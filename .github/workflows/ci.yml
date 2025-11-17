@@ -1,0 +1,22 @@
+name: mirror
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    name: Push to mirror
+    runs-on: ubuntu-latest
+    if: ${{ vars.MIRROR_URL != '' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Mirror repository
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: ${{ vars.MIRROR_URL }}
+          ssh_private_key: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
