@@ -1,20 +1,62 @@
-name: mirror
+name: ci
 
 on:
+  pull_request:
   push:
     branches:
       - main
 
 jobs:
-  mirror:
-    name: Push to mirror
+  format:
     runs-on: ubuntu-latest
-    if: ${{ vars.MIRROR_URL != '' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format ripgrep
+      - name: Format check
+        run: clang-format --dry-run --Werror $(rg --files -g '*.{cpp,hpp}' client server shared tests)
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy cmake ninja-build g++ ripgrep
+      - name: Configure
+        run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Clang-tidy
+        run: clang-tidy -p build --header-filter='^(client|server|shared|tests)/' --extra-arg=-w --quiet $(rg --files -g '*.{cpp,hpp}' client server shared tests)
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++
+      - name: Configure
+        run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Tests
+        run: ctest --test-dir build --output-on-failure
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - format
+      - lint
+      - tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.MIRROR_URL != ''
+    steps:
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Mirror repository
         uses: pixta-dev/repository-mirroring-action@v1
         with:
