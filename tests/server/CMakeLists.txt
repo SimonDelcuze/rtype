@@ -10,6 +10,13 @@ add_executable(rtype_server_tests
 target_link_libraries(rtype_server_tests
     PRIVATE
         rtype_shared
+        rtype_server_lib
+        rtype_gtest
+)
+
+target_include_directories(rtype_server_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/server/include
 )
 
 add_test(NAME server_tests COMMAND rtype_server_tests)

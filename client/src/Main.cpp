@@ -1,14 +1,6 @@
 #include "Main.hpp"
-#include "Test.hpp"
-#include <iostream>
 
-void run_client()
-{
-    std::cout << "client\n";
-    shared_hello("client");
-}
-
-int main()
+int main(void)
 {
     run_client();
     return 0;

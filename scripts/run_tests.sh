@@ -7,10 +7,11 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build"
 
 usage() {
-    echo "Usage: $0 [all|client|server]"
+    echo "Usage: $0 [all|client|server|shared]"
     echo "  all (default): run all tests"
     echo "  client       : build client and run client tests"
     echo "  server       : build server and run server tests"
+    echo "  shared       : build shared and run shared tests"
     exit 1
 }
 
@@ -28,6 +29,10 @@ case "$MODE" in
     server)
         echo "[run_tests.sh] Building server via build.sh..."
         "$SCRIPT_DIR/build.sh" server
+        ;;
+    shared)
+        echo "[run_tests.sh] Building shared via build.sh..."
+        "$SCRIPT_DIR/build.sh" shared
         ;;
     *)
         usage
@@ -50,5 +55,9 @@ case "$MODE" in
     server)
         echo "[run_tests.sh] Running server tests..."
         ctest -R server --output-on-failure
+        ;;
+    shared)
+        echo "[run_tests.sh] Running shared tests..."
+        ctest -R shared --output-on-failure
         ;;
 esac

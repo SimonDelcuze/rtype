@@ -1,7 +1,23 @@
-#include <iostream>
+#include <gtest/gtest.h>
 
-int main()
+#include "Main.hpp"
+
+#include <sstream>
+
+namespace {
+std::string capture_server_output()
+    {
+        std::stringstream buffer;
+        std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+        run_server();
+        std::cout.rdbuf(old);
+        return buffer.str();
+    }
+}
+
+TEST(Server, RunsAndPrints)
 {
-    std::cout << "[server tests] running..." << std::endl;
-    return 0;
+    const std::string output = capture_server_output();
+    EXPECT_NE(output.find("server"), std::string::npos);
+    EXPECT_NE(output.find("[shared] hello from server"), std::string::npos);
 }

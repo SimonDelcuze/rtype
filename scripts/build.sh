@@ -7,10 +7,11 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build"
 
 usage() {
-    echo "Usage: $0 [all|client|server]"
+    echo "Usage: $0 [all|client|server|shared]"
     echo "  all (default): build all targets"
     echo "  client       : build only rtype_client"
     echo "  server       : build only rtype_server"
+    echo "  shared       : build only rtype_shared_tests"
     exit 1
 }
 
@@ -33,6 +34,10 @@ case "$TARGET" in
     server)
         echo "[build.sh] Building server target..."
         CMAKE_TARGET_ARG="--target rtype_server"
+        ;;
+    shared)
+        echo "[build.sh] Building shared tests target..."
+        CMAKE_TARGET_ARG="--target rtype_shared_tests"
         ;;
     *)
         usage
