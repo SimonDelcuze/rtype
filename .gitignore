@@ -60,3 +60,8 @@ bin/
 CLAUDE.md
 AGENTS.md
 shared-apk/
+
+rtype_client
+rtype_server
+rtype_client_tests
+rtype_server_tests

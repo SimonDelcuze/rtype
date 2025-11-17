@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+BUILD_DIR="$PROJECT_ROOT/build"
+
+usage() {
+    echo "Usage: $0 [all|client|server]"
+    echo "  all (default): run all tests"
+    echo "  client       : build client and run client tests"
+    echo "  server       : build server and run server tests"
+    exit 1
+}
+
+MODE="${1-all}"
+
+case "$MODE" in
+    all)
+        echo "[run_tests.sh] Building all via build.sh..."
+        "$SCRIPT_DIR/build.sh"
+        ;;
+    client)
+        echo "[run_tests.sh] Building client via build.sh..."
+        "$SCRIPT_DIR/build.sh" client
+        ;;
+    server)
+        echo "[run_tests.sh] Building server via build.sh..."
+        "$SCRIPT_DIR/build.sh" server
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -DBUILD_TESTS=ON
+
+cd "$BUILD_DIR"
+
+case "$MODE" in
+    all)
+        echo "[run_tests.sh] Running all tests..."
+        ctest --output-on-failure
+        ;;
+    client)
+        echo "[run_tests.sh] Running client tests..."
+        ctest -R client --output-on-failure
+        ;;
+    server)
+        echo "[run_tests.sh] Running server tests..."
+        ctest -R server --output-on-failure
+        ;;
+esac
