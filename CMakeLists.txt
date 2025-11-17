@@ -14,14 +14,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 if (MSVC)
     add_compile_options(/W4 /permissive- /EHsc)
 else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 option(BUILD_TESTS "Build tests" OFF)
 
 file(GLOB_RECURSE RTYPE_SHARED_SOURCES
     CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/shared/src/*.c"
     "${CMAKE_SOURCE_DIR}/shared/src/*.cpp"
 )
 
@@ -42,3 +41,13 @@ if (BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+add_custom_target(clang_format
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/format.sh
+    COMMENT "Running clang-format on project sources"
+)
+
+add_custom_target(clang_tidy
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/lint.sh
+    COMMENT "Running clang-tidy on project sources"
+)

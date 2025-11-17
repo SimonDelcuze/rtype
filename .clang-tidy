@@ -1,0 +1,13 @@
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  -readability-magic-numbers,
+  -readability-implicit-bool-conversion,
+  -modernize-use-trailing-return-type,
+  -modernize-redundant-void-arg
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(client|server|shared|tests)/'
+FormatStyle: file

@@ -4,10 +4,9 @@
 
 #include <sstream>
 
-TEST(Shared, HelloPrintsMessage)
-{
+TEST(Shared, HelloPrintsMessage) {
     std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
 
     shared_hello("unit-test");
 

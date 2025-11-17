@@ -1,0 +1,36 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++20
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: true
+
+PointerAlignment: Right
+ReferenceAlignment: Left
+
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+SpacesBeforeTrailingComments: 1
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+
+NamespaceIndentation: All
+
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterFunction: false
+  AfterControlStatement: true
+  BeforeElse: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+SortIncludes: Never
+DerivePointerAlignment: false
