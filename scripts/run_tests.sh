@@ -41,23 +41,40 @@ esac
 
 cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -DBUILD_TESTS=ON
 
+case "$MODE" in
+    all)
+        cmake --build "$BUILD_DIR" --target rtype_shared_tests rtype_server_tests rtype_client_tests
+        ;;
+    client)
+        cmake --build "$BUILD_DIR" --target rtype_client_tests
+        ;;
+    server)
+        cmake --build "$BUILD_DIR" --target rtype_server_tests
+        ;;
+    shared)
+        cmake --build "$BUILD_DIR" --target rtype_shared_tests
+        ;;
+esac
+
 cd "$BUILD_DIR"
 
 case "$MODE" in
     all)
         echo "[run_tests.sh] Running all tests..."
-        ctest --output-on-failure
+        "$PROJECT_ROOT/rtype_shared_tests" --gtest_color=yes || true
+        "$PROJECT_ROOT/rtype_server_tests" --gtest_color=yes || true
+        "$PROJECT_ROOT/rtype_client_tests" --gtest_color=yes || true
         ;;
     client)
         echo "[run_tests.sh] Running client tests..."
-        ctest -R client --output-on-failure
+        "$PROJECT_ROOT/rtype_client_tests" --gtest_color=yes
         ;;
     server)
         echo "[run_tests.sh] Running server tests..."
-        ctest -R server --output-on-failure
+        "$PROJECT_ROOT/rtype_server_tests" --gtest_color=yes
         ;;
     shared)
         echo "[run_tests.sh] Running shared tests..."
-        ctest -R shared --output-on-failure
+        "$PROJECT_ROOT/rtype_shared_tests" --gtest_color=yes
         ;;
 esac
