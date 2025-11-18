@@ -33,12 +33,11 @@ target_include_directories(rtype_client_lib
 target_link_libraries(rtype_client_lib
     PUBLIC
         rtype_shared
-        ${SFML_LIBS}
-)
-
-target_compile_definitions(rtype_client_lib
-    PUBLIC
-        RTYPE_ASSETS_DIR="${CMAKE_SOURCE_DIR}/client/assets"
+        SFML::Graphics
+        SFML::Window
+        SFML::System
+        SFML::Audio
+        SFML::Network
 )
 
 add_executable(rtype_client
