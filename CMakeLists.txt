@@ -11,6 +11,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+include(FetchContent)
+
 if (MSVC)
     add_compile_options(/W4 /permissive- /EHsc)
 else()
@@ -27,6 +29,18 @@ file(GLOB_RECURSE RTYPE_SHARED_SOURCES
 add_library(rtype_shared OBJECT
     ${RTYPE_SHARED_SOURCES}
 )
+
+# Fetch SFML at configure time (no external package manager needed)
+set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
+set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
+FetchContent_Declare(
+    sfml
+    GIT_REPOSITORY https://github.com/SFML/SFML.git
+    GIT_TAG 3.0.2
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(sfml)
 
 target_include_directories(rtype_shared
     PUBLIC

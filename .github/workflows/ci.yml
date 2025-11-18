@@ -25,7 +25,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy cmake ninja-build g++ ripgrep
+          sudo apt-get install -y clang-tidy cmake ninja-build g++ ripgrep \
+            libx11-dev libxrandr-dev libudev-dev libgl1-mesa-dev libopenal-dev libsndfile1-dev libfreetype6-dev libjpeg-dev
       - name: Configure
         run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Clang-tidy
@@ -38,7 +39,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++
+          sudo apt-get install -y cmake ninja-build g++ \
+            libx11-dev libxrandr-dev libudev-dev libgl1-mesa-dev libopenal-dev libsndfile1-dev libfreetype6-dev libjpeg-dev
       - name: Configure
         run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON
       - name: Build

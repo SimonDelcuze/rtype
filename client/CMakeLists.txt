@@ -18,6 +18,11 @@ target_include_directories(rtype_client_lib
 target_link_libraries(rtype_client_lib
     PRIVATE
         rtype_shared
+        SFML::Graphics
+        SFML::Window
+        SFML::System
+        SFML::Audio
+        SFML::Network
 )
 
 add_executable(rtype_client
