@@ -1,16 +1,17 @@
-#include <gtest/gtest.h>
-
 #include "graphics/Sprite.hpp"
 #include "graphics/TextureManager.hpp"
+
 #include <filesystem>
+#include <gtest/gtest.h>
 #include <string>
 
-namespace {
+namespace
+{
     std::string assetPath(const std::string& relative)
     {
         return (std::filesystem::path(RTYPE_ASSETS_DIR) / relative).string();
     }
-}
+} // namespace
 
 TEST(Sprite, DefaultsToFullTextureRect)
 {
@@ -50,7 +51,7 @@ TEST(Sprite, PositionAndScale)
     sprite.setPosition(42.0F, 24.0F);
     sprite.setScale(2.0F, 3.0F);
 
-    const sf::Vector2f pos = sprite.raw().getPosition();
+    const sf::Vector2f pos   = sprite.raw().getPosition();
     const sf::Vector2f scale = sprite.raw().getScale();
 
     EXPECT_FLOAT_EQ(pos.x, 42.0F);

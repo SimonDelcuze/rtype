@@ -17,6 +17,6 @@ class Sprite
     void draw(Window& window) const;
     const sf::Sprite& raw() const;
 
-private:
+  private:
     sf::Sprite sprite_;
 };
