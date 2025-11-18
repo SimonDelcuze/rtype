@@ -1,36 +1,45 @@
-BasedOnStyle: Google
-Language: Cpp
-Standard: c++20
+BasedOnStyle: LLVM
+
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
 
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-AlignTrailingComments: true
+ColumnLimit: 120
 
-PointerAlignment: Right
-ReferenceAlignment: Left
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: False
+AllowShortBlocksOnASingleLine: Never
 
-AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-
-SpacesBeforeTrailingComments: 1
-SpaceAfterCStyleCast: true
-SpaceBeforeParens: ControlStatements
-
-NamespaceIndentation: All
-
+BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass: true
+  AfterControlStatement: false
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
   AfterStruct: true
-  AfterFunction: false
-  AfterControlStatement: true
-  BeforeElse: true
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 
-SortIncludes: Never
-DerivePointerAlignment: false
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+AlignOperands: true
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+
+SortIncludes: true
+IncludeBlocks: Regroup
+
+Cpp11BracedListStyle: true
+
+NamespaceIndentation: All
+IndentCaseLabels: true
+
+KeepEmptyLinesAtTheStartOfBlocks: false
