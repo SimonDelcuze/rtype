@@ -1,16 +1,7 @@
+#include "TestAssets.hpp"
 #include "graphics/TextureManager.hpp"
 
-#include <filesystem>
 #include <gtest/gtest.h>
-#include <string>
-
-namespace
-{
-    std::string assetPath(const std::string& relative)
-    {
-        return (std::filesystem::path(RTYPE_ASSETS_DIR) / relative).string();
-    }
-} // namespace
 
 TEST(TextureManager, LoadGetAndClear)
 {
