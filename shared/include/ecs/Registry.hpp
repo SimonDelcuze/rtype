@@ -48,7 +48,7 @@ class Registry
     template <typename Component> ComponentStorage<Component>* ensureStorage();
 
     std::vector<EntityId> freeIds_;
-    std::vector<bool> alive_;
+    std::vector<uint8_t> alive_;
     EntityId nextId_ = 0;
     std::unordered_map<std::type_index, std::unique_ptr<ComponentStorageBase>> storages_;
 };

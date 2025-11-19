@@ -73,3 +73,6 @@ registry.destroyEntity(player);
 
 This skeleton should serve client and server code equally; higher-level systems can now build on top of it (rendering, networking, gameplay).
 
+## Thread Safety
+
+The registry implementation is currently *not* thread-safe; concurrent access to methods like `createEntity` or `destroyEntity` will need external synchronization if you plan to mutate the registry from multiple threads.
