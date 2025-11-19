@@ -26,6 +26,15 @@ test_shared:
 format:
 	./scripts/format.sh
 
+format_client:
+	./scripts/format.sh client shared
+
+format_server:
+	./scripts/format.sh server shared
+
+format_tests:
+	./scripts/format.sh tests
+
 lint:
 	./scripts/lint.sh
 

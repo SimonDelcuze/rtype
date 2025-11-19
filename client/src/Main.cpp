@@ -1,6 +1,7 @@
-#include "Main.hpp"
+#include <iostream>
 
-int main(void) {
-    run_client();
+int main(void)
+{
+    std::cout << "client\n";
     return 0;
 }

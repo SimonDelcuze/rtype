@@ -4,7 +4,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-files=$(rg --files -g '*.{cpp,hpp}' "$PROJECT_ROOT/client" "$PROJECT_ROOT/server" "$PROJECT_ROOT/shared" "$PROJECT_ROOT/tests")
+if [ "$#" -eq 0 ]; then
+    TARGETS=("client" "server" "shared" "tests")
+else
+    TARGETS=("$@")
+fi
+
+PATHS=()
+for target in "${TARGETS[@]}"; do
+    case "$target" in
+        client|server|shared|tests)
+            PATHS+=("$PROJECT_ROOT/$target")
+            ;;
+        *)
+            echo "[format.sh] Unknown target '$target' (allowed: client, server, shared, tests)" >&2
+            exit 1
+            ;;
+    esac
+done
+
+files=$(rg --files -g '*.{cpp,hpp}' "${PATHS[@]}")
 
 if [ -z "$files" ]; then
     echo "[format.sh] No file to format."

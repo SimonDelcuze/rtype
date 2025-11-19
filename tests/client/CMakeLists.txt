@@ -19,4 +19,9 @@ target_include_directories(rtype_client_tests
         ${CMAKE_SOURCE_DIR}/client/include
 )
 
+target_compile_definitions(rtype_client_tests
+    PRIVATE
+        RTYPE_ASSETS_DIR="${CMAKE_SOURCE_DIR}/client/assets"
+)
+
 add_test(NAME client_tests COMMAND rtype_client_tests)
