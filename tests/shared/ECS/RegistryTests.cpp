@@ -2,20 +2,23 @@
 
 #include <gtest/gtest.h>
 
-namespace {
-    struct Position {
+namespace
+{
+    struct Position
+    {
         float x = 0.0F;
         float y = 0.0F;
     };
 
-    struct Health {
+    struct Health
+    {
         int value = 100;
     };
-}
+} // namespace
 TEST(Registry, CreatesAndReusesEntityIds)
 {
     Registry registry;
-    const EntityId first = registry.createEntity();
+    const EntityId first  = registry.createEntity();
     const EntityId second = registry.createEntity();
     EXPECT_EQ(first, 0u);
     EXPECT_EQ(second, 1u);
@@ -28,7 +31,7 @@ TEST(Registry, EmplaceAndGetComponent)
 {
     Registry registry;
     const EntityId entity = registry.createEntity();
-    auto& position = registry.emplace<Position>(entity, 10.0F, 20.0F);
+    auto& position        = registry.emplace<Position>(entity, 10.0F, 20.0F);
     EXPECT_FLOAT_EQ(position.x, 10.0F);
     EXPECT_FLOAT_EQ(position.y, 20.0F);
 

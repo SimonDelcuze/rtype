@@ -18,12 +18,14 @@ EntityId Registry::createEntity()
 
 void Registry::destroyEntity(EntityId id)
 {
-    if (id >= alive_.size() || !alive_[id])
+    if (id >= alive_.size() || !alive_[id]) {
         return;
+    }
     alive_[id] = false;
     freeIds_.push_back(id);
-    for (auto& [_, storage] : storages_)
+    for (auto& [_, storage] : storages_) {
         storage->remove(id);
+    }
 }
 
 bool Registry::isAlive(EntityId id) const
