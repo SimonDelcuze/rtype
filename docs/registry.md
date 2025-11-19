@@ -1,78 +1,89 @@
-# ECS Registry Overview
+# ECS Registry Detailed Design
 
-This document summarizes the structure and behavior of the shared ECS registry implementation.
+La registry partagée définie dans `shared/include/ecs/Registry.hpp` fournit la fondation ECS commune au client et au serveur. Ce document en décrit précisément les composants internes.
 
-## Entity Lifecycle
+## Cycle de vie des entités
 
-- `EntityId` is a 32-bit unsigned integer (`using EntityId = std::uint32_t`).
-- Call `Registry::createEntity()` to obtain a new ID; IDs are recycled when entities are destroyed.
-- `Registry::destroyEntity(id)` marks an entity as dead, releases its components, and makes the ID available for reuse.
-- `Registry::isAlive(id)` returns whether a given ID currently refers to a living entity.
-- `Registry::clear()` wipes the entire registry (entities, components, and storage).
+- `EntityId` est un entier 32 bits (`using EntityId = std::uint32_t`).
+- `createEntity()` réutilise un ID libre si possible, sinon en alloue un nouveau, marque la case vivante et remet sa signature à zéro.
+- `destroyEntity(id)` ignore silencieusement les IDs morts/invalides, sinon marque l’entité morte, supprime tous les composants (via les storages) et place l’ID dans `freeIds_`.
+- `isAlive(id)` consulte le tableau `alive_`.
+- `clear()` vide les entités, signatures, storages et remet `nextId_` à zéro.
 
-## Component Storage Skeleton
+## Identifiants de type de composant
 
-- Each component type gets its own `ComponentStorage<T>` instance, managed internally.
-- Storage uses an `unordered_map<EntityId, T>` per component type (sparse-set style).
-- Storages are created lazily when `emplace<T>` is executed for the first time.
+- `ComponentTypeId::value<T>()` retourne un index unique par type grâce à un compteur atomique interne.
+- Cet index détermine **le bit** à activer dans la signature d’une entité et permet d’adresser le bon stockage.
 
-## Registry API
+## Signatures par entité
 
-All public methods perform validation and throw custom errors derived from `IError`:
+- Chaque entité possède un bitset stocké dans `signatures_` (tableau aplati de `uint64_t`).
+- `signatureWordCount_` représente le nombre de mots (64 bits) par entité.
+- Lorsqu’un nouveau composant apparaît, `ensureSignatureWordCount` agrandit les signatures existantes pour allouer un bit supplémentaire.
+- `setSignatureBit`, `clearSignatureBit` et `hasSignatureBit` manipulent les bits. Les méthodes publiques (`emplace`, `has`, `get`, `remove`) s’appuient sur ces helpers pour faire des vérifications O(1) avant d’accéder au stockage.
 
-| Method | Description | Throws |
-|--------|-------------|--------|
-| `template<typename C, typename... Args> C& emplace(EntityId, Args&&...)` | Adds/replaces component `C` on an entity. Returns a reference to the stored component. | `RegistryError` if entity is dead |
-| `template<typename C> bool has(EntityId)` | Returns true if entity currently has component `C`. | *None* |
-| `template<typename C> C& get(EntityId)` / `const C& get` | Retrieves a reference to component `C`. | `RegistryError` (dead entity) or `ComponentNotFoundError` (type missing) |
-| `template<typename C> void remove(EntityId)` | Removes component `C` from an entity if present. | *None* |
+## Stockage sparse-set des composants
 
-### Error Types
+Pour chaque type `T`, la registry maintient un `ComponentStorage<T>` :
 
-Located in `shared/include/errors/`:
+- `dense` : liste compacte des entités possédant `T`.
+- `data` : tableau des instances `T`, aligné sur `dense`.
+- `sparse` : vecteur indexé par `EntityId` qui pointe vers l’index dans `dense` (`npos` signifie “absent”).
 
-- `IError`: base interface containing the `message()` accessor.
-- `RegistryError`: thrown for lifecycle-related issues (e.g. using dead entities).
-- `ComponentNotFoundError`: thrown when a component is requested but not registered on the entity.
+### Opérations
 
-Both concrete errors are simple wrappers around a string message; any code can catch either specific errors or the `IError` base.
+- `emplace<T>(entity, args...)` :
+  1. Vérifie que l’entité est vivante.
+  2. Récupère l’index du composant, agrandit les signatures si nécessaire.
+  3. Crée ou récupère le `ComponentStorage<T>`.
+  4. Ajoute/mets à jour l’entrée dans `dense/data` (sparse-set).
+  5. Active le bit dans la signature de l’entité.
+- `has<T>(entity)` : consulte la signature. Si le bit est à zéro, aucun stockage n’est touché.
+- `get<T>(entity)` : vérifie `alive` + signature, puis lit `data[sparse[id]]`. Lève `ComponentNotFoundError` si absent.
+- `remove<T>(entity)` : s’arrête si l’entité est morte ou si le bit vaut 0. Sinon supprime dans le sparse-set (swap avec la dernière entrée) et éteint le bit.
+- `destroyEntity(entity)` : réinitialise tous les mots de sa signature puis appelle `remove` sur chaque stockage via `ComponentStorageBase::remove`.
 
-## Storage Internals
+## API publique et erreurs
 
-- `ComponentStorageBase`: abstract base used to hold different component storages in a homogeneous container.
-- `ComponentStorage<C>` implements `emplace`, `contains`, `fetch`, `remove` for component `C`.
-- `Registry` maintains `std::unordered_map<std::type_index, std::unique_ptr<ComponentStorageBase>> storages_` for dynamic dispatch.
-- Each entity has a slot in `alive_` and a free-list for ID reuse.
+| Méthode | Comportement | Exceptions |
+| --- | --- | --- |
+| `emplace<C>(EntityId, Args&&...)` | Ajoute/remplace `C`, retourne la référence stockée. | `RegistryError` (entité morte) |
+| `has<C>(EntityId)` | Vérifie la présence de `C`. | Aucune |
+| `get<C>(EntityId)` / `const get` | Récupère `C`. | `RegistryError` (entité morte) ou `ComponentNotFoundError` |
+| `remove<C>(EntityId)` | Supprime `C` si présent. | Aucune |
 
-## Unit Tests
+Erreurs (dans `shared/include/errors/`) :
+- `IError` : interface de base.
+- `RegistryError` : usage invalide de la registry (entité morte, etc.).
+- `ComponentNotFoundError` : composant demandé absent.
 
-Located in `tests/shared/ECS/RegistryTests.cpp` covering:
+## Tests
 
-- ID reuse and entity destruction cleanup.
-- Successful `emplace/get/remove` flows.
-- Exceptions when acting on dead entities or missing components.
-- Graceful behavior when removing a component that isn’t present.
+`tests/shared/ECS/RegistryTests.cpp` et `MovementComponentTests.cpp` couvrent :
+- Recyclage d’IDs et suppression automatique des composants.
+- Bon fonctionnement de `emplace/get/remove`.
+- Exceptions lors des accès à des entités mortes ou à des composants manquants.
+- Stockage sparse-set via les tests de composant (vérification des données).
 
-## Usage Example
+## Exemple
 
 ```cpp
 Registry registry;
-EntityId player = registry.createEntity();
+EntityId e = registry.createEntity();
 
-registry.emplace<Position>(player, 10.f, 20.f);
-registry.emplace<Health>(player, 100);
+registry.emplace<Position>(e, 10.f, 20.f);
+registry.emplace<Health>(e, 100);
 
-if (registry.has<Position>(player)) {
-    auto& pos = registry.get<Position>(player);
-    /* ... */
+if (registry.has<Position>(e)) {
+    auto& pos = registry.get<Position>(e);
+    // ...
 }
 
-registry.remove<Health>(player);
-registry.destroyEntity(player);
+registry.remove<Health>(e);
+registry.destroyEntity(e);
 ```
 
-This skeleton should serve client and server code equally; higher-level systems can now build on top of it (rendering, networking, gameplay).
+## Remarques
 
-## Thread Safety
-
-The registry implementation is currently *not* thread-safe; concurrent access to methods like `createEntity` or `destroyEntity` will need external synchronization if you plan to mutate the registry from multiple threads.
+- La registry n’est pas thread-safe. Toute mutation simultanée nécessite une synchronisation externe.
+- Les signatures et le sparse-set sont les fondations requises pour des `view<Component...>` et un scheduler de systèmes : ils seront ajoutés dans les étapes suivantes mais reposent entièrement sur cette infrastructure partagée.
