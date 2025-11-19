@@ -10,7 +10,8 @@ Checks: >
   -readability-magic-numbers,
   -readability-implicit-bool-conversion,
   -modernize-use-trailing-return-type,
-  -modernize-redundant-void-arg
+  -modernize-redundant-void-arg,
+  -modernize-use-nodiscard
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(client|server|shared|tests)/'
 FormatStyle: file

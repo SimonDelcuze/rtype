@@ -16,7 +16,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-format ripgrep
       - name: Format check
-        run: clang-format --dry-run --Werror $(rg --files -g '*.{cpp,hpp}' client server shared tests)
+        run: clang-format --dry-run --Werror $(rg --files -g '*.{cpp,hpp,tpp}' client server shared tests)
 
   lint:
     runs-on: ubuntu-latest

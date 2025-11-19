@@ -23,7 +23,7 @@ for target in "${TARGETS[@]}"; do
     esac
 done
 
-files=$(rg --files -g '*.{cpp,hpp}' "${PATHS[@]}")
+files=$(rg --files -g '*.{cpp,hpp,tpp}' "${PATHS[@]}")
 
 if [ -z "$files" ]; then
     echo "[format.sh] No file to format."
