@@ -1,10 +1,16 @@
 #pragma once
 
+#include <exception>
 #include <string>
 
-class IError
+class IError : public std::exception
 {
   public:
-    virtual ~IError()                                   = default;
+    ~IError() override                                  = default;
     virtual const std::string& message() const noexcept = 0;
+
+    const char* what() const noexcept override
+    {
+        return message().c_str();
+    }
 };

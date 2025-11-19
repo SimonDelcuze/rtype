@@ -76,11 +76,8 @@ template <typename Component>
 template <typename... Args>
 Component& ComponentStorage<Component>::emplace(EntityId id, Args&&... args)
 {
-    if (const auto it = data.find(id); it != data.end()) {
-        it->second = Component(std::forward<Args>(args)...);
-        return it->second;
-    }
-    return data.emplace(id, Component(std::forward<Args>(args)...)).first->second;
+    auto result = data.insert_or_assign(id, Component(std::forward<Args>(args)...));
+    return result.first->second;
 }
 
 template <typename Component> bool ComponentStorage<Component>::contains(EntityId id) const
