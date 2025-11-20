@@ -25,6 +25,8 @@ add_library(rtype_client_lib STATIC
     ${RTYPE_CLIENT_SOURCES}
 )
 
+target_compile_options(rtype_client_lib PRIVATE ${RTYPE_COMPILE_OPTIONS})
+
 target_include_directories(rtype_client_lib
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -54,3 +56,5 @@ target_include_directories(rtype_client
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+target_compile_options(rtype_client PRIVATE ${RTYPE_COMPILE_OPTIONS})

@@ -14,9 +14,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 include(FetchContent)
 
 if (MSVC)
-    add_compile_options(/W4 /permissive- /EHsc)
+    set(RTYPE_COMPILE_OPTIONS /W4 /permissive- /EHsc)
 else()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+    set(RTYPE_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 option(BUILD_TESTS "Build tests" OFF)
@@ -29,6 +29,8 @@ file(GLOB_RECURSE RTYPE_SHARED_SOURCES
 add_library(rtype_shared OBJECT
     ${RTYPE_SHARED_SOURCES}
 )
+
+target_compile_options(rtype_shared PRIVATE ${RTYPE_COMPILE_OPTIONS})
 
 # Fetch SFML at configure time (no external package manager needed)
 set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")

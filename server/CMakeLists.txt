@@ -10,6 +10,8 @@ add_library(rtype_server_lib STATIC
     ${RTYPE_SERVER_SOURCES}
 )
 
+target_compile_options(rtype_server_lib PRIVATE ${RTYPE_COMPILE_OPTIONS})
+
 target_include_directories(rtype_server_lib
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -33,3 +35,5 @@ target_include_directories(rtype_server
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+target_compile_options(rtype_server PRIVATE ${RTYPE_COMPILE_OPTIONS})

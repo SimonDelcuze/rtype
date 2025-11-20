@@ -20,6 +20,8 @@ jest-html-reporters-*.html
 .turbo
 
 .vercel
+.cache
+compile_commands.json
 
 .next/
 out/
