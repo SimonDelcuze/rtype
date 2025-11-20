@@ -57,7 +57,7 @@ TEST(AnimationComponent, PlayPauseStop)
 
 TEST(AnimationComponent, Reset)
 {
-    auto anim        = AnimationComponent::create(4, 0.1F);
+    auto anim            = AnimationComponent::create(4, 0.1F);
     anim.currentFrame    = 3;
     anim.elapsedTime     = 0.5F;
     anim.finished        = true;
