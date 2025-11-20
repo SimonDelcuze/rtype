@@ -1,4 +1,5 @@
 #include "components/AnimationComponent.hpp"
+#include "components/SpriteComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "systems/AnimationSystem.hpp"
 
@@ -9,23 +10,21 @@ class AnimationSystemTest : public ::testing::Test
   protected:
     Registry registry;
     AnimationSystem system;
-    std::vector<std::tuple<EntityId, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>> callbacks;
 
-    void SetUp() override
+    EntityId createAnimatedEntity(std::uint32_t frameCount, float frameTime, bool loop = true)
     {
-        callbacks.clear();
-        system.setSpriteRectCallback([this](EntityId id, std::uint32_t x, std::uint32_t y, std::uint32_t w,
-                                            std::uint32_t h) { callbacks.emplace_back(id, x, y, w, h); });
+        EntityId entity = registry.createEntity();
+        registry.emplace<AnimationComponent>(entity, AnimationComponent::create(frameCount, frameTime, loop));
+        auto& sprite = registry.emplace<SpriteComponent>(entity);
+        sprite.setFrameSize(32, 32, frameCount);
+        return entity;
     }
 };
 
 TEST_F(AnimationSystemTest, AdvancesFrameAfterFrameTime)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& anim      = registry.get<AnimationComponent>(entity);
 
     EXPECT_EQ(anim.currentFrame, 0);
 
@@ -38,11 +37,8 @@ TEST_F(AnimationSystemTest, AdvancesFrameAfterFrameTime)
 
 TEST_F(AnimationSystemTest, LoopsAnimation)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(3, 0.1F, true));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 3;
+    EntityId entity = createAnimatedEntity(3, 0.1F, true);
+    auto& anim      = registry.get<AnimationComponent>(entity);
 
     system.update(registry, 0.1F);
     EXPECT_EQ(anim.currentFrame, 1);
@@ -57,11 +53,8 @@ TEST_F(AnimationSystemTest, LoopsAnimation)
 
 TEST_F(AnimationSystemTest, StopsAtEndWithoutLoop)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(3, 0.1F, false));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 3;
+    EntityId entity = createAnimatedEntity(3, 0.1F, false);
+    auto& anim      = registry.get<AnimationComponent>(entity);
 
     system.update(registry, 0.1F);
     system.update(registry, 0.1F);
@@ -74,13 +67,10 @@ TEST_F(AnimationSystemTest, StopsAtEndWithoutLoop)
 
 TEST_F(AnimationSystemTest, ReverseDirection)
 {
-    EntityId entity   = registry.createEntity();
-    auto& anim        = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(3, 0.1F, true));
+    EntityId entity   = createAnimatedEntity(3, 0.1F, true);
+    auto& anim        = registry.get<AnimationComponent>(entity);
     anim.direction    = AnimationDirection::Reverse;
     anim.currentFrame = 2;
-    anim.frameWidth   = 32;
-    anim.frameHeight  = 32;
-    anim.columns      = 3;
 
     system.update(registry, 0.1F);
     EXPECT_EQ(anim.currentFrame, 1);
@@ -94,12 +84,9 @@ TEST_F(AnimationSystemTest, ReverseDirection)
 
 TEST_F(AnimationSystemTest, PingPongDirection)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(3, 0.1F, true));
-    anim.direction   = AnimationDirection::PingPong;
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 3;
+    EntityId entity = createAnimatedEntity(3, 0.1F, true);
+    auto& anim      = registry.get<AnimationComponent>(entity);
+    anim.direction  = AnimationDirection::PingPong;
 
     system.update(registry, 0.1F);
     EXPECT_EQ(anim.currentFrame, 1);
@@ -117,90 +104,68 @@ TEST_F(AnimationSystemTest, PingPongDirection)
     EXPECT_EQ(anim.currentFrame, 1);
 }
 
-TEST_F(AnimationSystemTest, CallbackCalledWithCorrectCoordinates)
+TEST_F(AnimationSystemTest, UpdatesSpriteFrame)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& sprite    = registry.get<SpriteComponent>(entity);
+
+    EXPECT_EQ(sprite.getFrame(), 0);
 
     system.update(registry, 0.1F);
+    EXPECT_EQ(sprite.getFrame(), 1);
 
-    ASSERT_EQ(callbacks.size(), 1);
-    auto& [id, x, y, w, h] = callbacks[0];
-    EXPECT_EQ(id, entity);
-    EXPECT_EQ(x, 32);
-    EXPECT_EQ(y, 0);
-    EXPECT_EQ(w, 32);
-    EXPECT_EQ(h, 32);
-}
-
-TEST_F(AnimationSystemTest, CallbackWithMultipleRows)
-{
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::fromIndices({4}, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 2;
-
-    anim.currentFrame = 0;
     system.update(registry, 0.1F);
-
-    ASSERT_EQ(callbacks.size(), 1);
-    auto& [id, x, y, w, h] = callbacks[0];
-    EXPECT_EQ(x, 0);
-    EXPECT_EQ(y, 64);
+    EXPECT_EQ(sprite.getFrame(), 2);
 }
 
 TEST_F(AnimationSystemTest, DoesNotUpdatePausedAnimation)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& anim      = registry.get<AnimationComponent>(entity);
+    auto& sprite    = registry.get<SpriteComponent>(entity);
     anim.pause();
 
     system.update(registry, 0.5F);
 
     EXPECT_EQ(anim.currentFrame, 0);
-    EXPECT_TRUE(callbacks.empty());
+    EXPECT_EQ(sprite.getFrame(), 0);
 }
 
 TEST_F(AnimationSystemTest, DoesNotUpdateFinishedAnimation)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
-    anim.finished    = true;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& anim      = registry.get<AnimationComponent>(entity);
+    auto& sprite    = registry.get<SpriteComponent>(entity);
+    anim.finished   = true;
 
     system.update(registry, 0.5F);
 
     EXPECT_EQ(anim.currentFrame, 0);
-    EXPECT_TRUE(callbacks.empty());
+    EXPECT_EQ(sprite.getFrame(), 0);
 }
 
 TEST_F(AnimationSystemTest, SkipsDeadEntities)
 {
-    EntityId entity = registry.createEntity();
-    registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
+    EntityId entity = createAnimatedEntity(4, 0.1F);
     registry.destroyEntity(entity);
 
     system.update(registry, 0.5F);
+    // No crash = success
+}
 
-    EXPECT_TRUE(callbacks.empty());
+TEST_F(AnimationSystemTest, SkipsEntitiesWithoutSpriteComponent)
+{
+    EntityId entity = registry.createEntity();
+    registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
+
+    system.update(registry, 0.5F);
+    // No crash = success, animation not updated because no sprite
 }
 
 TEST_F(AnimationSystemTest, AccumulatesTime)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& anim      = registry.get<AnimationComponent>(entity);
 
     system.update(registry, 0.05F);
     EXPECT_EQ(anim.currentFrame, 0);
@@ -211,14 +176,12 @@ TEST_F(AnimationSystemTest, AccumulatesTime)
 
 TEST_F(AnimationSystemTest, HandlesMultipleFramesPerUpdate)
 {
-    EntityId entity  = registry.createEntity();
-    auto& anim       = registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
-    anim.frameWidth  = 32;
-    anim.frameHeight = 32;
-    anim.columns     = 4;
+    EntityId entity = createAnimatedEntity(4, 0.1F);
+    auto& anim      = registry.get<AnimationComponent>(entity);
+    auto& sprite    = registry.get<SpriteComponent>(entity);
 
     system.update(registry, 0.35F);
 
     EXPECT_EQ(anim.currentFrame, 3);
-    EXPECT_EQ(callbacks.size(), 3);
+    EXPECT_EQ(sprite.getFrame(), 3);
 }
