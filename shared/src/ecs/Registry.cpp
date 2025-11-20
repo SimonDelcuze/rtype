@@ -46,6 +46,11 @@ void Registry::clear()
     nextId_ = 0;
 }
 
+EntityId Registry::entityCount() const
+{
+    return nextId_;
+}
+
 void Registry::ensureSignatureWordCount(std::size_t componentIndex)
 {
     const std::size_t requiredWords = componentIndex / SIGNATURE_WORD_BITS + 1;

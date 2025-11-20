@@ -41,6 +41,7 @@ class Registry
     void destroyEntity(EntityId id);
     bool isAlive(EntityId id) const;
     void clear();
+    EntityId entityCount() const;
 
     template <typename Component, typename... Args> Component& emplace(EntityId id, Args&&... args);
     template <typename Component> bool has(EntityId id) const;
