@@ -22,10 +22,6 @@ struct AnimationComponent
     AnimationDirection direction = AnimationDirection::Forward;
     bool pingPongReverse         = false;
 
-    std::uint32_t frameWidth  = 0;
-    std::uint32_t frameHeight = 0;
-    std::uint32_t columns     = 1;
-
     static AnimationComponent create(std::uint32_t frameCount, float frameTime, bool loop = true);
     static AnimationComponent fromIndices(std::vector<std::uint32_t> indices, float frameTime, bool loop = true);
 

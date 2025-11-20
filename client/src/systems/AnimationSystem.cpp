@@ -1,10 +1,5 @@
 #include "systems/AnimationSystem.hpp"
 
-void AnimationSystem::setSpriteRectCallback(SpriteRectCallback callback)
-{
-    spriteRectCallback_ = std::move(callback);
-}
-
 void AnimationSystem::advanceFrame(AnimationComponent& anim)
 {
     if (anim.frameIndices.empty()) {
@@ -63,29 +58,16 @@ void AnimationSystem::advanceFrame(AnimationComponent& anim)
     }
 }
 
-void AnimationSystem::updateSpriteRect(EntityId entity, const AnimationComponent& anim)
-{
-    if (!spriteRectCallback_ || anim.frameWidth == 0 || anim.frameHeight == 0) {
-        return;
-    }
-
-    std::uint32_t frameIndex = anim.getCurrentFrameIndex();
-    std::uint32_t col        = frameIndex % anim.columns;
-    std::uint32_t row        = frameIndex / anim.columns;
-    std::uint32_t x          = col * anim.frameWidth;
-    std::uint32_t y          = row * anim.frameHeight;
-
-    spriteRectCallback_(entity, x, y, anim.frameWidth, anim.frameHeight);
-}
-
 void AnimationSystem::update(Registry& registry, float deltaTime)
 {
     for (EntityId entity = 0; entity < registry.entityCount(); ++entity) {
-        if (!registry.isAlive(entity) || !registry.has<AnimationComponent>(entity)) {
+        if (!registry.isAlive(entity) || !registry.has<AnimationComponent>(entity) ||
+            !registry.has<SpriteComponent>(entity)) {
             continue;
         }
 
         AnimationComponent& anim = registry.get<AnimationComponent>(entity);
+        SpriteComponent& sprite  = registry.get<SpriteComponent>(entity);
 
         if (!anim.playing || anim.finished || anim.frameIndices.empty()) {
             continue;
@@ -96,7 +78,7 @@ void AnimationSystem::update(Registry& registry, float deltaTime)
         while (anim.elapsedTime >= anim.frameTime && anim.playing) {
             anim.elapsedTime -= anim.frameTime;
             advanceFrame(anim);
-            updateSpriteRect(entity, anim);
+            sprite.setFrame(anim.getCurrentFrameIndex());
         }
     }
 }
