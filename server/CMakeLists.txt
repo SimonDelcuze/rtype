@@ -34,6 +34,7 @@ target_link_libraries(rtype_server
 target_include_directories(rtype_server
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/shared/include
 )
 
 target_compile_options(rtype_server PRIVATE ${RTYPE_COMPILE_OPTIONS})
