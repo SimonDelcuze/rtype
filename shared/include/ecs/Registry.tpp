@@ -1,17 +1,26 @@
 #pragma once
 
 #include <stdexcept>
+#include <utility>
 
 template <typename Component, typename... Args> Component& Registry::emplace(EntityId id, Args&&... args)
 {
     if (!isAlive(id))
         throw RegistryError("Cannot emplace component on dead entity");
-    return ensureStorage<Component>()->emplace(id, std::forward<Args>(args)...);
+    const auto componentIndex = ComponentTypeId::value<Component>();
+    ensureSignatureWordCount(componentIndex);
+    auto* storage   = ensureStorage<Component>();
+    auto& component = storage->emplace(id, std::forward<Args>(args)...);
+    setSignatureBit(id, componentIndex);
+    return component;
 }
 
 template <typename Component> bool Registry::has(EntityId id) const
 {
     if (!isAlive(id))
+        return false;
+    const auto componentIndex = ComponentTypeId::value<Component>();
+    if (!hasSignatureBit(id, componentIndex))
         return false;
     if (const auto* storage = findStorage<Component>())
         return storage->contains(id);
@@ -22,6 +31,9 @@ template <typename Component> Component& Registry::get(EntityId id)
 {
     if (!isAlive(id))
         throw RegistryError("Cannot get component from dead entity");
+    const auto componentIndex = ComponentTypeId::value<Component>();
+    if (!hasSignatureBit(id, componentIndex))
+        throw ComponentNotFoundError("Requested component not found on entity");
     auto* storage = findStorage<Component>();
     if (storage == nullptr)
         throw ComponentNotFoundError("Component type not registered");
@@ -32,6 +44,9 @@ template <typename Component> const Component& Registry::get(EntityId id) const
 {
     if (!isAlive(id))
         throw RegistryError("Cannot get component from dead entity");
+    const auto componentIndex = ComponentTypeId::value<Component>();
+    if (!hasSignatureBit(id, componentIndex))
+        throw ComponentNotFoundError("Requested component not found on entity");
     const auto* storage = findStorage<Component>();
     if (storage == nullptr)
         throw ComponentNotFoundError("Component type not registered");
@@ -42,8 +57,13 @@ template <typename Component> void Registry::remove(EntityId id)
 {
     if (!isAlive(id))
         return;
-    if (auto* storage = findStorage<Component>())
+    const auto componentIndex = ComponentTypeId::value<Component>();
+    if (!hasSignatureBit(id, componentIndex))
+        return;
+    if (auto* storage = findStorage<Component>()) {
         storage->remove(id);
+        clearSignatureBit(id, componentIndex);
+    }
 }
 
 template <typename Component> ComponentStorage<Component>* Registry::findStorage()
@@ -76,32 +96,53 @@ template <typename Component>
 template <typename... Args>
 Component& ComponentStorage<Component>::emplace(EntityId id, Args&&... args)
 {
-    auto result = data.insert_or_assign(id, Component(std::forward<Args>(args)...));
-    return result.first->second;
+    if (id >= sparse.size())
+        sparse.resize(id + 1, npos);
+    const auto index = sparse[id];
+    if (index != npos && index < dense.size() && dense[index] == id) {
+        data[index] = Component(std::forward<Args>(args)...);
+        return data[index];
+    }
+    dense.push_back(id);
+    sparse[id] = dense.size() - 1;
+    data.emplace_back(std::forward<Args>(args)...);
+    return data.back();
 }
 
 template <typename Component> bool ComponentStorage<Component>::contains(EntityId id) const
 {
-    return data.find(id) != data.end();
+    if (id >= sparse.size())
+        return false;
+    const auto index = sparse[id];
+    return index != npos && index < dense.size() && dense[index] == id;
 }
 
 template <typename Component> Component& ComponentStorage<Component>::fetch(EntityId id)
 {
-    auto it = data.find(id);
-    if (it == data.end())
+    if (!contains(id))
         throw ComponentNotFoundError("Requested component not found on entity");
-    return it->second;
+    return data[sparse[id]];
 }
 
 template <typename Component> const Component& ComponentStorage<Component>::fetch(EntityId id) const
 {
-    auto it = data.find(id);
-    if (it == data.end())
+    if (!contains(id))
         throw ComponentNotFoundError("Requested component not found on entity");
-    return it->second;
+    return data[sparse[id]];
 }
 
 template <typename Component> void ComponentStorage<Component>::remove(EntityId id)
 {
-    data.erase(id);
+    if (!contains(id))
+        return;
+    const std::size_t index = sparse[id];
+    const std::size_t last  = dense.size() - 1;
+    if (index != last) {
+        dense[index]         = dense[last];
+        data[index]          = std::move(data[last]);
+        sparse[dense[index]] = index;
+    }
+    dense.pop_back();
+    data.pop_back();
+    sparse[id] = npos;
 }

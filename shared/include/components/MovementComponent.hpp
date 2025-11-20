@@ -12,10 +12,10 @@ enum class MovementPattern : std::uint8_t
 struct MovementComponent
 {
     MovementPattern pattern = MovementPattern::Linear;
-    float speed              = 0.0F;
-    float amplitude          = 0.0F;
-    float frequency          = 0.0F;
-    float phase              = 0.0F;
+    float speed             = 0.0F;
+    float amplitude         = 0.0F;
+    float frequency         = 0.0F;
+    float phase             = 0.0F;
 
     static MovementComponent linear(float speed);
     static MovementComponent zigzag(float speed, float amplitude, float frequency);
@@ -25,9 +25,9 @@ struct MovementComponent
 inline MovementComponent MovementComponent::linear(float speed)
 {
     MovementComponent component;
-    component.pattern = MovementPattern::Linear;
-    component.speed   = speed;
-    component.phase   = 0.0F;
+    component.pattern   = MovementPattern::Linear;
+    component.speed     = speed;
+    component.phase     = 0.0F;
     component.frequency = 0.0F;
     component.amplitude = 0.0F;
     return component;
