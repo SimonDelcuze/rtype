@@ -6,7 +6,7 @@
 
 class Logger
 {
-public:
+  public:
     static Logger& instance();
 
     void setVerbose(bool enabled);
@@ -14,11 +14,11 @@ public:
     void warn(const std::string& message);
     void error(const std::string& message);
 
-private:
+  private:
     Logger();
     ~Logger();
 
-    Logger(const Logger&) = delete;
+    Logger(const Logger&)            = delete;
     Logger& operator=(const Logger&) = delete;
 
     void log(const std::string& level, const std::string& message, bool alwaysConsole);
@@ -27,4 +27,3 @@ private:
     std::mutex _mutex;
     bool _verbose;
 };
-

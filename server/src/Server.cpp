@@ -1,5 +1,5 @@
-#include "Main.hpp"
 #include "Logger.hpp"
+#include "Main.hpp"
 #include "Test.hpp"
 
 #include <iostream>
