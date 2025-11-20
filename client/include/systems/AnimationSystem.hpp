@@ -8,7 +8,8 @@
 class AnimationSystem
 {
   public:
-    using SpriteRectCallback = std::function<void(EntityId, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t)>;
+    using SpriteRectCallback =
+        std::function<void(EntityId, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t)>;
 
     void update(Registry& registry, float deltaTime);
     void setSpriteRectCallback(SpriteRectCallback callback);
