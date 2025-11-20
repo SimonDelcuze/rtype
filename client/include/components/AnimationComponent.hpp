@@ -13,12 +13,12 @@ enum class AnimationDirection : std::uint8_t
 struct AnimationComponent
 {
     std::vector<std::uint32_t> frameIndices;
-    float frameTime            = 0.1F;
-    float elapsedTime          = 0.0F;
-    std::uint32_t currentFrame = 0;
-    bool loop                  = true;
-    bool playing               = true;
-    bool finished              = false;
+    float frameTime              = 0.1F;
+    float elapsedTime            = 0.0F;
+    std::uint32_t currentFrame   = 0;
+    bool loop                    = true;
+    bool playing                 = true;
+    bool finished                = false;
     AnimationDirection direction = AnimationDirection::Forward;
     bool pingPongReverse         = false;
 
