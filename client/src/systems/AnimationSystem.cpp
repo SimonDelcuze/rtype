@@ -66,8 +66,8 @@ void AnimationSystem::update(Registry& registry, float deltaTime)
             continue;
         }
 
-        auto& anim = registry.get<AnimationComponent>(entity);
-        auto& sprite  = registry.get<SpriteComponent>(entity);
+        auto& anim   = registry.get<AnimationComponent>(entity);
+        auto& sprite = registry.get<SpriteComponent>(entity);
 
         if (!anim.playing || anim.finished || anim.frameIndices.empty()) {
             continue;
