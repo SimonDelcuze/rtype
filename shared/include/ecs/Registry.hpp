@@ -4,6 +4,8 @@
 #include "errors/ComponentNotFoundError.hpp"
 #include "errors/RegistryError.hpp"
 
+template <typename... Components> class View;
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -49,6 +51,8 @@ class Registry
     template <typename Component> const Component& get(EntityId id) const;
     template <typename Component> void remove(EntityId id);
 
+    template <typename... Components> View<Components...> view();
+
   private:
     template <typename Component> ComponentStorage<Component>* findStorage();
     template <typename Component> const ComponentStorage<Component>* findStorage() const;
@@ -64,8 +68,10 @@ class Registry
     void resetSignature(EntityId id);
     void setSignatureBit(EntityId id, std::size_t componentIndex);
     void clearSignatureBit(EntityId id, std::size_t componentIndex);
-    bool hasSignatureBit(EntityId id, std::size_t componentIndex) const;
     std::size_t signatureIndex(EntityId id, std::size_t word) const;
+
+  public:
+    bool hasSignatureBit(EntityId id, std::size_t componentIndex) const;
 
     std::vector<EntityId> freeIds_;
     std::vector<uint8_t> alive_;
