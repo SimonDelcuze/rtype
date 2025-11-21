@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ecs/View.hpp"
+
 #include <stdexcept>
 #include <utility>
 
@@ -145,4 +147,9 @@ template <typename Component> void ComponentStorage<Component>::remove(EntityId 
     dense.pop_back();
     data.pop_back();
     sparse[id] = npos;
+}
+
+template <typename... Components> View<Components...> Registry::view()
+{
+    return View<Components...>(*this);
 }
