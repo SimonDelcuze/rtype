@@ -14,12 +14,12 @@ class Logger
     void warn(const std::string& message);
     void error(const std::string& message);
 
+    Logger(const Logger&)            = delete;
+    Logger& operator=(const Logger&) = delete;
+
   private:
     Logger();
     ~Logger();
-
-    Logger(const Logger&)            = delete;
-    Logger& operator=(const Logger&) = delete;
 
     void log(const std::string& level, const std::string& message, bool alwaysConsole);
 

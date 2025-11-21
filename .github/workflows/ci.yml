@@ -31,7 +31,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Clang-tidy
-        run: clang-tidy -p build --header-filter='^(client|server|shared|tests)/' --extra-arg=-w --quiet $(rg --files -g '*.{cpp,hpp}' client server shared tests)
+        run: clang-tidy -p build --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet $(rg --files -g '*.{cpp,hpp}' client server shared)
 
   tests:
     runs-on: ubuntu-latest

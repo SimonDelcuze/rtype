@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ecs/ViewIterator.hpp"
+
 template <typename... Components> View<Components...>::View(Registry& registry) : registry_(registry)
 {
     componentIndices_ = {ComponentTypeId::value<Components>()...};

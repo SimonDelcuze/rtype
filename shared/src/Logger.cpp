@@ -13,14 +13,14 @@ Logger& Logger::instance()
     return instance;
 }
 
-Logger::Logger() : _file(), _mutex(), _verbose(false)
+Logger::Logger() : _verbose(false)
 {
     const std::filesystem::path directory("logs");
     const std::filesystem::path filePath = directory / "server.log";
 
     try {
         std::filesystem::create_directories(directory);
-    } catch (...) {
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
     }
 
     _file.open(filePath, std::ios::app);

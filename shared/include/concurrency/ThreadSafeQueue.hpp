@@ -33,8 +33,9 @@ template <typename T> class ThreadSafeQueue
     bool tryPop(T& out)
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        if (_queue.empty())
+        if (_queue.empty()) {
             return false;
+        }
         out = std::move(_queue.front());
         _queue.pop();
         return true;
