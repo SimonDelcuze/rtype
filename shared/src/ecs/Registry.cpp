@@ -54,8 +54,9 @@ EntityId Registry::entityCount() const
 void Registry::ensureSignatureWordCount(std::size_t componentIndex)
 {
     const std::size_t requiredWords = componentIndex / SIGNATURE_WORD_BITS + 1;
-    if (requiredWords <= signatureWordCount_)
+    if (requiredWords <= signatureWordCount_) {
         return;
+    }
     const std::size_t oldCount = signatureWordCount_;
     signatureWordCount_        = requiredWords;
     std::vector<SignatureWord> newSignatures(alive_.size() * signatureWordCount_, 0);
@@ -69,15 +70,17 @@ void Registry::ensureSignatureWordCount(std::size_t componentIndex)
 
 void Registry::appendSignatureForNewEntity()
 {
-    if (signatureWordCount_ == 0)
+    if (signatureWordCount_ == 0) {
         return;
+    }
     signatures_.resize(signatures_.size() + signatureWordCount_, 0);
 }
 
 void Registry::resetSignature(EntityId id)
 {
-    if (signatureWordCount_ == 0 || id >= alive_.size())
+    if (signatureWordCount_ == 0 || id >= alive_.size()) {
         return;
+    }
     const std::size_t offset = signatureIndex(id, 0);
     auto* start              = signatures_.data() + offset;
     std::fill_n(start, signatureWordCount_, SignatureWord{0});
@@ -85,8 +88,9 @@ void Registry::resetSignature(EntityId id)
 
 void Registry::setSignatureBit(EntityId id, std::size_t componentIndex)
 {
-    if (signatureWordCount_ == 0 || id >= alive_.size())
+    if (signatureWordCount_ == 0 || id >= alive_.size()) {
         return;
+    }
     const std::size_t word = componentIndex / SIGNATURE_WORD_BITS;
     const std::size_t bit  = componentIndex % SIGNATURE_WORD_BITS;
     signatures_[signatureIndex(id, word)] |= (SignatureWord{1} << bit);
@@ -94,8 +98,9 @@ void Registry::setSignatureBit(EntityId id, std::size_t componentIndex)
 
 void Registry::clearSignatureBit(EntityId id, std::size_t componentIndex)
 {
-    if (signatureWordCount_ == 0 || id >= alive_.size())
+    if (signatureWordCount_ == 0 || id >= alive_.size()) {
         return;
+    }
     const std::size_t word = componentIndex / SIGNATURE_WORD_BITS;
     const std::size_t bit  = componentIndex % SIGNATURE_WORD_BITS;
     signatures_[signatureIndex(id, word)] &= ~(SignatureWord{1} << bit);
@@ -103,11 +108,13 @@ void Registry::clearSignatureBit(EntityId id, std::size_t componentIndex)
 
 bool Registry::hasSignatureBit(EntityId id, std::size_t componentIndex) const
 {
-    if (signatureWordCount_ == 0 || id >= alive_.size())
+    if (signatureWordCount_ == 0 || id >= alive_.size()) {
         return false;
+    }
     const std::size_t word = componentIndex / SIGNATURE_WORD_BITS;
-    if (word >= signatureWordCount_)
+    if (word >= signatureWordCount_) {
         return false;
+    }
     const std::size_t bit = componentIndex % SIGNATURE_WORD_BITS;
     return (signatures_[signatureIndex(id, word)] & (SignatureWord{1} << bit)) != 0;
 }
