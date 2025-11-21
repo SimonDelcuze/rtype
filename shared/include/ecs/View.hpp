@@ -6,11 +6,9 @@
 #include <cstddef>
 #include <vector>
 
-template <typename... Components>
-class ViewIterator;
+template <typename... Components> class ViewIterator;
 
-template <typename... Components>
-class View
+template <typename... Components> class View
 {
   public:
     explicit View(Registry& registry);
