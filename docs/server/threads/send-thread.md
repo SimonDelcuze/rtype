@@ -52,7 +52,7 @@ A typical snapshot contains:
 
 Serialization rules depend on the protocol but typically include:
 
-* Fixed-size header containing message type, server tick index, and sequence ID.
+* [Fixed-size header](../networking/packet-header.md) containing message type, server tick index, and sequence ID.
 * Variable-size payload containing updates.
 * Delta-compression techniques to reduce bandwidth usage.
 

@@ -32,6 +32,8 @@
   * [MissileComponent](server/components/missile-component.md)
   * [MovementComponent](server/components/movement-component.md)
 * [Systems](server/systems.md)
+* [Networking](server/networking/README.md)
+  * [Packet Header](server/networking/packet-header.md)
 
 ## Client
 
