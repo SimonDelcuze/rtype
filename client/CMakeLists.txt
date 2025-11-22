@@ -40,6 +40,7 @@ target_link_libraries(rtype_client_lib
         SFML::System
         SFML::Audio
         SFML::Network
+        $<$<BOOL:${WIN32}>:ws2_32>
 )
 
 add_executable(rtype_client
@@ -50,6 +51,7 @@ target_link_libraries(rtype_client
     PRIVATE
         rtype_client_lib
         ${SFML_LIBS}
+        $<$<BOOL:${WIN32}>:ws2_32>
 )
 
 target_include_directories(rtype_client
