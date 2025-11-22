@@ -24,20 +24,31 @@ A system:
 * Reads and writes component data
 * Does not store entity-specific state
 
+All systems in our architecture implement the **`ISystem` interface**, which provides:
+* A standardized `update(Registry&, float deltaTime)` method
+* Optional lifecycle hooks (`onInit()`, `onShutdown()`)
+* Compatibility with the scheduler
+
 Example pattern:
 
 ```cpp
-class MovementSystem {
+#include "systems/ISystem.hpp"
+
+class MovementSystem : public ISystem {
 public:
-    void update(Registry& registry, float dt) {
-        for (auto [e, transform, velocity] : registry.view<Transform, Velocity>()) {
-            // Apply movement logic
+    void update(Registry& registry, float dt) override {
+        for (EntityId entity : registry.view<Transform, Velocity>()) {
+            auto& transform = registry.get<Transform>(entity);
+            auto& velocity = registry.get<Velocity>(entity);
+            
+            transform.x += velocity.dx * dt;
+            transform.y += velocity.dy * dt;
         }
     }
 };
 ```
 
-Systems are called in order by the **Game Loop** (server) or **Render Loop** (client).
+Systems are called in order by a **Scheduler** (see [Scheduler Architecture](scheduler-architecture.md)).
 
 ***
 
