@@ -23,6 +23,14 @@
   * [Game Loop Thread (Scheduler)](server/threads/game-loop-thread-scheduler.md)
   * [Send Thread](server/threads/send-thread.md)
 * [Components](server/components.md)
+  * [TransformComponent](server/components/transform-component.md)
+  * [VelocityComponent](server/components/velocity-component.md)
+  * [HitboxComponent](server/components/hitbox-component.md)
+  * [HealthComponent](server/components/health-component.md)
+  * [PlayerInputComponent](server/components/player-input-component.md)
+  * [MonsterAIComponent](server/components/monster-ai-component.md)
+  * [MissileComponent](server/components/missile-component.md)
+  * [MovementComponent](server/components/movement-component.md)
 * [Systems](server/systems.md)
 
 ## Client
@@ -35,4 +43,7 @@
   * [Send Thread](client/threads/send-thread.md)
 * [Prediction & Reconciliation](client/prediction-and-reconciliation.md)
 * [Components](client/components.md)
+  * [AnimationComponent](client/components/animation-component.md)
+  * [SpriteComponent](client/components/sprite-component.md)
 * [Systems](client/systems.md)
+  * [AnimationSystem](client/systems/animation-system.md)
