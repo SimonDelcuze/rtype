@@ -18,7 +18,7 @@ struct PacketHeader
 {
     std::uint8_t messageType = static_cast<std::uint8_t>(MessageType::Invalid);
     std::uint16_t sequenceId = 0;
-    std::uint32_t tickId = 0;
+    std::uint32_t tickId     = 0;
 
     static constexpr std::size_t kSize = 7;
 
@@ -42,11 +42,9 @@ struct PacketHeader
         PacketHeader h{};
         h.messageType = data[0];
         h.sequenceId  = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[1]) << 8) |
-                                                  static_cast<std::uint16_t>(data[2]));
-        h.tickId      = (static_cast<std::uint32_t>(data[3]) << 24) |
-                   (static_cast<std::uint32_t>(data[4]) << 16) |
-                   (static_cast<std::uint32_t>(data[5]) << 8) |
-                   static_cast<std::uint32_t>(data[6]);
+                                                   static_cast<std::uint16_t>(data[2]));
+        h.tickId      = (static_cast<std::uint32_t>(data[3]) << 24) | (static_cast<std::uint32_t>(data[4]) << 16) |
+                   (static_cast<std::uint32_t>(data[5]) << 8) | static_cast<std::uint32_t>(data[6]);
         return h;
     }
 };
