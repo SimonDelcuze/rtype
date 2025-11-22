@@ -11,6 +11,7 @@ target_link_libraries(rtype_shared_tests
     PRIVATE
         rtype_shared
         rtype_gtest
+        $<$<BOOL:${WIN32}>:ws2_32>
 )
 
 add_test(NAME shared_tests COMMAND rtype_shared_tests)

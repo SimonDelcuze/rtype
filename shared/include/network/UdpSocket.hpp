@@ -55,5 +55,5 @@ class UdpSocket
     IpEndpoint localEndpoint() const;
 
   private:
-    int fd_;
+    std::intptr_t fd_;
 };

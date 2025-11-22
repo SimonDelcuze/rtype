@@ -12,6 +12,7 @@ target_link_libraries(rtype_server_tests
         rtype_shared
         rtype_server_lib
         rtype_gtest
+        $<$<BOOL:${WIN32}>:ws2_32>
 )
 
 target_include_directories(rtype_server_tests
