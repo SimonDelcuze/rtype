@@ -12,21 +12,18 @@ class EventBus
   public:
     EventBus() = default;
 
-    template <typename T, typename F>
-    void subscribe(F&& f)
+    template <typename T, typename F> void subscribe(F&& f)
     {
         auto& ch = ensureChannel<T>();
         ch.subscribers.emplace_back(std::forward<F>(f));
     }
 
-    template <typename T>
-    void emit(const T& e)
+    template <typename T> void emit(const T& e)
     {
         ensureChannel<T>().push(e);
     }
 
-    template <typename T>
-    void emit(T&& e)
+    template <typename T> void emit(T&& e)
     {
         ensureChannel<T>().push(std::move(e));
     }
@@ -51,9 +48,9 @@ class EventBus
   private:
     struct IChannel
     {
-        virtual ~IChannel() = default;
+        virtual ~IChannel()    = default;
         virtual void process() = 0;
-        virtual void clear() = 0;
+        virtual void clear()   = 0;
     };
 
     template <typename T> struct Channel : IChannel
@@ -97,13 +94,12 @@ class EventBus
         }
     };
 
-    template <typename T>
-    Channel<T>& ensureChannel()
+    template <typename T> Channel<T>& ensureChannel()
     {
         const std::type_index ti(typeid(T));
         auto it = channels_.find(ti);
         if (it == channels_.end()) {
-            auto ptr = std::make_unique<Channel<T>>();
+            auto ptr  = std::make_unique<Channel<T>>();
             auto* raw = ptr.get();
             channels_.emplace(ti, std::move(ptr));
             order_.push_back(ti);
@@ -115,4 +111,3 @@ class EventBus
     std::unordered_map<std::type_index, std::unique_ptr<IChannel>> channels_;
     std::vector<std::type_index> order_;
 };
-
