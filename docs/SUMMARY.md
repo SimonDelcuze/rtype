@@ -12,6 +12,7 @@
   * [Registry](global-overview/ecs-architecture/registry.md)
   * [Components Overview](global-overview/ecs-architecture/components-overview.md)
   * [Systems Overview](global-overview/ecs-architecture/systems-overview.md)
+  * [Scheduler Architecture](global-overview/ecs-architecture/scheduler-architecture.md)
   * [Event Bus](global-overview/ecs-architecture/event-bus.md)
 
 ## Server
