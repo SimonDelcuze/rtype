@@ -1,31 +1,32 @@
-#include <gtest/gtest.h>
-
 #include "events/EventBus.hpp"
 
-namespace {
-struct DamageEvent
-{
-    std::uint32_t target;
-    int amount;
-};
+#include <cstdint>
+#include <gtest/gtest.h>
+#include <vector>
 
-struct A
+namespace
 {
-};
+    struct DamageEvent
+    {
+        std::uint32_t target;
+        int amount;
+    };
 
-struct B
-{
-};
+    struct A
+    {};
+
+    struct B
+    {};
 } // namespace
 
 TEST(EventBus, SimpleEventFlow)
 {
     EventBus bus;
-    bool called = false;
+    bool called  = false;
     int captured = 0;
 
     bus.subscribe<DamageEvent>([&](const DamageEvent& e) {
-        called = true;
+        called   = true;
         captured = e.amount;
     });
 
@@ -41,7 +42,10 @@ TEST(EventBus, EmitDuringProcessIsDeferred)
     EventBus bus;
     std::vector<char> order;
 
-    bus.subscribe<A>([&](const A&) { order.push_back('A'); bus.emit<B>(B{}); });
+    bus.subscribe<A>([&](const A&) {
+        order.push_back('A');
+        bus.emit<B>(B{});
+    });
     bus.subscribe<B>([&](const B&) { order.push_back('B'); });
 
     bus.emit<A>(A{});
@@ -71,4 +75,3 @@ TEST(EventBus, SubscriberOrderPreserved)
     EXPECT_EQ(seq[1], 2);
     EXPECT_EQ(seq[2], 3);
 }
-

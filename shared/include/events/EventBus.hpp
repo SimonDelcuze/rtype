@@ -30,11 +30,19 @@ class EventBus
 
     void process()
     {
+        std::vector<IChannel*> scheduled;
+        scheduled.reserve(order_.size());
         for (const auto& ti : order_) {
             auto it = channels_.find(ti);
-            if (it != channels_.end()) {
-                it->second->process();
+            if (it != channels_.end() && it->second->hasNext()) {
+                scheduled.push_back(it->second.get());
             }
+        }
+        for (auto* ch : scheduled) {
+            ch->swapIn();
+        }
+        for (auto* ch : scheduled) {
+            ch->run();
         }
     }
 
@@ -48,9 +56,11 @@ class EventBus
   private:
     struct IChannel
     {
-        virtual ~IChannel()    = default;
-        virtual void process() = 0;
-        virtual void clear()   = 0;
+        virtual ~IChannel()          = default;
+        virtual bool hasNext() const = 0;
+        virtual void swapIn()        = 0;
+        virtual void run()           = 0;
+        virtual void clear()         = 0;
     };
 
     template <typename T> struct Channel : IChannel
@@ -70,12 +80,18 @@ class EventBus
             next.push_back(std::move(e));
         }
 
-        void process() override
+        bool hasNext() const override
         {
-            if (next.empty() && current.empty()) {
-                return;
-            }
+            return !next.empty();
+        }
+
+        void swapIn() override
+        {
             current.swap(next);
+        }
+
+        void run() override
+        {
             for (const auto& e : current) {
                 for (auto& cb : subscribers) {
                     try {
