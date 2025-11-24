@@ -41,8 +41,8 @@ TEST(LayerComponent, MutableLayerCanBeUpdated)
 
 TEST(LayerComponent, InstancesAreIndependent)
 {
-    auto a = LayerComponent::create(1);
-    auto b = LayerComponent::create(4);
+    auto a  = LayerComponent::create(1);
+    auto b  = LayerComponent::create(4);
     a.layer = 99;
     EXPECT_EQ(a.layer, 99);
     EXPECT_EQ(b.layer, 4);
