@@ -1,9 +1,9 @@
 #include "network/InputPacket.hpp"
 
 #include <array>
+#include <gtest/gtest.h>
 #include <limits>
 #include <vector>
-#include <gtest/gtest.h>
 
 TEST(InputPacket, EncodeDecodeRoundTrip)
 {

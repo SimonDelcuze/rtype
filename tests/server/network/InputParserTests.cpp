@@ -1,5 +1,6 @@
 #include "network/InputParser.hpp"
 
+#include <array>
 #include <gtest/gtest.h>
 
 TEST(InputParser, ParseValidPacket)
