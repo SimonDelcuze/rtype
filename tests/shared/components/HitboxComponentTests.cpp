@@ -32,8 +32,8 @@ TEST(HitboxComponent, Intersects)
 
 TEST(HitboxComponent, IntersectsInactive)
 {
-    auto h1 = HitboxComponent::create(10.0F, 10.0F);
-    auto h2 = HitboxComponent::create(10.0F, 10.0F);
+    auto h1     = HitboxComponent::create(10.0F, 10.0F);
+    auto h2     = HitboxComponent::create(10.0F, 10.0F);
     h2.isActive = false;
 
     EXPECT_FALSE(h1.intersects(h2, 0.0F, 0.0F, 5.0F, 5.0F));

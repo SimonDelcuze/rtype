@@ -4,11 +4,11 @@
 
 struct HitboxComponent
 {
-    float width    = 0.0F;
-    float height   = 0.0F;
-    float offsetX  = 0.0F;
-    float offsetY  = 0.0F;
-    bool isActive  = true;
+    float width   = 0.0F;
+    float height  = 0.0F;
+    float offsetX = 0.0F;
+    float offsetY = 0.0F;
+    bool isActive = true;
 
     static HitboxComponent create(float width, float height, float offsetX = 0.0F, float offsetY = 0.0F);
     bool contains(float px, float py, float entityX, float entityY) const;
