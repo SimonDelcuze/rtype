@@ -7,6 +7,14 @@ void AnimationSystem::advanceFrame(AnimationComponent& anim)
     }
 
     auto frameCount = static_cast<std::uint32_t>(anim.frameIndices.size());
+    if (frameCount == 1) {
+        anim.currentFrame = 0;
+        if (!anim.loop) {
+            anim.finished = true;
+            anim.playing  = false;
+        }
+        return;
+    }
 
     switch (anim.direction) {
         case AnimationDirection::Forward:
@@ -70,6 +78,11 @@ void AnimationSystem::update(Registry& registry, float deltaTime)
         auto& sprite = registry.get<SpriteComponent>(entity);
 
         if (!anim.playing || anim.finished || anim.frameIndices.empty()) {
+            continue;
+        }
+
+        if (anim.frameTime <= 0.0F) {
+            anim.playing = false;
             continue;
         }
 
