@@ -45,9 +45,7 @@ TEST_F(AudioSystemTests, PlayActionWithMissingSound)
     AudioSystem system(soundManager);
     system.update(registry);
 
-    // Action should be reset to None after processing
     EXPECT_EQ(audio.action, AudioAction::None);
-    // isPlaying should remain false since sound wasn't found
     EXPECT_FALSE(audio.isPlaying);
 }
 
@@ -105,7 +103,6 @@ TEST_F(AudioSystemTests, MultipleEntitiesProcessed)
     AudioSystem system(soundManager);
     system.update(registry);
 
-    // Both entities should have their actions reset after processing
     auto& updatedAudio1 = registry.get<AudioComponent>(entity1);
     auto& updatedAudio2 = registry.get<AudioComponent>(entity2);
     EXPECT_EQ(updatedAudio1.action, AudioAction::None);
@@ -123,7 +120,6 @@ TEST_F(AudioSystemTests, VolumeAndPitchAreRespected)
     AudioSystem system(soundManager);
     system.update(registry);
 
-    // Values should be preserved
     EXPECT_FLOAT_EQ(audio.volume, 50.0F);
     EXPECT_FLOAT_EQ(audio.pitch, 1.5F);
 }

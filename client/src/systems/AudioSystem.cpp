@@ -49,14 +49,19 @@ void AudioSystem::update(Registry& registry)
         audio.action = AudioAction::None;
     }
 
-    // Update isPlaying status for finished sounds
-    for (auto& [entity, soundPtr] : sounds_) {
-        if (!soundPtr || !registry.isAlive(entity) || !registry.has<AudioComponent>(entity)) {
+    for (auto it = sounds_.begin(); it != sounds_.end();) {
+        EntityId entity   = it->first;
+        auto&    soundPtr = it->second;
+
+        if (!registry.isAlive(entity) || !registry.has<AudioComponent>(entity)) {
+            it = sounds_.erase(it);
             continue;
         }
-        AudioComponent& audio = registry.get<AudioComponent>(entity);
-        if (audio.isPlaying && soundPtr->getStatus() == sf::Sound::Status::Stopped) {
-            audio.isPlaying = false;
+
+        if (soundPtr && soundPtr->getStatus() == sf::Sound::Status::Stopped) {
+            AudioComponent& audio = registry.get<AudioComponent>(entity);
+            audio.isPlaying       = false;
         }
+        ++it;
     }
 }

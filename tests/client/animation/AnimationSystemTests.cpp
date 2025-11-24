@@ -150,7 +150,6 @@ TEST_F(AnimationSystemTest, SkipsDeadEntities)
     registry.destroyEntity(entity);
 
     system.update(registry, 0.5F);
-    // No crash = success
 }
 
 TEST_F(AnimationSystemTest, SkipsEntitiesWithoutSpriteComponent)
@@ -159,7 +158,6 @@ TEST_F(AnimationSystemTest, SkipsEntitiesWithoutSpriteComponent)
     registry.emplace<AnimationComponent>(entity, AnimationComponent::create(4, 0.1F));
 
     system.update(registry, 0.5F);
-    // No crash = success, animation not updated because no sprite
 }
 
 TEST_F(AnimationSystemTest, AccumulatesTime)
