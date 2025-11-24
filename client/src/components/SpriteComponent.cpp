@@ -37,7 +37,7 @@ void SpriteComponent::setFrameSize(std::uint32_t width, std::uint32_t height, st
 {
     frameWidth  = width;
     frameHeight = height;
-    columns     = cols;
+    columns     = cols == 0 ? 1 : cols;
     setFrame(currentFrame);
 }
 
