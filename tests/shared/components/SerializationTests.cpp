@@ -4,7 +4,7 @@
 
 TEST(Serialization, TransformRoundTrip)
 {
-    auto original = TransformComponent::create(10.0F, 20.0F, 45.0F);
+    auto original   = TransformComponent::create(10.0F, 20.0F, 45.0F);
     original.scaleX = 2.0F;
     original.scaleY = 3.0F;
 
