@@ -18,6 +18,7 @@ target_link_libraries(rtype_server_tests
 target_include_directories(rtype_server_tests
     PRIVATE
         ${CMAKE_SOURCE_DIR}/server/include
+        ${CMAKE_SOURCE_DIR}/shared/include
 )
 
 add_test(NAME server_tests COMMAND rtype_server_tests)
