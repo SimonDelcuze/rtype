@@ -3,6 +3,8 @@
 #include <chrono>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <limits>
+#include <optional>
 #include <thread>
 
 using namespace std::chrono_literals;
@@ -50,6 +52,42 @@ TEST(InputReceiveThread, EnqueueValidInput)
     EXPECT_FLOAT_EQ(got.input.x, p.x);
     EXPECT_FLOAT_EQ(got.input.y, p.y);
     EXPECT_FLOAT_EQ(got.input.angle, p.angle);
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, ClientStateStoredOnValidPacket)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 3;
+    p.header.tickId     = 20;
+    auto buf            = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    std::optional<ClientState> state;
+    for (int i = 0; i < 50; ++i) {
+        state = rt.clientState(got.from);
+        if (state)
+            break;
+        std::this_thread::sleep_for(1ms);
+    }
+    ASSERT_TRUE(state.has_value());
+    EXPECT_EQ(state->lastSequenceId, p.header.sequenceId);
+    auto now = std::chrono::steady_clock::now();
+    auto dt  = now - state->lastPacketTime;
+    EXPECT_LT(dt, 1s);
 
     rt.stop();
 }
@@ -104,6 +142,10 @@ TEST(InputReceiveThread, DropStaleSequence)
     ASSERT_TRUE(pollPop(queue, got));
     EXPECT_EQ(got.input.sequenceId, newer.header.sequenceId);
     EXPECT_FALSE(pollPop(queue, got, 50));
+
+    auto state = rt.clientState(ep);
+    ASSERT_TRUE(state.has_value());
+    EXPECT_EQ(state->lastSequenceId, newer.header.sequenceId);
 
     rt.stop();
 }
@@ -202,6 +244,50 @@ TEST(InputReceiveThread, SeparateSequencePerEndpoint)
     ReceivedInput got{};
     ASSERT_TRUE(pollPop(queue, got));
     ASSERT_TRUE(pollPop(queue, got));
+
+    auto stateA = rt.clientState(txA.localEndpoint());
+    auto stateB = rt.clientState(txB.localEndpoint());
+    ASSERT_TRUE(stateA.has_value());
+    ASSERT_TRUE(stateB.has_value());
+    EXPECT_EQ(stateA->lastSequenceId, a.header.sequenceId);
+    EXPECT_EQ(stateB->lastSequenceId, b.header.sequenceId);
+    EXPECT_NE(stateA->lastPacketTime, stateB->lastPacketTime);
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, StaleDoesNotUpdateState)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket first{};
+    first.header.sequenceId = 4;
+    auto bufFirst           = first.encode();
+    ASSERT_TRUE(tx.sendTo(bufFirst.data(), bufFirst.size(), ep).ok());
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+    auto state1 = rt.clientState(tx.localEndpoint());
+    ASSERT_TRUE(state1.has_value());
+
+    std::this_thread::sleep_for(5ms);
+
+    InputPacket stale{};
+    stale.header.sequenceId = 3;
+    auto bufStale           = stale.encode();
+    ASSERT_TRUE(tx.sendTo(bufStale.data(), bufStale.size(), ep).ok());
+    EXPECT_FALSE(pollPop(queue, got, 50));
+
+    auto state2 = rt.clientState(tx.localEndpoint());
+    ASSERT_TRUE(state2.has_value());
+    EXPECT_EQ(state2->lastSequenceId, state1->lastSequenceId);
+    EXPECT_EQ(state2->lastPacketTime, state1->lastPacketTime);
 
     rt.stop();
 }

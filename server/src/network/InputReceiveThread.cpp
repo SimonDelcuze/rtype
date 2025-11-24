@@ -49,6 +49,22 @@ IpEndpoint InputReceiveThread::endpoint() const
     return socket_.localEndpoint();
 }
 
+std::optional<ClientState> InputReceiveThread::clientState(const IpEndpoint& ep) const
+{
+    EndpointKey key{ep.addr, ep.port};
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    auto it = sessions_.find(key);
+    if (it != sessions_.end())
+        return it->second;
+    if (lastAccepted_.has_value() && ep.addr == socket_.localEndpoint().addr &&
+        ep.port == socket_.localEndpoint().port) {
+        auto it2 = sessions_.find(*lastAccepted_);
+        if (it2 != sessions_.end())
+            return it2->second;
+    }
+    return std::nullopt;
+}
+
 void InputReceiveThread::run()
 {
     std::array<std::uint8_t, 1024> buf{};
@@ -67,11 +83,18 @@ void InputReceiveThread::run()
         auto parsed = parseInputPacket(buf.data(), r.size);
         if (!parsed)
             continue;
+        auto now = std::chrono::steady_clock::now();
         EndpointKey key{src.addr, src.port};
-        auto it = lastSeq_.find(key);
-        if (it != lastSeq_.end() && parsed->sequenceId <= it->second)
-            continue;
-        lastSeq_[key] = parsed->sequenceId;
+        {
+            std::lock_guard<std::mutex> lock(sessionMutex_);
+            auto it = sessions_.find(key);
+            if (it != sessions_.end() && parsed->sequenceId <= it->second.lastSequenceId)
+                continue;
+            auto& state          = sessions_[key];
+            state.lastSequenceId = parsed->sequenceId;
+            state.lastPacketTime = now;
+            lastAccepted_        = key;
+        }
         ReceivedInput ev{*parsed, src};
         queue_.push(std::move(ev));
     }

@@ -6,7 +6,10 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstddef>
+#include <mutex>
+#include <optional>
 #include <thread>
 #include <unordered_map>
 
@@ -14,6 +17,12 @@ struct ReceivedInput
 {
     ServerInput input;
     IpEndpoint from;
+};
+
+struct ClientState
+{
+    std::uint16_t lastSequenceId = 0;
+    std::chrono::steady_clock::time_point lastPacketTime{};
 };
 
 class InputReceiveThread
@@ -26,6 +35,7 @@ class InputReceiveThread
     void stop();
     bool isRunning() const;
     IpEndpoint endpoint() const;
+    std::optional<ClientState> clientState(const IpEndpoint& ep) const;
 
   private:
     void run();
@@ -56,5 +66,7 @@ class InputReceiveThread
     std::atomic<bool> running_{false};
     std::thread worker_;
     UdpSocket socket_;
-    std::unordered_map<EndpointKey, std::uint16_t, EndpointKeyHash> lastSeq_;
+    mutable std::mutex sessionMutex_;
+    std::unordered_map<EndpointKey, ClientState, EndpointKeyHash> sessions_;
+    std::optional<EndpointKey> lastAccepted_;
 };
