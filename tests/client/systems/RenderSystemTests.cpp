@@ -45,11 +45,10 @@ TEST(RenderSystem, AppliesScaleAndRotation)
     EntityId entity = registry.createEntity();
     auto& sprite    = registry.emplace<SpriteComponent>(entity);
     sprite.setTexture(texture);
-    auto& transform = registry.emplace<TransformComponent>(entity);
-    transform.scaleX = 2.0F;
-    transform.scaleY = 3.0F;
-    transform.rotation =
-        90.0F; // degrees; RenderSystem wraps with sf::degrees to convert to sf::Angle in SFML 3.0
+    auto& transform    = registry.emplace<TransformComponent>(entity);
+    transform.scaleX   = 2.0F;
+    transform.scaleY   = 3.0F;
+    transform.rotation = 90.0F; // degrees; RenderSystem wraps with sf::degrees to convert to sf::Angle in SFML 3.0
 
     renderSystem.update(registry, 0.0F);
 
