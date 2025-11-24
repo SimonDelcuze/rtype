@@ -1,5 +1,4 @@
 #include "components/AnimationComponent.hpp"
-#include "components/BackgroundScrollComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -8,7 +7,6 @@
 #include "graphics/Window.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
-#include "systems/BackgroundScrollSystem.hpp"
 #include "systems/RenderSystem.hpp"
 
 #include <SFML/Window/VideoMode.hpp>
@@ -22,19 +20,8 @@ int main()
     TextureManager textureManager;
     Registry registry;
 
-    EntityId bg = registry.createEntity();
-    try {
-        const auto& bgTexture = textureManager.load("background", "client/assets/backgrounds/space.png");
-        registry.emplace<SpriteComponent>(bg, SpriteComponent(bgTexture));
-        registry.emplace<TransformComponent>(bg, TransformComponent::create(0.0F, 0.0F));
-        registry.emplace<BackgroundScrollComponent>(bg, BackgroundScrollComponent::create(-150.0F, 0.0F, 0.0F));
-        registry.emplace<LayerComponent>(bg, LayerComponent::create(-10));
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to load background texture: " << e.what() << '\n';
-        return 1;
-    }
-
     EntityId player = registry.createEntity();
+
     try {
         const auto& texture = textureManager.load("player", "client/assets/sprites/r-typesheet1.png");
         auto& sprite        = registry.emplace<SpriteComponent>(player, SpriteComponent(texture));
@@ -43,12 +30,11 @@ int main()
         std::cerr << "Failed to load player texture: " << e.what() << '\n';
         return 1;
     }
-    registry.emplace<TransformComponent>(player, TransformComponent::create(200.0F, 360.0F));
+
+    registry.emplace<TransformComponent>(player, TransformComponent::create(200.0F, 200.0F));
     registry.emplace<AnimationComponent>(player, AnimationComponent::create(8, 0.1F));
     registry.emplace<LayerComponent>(player, LayerComponent::create(0));
-
     GameLoop gameLoop;
-    gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
 

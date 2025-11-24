@@ -26,7 +26,22 @@ const sf::Texture* TextureManager::get(const std::string& id) const
     return &it->second;
 }
 
+bool TextureManager::has(const std::string& id) const
+{
+    return textures_.find(id) != textures_.end();
+}
+
+void TextureManager::remove(const std::string& id)
+{
+    textures_.erase(id);
+}
+
 void TextureManager::clear()
 {
     textures_.clear();
+}
+
+std::size_t TextureManager::size() const
+{
+    return textures_.size();
 }
