@@ -9,12 +9,12 @@ TEST(InputPacket, EncodeDecodeRoundTrip)
 {
     InputPacket p{};
     p.header.sequenceId = 0x1234;
-    p.header.tickId = 0x0A0B0C0D;
-    p.playerId = 0x01020304;
-    p.flags = static_cast<std::uint16_t>(InputFlag::MoveUp | InputFlag::Fire);
-    p.x = 1.5F;
-    p.y = -2.25F;
-    p.angle = 3.125F;
+    p.header.tickId     = 0x0A0B0C0D;
+    p.playerId          = 0x01020304;
+    p.flags             = static_cast<std::uint16_t>(InputFlag::MoveUp | InputFlag::Fire);
+    p.x                 = 1.5F;
+    p.y                 = -2.25F;
+    p.angle             = 3.125F;
 
     auto buf = p.encode();
     EXPECT_EQ(buf.size(), InputPacket::kSize);
@@ -41,8 +41,8 @@ TEST(InputPacket, RejectWrongSize)
 TEST(InputPacket, RejectWrongType)
 {
     InputPacket p{};
-    auto buf = p.encode();
-    buf[0] = static_cast<std::uint8_t>(MessageType::Snapshot);
+    auto buf     = p.encode();
+    buf[0]       = static_cast<std::uint8_t>(MessageType::Snapshot);
     auto decoded = InputPacket::decode(buf.data(), buf.size());
     EXPECT_FALSE(decoded.has_value());
 }
@@ -50,8 +50,8 @@ TEST(InputPacket, RejectWrongType)
 TEST(InputPacket, RejectNonFinite)
 {
     InputPacket p{};
-    p.angle = std::numeric_limits<float>::infinity();
-    auto buf = p.encode();
+    p.angle      = std::numeric_limits<float>::infinity();
+    auto buf     = p.encode();
     auto decoded = InputPacket::decode(buf.data(), buf.size());
     EXPECT_FALSE(decoded.has_value());
 }
