@@ -98,7 +98,6 @@ TEST(TextureManager, ReloadPreservesId)
     manager.load("background", assetPath("backgrounds/space.png"));
     sf::Vector2u firstSize = manager.get("background")->getSize();
 
-    // Reload same texture
     manager.load("background", assetPath("backgrounds/space.png"));
     sf::Vector2u secondSize = manager.get("background")->getSize();
 
