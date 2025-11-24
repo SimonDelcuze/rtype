@@ -48,5 +48,7 @@
 * [Components](client/components.md)
   * [AnimationComponent](client/components/animation-component.md)
   * [SpriteComponent](client/components/sprite-component.md)
+  * [AudioComponent](client/components/audio-component.md)
 * [Systems](client/systems.md)
   * [AnimationSystem](client/systems/animation-system.md)
+  * [AudioSystem](client/systems/audio-system.md)
