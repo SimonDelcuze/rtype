@@ -94,19 +94,26 @@ TEST_F(AudioSystemTests, MultipleEntitiesProcessed)
     EntityId entity1 = registry.createEntity();
     EntityId entity2 = registry.createEntity();
 
-    auto& audio1 = registry.emplace<AudioComponent>(entity1);
-    auto& audio2 = registry.emplace<AudioComponent>(entity2);
+    registry.emplace<AudioComponent>(entity1);
+    registry.emplace<AudioComponent>(entity2);
 
-    audio1.play("sound1");
-    audio2.play("sound2");
+    auto& audio1 = registry.get<AudioComponent>(entity1);
+    auto& audio2 = registry.get<AudioComponent>(entity2);
+
+    audio1.isPlaying = true;
+    audio1.stop();
+    audio2.isPlaying = true;
+    audio2.stop();
 
     AudioSystem system(soundManager);
     system.update(registry);
 
-    auto& updatedAudio1 = registry.get<AudioComponent>(entity1);
-    auto& updatedAudio2 = registry.get<AudioComponent>(entity2);
-    EXPECT_EQ(updatedAudio1.action, AudioAction::None);
-    EXPECT_EQ(updatedAudio2.action, AudioAction::None);
+    auto& result1 = registry.get<AudioComponent>(entity1);
+    auto& result2 = registry.get<AudioComponent>(entity2);
+    EXPECT_EQ(result1.action, AudioAction::None);
+    EXPECT_EQ(result2.action, AudioAction::None);
+    EXPECT_FALSE(result1.isPlaying);
+    EXPECT_FALSE(result2.isPlaying);
 }
 
 TEST_F(AudioSystemTests, VolumeAndPitchAreRespected)
