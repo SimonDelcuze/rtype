@@ -28,7 +28,7 @@ class BackgroundScrollSystemTest : public ::testing::Test
         EntityId e = registry.createEntity();
         registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
         registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(speedX, speedY, 0.0F, 0.0F));
-        auto& tex   = makeTexture(texW, texH);
+        auto& tex    = makeTexture(texW, texH);
         auto& sprite = registry.emplace<SpriteComponent>(e);
         sprite.setTexture(tex);
         return e;
@@ -46,7 +46,7 @@ TEST_F(BackgroundScrollSystemTest, AppliesSpeed)
 
 TEST_F(BackgroundScrollSystemTest, AutoScaleAndOffsetsFromWindowAndTexture)
 {
-    EntityId e = createBand(-10.0F, 0.0F, 50, 50);
+    EntityId e   = createBand(-10.0F, 0.0F, 50, 50);
     auto& scroll = registry.get<BackgroundScrollComponent>(e);
     EXPECT_NO_THROW(system.update(registry, 0.0F));
     EXPECT_NE(scroll.resetOffsetX, 0.0F);
@@ -66,7 +66,7 @@ TEST_F(BackgroundScrollSystemTest, WrapMovesBandToEnd)
 {
     EntityId e1 = createBand(-100.0F, 0.0F, 50, 50); // width 100 after scale
     // place a second band manually to be the current maxX
-    EntityId e2 = createBand(-100.0F, 0.0F, 50, 50);
+    EntityId e2                            = createBand(-100.0F, 0.0F, 50, 50);
     registry.get<TransformComponent>(e2).x = 100.0F;
     system.update(registry, 0.0F); // compute offsets and coverage
 
