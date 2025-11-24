@@ -50,8 +50,8 @@ void AudioSystem::update(Registry& registry)
     }
 
     for (auto it = sounds_.begin(); it != sounds_.end();) {
-        EntityId entity   = it->first;
-        auto&    soundPtr = it->second;
+        EntityId entity = it->first;
+        auto& soundPtr  = it->second;
 
         if (!registry.isAlive(entity) || !registry.has<AudioComponent>(entity)) {
             it = sounds_.erase(it);
