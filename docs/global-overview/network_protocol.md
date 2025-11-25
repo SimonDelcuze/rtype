@@ -1,5 +1,19 @@
 # RType UDP Protocol Documentation
 
+## Protocol Overview
+
+The RType UDP Protocol is a lightweight, binary network protocol designed for fast, real-time communication between clients and the game server. It is optimized for arcade-style gameplay running at high update frequencies (e.g., 60Hz), where low latency, efficient data transfer, and resistance to packet loss are essential.
+
+All messages follow a compact binary header that includes a magic number, protocol version, packet type, message type, sequence ID, server tick ID, and payload length. This ensures that packets can be validated, ordered, and processed reliably even under unstable network conditions.
+
+The protocol is strictly **binary** and avoids text-based encoding to minimize packet size and maximize bandwidth efficiency. Communication is performed exclusively over **UDP**, with optional acknowledgment messages for reliability when required by specific interactions.
+
+A key feature of this protocol is the use of **delta-state snapshots**:  
+the server does not send full world states every tick.  
+Instead, for each entity, only the fields that have changed since the last acknowledged snapshot are transmitted. A 16-bit **Update Mask** indicates which fields are included in each update, allowing the server to send extremely compact packets and scale efficiently with a large number of entities.
+
+This design keeps network usage low while maintaining accurate and responsive synchronization between the server’s authoritative simulation and the client’s predicted rendering.
+
 ## Header Structure
 
 - **Magic Number** (4 bytes): Fixed value `0xA3 0x5F 0xC8 0x1D` to identify the protocol.
@@ -30,6 +44,33 @@
 - **Sequence Number** (2 bytes): Incremental number for packet ordering.
 - **Tick ID** (4 bytes): Current server tick when the packet is sent.
 - **Payload Length** (2 bytes): Length of the payload in bytes.
+
+
+### CRC32 (Integrity Check)
+
+All packets include an additional 4-byte CRC32 checksum appended at the end of the message.
+
+- **CRC32** (4 bytes):  
+  A checksum computed over the entire packet *excluding* the CRC32 field itself  
+  (from Magic Number up to the end of the Payload).  
+  Used to detect corrupted, truncated, or malformed packets.
+
+**Final packet layout:**
+
+```
+[Header][Payload][CRC32]
+```
+
+### Verification
+
+- The sender computes CRC32(Header + Payload) and appends it.
+- The receiver recomputes CRC32 on the received data (excluding the last 4 bytes)  
+  and compares the result with the transmitted CRC32.
+- If they do not match, the packet is discarded.
+
+CRC32 improves robustness in UDP environments by preventing clients or servers  
+from processing corrupted snapshots or malformed data.
+
 
 ## Client to Server Packet Structure
 
@@ -153,3 +194,51 @@
 - Payload:
   - Acknowledged Sequence Number (2 bytes)
   - Acknowledged Message Type (1 byte)
+
+## Reason Codes
+
+Several messages in the protocol (such as `CLIENT_DISCONNECT`, `SERVER_KICK`, `SERVER_BAN`, and `SERVER_DISCONNECT`) include a **Reason Code** field.  
+This field specifies why a disconnection or administrative action occurred.
+
+Reason Codes are 1 byte (0–255).  
+The following values are reserved:
+
+### Generic Reason Codes
+- **0x00 — Unknown Reason**  
+  Used when no specific cause is provided.
+
+- **0x01 — Requested by Client**  
+  The client intentionally closed the connection (user pressed "Quit", etc.).
+
+### Kick Reasons (Server → Client)
+- **0x10 — Inactivity**  
+  Client was removed due to prolonged inactivity.
+
+- **0x11 — Protocol Violation**  
+  Client sent invalid or malformed packets.
+
+- **0x12 — Overflow / Spam**  
+  Client exceeded message rate limits or produced excessive traffic.
+
+- **0x13 — Unauthorized Action**  
+  Client attempted an invalid or forbidden behavior.
+
+### Ban Reasons (Server → Client)
+- **0x20 — Cheating Detected**  
+  Client exhibited behavior flagged by anticheat.
+
+- **0x21 — Manual Ban**  
+  Administrator or server logic explicitly banned the client.
+
+### Server Shutdown Reasons
+- **0x30 — Server Shutdown**  
+  The server is closing gracefully.
+
+- **0x31 — Server Restart**  
+  The server is restarting and disconnecting clients safely.
+
+---
+
+### Notes
+- Additional custom reason codes (0x80–0xFF) may be defined by game logic if needed.
+- Clients should treat unknown reason codes as non-fatal and display a generic message.
