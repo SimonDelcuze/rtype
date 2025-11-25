@@ -53,3 +53,4 @@
 * [Systems](client/systems.md)
   * [AnimationSystem](client/systems/animation-system.md)
   * [AudioSystem](client/systems/audio-system.md)
+  * [InterpolationSystem](client/systems/interpolation-system.md)
