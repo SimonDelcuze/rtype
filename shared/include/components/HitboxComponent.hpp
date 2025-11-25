@@ -10,18 +10,20 @@ struct HitboxComponent
     float offsetY = 0.0F;
     bool isActive = true;
 
-    static HitboxComponent create(float width, float height, float offsetX = 0.0F, float offsetY = 0.0F);
+    static HitboxComponent create(float width, float height, float offsetX = 0.0F, float offsetY = 0.0F,
+                                  bool active = true);
     bool contains(float px, float py, float entityX, float entityY) const;
     bool intersects(const HitboxComponent& other, float x1, float y1, float x2, float y2) const;
 };
 
-inline HitboxComponent HitboxComponent::create(float width, float height, float offsetX, float offsetY)
+inline HitboxComponent HitboxComponent::create(float width, float height, float offsetX, float offsetY, bool active)
 {
     HitboxComponent h;
-    h.width   = width;
-    h.height  = height;
-    h.offsetX = offsetX;
-    h.offsetY = offsetY;
+    h.width    = width;
+    h.height   = height;
+    h.offsetX  = offsetX;
+    h.offsetY  = offsetY;
+    h.isActive = active;
     return h;
 }
 
