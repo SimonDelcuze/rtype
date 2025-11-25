@@ -40,6 +40,7 @@ target_link_libraries(rtype_client_lib
         SFML::System
         SFML::Audio
         SFML::Network
+        nlohmann_json::nlohmann_json
         $<$<BOOL:${WIN32}>:ws2_32>
 )
 
