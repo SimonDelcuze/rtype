@@ -48,7 +48,7 @@ TEST(RenderSystem, AppliesScaleAndRotation)
     auto& transform    = registry.emplace<TransformComponent>(entity);
     transform.scaleX   = 2.0F;
     transform.scaleY   = 3.0F;
-    transform.rotation = 90.0F; // degrees; RenderSystem wraps with sf::degrees to convert to sf::Angle in SFML 3.0
+    transform.rotation = 90.0F;
 
     renderSystem.update(registry, 0.0F);
 
@@ -68,24 +68,19 @@ TEST(RenderSystem, RespectsLayerComponentSorting)
     sf::Texture texture;
     ASSERT_TRUE(texture.resize({16u, 16u}));
 
-    // Lower layer entity
     EntityId e1 = registry.createEntity();
     registry.emplace<SpriteComponent>(e1).setTexture(texture);
     registry.emplace<TransformComponent>(e1, TransformComponent::create(1.0F, 1.0F));
     registry.emplace<LayerComponent>(e1, LayerComponent::create(0));
 
-    // Higher layer entity
     EntityId e2 = registry.createEntity();
     registry.emplace<SpriteComponent>(e2).setTexture(texture);
     registry.emplace<TransformComponent>(e2, TransformComponent::create(2.0F, 2.0F));
     registry.emplace<LayerComponent>(e2, LayerComponent::create(1));
 
-    // Re-fetch after potential storage reallocations
     auto& s1 = registry.get<SpriteComponent>(e1);
     auto& s2 = registry.get<SpriteComponent>(e2);
 
-    // If sorting breaks, the second entity might overwrite first due to same texture rect;
-    // we just ensure update runs without throwing and transforms are applied.
     renderSystem.update(registry, 0.0F);
 
     ASSERT_NE(s1.raw(), nullptr);
@@ -122,10 +117,9 @@ TEST(RenderSystem, IgnoresEntitiesWithoutSpriteInstance)
     Registry registry;
 
     EntityId e = registry.createEntity();
-    auto& s    = registry.emplace<SpriteComponent>(e); // no texture set
+    auto& s    = registry.emplace<SpriteComponent>(e);
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
 
-    // Should not crash and should leave sprite empty
     renderSystem.update(registry, 0.0F);
     EXPECT_FALSE(s.hasSprite());
     EXPECT_EQ(s.raw(), nullptr);
@@ -144,7 +138,6 @@ TEST(RenderSystem, SkipsEntitiesWithoutTransformComponent)
     auto& s    = registry.emplace<SpriteComponent>(e);
     s.setTexture(texture);
 
-    // No TransformComponent; view should skip, and sprite should stay untouched
     renderSystem.update(registry, 0.0F);
     ASSERT_NE(s.raw(), nullptr);
     EXPECT_FLOAT_EQ(s.raw()->getPosition().x, 0.0F);
@@ -169,6 +162,5 @@ TEST(RenderSystem, SkipsDeadEntities)
 
     renderSystem.update(registry, 0.0F);
 
-    // Sprite pointer may be empty because the component isn't touched; just ensure no crash and state unchanged.
     EXPECT_FALSE(s.hasSprite());
 }
