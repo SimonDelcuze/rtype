@@ -149,6 +149,13 @@ template <typename Component> void ComponentStorage<Component>::remove(EntityId 
     sparse[id] = npos;
 }
 
+template <typename Component> void ComponentStorage<Component>::reset(EntityId id)
+{
+    if (!contains(id))
+        return;
+    data[sparse[id]] = Component{};
+}
+
 template <typename... Components> View<Components...> Registry::view()
 {
     return View<Components...>(*this);

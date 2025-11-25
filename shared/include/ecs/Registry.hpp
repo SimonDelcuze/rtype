@@ -21,6 +21,7 @@ struct ComponentStorageBase
 {
     virtual ~ComponentStorageBase()  = default;
     virtual void remove(EntityId id) = 0;
+    virtual void reset(EntityId id)  = 0;
 };
 
 template <typename Component> struct ComponentStorage : ComponentStorageBase
@@ -34,6 +35,7 @@ template <typename Component> struct ComponentStorage : ComponentStorageBase
     Component& fetch(EntityId id);
     const Component& fetch(EntityId id) const;
     void remove(EntityId id) override;
+    void reset(EntityId id) override;
 };
 
 class Registry

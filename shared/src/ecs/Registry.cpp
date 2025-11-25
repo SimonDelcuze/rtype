@@ -28,7 +28,7 @@ void Registry::destroyEntity(EntityId id)
     resetSignature(id);
     freeIds_.push_back(id);
     for (auto& [_, storage] : storages_) {
-        storage->remove(id);
+        storage->reset(id);
     }
 }
 
