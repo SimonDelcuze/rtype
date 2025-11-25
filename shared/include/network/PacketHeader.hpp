@@ -7,17 +7,17 @@
 
 enum class MessageType : std::uint8_t
 {
-    Invalid            = 0,
-    ClientHello        = 0x01,
-    ClientJoinRequest  = 0x02,
-    ClientReady        = 0x03,
-    ClientPing         = 0x04,
-    Input              = 0x05, // CLIENT_INPUT
-    ClientAcknowledge  = 0x06,
-    ClientDisconnect   = 0x07,
-    Snapshot           = 0x14, // SERVER_SNAPSHOT
-    Handshake          = ClientHello,     // legacy alias
-    Ack                = ClientAcknowledge // legacy alias
+    Invalid           = 0,
+    ClientHello       = 0x01,
+    ClientJoinRequest = 0x02,
+    ClientReady       = 0x03,
+    ClientPing        = 0x04,
+    Input             = 0x05,
+    ClientAcknowledge = 0x06,
+    ClientDisconnect  = 0x07,
+    Snapshot          = 0x14,
+    Handshake         = ClientHello,
+    Ack               = ClientAcknowledge
 };
 
 enum class PacketType : std::uint8_t
@@ -28,12 +28,12 @@ enum class PacketType : std::uint8_t
 
 struct PacketHeader
 {
-    std::uint8_t version       = 1;
-    std::uint8_t packetType    = static_cast<std::uint8_t>(PacketType::ClientToServer);
-    std::uint8_t messageType   = static_cast<std::uint8_t>(MessageType::Invalid);
-    std::uint16_t sequenceId   = 0;
-    std::uint32_t tickId       = 0;
-    std::uint16_t payloadSize  = 0; // bytes after header, excluding CRC
+    std::uint8_t version      = 1;
+    std::uint8_t packetType   = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    std::uint8_t messageType  = static_cast<std::uint8_t>(MessageType::Invalid);
+    std::uint16_t sequenceId  = 0;
+    std::uint32_t tickId      = 0;
+    std::uint16_t payloadSize = 0; // bytes after header, excluding CRC
 
     static constexpr std::array<std::uint8_t, 4> kMagic = {0xA3, 0x5F, 0xC8, 0x1D};
     static constexpr std::uint8_t kProtocolVersion      = 1;
@@ -43,15 +43,15 @@ struct PacketHeader
     [[nodiscard]] inline std::array<std::uint8_t, kSize> encode() const noexcept
     {
         std::array<std::uint8_t, kSize> out{};
-        out[0] = kMagic[0];
-        out[1] = kMagic[1];
-        out[2] = kMagic[2];
-        out[3] = kMagic[3];
-        out[4] = version;
-        out[5] = packetType;
-        out[6] = messageType;
-        out[7] = static_cast<std::uint8_t>((sequenceId >> 8) & 0xFF);
-        out[8] = static_cast<std::uint8_t>(sequenceId & 0xFF);
+        out[0]  = kMagic[0];
+        out[1]  = kMagic[1];
+        out[2]  = kMagic[2];
+        out[3]  = kMagic[3];
+        out[4]  = version;
+        out[5]  = packetType;
+        out[6]  = messageType;
+        out[7]  = static_cast<std::uint8_t>((sequenceId >> 8) & 0xFF);
+        out[8]  = static_cast<std::uint8_t>(sequenceId & 0xFF);
         out[9]  = static_cast<std::uint8_t>((tickId >> 24) & 0xFF);
         out[10] = static_cast<std::uint8_t>((tickId >> 16) & 0xFF);
         out[11] = static_cast<std::uint8_t>((tickId >> 8) & 0xFF);

@@ -44,9 +44,8 @@ TEST(InputPacket, RejectWrongSize)
 TEST(InputPacket, RejectWrongType)
 {
     InputPacket p{};
-    auto buf = p.encode();
-    // messageType is at offset 6 in the 15-byte header
-    buf[6] = static_cast<std::uint8_t>(MessageType::Snapshot);
+    auto buf     = p.encode();
+    buf[6]       = static_cast<std::uint8_t>(MessageType::Snapshot);
     auto decoded = InputPacket::decode(buf.data(), buf.size());
     EXPECT_FALSE(decoded.has_value());
 }
