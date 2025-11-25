@@ -74,8 +74,7 @@ struct InputPacket
         w32(std::bit_cast<std::uint32_t>(x));
         w32(std::bit_cast<std::uint32_t>(y));
         w32(std::bit_cast<std::uint32_t>(angle));
-        // CRC32 over header + payload
-        auto crc = PacketHeader::crc32(out.data(), PacketHeader::kSize + kPayloadSize);
+        auto crc   = PacketHeader::crc32(out.data(), PacketHeader::kSize + kPayloadSize);
         out[o]     = static_cast<std::uint8_t>((crc >> 24) & 0xFF);
         out[o + 1] = static_cast<std::uint8_t>((crc >> 16) & 0xFF);
         out[o + 2] = static_cast<std::uint8_t>((crc >> 8) & 0xFF);
@@ -98,7 +97,6 @@ struct InputPacket
             return std::nullopt;
         if (len != PacketHeader::kSize + hdr->payloadSize + PacketHeader::kCrcSize)
             return std::nullopt;
-        // CRC check
         const std::size_t payloadOffset = PacketHeader::kSize;
         const std::size_t crcOffset     = payloadOffset + hdr->payloadSize;
         std::uint32_t transmittedCrc    = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
