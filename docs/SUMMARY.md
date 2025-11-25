@@ -45,6 +45,7 @@
   * [Game Loop Thread (Scheduler)](client/threads/game-loop-thread-scheduler.md)
   * [Send Thread](client/threads/send-thread.md)
 * [Prediction & Reconciliation](client/prediction-and-reconciliation.md)
+* [Asset Management](asset-manifest.md)
 * [Components](client/components.md)
   * [AnimationComponent](client/components/animation-component.md)
   * [SpriteComponent](client/components/sprite-component.md)
