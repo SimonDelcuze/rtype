@@ -153,7 +153,7 @@ template <typename Component> void ComponentStorage<Component>::reset(EntityId i
 {
     if (!contains(id))
         return;
-    data[sparse[id]] = Component{};
+    resetValue<Component>(data[sparse[id]]);
 }
 
 template <typename... Components> View<Components...> Registry::view()

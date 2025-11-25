@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/ComponentTypeId.hpp"
+#include "ecs/ResetValue.hpp"
 #include "errors/ComponentNotFoundError.hpp"
 #include "errors/RegistryError.hpp"
 
@@ -23,6 +24,8 @@ struct ComponentStorageBase
     virtual void remove(EntityId id) = 0;
     virtual void reset(EntityId id)  = 0;
 };
+
+template <typename Component> void resetValue(Component& value);
 
 template <typename Component> struct ComponentStorage : ComponentStorageBase
 {
