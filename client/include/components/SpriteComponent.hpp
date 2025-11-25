@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ecs/ResetValue.hpp"
+
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <cstdint>
@@ -25,3 +27,8 @@ struct SpriteComponent
     const sf::Sprite* raw() const;
     bool hasSprite() const;
 };
+
+template <> inline void resetValue<SpriteComponent>(SpriteComponent& value)
+{
+    value = SpriteComponent{};
+}
