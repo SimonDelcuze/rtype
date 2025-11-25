@@ -16,6 +16,7 @@ struct MovementComponent
     float amplitude         = 0.0F;
     float frequency         = 0.0F;
     float phase             = 0.0F;
+    float time              = 0.0F;
 
     static MovementComponent linear(float speed);
     static MovementComponent zigzag(float speed, float amplitude, float frequency);
@@ -30,6 +31,7 @@ inline MovementComponent MovementComponent::linear(float speed)
     component.phase     = 0.0F;
     component.frequency = 0.0F;
     component.amplitude = 0.0F;
+    component.time      = 0.0F;
     return component;
 }
 
@@ -41,6 +43,7 @@ inline MovementComponent MovementComponent::zigzag(float speed, float amplitude,
     component.amplitude = amplitude;
     component.frequency = frequency;
     component.phase     = 0.0F;
+    component.time      = 0.0F;
     return component;
 }
 
@@ -52,5 +55,6 @@ inline MovementComponent MovementComponent::sine(float speed, float amplitude, f
     component.amplitude = amplitude;
     component.frequency = frequency;
     component.phase     = phase;
+    component.time      = 0.0F;
     return component;
 }
