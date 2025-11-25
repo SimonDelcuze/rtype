@@ -10,9 +10,9 @@
 struct MonsterSpawnConfig
 {
     float spawnInterval = 1.0F;
-    float spawnX = 0.0F;
-    float yMin = 0.0F;
-    float yMax = 0.0F;
+    float spawnX        = 0.0F;
+    float yMin          = 0.0F;
+    float yMax          = 0.0F;
 };
 
 class MonsterSpawnSystem
