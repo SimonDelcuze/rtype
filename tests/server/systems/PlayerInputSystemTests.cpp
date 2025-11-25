@@ -1,4 +1,5 @@
 #include "network/InputReceiveThread.hpp"
+#include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <cmath>
@@ -103,6 +104,82 @@ TEST(PlayerInputSystem, SkipsMissingComponentsOrDead)
     auto& vel = registry.get<VelocityComponent>(aliveNoInput);
     EXPECT_FLOAT_EQ(vel.vx, 0.0F);
     EXPECT_FLOAT_EQ(vel.vy, 0.0F);
+}
+
+TEST(PlayerInputSystem, CreatesMissileOnFire)
+{
+    Registry registry;
+    EntityId p      = registry.createEntity();
+    auto& t         = registry.emplace<TransformComponent>(p);
+    t.x             = 10.0F;
+    t.y             = 5.0F;
+    auto& pic       = registry.emplace<PlayerInputComponent>(p);
+    pic.angle       = 0.0F;
+    float expectedX = t.x;
+    float expectedY = t.y;
+
+    PlayerInputSystem sys(1.0F, 6.0F, 2.5F, 3);
+    std::vector<ReceivedInput> inputs;
+    inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, pic.angle));
+
+    sys.update(registry, inputs);
+
+    std::size_t missiles = 0;
+    for (EntityId id = 0; id < registry.entityCount(); ++id) {
+        if (!registry.isAlive(id))
+            continue;
+        if (!registry.has<MissileComponent>(id))
+            continue;
+        ++missiles;
+        auto& mt    = registry.get<TransformComponent>(id);
+        auto& mv    = registry.get<VelocityComponent>(id);
+        auto& owner = registry.get<OwnershipComponent>(id);
+        auto& tag   = registry.get<TagComponent>(id);
+        auto& mc    = registry.get<MissileComponent>(id);
+        EXPECT_FLOAT_EQ(mt.x, expectedX);
+        EXPECT_FLOAT_EQ(mt.y, expectedY);
+        EXPECT_FLOAT_EQ(mt.rotation, pic.angle);
+        EXPECT_FLOAT_EQ(mv.vx, 6.0F);
+        EXPECT_FLOAT_EQ(mv.vy, 0.0F);
+        EXPECT_EQ(owner.ownerId, p);
+        EXPECT_TRUE(tag.hasTag(EntityTag::Projectile));
+        EXPECT_EQ(mc.damage, 3);
+        EXPECT_FLOAT_EQ(mc.lifetime, 2.5F);
+        EXPECT_TRUE(mc.fromPlayer);
+    }
+    EXPECT_EQ(missiles, 1u);
+}
+
+TEST(PlayerInputSystem, MissileMovesWithMovementSystem)
+{
+    Registry registry;
+    EntityId p = registry.createEntity();
+    auto& t    = registry.emplace<TransformComponent>(p);
+    t.x        = 0.0F;
+    t.y        = 0.0F;
+    auto& pic  = registry.emplace<PlayerInputComponent>(p);
+    pic.angle  = static_cast<float>(M_PI) / 2.0F;
+
+    PlayerInputSystem sys(1.0F, 4.0F, 1.0F, 1);
+    std::vector<ReceivedInput> inputs;
+    inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::Fire), 0.0F, 0.0F, pic.angle));
+    sys.update(registry, inputs);
+
+    MovementSystem move;
+    move.update(registry, 0.5F);
+
+    std::size_t missiles = 0;
+    for (EntityId id = 0; id < registry.entityCount(); ++id) {
+        if (!registry.isAlive(id))
+            continue;
+        if (!registry.has<MissileComponent>(id))
+            continue;
+        ++missiles;
+        auto& mt = registry.get<TransformComponent>(id);
+        EXPECT_NEAR(mt.x, 0.0F, 1e-5);
+        EXPECT_NEAR(mt.y, 2.0F, 1e-5);
+    }
+    EXPECT_EQ(missiles, 1u);
 }
 
 TEST(PlayerInputSystem, LatestInputWinsPerPlayer)
