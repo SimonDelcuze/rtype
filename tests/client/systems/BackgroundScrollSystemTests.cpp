@@ -54,48 +54,44 @@ TEST_F(BackgroundScrollSystemTest, AutoScaleAndOffsetsFromWindowAndTexture)
 
 TEST_F(BackgroundScrollSystemTest, EnsuresCoverageAddsBands)
 {
-    createBand(-10.0F, 0.0F, 50, 50); // scaled width 100
-    system.update(registry, 0.0F);    // first pass computes offsets
-    system.update(registry, 0.0F);    // ensure coverage spawns clones
+    createBand(-10.0F, 0.0F, 50, 50);
+    system.update(registry, 0.0F);
+    system.update(registry, 0.0F);
 
-    // window width 100, width band 100 -> coverage loop adds one extra band
     EXPECT_GE(registry.entityCount(), 2u);
 }
 
 TEST_F(BackgroundScrollSystemTest, WrapMovesBandToEnd)
 {
-    EntityId e1 = createBand(-100.0F, 0.0F, 50, 50); // width 100 after scale
-    // place a second band manually to be the current maxX
-    EntityId e2                            = createBand(-100.0F, 0.0F, 50, 50);
+    EntityId e1 = createBand(-100.0F, 0.0F, 50, 50);
+    EntityId e2 = createBand(-100.0F, 0.0F, 50, 50);
     registry.get<TransformComponent>(e2).x = 100.0F;
-    system.update(registry, 0.0F); // compute offsets and coverage
+    system.update(registry, 0.0F);
 
     auto& t1 = registry.get<TransformComponent>(e1);
     auto& t2 = registry.get<TransformComponent>(e2);
 
-    // force t1 to wrap next frame
     t1.x = -100.0F;
     system.update(registry, 0.0F);
 
-    EXPECT_GT(t1.x, t2.x); // moved after the current max
+    EXPECT_GT(t1.x, t2.x);
 }
 
 TEST_F(BackgroundScrollSystemTest, NextBackgroundAppliedOnWrap)
 {
     EntityId e = createBand(-100.0F, 0.0F, 50, 50);
-    system.update(registry, 0.0F); // init offsets/scale
+    system.update(registry, 0.0F);
 
-    sf::Texture& newTex = makeTexture(25, 25); // different size -> different reset offset
+    sf::Texture& newTex = makeTexture(25, 25);
     system.setNextBackground(newTex);
 
     auto& scroll = registry.get<BackgroundScrollComponent>(e);
     auto& t      = registry.get<TransformComponent>(e);
 
-    // force wrap
     t.x = -scroll.resetOffsetX;
     system.update(registry, 0.0F);
 
-    EXPECT_FLOAT_EQ(scroll.resetOffsetX, 100.0F); // newTex height 25 -> scale 4, width 25*4=100
+    EXPECT_FLOAT_EQ(scroll.resetOffsetX, 100.0F);
 }
 
 TEST_F(BackgroundScrollSystemTest, IgnoresDeadEntities)
