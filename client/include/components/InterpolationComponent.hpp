@@ -4,9 +4,9 @@
 
 enum class InterpolationMode : std::uint8_t
 {
-    None,       
-    Linear,     
-    Extrapolate 
+    None,
+    Linear,
+    Extrapolate
 };
 
 struct InterpolationComponent

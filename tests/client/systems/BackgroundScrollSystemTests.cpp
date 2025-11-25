@@ -63,8 +63,8 @@ TEST_F(BackgroundScrollSystemTest, EnsuresCoverageAddsBands)
 
 TEST_F(BackgroundScrollSystemTest, WrapMovesBandToEnd)
 {
-    EntityId e1 = createBand(-100.0F, 0.0F, 50, 50);
-    EntityId e2 = createBand(-100.0F, 0.0F, 50, 50);
+    EntityId e1                            = createBand(-100.0F, 0.0F, 50, 50);
+    EntityId e2                            = createBand(-100.0F, 0.0F, 50, 50);
     registry.get<TransformComponent>(e2).x = 100.0F;
     system.update(registry, 0.0F);
 
