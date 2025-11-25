@@ -3,6 +3,7 @@
 #include "components/Components.hpp"
 #include "ecs/Registry.hpp"
 
+#include <array>
 #include <optional>
 #include <vector>
 
