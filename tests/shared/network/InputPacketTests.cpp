@@ -21,7 +21,10 @@ TEST(InputPacket, EncodeDecodeRoundTrip)
 
     auto decoded = InputPacket::decode(buf.data(), buf.size());
     ASSERT_TRUE(decoded.has_value());
+    EXPECT_EQ(decoded->header.version, PacketHeader::kProtocolVersion);
+    EXPECT_EQ(decoded->header.packetType, static_cast<std::uint8_t>(PacketType::ClientToServer));
     EXPECT_EQ(decoded->header.messageType, static_cast<std::uint8_t>(MessageType::Input));
+    EXPECT_EQ(decoded->header.payloadSize, InputPacket::kPayloadSize);
     EXPECT_EQ(decoded->header.sequenceId, p.header.sequenceId);
     EXPECT_EQ(decoded->header.tickId, p.header.tickId);
     EXPECT_EQ(decoded->playerId, p.playerId);
@@ -41,8 +44,9 @@ TEST(InputPacket, RejectWrongSize)
 TEST(InputPacket, RejectWrongType)
 {
     InputPacket p{};
-    auto buf     = p.encode();
-    buf[0]       = static_cast<std::uint8_t>(MessageType::Snapshot);
+    auto buf = p.encode();
+    // messageType is at offset 6 in the 15-byte header
+    buf[6] = static_cast<std::uint8_t>(MessageType::Snapshot);
     auto decoded = InputPacket::decode(buf.data(), buf.size());
     EXPECT_FALSE(decoded.has_value());
 }

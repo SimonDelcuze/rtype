@@ -43,12 +43,15 @@ struct InputPacket
     float angle            = 0.0F;
 
     static constexpr std::size_t kPayloadSize = 4 + 2 + 4 + 4 + 4;
-    static constexpr std::size_t kSize        = PacketHeader::kSize + kPayloadSize;
+    static constexpr std::size_t kSize        = PacketHeader::kSize + kPayloadSize + PacketHeader::kCrcSize;
 
     [[nodiscard]] std::array<std::uint8_t, kSize> encode() const noexcept
     {
         PacketHeader h = header;
+        h.version      = PacketHeader::kProtocolVersion;
+        h.packetType   = static_cast<std::uint8_t>(PacketType::ClientToServer);
         h.messageType  = static_cast<std::uint8_t>(MessageType::Input);
+        h.payloadSize  = static_cast<std::uint16_t>(kPayloadSize);
         auto hdr       = h.encode();
         std::array<std::uint8_t, kSize> out{};
         for (std::size_t i = 0; i < hdr.size(); ++i)
@@ -71,17 +74,39 @@ struct InputPacket
         w32(std::bit_cast<std::uint32_t>(x));
         w32(std::bit_cast<std::uint32_t>(y));
         w32(std::bit_cast<std::uint32_t>(angle));
+        // CRC32 over header + payload
+        auto crc = PacketHeader::crc32(out.data(), PacketHeader::kSize + kPayloadSize);
+        out[o]     = static_cast<std::uint8_t>((crc >> 24) & 0xFF);
+        out[o + 1] = static_cast<std::uint8_t>((crc >> 16) & 0xFF);
+        out[o + 2] = static_cast<std::uint8_t>((crc >> 8) & 0xFF);
+        out[o + 3] = static_cast<std::uint8_t>(crc & 0xFF);
         return out;
     }
 
     [[nodiscard]] static std::optional<InputPacket> decode(const std::uint8_t* data, std::size_t len) noexcept
     {
-        if (data == nullptr || len != kSize)
+        if (data == nullptr || len < kSize)
             return std::nullopt;
         auto hdr = PacketHeader::decode(data, len);
         if (!hdr)
             return std::nullopt;
         if (hdr->messageType != static_cast<std::uint8_t>(MessageType::Input))
+            return std::nullopt;
+        if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ClientToServer))
+            return std::nullopt;
+        if (hdr->payloadSize != kPayloadSize)
+            return std::nullopt;
+        if (len != PacketHeader::kSize + hdr->payloadSize + PacketHeader::kCrcSize)
+            return std::nullopt;
+        // CRC check
+        const std::size_t payloadOffset = PacketHeader::kSize;
+        const std::size_t crcOffset     = payloadOffset + hdr->payloadSize;
+        std::uint32_t transmittedCrc    = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
+                                       (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
+                                       (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) |
+                                       static_cast<std::uint32_t>(data[crcOffset + 3]);
+        auto computedCrc = PacketHeader::crc32(data, crcOffset);
+        if (computedCrc != transmittedCrc)
             return std::nullopt;
         std::size_t o = PacketHeader::kSize;
         auto r16      = [&](std::uint16_t& v) {
@@ -113,4 +138,4 @@ struct InputPacket
     }
 };
 
-static_assert(InputPacket::kSize == 25, "InputPacket wire size must remain 25 bytes");
+static_assert(InputPacket::kSize == 37, "InputPacket wire size must remain 37 bytes");
