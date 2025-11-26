@@ -22,16 +22,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-tidy cmake ninja-build g++ ripgrep \
             libx11-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev \
             libgl1-mesa-dev libopenal-dev libsndfile1-dev libfreetype6-dev libjpeg-dev
-      - name: Configure
-        run: cmake -S . -B build -GNinja -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      - name: Clang-tidy
-        run: clang-tidy -p build --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet $(rg --files -g '*.{cpp,hpp}' client server shared)
+      - name: Run lint script (changed files vs origin/main)
+        env:
+          LINT_BASE_REF: origin/main
+        run: scripts/lint.sh
 
   tests:
     runs-on: ubuntu-latest
