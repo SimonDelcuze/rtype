@@ -2,13 +2,13 @@
 
 struct CameraComponent
 {
-    float x      = 0.0F;
-    float y      = 0.0F;
-    float zoom   = 1.0F;
-    float offsetX = 0.0F;
-    float offsetY = 0.0F;
+    float x        = 0.0F;
+    float y        = 0.0F;
+    float zoom     = 1.0F;
+    float offsetX  = 0.0F;
+    float offsetY  = 0.0F;
     float rotation = 0.0F;
-    bool active   = true;
+    bool active    = true;
 
     static CameraComponent create(float x, float y, float zoom = 1.0F);
 

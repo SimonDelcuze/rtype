@@ -5,7 +5,7 @@
 
 CameraSystem::CameraSystem(sf::RenderWindow& window) : window_(window)
 {
-    view_ = window_.getView();
+    view_           = window_.getView();
     auto windowSize = window_.getSize();
     baseViewSize_   = sf::Vector2f(static_cast<float>(windowSize.x), static_cast<float>(windowSize.y));
     view_.setSize(baseViewSize_);
@@ -75,8 +75,8 @@ EntityId CameraSystem::findActiveCamera(Registry& registry)
 
 void CameraSystem::applyCamera(const CameraComponent& camera)
 {
-    float centerX = camera.x + camera.offsetX;
-    float centerY = camera.y + camera.offsetY;
+    float centerX      = camera.x + camera.offsetX;
+    float centerY      = camera.y + camera.offsetY;
     float zoomedWidth  = baseViewSize_.x / camera.zoom;
     float zoomedHeight = baseViewSize_.y / camera.zoom;
     view_.setCenter(sf::Vector2f(centerX, centerY));
@@ -88,8 +88,8 @@ void CameraSystem::clampToWorldBounds(CameraComponent& camera)
 {
     float halfViewWidth  = (baseViewSize_.x / camera.zoom) / 2.0F;
     float halfViewHeight = (baseViewSize_.y / camera.zoom) / 2.0F;
-    float minX = worldLeft_ + halfViewWidth;
-    float maxX = worldLeft_ + worldWidth_ - halfViewWidth;
+    float minX           = worldLeft_ + halfViewWidth;
+    float maxX           = worldLeft_ + worldWidth_ - halfViewWidth;
     if (maxX < minX) {
         camera.x = worldLeft_ + worldWidth_ / 2.0F;
     } else {
