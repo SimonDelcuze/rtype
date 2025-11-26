@@ -17,4 +17,17 @@ struct ServerInput
     std::uint32_t tickId     = 0;
 };
 
-std::optional<ServerInput> parseInputPacket(const std::uint8_t* data, std::size_t len);
+enum class InputParseStatus
+{
+    Ok,
+    DecodeFailed,
+    InvalidFlags
+};
+
+struct InputParseResult
+{
+    std::optional<ServerInput> input;
+    InputParseStatus status = InputParseStatus::DecodeFailed;
+};
+
+InputParseResult parseInputPacket(const std::uint8_t* data, std::size_t len);

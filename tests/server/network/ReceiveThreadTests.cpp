@@ -1,10 +1,13 @@
 #include "network/InputReceiveThread.hpp"
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
+#include <string>
 #include <thread>
 
 using namespace std::chrono_literals;
@@ -17,6 +20,21 @@ static bool pollPop(ThreadSafeQueue<ReceivedInput>& q, ReceivedInput& out, int a
         std::this_thread::sleep_for(1ms);
     }
     return false;
+}
+
+static void clearLogFile()
+{
+    const std::filesystem::path path("logs/server.log");
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream f(path, std::ios::trunc);
+}
+
+static std::string readLogFile()
+{
+    std::ifstream f("logs/server.log");
+    if (!f.is_open())
+        return {};
+    return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 }
 
 TEST(InputReceiveThread, EnqueueValidInput)
@@ -290,4 +308,109 @@ TEST(InputReceiveThread, StaleDoesNotUpdateState)
     EXPECT_EQ(state2->lastPacketTime, state1->lastPacketTime);
 
     rt.stop();
+}
+
+TEST(InputReceiveThread, LogDecodeFailure)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    PacketHeader h{};
+    auto hdr = h.encode();
+    ASSERT_TRUE(tx.sendTo(hdr.data(), hdr.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogInvalidFlags)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.flags = 0xFFFF;
+    auto buf = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=invalid_flags"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogStaleSequence)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 3;
+    auto bufNew = p.encode();
+    ASSERT_TRUE(tx.sendTo(bufNew.data(), bufNew.size(), ep).ok());
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    InputPacket stale{};
+    stale.header.sequenceId = 2;
+    auto bufOld = stale.encode();
+    ASSERT_TRUE(tx.sendTo(bufOld.data(), bufOld.size(), ep).ok());
+
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=stale_sequence"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogCrcMismatch)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    auto buf = p.encode();
+    buf.back() ^= 0xFF;
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
 }
