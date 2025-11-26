@@ -3,11 +3,6 @@
 #include <errors/IError.hpp>
 #include <string>
 
-/**
- * @brief Exception thrown when audio operations fail
- *
- * Used by audio systems when sound playback or audio device operations fail.
- */
 class AudioError : public IError
 {
   public:

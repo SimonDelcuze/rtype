@@ -3,11 +3,6 @@
 #include <errors/IError.hpp>
 #include <string>
 
-/**
- * @brief Exception thrown when a file cannot be found or opened
- *
- * Used when attempting to open manifest files or other configuration files.
- */
 class FileNotFoundError : public IError
 {
   public:

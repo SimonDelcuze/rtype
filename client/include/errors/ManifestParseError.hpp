@@ -3,11 +3,6 @@
 #include <errors/IError.hpp>
 #include <string>
 
-/**
- * @brief Exception thrown when an asset manifest file cannot be parsed
- *
- * Used by AssetManifest when JSON parsing fails or required fields are missing.
- */
 class ManifestParseError : public IError
 {
   public:
