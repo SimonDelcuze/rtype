@@ -7,17 +7,18 @@
 
 enum class MessageType : std::uint8_t
 {
-    Invalid           = 0,
-    ClientHello       = 0x01,
-    ClientJoinRequest = 0x02,
-    ClientReady       = 0x03,
-    ClientPing        = 0x04,
-    Input             = 0x05,
-    ClientAcknowledge = 0x06,
-    ClientDisconnect  = 0x07,
-    Snapshot          = 0x14,
-    Handshake         = ClientHello,
-    Ack               = ClientAcknowledge
+    Invalid            = 0,
+    ClientHello        = 0x01,
+    ClientJoinRequest  = 0x02,
+    ClientReady        = 0x03,
+    ClientPing         = 0x04,
+    Input              = 0x05,
+    ClientAcknowledge  = 0x06,
+    ClientDisconnect   = 0x07,
+    PlayerDisconnected = 0x1C,
+    Snapshot           = 0x14,
+    Handshake          = ClientHello,
+    Ack                = ClientAcknowledge
 };
 
 enum class PacketType : std::uint8_t

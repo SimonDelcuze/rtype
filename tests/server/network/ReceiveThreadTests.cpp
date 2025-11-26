@@ -1,11 +1,17 @@
+#include "events/ClientTimeoutEvent.hpp"
 #include "network/InputReceiveThread.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
+#include <string>
 #include <thread>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -17,6 +23,31 @@ static bool pollPop(ThreadSafeQueue<ReceivedInput>& q, ReceivedInput& out, int a
         std::this_thread::sleep_for(1ms);
     }
     return false;
+}
+
+static bool pollTimeout(ThreadSafeQueue<ClientTimeoutEvent>& q, ClientTimeoutEvent& out, int attempts = 200)
+{
+    for (int i = 0; i < attempts; ++i) {
+        if (q.tryPop(out))
+            return true;
+        std::this_thread::sleep_for(1ms);
+    }
+    return false;
+}
+
+static void clearLogFile()
+{
+    const std::filesystem::path path("logs/server.log");
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream f(path, std::ios::trunc);
+}
+
+static std::string readLogFile()
+{
+    std::ifstream f("logs/server.log");
+    if (!f.is_open())
+        return {};
+    return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 }
 
 TEST(InputReceiveThread, EnqueueValidInput)
@@ -288,6 +319,284 @@ TEST(InputReceiveThread, StaleDoesNotUpdateState)
     ASSERT_TRUE(state2.has_value());
     EXPECT_EQ(state2->lastSequenceId, state1->lastSequenceId);
     EXPECT_EQ(state2->lastPacketTime, state1->lastPacketTime);
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, LogDecodeFailure)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    PacketHeader h{};
+    auto hdr = h.encode();
+    ASSERT_TRUE(tx.sendTo(hdr.data(), hdr.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogInvalidFlags)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.flags  = 0xFFFF;
+    auto buf = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=invalid_flags"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogStaleSequence)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 3;
+    auto bufNew         = p.encode();
+    ASSERT_TRUE(tx.sendTo(bufNew.data(), bufNew.size(), ep).ok());
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    InputPacket stale{};
+    stale.header.sequenceId = 2;
+    auto bufOld             = stale.encode();
+    ASSERT_TRUE(tx.sendTo(bufOld.data(), bufOld.size(), ep).ok());
+
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=stale_sequence"), std::string::npos);
+}
+
+TEST(InputReceiveThread, LogCrcMismatch)
+{
+    clearLogFile();
+    ThreadSafeQueue<ReceivedInput> queue;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    auto buf = p.encode();
+    buf.back() ^= 0xFF;
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    EXPECT_FALSE(pollPop(queue, got, 100));
+    rt.stop();
+
+    auto log = readLogFile();
+    EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
+}
+
+TEST(InputReceiveThread, TimeoutEventEmittedAfterSilence)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    ThreadSafeQueue<ClientTimeoutEvent> timeouts;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue, &timeouts, std::chrono::milliseconds(30));
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 7;
+    auto buf            = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    ClientTimeoutEvent ev{};
+    ASSERT_TRUE(pollTimeout(timeouts, ev, 500));
+    EXPECT_EQ(ev.endpoint.port, tx.localEndpoint().port);
+    EXPECT_EQ(ev.lastSequenceId, p.header.sequenceId);
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, TimeoutNotEmittedBeforeThreshold)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    ThreadSafeQueue<ClientTimeoutEvent> timeouts;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue, &timeouts, std::chrono::milliseconds(100));
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 2;
+    auto buf            = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    ClientTimeoutEvent ev{};
+    EXPECT_FALSE(pollTimeout(timeouts, ev, 50));
+    EXPECT_TRUE(pollTimeout(timeouts, ev, 200));
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, TimeoutResetsOnActivity)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    ThreadSafeQueue<ClientTimeoutEvent> timeouts;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue, &timeouts, std::chrono::milliseconds(60));
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket first{};
+    first.header.sequenceId = 1;
+    auto bufFirst           = first.encode();
+    ASSERT_TRUE(tx.sendTo(bufFirst.data(), bufFirst.size(), ep).ok());
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    std::this_thread::sleep_for(40ms);
+
+    InputPacket second{};
+    second.header.sequenceId = 5;
+    auto bufSecond           = second.encode();
+    ASSERT_TRUE(tx.sendTo(bufSecond.data(), bufSecond.size(), ep).ok());
+    ASSERT_TRUE(pollPop(queue, got));
+
+    ClientTimeoutEvent ev{};
+    EXPECT_FALSE(pollTimeout(timeouts, ev, 40));
+    EXPECT_TRUE(pollTimeout(timeouts, ev, 200));
+    EXPECT_EQ(ev.lastSequenceId, second.header.sequenceId);
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, TimeoutNotRepeatedAfterEvent)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    ThreadSafeQueue<ClientTimeoutEvent> timeouts;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue, &timeouts, std::chrono::milliseconds(50));
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket tx;
+    ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket p{};
+    p.header.sequenceId = 4;
+    auto buf            = p.encode();
+    ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+
+    ClientTimeoutEvent ev{};
+    ASSERT_TRUE(pollTimeout(timeouts, ev, 200));
+    EXPECT_FALSE(pollTimeout(timeouts, ev, 200));
+
+    rt.stop();
+}
+
+TEST(InputReceiveThread, TimeoutOnlyInactiveClient)
+{
+    ThreadSafeQueue<ReceivedInput> queue;
+    ThreadSafeQueue<ClientTimeoutEvent> timeouts;
+    InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue, &timeouts, std::chrono::milliseconds(80));
+    ASSERT_TRUE(rt.start());
+    auto ep = rt.endpoint();
+    ASSERT_NE(ep.port, 0);
+
+    UdpSocket txA;
+    UdpSocket txB;
+    ASSERT_TRUE(txA.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+    ASSERT_TRUE(txB.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
+
+    InputPacket a{};
+    a.header.sequenceId = 1;
+    auto bufA           = a.encode();
+    InputPacket b{};
+    b.header.sequenceId = 1;
+    auto bufB           = b.encode();
+
+    ASSERT_TRUE(txA.sendTo(bufA.data(), bufA.size(), ep).ok());
+    ASSERT_TRUE(txB.sendTo(bufB.data(), bufB.size(), ep).ok());
+
+    ReceivedInput got{};
+    ASSERT_TRUE(pollPop(queue, got));
+    ASSERT_TRUE(pollPop(queue, got));
+
+    std::this_thread::sleep_for(50ms);
+
+    InputPacket keepAlive{};
+    keepAlive.header.sequenceId = 2;
+    auto bufKeep                = keepAlive.encode();
+    ASSERT_TRUE(txA.sendTo(bufKeep.data(), bufKeep.size(), ep).ok());
+    ASSERT_TRUE(pollPop(queue, got));
+
+    ClientTimeoutEvent ev1{};
+    ClientTimeoutEvent ev2{};
+    ASSERT_TRUE(pollTimeout(timeouts, ev1, 400));
+    ASSERT_TRUE(pollTimeout(timeouts, ev2, 300));
+
+    std::vector<std::uint16_t> ports{ev1.endpoint.port, ev2.endpoint.port};
+    std::vector<std::uint16_t> expected{txA.localEndpoint().port, txB.localEndpoint().port};
+    std::sort(ports.begin(), ports.end());
+    std::sort(expected.begin(), expected.end());
+    EXPECT_EQ(ports, expected);
+
+    std::vector<std::uint16_t> seqs{ev1.lastSequenceId, ev2.lastSequenceId};
+    std::vector<std::uint16_t> expectedSeqs{
+        a.header.sequenceId, keepAlive.header.sequenceId > 0 ? keepAlive.header.sequenceId : a.header.sequenceId};
+    std::sort(seqs.begin(), seqs.end());
+    std::sort(expectedSeqs.begin(), expectedSeqs.end());
+    EXPECT_EQ(seqs, expectedSeqs);
 
     rt.stop();
 }

@@ -6,7 +6,6 @@
 #include "ecs/Registry.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
-#include "network/NetworkMessageHandler.hpp"
 #include "network/NetworkReceiver.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
@@ -25,15 +24,12 @@ int main()
     TextureManager textureManager;
     Registry registry;
     ThreadSafeQueue<std::vector<std::uint8_t>> snapshotQueue;
-    ThreadSafeQueue<SnapshotParseResult> parsedSnapshots;
 
     NetworkReceiver receiver(IpEndpoint::v4(0, 0, 0, 0, 50000),
                              [&](std::vector<std::uint8_t>&& packet) { snapshotQueue.push(std::move(packet)); });
     if (!receiver.start()) {
         std::cerr << "Failed to start NetworkReceiver\n";
     }
-
-    NetworkMessageHandler messageHandler(snapshotQueue, parsedSnapshots);
 
     EntityId player = registry.createEntity();
 

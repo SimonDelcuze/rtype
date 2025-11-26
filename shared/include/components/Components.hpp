@@ -2,7 +2,6 @@
 
 #include "components/HealthComponent.hpp"
 #include "components/HitboxComponent.hpp"
-#include "components/LayerComponent.hpp"
 #include "components/MissileComponent.hpp"
 #include "components/MovementComponent.hpp"
 #include "components/OwnershipComponent.hpp"

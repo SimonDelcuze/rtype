@@ -1,6 +1,7 @@
 #pragma once
 
 #include "network/DeltaStatePacket.hpp"
+#include "network/PlayerDisconnectedPacket.hpp"
 #include "network/UdpSocket.hpp"
 
 #include <atomic>
@@ -19,6 +20,7 @@ class SendThread
     bool isRunning() const;
     void setClients(const std::vector<IpEndpoint>& clients);
     void publish(const DeltaStatePacket& packet);
+    void broadcast(const PlayerDisconnectedPacket& packet);
     IpEndpoint endpoint() const;
 
   private:
