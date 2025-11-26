@@ -47,6 +47,7 @@
 * [Prediction & Reconciliation](client/prediction-and-reconciliation.md)
 * [Asset Management](asset-manifest.md)
 * [Scene Graph & Layering](client/scene-graph-layering.md)
+* [Collision Masks & Hitboxes](collision-masks.md)
 * [Components](client/components.md)
   * [AnimationComponent](client/components/animation-component.md)
   * [SpriteComponent](client/components/sprite-component.md)
