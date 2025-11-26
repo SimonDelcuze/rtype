@@ -25,7 +25,7 @@ static SnapshotParseResult makeSnapshot(std::uint32_t tick, std::uint32_t entity
 {
     SnapshotEntity e{};
     e.entityId   = entityId;
-    e.updateMask = 0x1F | (dead ? (1u << 8) : 0u) | (1u << 5); // type bit unused, pos/vel/health, dead optional
+    e.updateMask = 0x1F | (dead ? (1u << 8) : 0u) | (1u << 5);
     e.posX       = x;
     e.posY       = y;
     e.velX       = vx;
@@ -158,7 +158,7 @@ TEST(ReplicationSystem, VelocityOnlyDoesNotCreateTransform)
 {
     SnapshotEntity e{};
     e.entityId   = 5;
-    e.updateMask = 0x18; // velX + velY
+    e.updateMask = 0x18;
     e.velX       = 7.0F;
     e.velY       = 8.0F;
 
@@ -179,7 +179,7 @@ TEST(ReplicationSystem, TransformOnlyNoVelocity)
 {
     SnapshotEntity e{};
     e.entityId   = 6;
-    e.updateMask = 0x06; // posX + posY
+    e.updateMask = 0x06;
     e.posX       = 9.0F;
     e.posY       = -1.0F;
 
@@ -276,7 +276,7 @@ TEST(ReplicationSystem, PositionNotOverwrittenWhenMissingFields)
 
     SnapshotEntity e{};
     e.entityId   = 50;
-    e.updateMask = 0x18; // vel only
+    e.updateMask = 0x18;
     e.velX       = 1.0F;
     queue.push(makeCustomSnapshot(2, {e}));
     sys.update(registry, 0.0F);
@@ -291,7 +291,7 @@ TEST(ReplicationSystem, InterpolationNotCreatedWithoutPosition)
 {
     SnapshotEntity e{};
     e.entityId   = 60;
-    e.updateMask = 0x18; // vel only
+    e.updateMask = 0x18;
     e.velX       = 1.0F;
     e.velY       = 2.0F;
 
@@ -347,7 +347,7 @@ TEST(ReplicationSystem, StatusFieldIgnoredButEntityCreated)
 {
     SnapshotEntity e{};
     e.entityId      = 90;
-    e.updateMask    = 0x46; // posX/posY + status bit6
+    e.updateMask    = 0x46;
     e.posX          = 4.0F;
     e.posY          = 5.0F;
     e.statusEffects = 3;
@@ -367,7 +367,7 @@ TEST(ReplicationSystem, DeadFlagDoesNotLeaveComponents)
 {
     SnapshotEntity e{};
     e.entityId   = 100;
-    e.updateMask = 0x1BF; // pos/vel/health + dead bit
+    e.updateMask = 0x1BF;
     e.posX       = 1.0F;
     e.posY       = 1.0F;
     e.velX       = 0.0F;
