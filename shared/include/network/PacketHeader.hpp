@@ -34,11 +34,11 @@ struct PacketHeader
     std::uint8_t messageType  = static_cast<std::uint8_t>(MessageType::Invalid);
     std::uint16_t sequenceId  = 0;
     std::uint32_t tickId      = 0;
-    std::uint16_t payloadSize = 0; // bytes after header, excluding CRC
+    std::uint16_t payloadSize = 0;
 
     static constexpr std::array<std::uint8_t, 4> kMagic = {0xA3, 0x5F, 0xC8, 0x1D};
     static constexpr std::uint8_t kProtocolVersion      = 1;
-    static constexpr std::size_t kSize                  = 15; // 4 + 1 + 1 + 1 + 2 + 4 + 2
+    static constexpr std::size_t kSize                  = 15;
     static constexpr std::size_t kCrcSize               = 4;
 
     [[nodiscard]] inline std::array<std::uint8_t, kSize> encode() const noexcept
