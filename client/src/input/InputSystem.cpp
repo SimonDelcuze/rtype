@@ -1,9 +1,5 @@
 #include "input/InputSystem.hpp"
 
-#include "components/TransformComponent.hpp"
-#include <SFML/Window/Keyboard.hpp>
-#include <iostream>
-
 InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY)
     : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY)
 {
@@ -19,14 +15,27 @@ void InputSystem::update(Registry& registry, float)
         return;
     }
 
+    const bool left = (flags & InputMapper::LeftFlag) != 0;
+    const bool right = (flags & InputMapper::RightFlag) != 0;
+    const bool up = (flags & InputMapper::UpFlag) != 0;
+    const bool down = (flags & InputMapper::DownFlag) != 0;
+
     float angle = 0.0F;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
+    if (left && up) {
+        angle = 225.0F;
+    } else if (left && down) {
+        angle = 135.0F;
+    } else if (right && up) {
+        angle = 315.0F;
+    } else if (right && down) {
+        angle = 45.0F;
+    } else if (left) {
         angle = 180.0F;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
+    } else if (right) {
         angle = 0.0F;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
+    } else if (up) {
         angle = 270.0F;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
+    } else if (down) {
         angle = 90.0F;
     }
 
