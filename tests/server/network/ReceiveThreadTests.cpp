@@ -347,7 +347,7 @@ TEST(InputReceiveThread, LogInvalidFlags)
     ASSERT_TRUE(tx.open(IpEndpoint::v4(127, 0, 0, 1, 0)));
 
     InputPacket p{};
-    p.flags = 0xFFFF;
+    p.flags  = 0xFFFF;
     auto buf = p.encode();
     ASSERT_TRUE(tx.sendTo(buf.data(), buf.size(), ep).ok());
 
@@ -373,14 +373,14 @@ TEST(InputReceiveThread, LogStaleSequence)
 
     InputPacket p{};
     p.header.sequenceId = 3;
-    auto bufNew = p.encode();
+    auto bufNew         = p.encode();
     ASSERT_TRUE(tx.sendTo(bufNew.data(), bufNew.size(), ep).ok());
     ReceivedInput got{};
     ASSERT_TRUE(pollPop(queue, got));
 
     InputPacket stale{};
     stale.header.sequenceId = 2;
-    auto bufOld = stale.encode();
+    auto bufOld             = stale.encode();
     ASSERT_TRUE(tx.sendTo(bufOld.data(), bufOld.size(), ep).ok());
 
     EXPECT_FALSE(pollPop(queue, got, 100));

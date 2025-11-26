@@ -48,8 +48,8 @@ TEST(InputParser, RejectWrongSize)
 TEST(InputParser, RejectWrongMessageType)
 {
     InputPacket p{};
-    auto buf = p.encode();
-    buf[6] = static_cast<std::uint8_t>(MessageType::Snapshot);
+    auto buf     = p.encode();
+    buf[6]       = static_cast<std::uint8_t>(MessageType::Snapshot);
     auto decoded = parseInputPacket(buf.data(), buf.size());
     EXPECT_EQ(decoded.status, InputParseStatus::DecodeFailed);
     EXPECT_FALSE(decoded.input.has_value());
@@ -58,8 +58,8 @@ TEST(InputParser, RejectWrongMessageType)
 TEST(InputParser, RejectWrongPacketType)
 {
     InputPacket p{};
-    auto buf = p.encode();
-    buf[5] = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    auto buf     = p.encode();
+    buf[5]       = static_cast<std::uint8_t>(PacketType::ServerToClient);
     auto decoded = parseInputPacket(buf.data(), buf.size());
     EXPECT_EQ(decoded.status, InputParseStatus::DecodeFailed);
     EXPECT_FALSE(decoded.input.has_value());
