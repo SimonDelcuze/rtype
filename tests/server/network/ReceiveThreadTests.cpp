@@ -1,6 +1,7 @@
 #include "events/ClientTimeoutEvent.hpp"
 #include "network/InputReceiveThread.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <filesystem>
@@ -10,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <vector>
 
 using namespace std::chrono_literals;
 
