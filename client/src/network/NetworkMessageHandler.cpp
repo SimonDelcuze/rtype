@@ -3,8 +3,7 @@
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue)
     : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue)
-{
-}
+{}
 
 void NetworkMessageHandler::poll()
 {

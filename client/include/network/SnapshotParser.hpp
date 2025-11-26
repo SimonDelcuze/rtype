@@ -8,7 +8,7 @@
 
 struct SnapshotEntity
 {
-    std::uint32_t entityId = 0;
+    std::uint32_t entityId   = 0;
     std::uint16_t updateMask = 0;
     std::optional<std::uint8_t> entityType;
     std::optional<float> posX;
@@ -41,5 +41,6 @@ class SnapshotParser
     static std::uint16_t readU16(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::uint32_t readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static float readFloat(const std::vector<std::uint8_t>& buf, std::size_t& offset);
-    static std::optional<SnapshotEntity> parseEntity(const std::vector<std::uint8_t>& data, std::size_t& offset, const PacketHeader& header);
+    static std::optional<SnapshotEntity> parseEntity(const std::vector<std::uint8_t>& data, std::size_t& offset,
+                                                     const PacketHeader& header);
 };

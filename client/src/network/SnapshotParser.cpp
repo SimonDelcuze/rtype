@@ -16,7 +16,7 @@ std::optional<SnapshotParseResult> SnapshotParser::parse(const std::vector<std::
         return std::nullopt;
     }
 
-    std::size_t offset = PacketHeader::kSize;
+    std::size_t offset        = PacketHeader::kSize;
     std::uint16_t entityCount = readU16(data, offset);
 
     SnapshotParseResult result{};
@@ -89,7 +89,8 @@ std::uint16_t SnapshotParser::readU16(const std::vector<std::uint8_t>& buf, std:
 
 std::uint32_t SnapshotParser::readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset)
 {
-    std::uint32_t v = (static_cast<std::uint32_t>(buf[offset]) << 24) | (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
+    std::uint32_t v = (static_cast<std::uint32_t>(buf[offset]) << 24) |
+                      (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
                       (static_cast<std::uint32_t>(buf[offset + 2]) << 8) | static_cast<std::uint32_t>(buf[offset + 3]);
     offset += 4;
     return v;
@@ -101,7 +102,8 @@ float SnapshotParser::readFloat(const std::vector<std::uint8_t>& buf, std::size_
     return std::bit_cast<float>(v);
 }
 
-std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std::uint8_t>& data, std::size_t& offset, const PacketHeader& header)
+std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std::uint8_t>& data, std::size_t& offset,
+                                                          const PacketHeader& header)
 {
     if (!ensureAvailable(offset, 6, PacketHeader::kSize + header.payloadSize)) {
         return std::nullopt;

@@ -9,65 +9,65 @@
 
 namespace
 {
-void writeU16(std::vector<std::uint8_t>& out, std::uint16_t v)
-{
-    out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
-    out.push_back(static_cast<std::uint8_t>(v & 0xFF));
-}
+    void writeU16(std::vector<std::uint8_t>& out, std::uint16_t v)
+    {
+        out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>(v & 0xFF));
+    }
 
-void writeU32(std::vector<std::uint8_t>& out, std::uint32_t v)
-{
-    out.push_back(static_cast<std::uint8_t>((v >> 24) & 0xFF));
-    out.push_back(static_cast<std::uint8_t>((v >> 16) & 0xFF));
-    out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
-    out.push_back(static_cast<std::uint8_t>(v & 0xFF));
-}
+    void writeU32(std::vector<std::uint8_t>& out, std::uint32_t v)
+    {
+        out.push_back(static_cast<std::uint8_t>((v >> 24) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>((v >> 16) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>(v & 0xFF));
+    }
 
-void writeFloat(std::vector<std::uint8_t>& out, float v)
-{
-    writeU32(out, std::bit_cast<std::uint32_t>(v));
-}
+    void writeFloat(std::vector<std::uint8_t>& out, float v)
+    {
+        writeU32(out, std::bit_cast<std::uint32_t>(v));
+    }
 
-std::vector<std::uint8_t> makeSnapshotPacket()
-{
-    PacketHeader h{};
-    h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+    std::vector<std::uint8_t> makeSnapshotPacket()
+    {
+        PacketHeader h{};
+        h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
 
-    std::vector<std::uint8_t> buf;
-    auto hdr = h.encode();
-    buf.insert(buf.end(), hdr.begin(), hdr.end());
+        std::vector<std::uint8_t> buf;
+        auto hdr = h.encode();
+        buf.insert(buf.end(), hdr.begin(), hdr.end());
 
-    writeU16(buf, 1);
-    writeU32(buf, 123);
-    writeU16(buf, 0x006);
-    writeFloat(buf, 10.0F);
-    writeFloat(buf, -5.0F);
+        writeU16(buf, 1);
+        writeU32(buf, 123);
+        writeU16(buf, 0x006);
+        writeFloat(buf, 10.0F);
+        writeFloat(buf, -5.0F);
 
-    std::size_t payloadSize = buf.size() - PacketHeader::kSize;
-    buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
-    buf[14]                 = static_cast<std::uint8_t>(payloadSize & 0xFF);
+        std::size_t payloadSize = buf.size() - PacketHeader::kSize;
+        buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
+        buf[14]                 = static_cast<std::uint8_t>(payloadSize & 0xFF);
 
-    std::uint32_t crc = PacketHeader::crc32(buf.data(), buf.size());
-    writeU32(buf, crc);
-    return buf;
-}
+        std::uint32_t crc = PacketHeader::crc32(buf.data(), buf.size());
+        writeU32(buf, crc);
+        return buf;
+    }
 
-std::vector<std::uint8_t> makeNonSnapshotPacket()
-{
-    PacketHeader h{};
-    h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    h.messageType = static_cast<std::uint8_t>(MessageType::Input);
-    std::vector<std::uint8_t> buf;
-    auto hdr = h.encode();
-    buf.insert(buf.end(), hdr.begin(), hdr.end());
-    std::size_t payloadSize = 0;
-    buf[13]                 = 0;
-    buf[14]                 = 0;
-    std::uint32_t crc       = PacketHeader::crc32(buf.data(), buf.size());
-    writeU32(buf, crc);
-    return buf;
-}
+    std::vector<std::uint8_t> makeNonSnapshotPacket()
+    {
+        PacketHeader h{};
+        h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        h.messageType = static_cast<std::uint8_t>(MessageType::Input);
+        std::vector<std::uint8_t> buf;
+        auto hdr = h.encode();
+        buf.insert(buf.end(), hdr.begin(), hdr.end());
+        std::size_t payloadSize = 0;
+        buf[13]                 = 0;
+        buf[14]                 = 0;
+        std::uint32_t crc       = PacketHeader::crc32(buf.data(), buf.size());
+        writeU32(buf, crc);
+        return buf;
+    }
 } // namespace
 
 TEST(NetworkMessageHandler, DispatchesSnapshotToParsedQueue)
