@@ -29,11 +29,9 @@ void HitboxDebugSystem::update(Registry& registry)
             continue;
         }
 
-        // Calculate actual hitbox position (entity position + offset)
         float hitboxX = transform.x + hitbox.offsetX;
         float hitboxY = transform.y + hitbox.offsetY;
 
-        // Create rectangle shape for debug visualization
         sf::RectangleShape rect;
         rect.setPosition(sf::Vector2f{hitboxX, hitboxY});
         rect.setSize(sf::Vector2f{hitbox.width, hitbox.height});
