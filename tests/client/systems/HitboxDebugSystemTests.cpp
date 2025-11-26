@@ -125,6 +125,4 @@ TEST_F(HitboxDebugSystemTests, HitboxWithOffset)
 
     system->setEnabled(true);
     EXPECT_NO_THROW(system->update(registry));
-
-    // Hitbox should be drawn at (100 + 5, 100 + 5) with size (10, 10)
 }
