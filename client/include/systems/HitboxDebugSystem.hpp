@@ -12,7 +12,6 @@ class HitboxDebugSystem
 
     void update(Registry& registry);
 
-    // Configuration
     void setEnabled(bool enabled);
     void setColor(const sf::Color& color);
     void setThickness(float thickness);
