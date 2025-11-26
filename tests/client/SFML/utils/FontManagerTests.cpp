@@ -1,4 +1,5 @@
 #include "TestAssets.hpp"
+#include "errors/AssetLoadError.hpp"
 #include "graphics/FontManager.hpp"
 
 #include <gtest/gtest.h>
@@ -32,7 +33,7 @@ TEST(FontManager, LoadTwiceReplacesExisting)
 TEST(FontManager, LoadThrowsOnMissingFile)
 {
     FontManager manager;
-    EXPECT_THROW(manager.load("missing", assetPath("fonts/does_not_exist.ttf")), std::runtime_error);
+    EXPECT_THROW(manager.load("missing", assetPath("fonts/does_not_exist.ttf")), AssetLoadError);
 }
 
 TEST(FontManager, GetUnknownReturnsNullptr)
@@ -44,7 +45,7 @@ TEST(FontManager, GetUnknownReturnsNullptr)
 TEST(FontManager, FailedLoadDoesNotInsert)
 {
     FontManager manager;
-    EXPECT_THROW(manager.load("bad", assetPath("fonts/nope.ttf")), std::runtime_error);
+    EXPECT_THROW(manager.load("bad", assetPath("fonts/nope.ttf")), AssetLoadError);
     EXPECT_EQ(manager.get("bad"), nullptr);
 }
 

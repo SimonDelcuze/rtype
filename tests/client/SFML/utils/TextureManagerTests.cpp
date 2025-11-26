@@ -1,4 +1,5 @@
 #include "TestAssets.hpp"
+#include "errors/AssetLoadError.hpp"
 #include "graphics/TextureManager.hpp"
 
 #include <gtest/gtest.h>
@@ -33,7 +34,7 @@ TEST(TextureManager, LoadTwiceReplacesExisting)
 TEST(TextureManager, LoadThrowsOnMissingFile)
 {
     TextureManager manager;
-    EXPECT_THROW(manager.load("missing", assetPath("backgrounds/does_not_exist.png")), std::runtime_error);
+    EXPECT_THROW(manager.load("missing", assetPath("backgrounds/does_not_exist.png")), AssetLoadError);
 }
 
 TEST(TextureManager, GetUnknownReturnsNullptr)
@@ -45,7 +46,7 @@ TEST(TextureManager, GetUnknownReturnsNullptr)
 TEST(TextureManager, FailedLoadDoesNotInsert)
 {
     TextureManager manager;
-    EXPECT_THROW(manager.load("bad", assetPath("backgrounds/nope.png")), std::runtime_error);
+    EXPECT_THROW(manager.load("bad", assetPath("backgrounds/nope.png")), AssetLoadError);
     EXPECT_EQ(manager.get("bad"), nullptr);
 }
 
