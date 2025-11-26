@@ -143,7 +143,6 @@ TEST(SnapshotParser, RejectsTruncatedEntityHeader)
 TEST(SnapshotParser, RejectsMissingFieldData)
 {
     std::vector<std::uint8_t> data;
-    data.push_back(1);
     auto payload = entityPayload(1, 0x001, data);
     auto pkt     = buildSnapshot(1, {payload});
     auto parsed  = SnapshotParser::parse(pkt);
@@ -167,7 +166,7 @@ TEST(SnapshotParser, ParsesMultipleEntities)
     std::vector<std::uint8_t> e2data;
     writeFloat(e2data, -1.0F);
     writeFloat(e2data, 2.0F);
-    auto e2 = entityPayload(20, 0x006, e2data);
+    auto e2 = entityPayload(20, 0x00C, e2data);
 
     auto pkt    = buildSnapshot(2, {e1, e2});
     auto parsed = SnapshotParser::parse(pkt);

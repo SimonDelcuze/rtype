@@ -28,21 +28,21 @@ namespace
         writeU32(out, std::bit_cast<std::uint32_t>(v));
     }
 
-    std::vector<std::uint8_t> makeSnapshotPacket()
-    {
-        PacketHeader h{};
-        h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-        h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+std::vector<std::uint8_t> makeSnapshotPacket()
+{
+    PacketHeader h{};
+    h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
 
         std::vector<std::uint8_t> buf;
         auto hdr = h.encode();
         buf.insert(buf.end(), hdr.begin(), hdr.end());
 
         writeU16(buf, 1);
-        writeU32(buf, 123);
-        writeU16(buf, 0x006);
-        writeFloat(buf, 10.0F);
-        writeFloat(buf, -5.0F);
+    writeU32(buf, 123);
+    writeU16(buf, 0x00C); // posY + velX
+    writeFloat(buf, -5.0F); // posY
+    writeFloat(buf, 10.0F); // velX
 
         std::size_t payloadSize = buf.size() - PacketHeader::kSize;
         buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
