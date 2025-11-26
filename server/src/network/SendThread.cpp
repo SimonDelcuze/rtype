@@ -49,6 +49,16 @@ void SendThread::publish(const DeltaStatePacket& packet)
     latest_ = packet.encode();
 }
 
+void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
+{
+    auto payload = packet.encode();
+    if (!running_)
+        return;
+    for (const auto& c : clients_) {
+        socket_.sendTo(payload.data(), payload.size(), c);
+    }
+}
+
 IpEndpoint SendThread::endpoint() const
 {
     return socket_.localEndpoint();
