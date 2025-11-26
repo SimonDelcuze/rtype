@@ -40,9 +40,9 @@ namespace
 
         writeU16(buf, 1);
         writeU32(buf, 123);
-        writeU16(buf, 0x00C);   // posY + velX
-        writeFloat(buf, -5.0F); // posY
-        writeFloat(buf, 10.0F); // velX
+        writeU16(buf, 0x00C);
+        writeFloat(buf, -5.0F);
+        writeFloat(buf, 10.0F);
 
         std::size_t payloadSize = buf.size() - PacketHeader::kSize;
         buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
