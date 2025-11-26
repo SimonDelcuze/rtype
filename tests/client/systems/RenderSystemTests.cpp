@@ -174,31 +174,26 @@ TEST(RenderSystem, SceneGraphLayeringBackgroundEntitiesHUD)
     sf::Texture texture;
     ASSERT_TRUE(texture.resize({8u, 8u}));
 
-    // Create background entity
     EntityId background = registry.createEntity();
     auto& bgSprite      = registry.emplace<SpriteComponent>(background);
     bgSprite.setTexture(texture);
     registry.emplace<TransformComponent>(background);
     registry.emplace<LayerComponent>(background, LayerComponent::create(RenderLayer::Background));
 
-    // Create entity (default layer)
     EntityId player    = registry.createEntity();
     auto& playerSprite = registry.emplace<SpriteComponent>(player);
     playerSprite.setTexture(texture);
     registry.emplace<TransformComponent>(player);
     registry.emplace<LayerComponent>(player, LayerComponent::create(RenderLayer::Entities));
 
-    // Create HUD entity
     EntityId hud    = registry.createEntity();
     auto& hudSprite = registry.emplace<SpriteComponent>(hud);
     hudSprite.setTexture(texture);
     registry.emplace<TransformComponent>(hud);
     registry.emplace<LayerComponent>(hud, LayerComponent::create(RenderLayer::HUD));
 
-    // Should render in order: Background < Entities < HUD
     EXPECT_NO_THROW(renderSystem.update(registry, 0.0F));
 
-    // Verify layers are in correct order
     auto& bgLayer  = registry.get<LayerComponent>(background);
     auto& plLayer  = registry.get<LayerComponent>(player);
     auto& hudLayer = registry.get<LayerComponent>(hud);
