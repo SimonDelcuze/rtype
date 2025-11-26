@@ -20,5 +20,34 @@
       "path": "sprites/bullet.png",
       "type": "sprite"
     }
+  ],
+  "sounds": [
+    {
+      "id": "laser",
+      "path": "sounds/laser.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "explosion",
+      "path": "sounds/explosion.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "theme_music",
+      "path": "music/theme.ogg",
+      "type": "music"
+    }
+  ],
+  "fonts": [
+    {
+      "id": "ui_font",
+      "path": "fonts/ui.ttf",
+      "type": "ui"
+    },
+    {
+      "id": "score_font",
+      "path": "fonts/score.ttf",
+      "type": "game"
+    }
   ]
 }

@@ -10,6 +10,20 @@ struct TextureEntry
     std::string type;
 };
 
+struct SoundEntry
+{
+    std::string id;
+    std::string path;
+    std::string type;
+};
+
+struct FontEntry
+{
+    std::string id;
+    std::string path;
+    std::string type;
+};
+
 class AssetManifest
 {
   public:
@@ -19,6 +33,14 @@ class AssetManifest
     const std::vector<TextureEntry>& getTextures() const;
     std::vector<TextureEntry> getTexturesByType(const std::string& type) const;
 
+    const std::vector<SoundEntry>& getSounds() const;
+    std::vector<SoundEntry> getSoundsByType(const std::string& type) const;
+
+    const std::vector<FontEntry>& getFonts() const;
+    std::vector<FontEntry> getFontsByType(const std::string& type) const;
+
   private:
     std::vector<TextureEntry> textures_;
+    std::vector<SoundEntry> sounds_;
+    std::vector<FontEntry> fonts_;
 };

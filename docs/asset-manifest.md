@@ -1,10 +1,10 @@
 # Asset Manifest & Loader
 
-The asset manifest system allows you to define all game assets in a JSON file and load them automatically at startup.
+The asset manifest system allows you to define all game assets (textures, sounds, and fonts) in a JSON file and load them automatically at startup.
 
 ## Manifest Format
 
-Create a JSON file (e.g., `assets.json`) describing your textures:
+Create a JSON file (e.g., `assets.json`) describing your assets:
 
 ```json
 {
@@ -18,11 +18,30 @@ Create a JSON file (e.g., `assets.json`) describing your textures:
       "id": "player_ship",
       "path": "sprites/player.png",
       "type": "sprite"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "laser",
+      "path": "sounds/laser.wav",
+      "type": "sfx"
     },
     {
-      "id": "enemy_ship",
-      "path": "sprites/enemy.png",
-      "type": "sprite"
+      "id": "theme_music",
+      "path": "music/theme.ogg",
+      "type": "music"
+    }
+  ],
+  "fonts": [
+    {
+      "id": "ui_font",
+      "path": "fonts/ui.ttf",
+      "type": "ui"
+    },
+    {
+      "id": "score_font",
+      "path": "fonts/score.ttf",
+      "type": "game"
     }
   ]
 }
@@ -30,9 +49,9 @@ Create a JSON file (e.g., `assets.json`) describing your textures:
 
 ### Fields
 
-- **id**: Unique identifier for the texture (used in `TextureManager`)
-- **path**: Relative path to the texture file
-- **type**: Optional categorization ("sprite", "background", etc.)
+- **id**: Unique identifier for the asset (used in `TextureManager`, `SoundManager`, or `FontManager`)
+- **path**: Relative path to the asset file
+- **type**: Optional categorization ("sprite", "background", "sfx", "music", "ui", "game", etc.)
 
 ## Usage
 
@@ -40,16 +59,22 @@ Create a JSON file (e.g., `assets.json`) describing your textures:
 
 ```cpp
 #include "assets/AssetLoader.hpp"
+#include "audio/SoundManager.hpp"
+#include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 
 TextureManager textureManager;
-AssetLoader loader(textureManager);
+SoundManager soundManager;
+FontManager fontManager;
+AssetLoader loader(textureManager, soundManager, fontManager);
 
 // Load all assets from manifest
 loader.loadFromManifestFile("client/assets/assets.json");
 
-// Access loaded textures
+// Access loaded assets
 const sf::Texture* playerTexture = textureManager.get("player_ship");
+const sf::SoundBuffer* laserSound = soundManager.get("laser");
+const sf::Font* uiFont = fontManager.get("ui_font");
 ```
 
 ### Loading with Progress Callback
@@ -65,6 +90,8 @@ loader.loadFromManifestFile("client/assets/assets.json",
 );
 ```
 
+The callback reports progress across all asset types combined (textures, sounds, and fonts).
+
 ### Loading from AssetManifest Object
 
 ```cpp
@@ -76,10 +103,20 @@ AssetManifest manifest = AssetManifest::fromFile("assets.json");
 // Filter by type
 auto sprites = manifest.getTexturesByType("sprite");
 auto backgrounds = manifest.getTexturesByType("background");
+auto sfx = manifest.getSoundsByType("sfx");
+auto uiFonts = manifest.getFontsByType("ui");
 
 // Load only specific types
 for (const auto& entry : sprites) {
     textureManager.load(entry.id, entry.path);
+}
+
+for (const auto& entry : sfx) {
+    soundManager.load(entry.id, entry.path);
+}
+
+for (const auto& entry : uiFonts) {
+    fontManager.load(entry.id, entry.path);
 }
 ```
 
@@ -104,9 +141,29 @@ public:
 
     // Get textures filtered by type
     std::vector<TextureEntry> getTexturesByType(const std::string& type) const;
+
+    // Get all sound entries
+    const std::vector<SoundEntry>& getSounds() const;
+
+    // Get sounds filtered by type
+    std::vector<SoundEntry> getSoundsByType(const std::string& type) const;
 };
 
 struct TextureEntry
+{
+    std::string id;
+    std::string path;
+    std::string type;
+};
+
+struct SoundEntry
+{
+    std::string id;
+    std::string path;
+    std::string type;
+};
+
+struct FontEntry
 {
     std::string id;
     std::string path;
@@ -116,7 +173,7 @@ struct TextureEntry
 
 ### AssetLoader
 
-Loads textures from a manifest into a TextureManager.
+Loads textures, sounds, and fonts from a manifest into their respective managers.
 
 ```cpp
 class AssetLoader
@@ -124,7 +181,7 @@ class AssetLoader
 public:
     using ProgressCallback = std::function<void(std::size_t loaded, std::size_t total, const std::string& currentId)>;
 
-    explicit AssetLoader(TextureManager& textureManager);
+    AssetLoader(TextureManager& textureManager, SoundManager& soundManager, FontManager& fontManager);
 
     // Load from manifest object
     void loadFromManifest(const AssetManifest& manifest);
@@ -136,15 +193,21 @@ public:
 };
 ```
 
+The loader processes textures, sounds, and fonts in sequence, reporting combined progress through the callback.
+
 ## Complete Example
 
 ```cpp
 #include "assets/AssetLoader.hpp"
+#include "audio/SoundManager.hpp"
+#include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 
 int main() {
     TextureManager textureManager;
-    AssetLoader loader(textureManager);
+    SoundManager soundManager;
+    FontManager fontManager;
+    AssetLoader loader(textureManager, soundManager, fontManager);
 
     // Load all assets with progress
     std::cout << "Loading assets...\n";
@@ -154,12 +217,29 @@ int main() {
         }
     );
 
-    std::cout << "Loaded " << textureManager.size() << " textures\n";
+    std::cout << "Loaded " << textureManager.size() << " textures, "
+              << soundManager.size() << " sounds, and "
+              << fontManager.size() << " fonts\n";
 
     // Use textures
     const sf::Texture* player = textureManager.get("player_ship");
     if (player) {
         // Create sprite, etc.
+    }
+
+    // Use sounds
+    const sf::SoundBuffer* laser = soundManager.get("laser");
+    if (laser) {
+        sf::Sound laserSound(*laser);
+        laserSound.play();
+    }
+
+    // Use fonts
+    const sf::Font* uiFont = fontManager.get("ui_font");
+    if (uiFont) {
+        sf::Text scoreText;
+        scoreText.setFont(*uiFont);
+        scoreText.setString("Score: 0");
     }
 
     return 0;
@@ -185,8 +265,9 @@ try {
 
 ## Benefits
 
-1. **Centralized Configuration**: All assets defined in one place
+1. **Centralized Configuration**: All assets (textures, sounds, and fonts) defined in one place
 2. **Easy Maintenance**: Add/remove assets without changing code
-3. **Loading Progress**: Track loading with callbacks
-4. **Type Filtering**: Load only specific asset types
+3. **Loading Progress**: Track loading with callbacks across all asset types
+4. **Type Filtering**: Load only specific asset types (e.g., only sprites, only sfx, only ui fonts)
 5. **Error Handling**: Clear error messages for missing/invalid assets
+6. **Unified Loading**: Single API for textures, sounds, and fonts
