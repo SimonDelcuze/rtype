@@ -1,4 +1,6 @@
 #include "assets/AssetManifest.hpp"
+#include "errors/FileNotFoundError.hpp"
+#include "errors/ManifestParseError.hpp"
 
 #include <gtest/gtest.h>
 
@@ -45,7 +47,7 @@ TEST(AssetManifestTests, FromStringInvalidJsonThrows)
 {
     std::string json = "invalid json {";
 
-    EXPECT_THROW(AssetManifest::fromString(json), std::runtime_error);
+    EXPECT_THROW(AssetManifest::fromString(json), ManifestParseError);
 }
 
 TEST(AssetManifestTests, FromStringMissingIdThrows)
@@ -56,7 +58,7 @@ TEST(AssetManifestTests, FromStringMissingIdThrows)
         ]
     })";
 
-    EXPECT_THROW(AssetManifest::fromString(json), std::runtime_error);
+    EXPECT_THROW(AssetManifest::fromString(json), ManifestParseError);
 }
 
 TEST(AssetManifestTests, FromStringMissingPathThrows)
@@ -67,7 +69,7 @@ TEST(AssetManifestTests, FromStringMissingPathThrows)
         ]
     })";
 
-    EXPECT_THROW(AssetManifest::fromString(json), std::runtime_error);
+    EXPECT_THROW(AssetManifest::fromString(json), ManifestParseError);
 }
 
 TEST(AssetManifestTests, GetTexturesByTypeFiltersCorrectly)
@@ -107,5 +109,5 @@ TEST(AssetManifestTests, GetTexturesByTypeNoMatch)
 
 TEST(AssetManifestTests, FromFileNonexistentThrows)
 {
-    EXPECT_THROW(AssetManifest::fromFile("nonexistent.json"), std::runtime_error);
+    EXPECT_THROW(AssetManifest::fromFile("nonexistent.json"), FileNotFoundError);
 }

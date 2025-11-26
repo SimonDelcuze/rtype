@@ -1,8 +1,10 @@
 #include "assets/AssetManifest.hpp"
 
+#include "errors/FileNotFoundError.hpp"
+#include "errors/ManifestParseError.hpp"
+
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <stdexcept>
 
 using json = nlohmann::json;
 
@@ -10,14 +12,14 @@ AssetManifest AssetManifest::fromFile(const std::string& filepath)
 {
     std::ifstream file(filepath);
     if (!file.is_open()) {
-        throw std::runtime_error("Failed to open asset manifest: " + filepath);
+        throw FileNotFoundError("Failed to open asset manifest: " + filepath);
     }
 
     json j;
     try {
         file >> j;
     } catch (const json::parse_error& e) {
-        throw std::runtime_error("Failed to parse asset manifest: " + std::string(e.what()));
+        throw ManifestParseError("Failed to parse asset manifest: " + std::string(e.what()));
     }
 
     return fromString(j.dump());
@@ -38,7 +40,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
                 entry.type = item.value("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
-                    throw std::runtime_error("Invalid texture entry: missing id or path");
+                    throw ManifestParseError("Invalid texture entry: missing id or path");
                 }
 
                 manifest.textures_.push_back(entry);
@@ -53,7 +55,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
                 entry.type = item.value("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
-                    throw std::runtime_error("Invalid sound entry: missing id or path");
+                    throw ManifestParseError("Invalid sound entry: missing id or path");
                 }
 
                 manifest.sounds_.push_back(entry);
@@ -68,14 +70,14 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
                 entry.type = item.value("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
-                    throw std::runtime_error("Invalid font entry: missing id or path");
+                    throw ManifestParseError("Invalid font entry: missing id or path");
                 }
 
                 manifest.fonts_.push_back(entry);
             }
         }
     } catch (const json::exception& e) {
-        throw std::runtime_error("Failed to parse asset manifest JSON: " + std::string(e.what()));
+        throw ManifestParseError("Failed to parse asset manifest JSON: " + std::string(e.what()));
     }
 
     return manifest;

@@ -1,4 +1,5 @@
 #include "audio/SoundManager.hpp"
+#include "errors/AssetLoadError.hpp"
 
 #include <gtest/gtest.h>
 
@@ -23,7 +24,7 @@ TEST(SoundManagerTests, GetReturnsNullptrForNonexistent)
 TEST(SoundManagerTests, LoadNonexistentFileThrows)
 {
     SoundManager manager;
-    EXPECT_THROW(manager.load("test", "nonexistent_file.wav"), std::runtime_error);
+    EXPECT_THROW(manager.load("test", "nonexistent_file.wav"), AssetLoadError);
     EXPECT_FALSE(manager.has("test"));
 }
 

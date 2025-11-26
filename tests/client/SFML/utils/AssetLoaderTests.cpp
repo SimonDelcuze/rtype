@@ -2,6 +2,8 @@
 #include "assets/AssetLoader.hpp"
 #include "assets/AssetManifest.hpp"
 #include "audio/SoundManager.hpp"
+#include "errors/AssetLoadError.hpp"
+#include "errors/FileNotFoundError.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 
@@ -100,7 +102,7 @@ TEST(AssetLoaderTests, LoadFromManifestInvalidPathThrows)
     })";
 
     AssetManifest manifest = AssetManifest::fromString(json);
-    EXPECT_THROW(loader.loadFromManifest(manifest), std::runtime_error);
+    EXPECT_THROW(loader.loadFromManifest(manifest), AssetLoadError);
 }
 
 TEST(AssetLoaderTests, LoadFromManifestFileNonexistent)
@@ -110,7 +112,7 @@ TEST(AssetLoaderTests, LoadFromManifestFileNonexistent)
     FontManager fontManager;
     AssetLoader loader(textureManager, soundManager, fontManager);
 
-    EXPECT_THROW(loader.loadFromManifestFile("nonexistent.json"), std::runtime_error);
+    EXPECT_THROW(loader.loadFromManifestFile("nonexistent.json"), FileNotFoundError);
 }
 
 TEST(AssetLoaderTests, LoadFromManifestEmptyDoesNotCrash)
