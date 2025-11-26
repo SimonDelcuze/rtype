@@ -16,6 +16,7 @@ enum class MessageType : std::uint8_t
     ClientAcknowledge  = 0x06,
     ClientDisconnect   = 0x07,
     PlayerDisconnected = 0x1C,
+    EntitySpawn        = 0x1D,
     Snapshot           = 0x14,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
