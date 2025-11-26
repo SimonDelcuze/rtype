@@ -1,6 +1,7 @@
 #pragma once
 
 #include "concurrency/ThreadSafeQueue.hpp"
+#include "events/ClientTimeoutEvent.hpp"
 #include "network/InputParser.hpp"
 #include "network/UdpSocket.hpp"
 
@@ -28,7 +29,9 @@ struct ClientState
 class InputReceiveThread
 {
   public:
-    InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue);
+    InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
+                       ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue = nullptr,
+                       std::chrono::milliseconds timeout                 = std::chrono::seconds(5));
     ~InputReceiveThread();
 
     bool start();
@@ -63,10 +66,15 @@ class InputReceiveThread
 
     IpEndpoint bind_;
     ThreadSafeQueue<ReceivedInput>& queue_;
+    ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue_;
+    std::chrono::milliseconds timeout_;
     std::atomic<bool> running_{false};
     std::thread worker_;
     UdpSocket socket_;
     mutable std::mutex sessionMutex_;
     std::unordered_map<EndpointKey, ClientState, EndpointKeyHash> sessions_;
     std::optional<EndpointKey> lastAccepted_;
+    std::chrono::steady_clock::time_point lastTimeoutCheck_{};
+
+    void checkTimeouts(std::chrono::steady_clock::time_point now);
 };
