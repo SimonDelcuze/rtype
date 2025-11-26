@@ -1,5 +1,6 @@
 #include "network/NetworkReceiver.hpp"
 #include "network/PacketHeader.hpp"
+#include "network/SnapshotParser.hpp"
 #include "network/UdpSocket.hpp"
 
 #include <atomic>
