@@ -1,10 +1,12 @@
 #include "audio/SoundManager.hpp"
 
+#include "errors/AssetLoadError.hpp"
+
 const sf::SoundBuffer& SoundManager::load(const std::string& id, const std::string& filepath)
 {
     sf::SoundBuffer buffer;
     if (!buffer.loadFromFile(filepath)) {
-        throw std::runtime_error("Failed to load sound: " + filepath);
+        throw AssetLoadError("Failed to load sound: " + filepath);
     }
     buffers_[id] = std::move(buffer);
     return buffers_.at(id);
