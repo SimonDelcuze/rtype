@@ -30,12 +30,12 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
 
     int count = std::max(0, lives.current);
     for (int i = 0; i < count; ++i) {
-        pip.setPosition(sf::Vector2f{startX + (pipSize + pipSpacing) * static_cast<float>(i), y});
+        pip.setPosition(sf::Vector2f{startX + ((pipSize + pipSpacing) * static_cast<float>(i)), y});
         window_.draw(pip);
     }
 }
 
-void HUDSystem::update(Registry& registry, float)
+void HUDSystem::update(Registry& registry, float /*deltaTime*/)
 {
     for (EntityId entity : registry.view<TransformComponent, TextComponent>()) {
         if (!registry.isAlive(entity)) {

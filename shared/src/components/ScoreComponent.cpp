@@ -1,5 +1,7 @@
 #include "components/ScoreComponent.hpp"
 
+#include <algorithm>
+
 ScoreComponent ScoreComponent::create(int initial)
 {
     ScoreComponent s;
@@ -20,10 +22,7 @@ void ScoreComponent::subtract(int amount)
     if (amount <= 0) {
         return;
     }
-    value -= amount;
-    if (value < 0) {
-        value = 0;
-    }
+    value = std::max(0, value - amount);
 }
 
 void ScoreComponent::reset()
@@ -33,7 +32,7 @@ void ScoreComponent::reset()
 
 void ScoreComponent::set(int newValue)
 {
-    value = newValue < 0 ? 0 : newValue;
+    value = std::max(0, newValue);
 }
 
 bool ScoreComponent::isZero() const

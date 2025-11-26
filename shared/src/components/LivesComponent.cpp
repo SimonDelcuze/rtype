@@ -1,5 +1,7 @@
 #include "components/LivesComponent.hpp"
 
+#include <algorithm>
+
 LivesComponent LivesComponent::create(int currentLives, int maxLives)
 {
     LivesComponent l;
@@ -13,10 +15,7 @@ void LivesComponent::loseLife(int amount)
     if (amount <= 0) {
         return;
     }
-    current -= amount;
-    if (current < 0) {
-        current = 0;
-    }
+    current = std::max(0, current - amount);
 }
 
 void LivesComponent::addLife(int amount)
@@ -24,10 +23,7 @@ void LivesComponent::addLife(int amount)
     if (amount <= 0) {
         return;
     }
-    current += amount;
-    if (current > max) {
-        current = max;
-    }
+    current = std::min(max, current + amount);
 }
 
 void LivesComponent::addExtraLife(int amount)
@@ -41,13 +37,8 @@ void LivesComponent::addExtraLife(int amount)
 
 void LivesComponent::setMax(int newMax)
 {
-    if (newMax < 0) {
-        newMax = 0;
-    }
-    max = newMax;
-    if (current > max) {
-        current = max;
-    }
+    max     = std::max(0, newMax);
+    current = std::min(current, max);
 }
 
 void LivesComponent::resetToMax()

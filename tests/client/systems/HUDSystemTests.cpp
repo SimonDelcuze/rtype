@@ -147,16 +147,18 @@ TEST_F(HUDSystemFixture, MultipleScoreEntitiesEachUpdated)
 {
     EntityId e1 = registry.createEntity();
     registry.emplace<TransformComponent>(e1, TransformComponent::create(0.0F, 0.0F));
-    auto& t1 = registry.emplace<TextComponent>(e1, TextComponent::create("", 20, sf::Color::White));
+    registry.emplace<TextComponent>(e1, TextComponent::create("", 20, sf::Color::White));
     registry.emplace<ScoreComponent>(e1, ScoreComponent::create(10));
 
     EntityId e2 = registry.createEntity();
     registry.emplace<TransformComponent>(e2, TransformComponent::create(0.0F, 0.0F));
-    auto& t2 = registry.emplace<TextComponent>(e2, TextComponent::create("", 20, sf::Color::White));
+    registry.emplace<TextComponent>(e2, TextComponent::create("", 20, sf::Color::White));
     registry.emplace<ScoreComponent>(e2, ScoreComponent::create(20));
 
     system.update(registry, 0.0F);
 
+    auto& t1 = registry.get<TextComponent>(e1);
+    auto& t2 = registry.get<TextComponent>(e2);
     EXPECT_EQ(t1.content, "Score: 10");
     EXPECT_EQ(t2.content, "Score: 20");
 }
@@ -165,16 +167,18 @@ TEST_F(HUDSystemFixture, MixedScoreAndLivesEntities)
 {
     EntityId scoreE = registry.createEntity();
     registry.emplace<TransformComponent>(scoreE, TransformComponent::create(0.0F, 0.0F));
-    auto& tScore = registry.emplace<TextComponent>(scoreE, TextComponent::create("", 20, sf::Color::White));
+    registry.emplace<TextComponent>(scoreE, TextComponent::create("", 20, sf::Color::White));
     registry.emplace<ScoreComponent>(scoreE, ScoreComponent::create(77));
 
     EntityId livesE = registry.createEntity();
     registry.emplace<TransformComponent>(livesE, TransformComponent::create(0.0F, 0.0F));
-    auto& tLives = registry.emplace<TextComponent>(livesE, TextComponent::create("", 20, sf::Color::White));
+    registry.emplace<TextComponent>(livesE, TextComponent::create("", 20, sf::Color::White));
     registry.emplace<LivesComponent>(livesE, LivesComponent::create(2, 4));
 
     system.update(registry, 0.0F);
 
+    auto& tScore = registry.get<TextComponent>(scoreE);
+    auto& tLives = registry.get<TextComponent>(livesE);
     EXPECT_EQ(tScore.content, "Score: 77");
     EXPECT_EQ(tLives.content, "Lives: 2/4");
 }
