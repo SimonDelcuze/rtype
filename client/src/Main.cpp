@@ -2,9 +2,11 @@
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
+#include "network/NetworkReceiver.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
 #include "systems/RenderSystem.hpp"
@@ -12,6 +14,7 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 int main()
 {
@@ -19,6 +22,13 @@ int main()
 
     TextureManager textureManager;
     Registry registry;
+    ThreadSafeQueue<std::vector<std::uint8_t>> snapshotQueue;
+
+    NetworkReceiver receiver(IpEndpoint::v4(0, 0, 0, 0, 50000),
+                             [&](std::vector<std::uint8_t>&& packet) { snapshotQueue.push(std::move(packet)); });
+    if (!receiver.start()) {
+        std::cerr << "Failed to start NetworkReceiver\n";
+    }
 
     EntityId player = registry.createEntity();
 
@@ -38,5 +48,7 @@ int main()
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
 
-    return gameLoop.run(window, registry);
+    int rc = gameLoop.run(window, registry);
+    receiver.stop();
+    return rc;
 }
