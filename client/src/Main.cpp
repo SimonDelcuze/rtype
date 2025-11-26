@@ -44,7 +44,7 @@ int main()
         sprite.setFrameSize(32, 32, 8);
     } catch (const std::exception& e) {
         std::cerr << "Failed to load player texture: " << e.what() << '\n';
-        return 1;   
+        return 1;
     }
 
     registry.emplace<TransformComponent>(player, TransformComponent::create(200.0F, 200.0F));
