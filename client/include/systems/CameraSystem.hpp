@@ -1,0 +1,42 @@
+#pragma once
+
+#include "components/CameraComponent.hpp"
+#include "ecs/Registry.hpp"
+
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/View.hpp>
+
+class CameraSystem
+{
+  public:
+    explicit CameraSystem(sf::RenderWindow& window);
+
+    void update(Registry& registry);
+
+    sf::View& getView();
+
+    const sf::View& getView() const;
+
+    void setWorldBounds(float left, float top, float width, float height);
+
+    void setWorldBoundsEnabled(bool enabled);
+
+    EntityId getActiveCamera() const;
+
+  private:
+    EntityId findActiveCamera(Registry& registry);
+
+    void applyCamera(const CameraComponent& camera);
+
+    void clampToWorldBounds(CameraComponent& camera);
+
+    sf::RenderWindow& window_;
+    sf::View view_;
+    EntityId activeCameraId_{0};
+    sf::Vector2f baseViewSize_;
+    bool worldBoundsEnabled_{false};
+    float worldLeft_{0.0F};
+    float worldTop_{0.0F};
+    float worldWidth_{0.0F};
+    float worldHeight_{0.0F};
+};
