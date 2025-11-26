@@ -59,7 +59,6 @@ void NetworkReceiver::loop()
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
-            // Other errors: keep looping but avoid busy spin.
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
             continue;
         }
