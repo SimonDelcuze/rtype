@@ -1,6 +1,8 @@
 #include "assets/AssetLoader.hpp"
 
-AssetLoader::AssetLoader(TextureManager& textureManager) : textureManager_(textureManager) {}
+AssetLoader::AssetLoader(TextureManager& textureManager, SoundManager& soundManager, FontManager& fontManager)
+    : textureManager_(textureManager), soundManager_(soundManager), fontManager_(fontManager)
+{}
 
 void AssetLoader::loadFromManifest(const AssetManifest& manifest)
 {
@@ -10,11 +12,31 @@ void AssetLoader::loadFromManifest(const AssetManifest& manifest)
 void AssetLoader::loadFromManifest(const AssetManifest& manifest, ProgressCallback callback)
 {
     const auto& textures = manifest.getTextures();
-    std::size_t total    = textures.size();
+    const auto& sounds   = manifest.getSounds();
+    const auto& fonts    = manifest.getFonts();
+    std::size_t total    = textures.size() + sounds.size() + fonts.size();
     std::size_t loaded   = 0;
 
     for (const auto& entry : textures) {
         textureManager_.load(entry.id, entry.path);
+        ++loaded;
+
+        if (callback) {
+            callback(loaded, total, entry.id);
+        }
+    }
+
+    for (const auto& entry : sounds) {
+        soundManager_.load(entry.id, entry.path);
+        ++loaded;
+
+        if (callback) {
+            callback(loaded, total, entry.id);
+        }
+    }
+
+    for (const auto& entry : fonts) {
+        fontManager_.load(entry.id, entry.path);
         ++loaded;
 
         if (callback) {

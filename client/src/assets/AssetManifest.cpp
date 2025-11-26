@@ -44,6 +44,36 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
                 manifest.textures_.push_back(entry);
             }
         }
+
+        if (j.contains("sounds") && j["sounds"].is_array()) {
+            for (const auto& item : j["sounds"]) {
+                SoundEntry entry;
+                entry.id   = item.value("id", "");
+                entry.path = item.value("path", "");
+                entry.type = item.value("type", "");
+
+                if (entry.id.empty() || entry.path.empty()) {
+                    throw std::runtime_error("Invalid sound entry: missing id or path");
+                }
+
+                manifest.sounds_.push_back(entry);
+            }
+        }
+
+        if (j.contains("fonts") && j["fonts"].is_array()) {
+            for (const auto& item : j["fonts"]) {
+                FontEntry entry;
+                entry.id   = item.value("id", "");
+                entry.path = item.value("path", "");
+                entry.type = item.value("type", "");
+
+                if (entry.id.empty() || entry.path.empty()) {
+                    throw std::runtime_error("Invalid font entry: missing id or path");
+                }
+
+                manifest.fonts_.push_back(entry);
+            }
+        }
     } catch (const json::exception& e) {
         throw std::runtime_error("Failed to parse asset manifest JSON: " + std::string(e.what()));
     }
@@ -60,6 +90,38 @@ std::vector<TextureEntry> AssetManifest::getTexturesByType(const std::string& ty
 {
     std::vector<TextureEntry> result;
     for (const auto& entry : textures_) {
+        if (entry.type == type) {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+const std::vector<SoundEntry>& AssetManifest::getSounds() const
+{
+    return sounds_;
+}
+
+std::vector<SoundEntry> AssetManifest::getSoundsByType(const std::string& type) const
+{
+    std::vector<SoundEntry> result;
+    for (const auto& entry : sounds_) {
+        if (entry.type == type) {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+const std::vector<FontEntry>& AssetManifest::getFonts() const
+{
+    return fonts_;
+}
+
+std::vector<FontEntry> AssetManifest::getFontsByType(const std::string& type) const
+{
+    std::vector<FontEntry> result;
+    for (const auto& entry : fonts_) {
         if (entry.type == type) {
             result.push_back(entry);
         }
