@@ -10,12 +10,12 @@ if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
     cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 fi
 
-files=$(rg --files -g '*.{cpp,hpp}' "$PROJECT_ROOT/client" "$PROJECT_ROOT/server" "$PROJECT_ROOT/shared")
+BASE_REF="${LINT_BASE_REF:-origin/main}"
+changed_files=$(git diff --name-only "${BASE_REF}"...HEAD -- '*.cpp' '*.hpp')
 
-if [ -z "$files" ]; then
-    echo "[lint.sh] No file to check."
+if [ -z "$changed_files" ]; then
+    echo "[lint.sh] No changed C++ files to lint (base=${BASE_REF})."
     exit 0
 fi
 
-# Only lint production code; tests are excluded from the file list.
-clang-tidy -p "$BUILD_DIR" --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet $files
+clang-tidy -p "$BUILD_DIR" --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet $changed_files
