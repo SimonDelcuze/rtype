@@ -1,24 +1,24 @@
 #include "input/InputSystem.hpp"
 
-InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY)
+InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
+                         float& posY)
     : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY)
-{
-}
+{}
 
 void InputSystem::initialize() {}
 
 void InputSystem::update(Registry& registry, float)
 {
-    (void)registry;
+    (void) registry;
     auto flags = mapper_->pollFlags();
     if (flags == 0) {
         return;
     }
 
-    const bool left = (flags & InputMapper::LeftFlag) != 0;
+    const bool left  = (flags & InputMapper::LeftFlag) != 0;
     const bool right = (flags & InputMapper::RightFlag) != 0;
-    const bool up = (flags & InputMapper::UpFlag) != 0;
-    const bool down = (flags & InputMapper::DownFlag) != 0;
+    const bool up    = (flags & InputMapper::UpFlag) != 0;
+    const bool down  = (flags & InputMapper::DownFlag) != 0;
 
     float angle = 0.0F;
     if (left && up) {

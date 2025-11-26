@@ -1,19 +1,21 @@
+#include "components/TransformComponent.hpp"
+#include "ecs/Registry.hpp"
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
 #include "input/InputSystem.hpp"
-
-#include "components/TransformComponent.hpp"
-#include "ecs/Registry.hpp"
 
 #include <gtest/gtest.h>
 
 namespace
 {
-struct FakeMapper : public InputMapper
-{
-    std::uint16_t nextFlags = 0;
-    std::uint16_t pollFlags() const override { return nextFlags; }
-};
+    struct FakeMapper : public InputMapper
+    {
+        std::uint16_t nextFlags = 0;
+        std::uint16_t pollFlags() const override
+        {
+            return nextFlags;
+        }
+    };
 } // namespace
 
 TEST(InputSystem, DoesNothingWhenNoFlags)
@@ -34,7 +36,7 @@ TEST(InputSystem, EnqueuesCommandWithSequenceAndPos)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::UpFlag;
+    mapper.nextFlags  = InputMapper::UpFlag;
     std::uint32_t seq = 5;
     float x = 10.0F, y = 20.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -53,7 +55,7 @@ TEST(InputSystem, IncrementsSequenceEachPush)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::RightFlag;
+    mapper.nextFlags  = InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -72,7 +74,7 @@ TEST(InputSystem, SetsLeftAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::LeftFlag;
+    mapper.nextFlags  = InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -87,7 +89,7 @@ TEST(InputSystem, SetsRightAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::RightFlag;
+    mapper.nextFlags  = InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -102,7 +104,7 @@ TEST(InputSystem, SetsUpAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::UpFlag;
+    mapper.nextFlags  = InputMapper::UpFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -117,7 +119,7 @@ TEST(InputSystem, SetsDownAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::DownFlag;
+    mapper.nextFlags  = InputMapper::DownFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -132,7 +134,7 @@ TEST(InputSystem, SetsDiagonalUpLeftAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::UpFlag | InputMapper::LeftFlag;
+    mapper.nextFlags  = InputMapper::UpFlag | InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -147,7 +149,7 @@ TEST(InputSystem, SetsDiagonalDownRightAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::DownFlag | InputMapper::RightFlag;
+    mapper.nextFlags  = InputMapper::DownFlag | InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);
@@ -162,7 +164,7 @@ TEST(InputSystem, FireOnlyKeepsDefaultAngle)
 {
     InputBuffer buffer;
     FakeMapper mapper;
-    mapper.nextFlags = InputMapper::FireFlag;
+    mapper.nextFlags  = InputMapper::FireFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
     InputSystem sys(buffer, mapper, seq, x, y);

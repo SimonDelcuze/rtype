@@ -59,13 +59,14 @@ TEST(InputBuffer, PreservesOrderMultipleElements)
 TEST(InputBuffer, ThreadSafetyPushFromMultipleThreads)
 {
     InputBuffer buf;
-    const int threads = 4;
+    const int threads   = 4;
     const int perThread = 10;
     std::vector<std::thread> workers;
     for (int t = 0; t < threads; ++t) {
         workers.emplace_back([&buf, t, perThread]() {
             for (int i = 0; i < perThread; ++i) {
-                buf.push(InputCommand{.flags = static_cast<std::uint16_t>(t), .sequenceId = static_cast<std::uint32_t>(t * perThread + i)});
+                buf.push(InputCommand{.flags      = static_cast<std::uint16_t>(t),
+                                      .sequenceId = static_cast<std::uint32_t>(t * perThread + i)});
             }
         });
     }
