@@ -3,12 +3,6 @@
 #include <errors/IError.hpp>
 #include <string>
 
-/**
- * @brief Exception thrown when rendering operations fail
- *
- * Used by rendering systems when window creation, rendering, or graphics
- * operations fail.
- */
 class RenderError : public IError
 {
   public:
