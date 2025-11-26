@@ -12,61 +12,62 @@
 
 namespace
 {
-std::vector<std::uint8_t> makeSnapshotPacket(std::uint16_t sequenceId = 1, std::uint32_t tickId = 42, bool withCrc = true)
-{
-    PacketHeader h{};
-    h.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    h.messageType  = static_cast<std::uint8_t>(MessageType::Snapshot);
-    h.sequenceId   = sequenceId;
-    h.tickId       = tickId;
-    h.payloadSize  = 2;
-    auto hdr       = h.encode();
-    std::vector<std::uint8_t> buf(hdr.begin(), hdr.end());
-    buf.push_back(0);
-    buf.push_back(0);
-    if (withCrc) {
-        std::uint32_t crc = PacketHeader::crc32(buf.data(), buf.size());
-        buf.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
-        buf.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
-        buf.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
-        buf.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+    std::vector<std::uint8_t> makeSnapshotPacket(std::uint16_t sequenceId = 1, std::uint32_t tickId = 42,
+                                                 bool withCrc = true)
+    {
+        PacketHeader h{};
+        h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+        h.sequenceId  = sequenceId;
+        h.tickId      = tickId;
+        h.payloadSize = 2;
+        auto hdr      = h.encode();
+        std::vector<std::uint8_t> buf(hdr.begin(), hdr.end());
+        buf.push_back(0);
+        buf.push_back(0);
+        if (withCrc) {
+            std::uint32_t crc = PacketHeader::crc32(buf.data(), buf.size());
+            buf.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+            buf.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+            buf.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+            buf.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+        }
+        return buf;
     }
-    return buf;
-}
 
-std::vector<std::uint8_t> makeNonSnapshotPacket()
-{
-    PacketHeader h{};
-    h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    h.messageType = static_cast<std::uint8_t>(MessageType::Input);
-    h.sequenceId  = 1;
-    h.tickId      = 1;
-    h.payloadSize = 0;
-    auto hdr      = h.encode();
-    return std::vector<std::uint8_t>(hdr.begin(), hdr.end());
-}
-
-std::vector<std::uint8_t> makeClientToServerPacket()
-{
-    PacketHeader h{};
-    h.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
-    h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
-    h.sequenceId  = 1;
-    h.tickId      = 1;
-    h.payloadSize = 0;
-    auto hdr      = h.encode();
-    return std::vector<std::uint8_t>(hdr.begin(), hdr.end());
-}
-
-bool sendPacket(const std::vector<std::uint8_t>& data, const IpEndpoint& dst)
-{
-    UdpSocket sender;
-    if (!sender.open(IpEndpoint::v4(0, 0, 0, 0, 0))) {
-        return false;
+    std::vector<std::uint8_t> makeNonSnapshotPacket()
+    {
+        PacketHeader h{};
+        h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        h.messageType = static_cast<std::uint8_t>(MessageType::Input);
+        h.sequenceId  = 1;
+        h.tickId      = 1;
+        h.payloadSize = 0;
+        auto hdr      = h.encode();
+        return std::vector<std::uint8_t>(hdr.begin(), hdr.end());
     }
-    auto res = sender.sendTo(data.data(), data.size(), dst);
-    return res.ok();
-}
+
+    std::vector<std::uint8_t> makeClientToServerPacket()
+    {
+        PacketHeader h{};
+        h.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+        h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+        h.sequenceId  = 1;
+        h.tickId      = 1;
+        h.payloadSize = 0;
+        auto hdr      = h.encode();
+        return std::vector<std::uint8_t>(hdr.begin(), hdr.end());
+    }
+
+    bool sendPacket(const std::vector<std::uint8_t>& data, const IpEndpoint& dst)
+    {
+        UdpSocket sender;
+        if (!sender.open(IpEndpoint::v4(0, 0, 0, 0, 0))) {
+            return false;
+        }
+        auto res = sender.sendTo(data.data(), data.size(), dst);
+        return res.ok();
+    }
 } // namespace
 
 TEST(NetworkReceiver, ReceivesSnapshotPacketWithCrc)
@@ -76,7 +77,7 @@ TEST(NetworkReceiver, ReceivesSnapshotPacketWithCrc)
     std::condition_variable cv;
 
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
         cv.notify_one();
     });
@@ -100,7 +101,7 @@ TEST(NetworkReceiver, IgnoresNonSnapshotPacket)
     std::atomic<int> count{0};
 
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
 
@@ -124,7 +125,7 @@ TEST(NetworkReceiver, ReceivesSnapshotWithoutCrc)
     std::condition_variable cv;
 
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
         cv.notify_one();
     });
@@ -147,7 +148,7 @@ TEST(NetworkReceiver, IgnoresClientToServerPacket)
 {
     std::atomic<int> count{0};
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
     ASSERT_TRUE(rx.start());
@@ -167,7 +168,7 @@ TEST(NetworkReceiver, IgnoresInvalidMagic)
 {
     std::atomic<int> count{0};
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
     ASSERT_TRUE(rx.start());
@@ -188,7 +189,7 @@ TEST(NetworkReceiver, IgnoresInvalidVersion)
 {
     std::atomic<int> count{0};
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
     ASSERT_TRUE(rx.start());
@@ -196,7 +197,7 @@ TEST(NetworkReceiver, IgnoresInvalidVersion)
     ASSERT_NE(ep.port, 0);
 
     auto data = makeSnapshotPacket();
-    data[4] = static_cast<std::uint8_t>(PacketHeader::kProtocolVersion + 1);
+    data[4]   = static_cast<std::uint8_t>(PacketHeader::kProtocolVersion + 1);
     ASSERT_TRUE(sendPacket(data, ep));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -209,7 +210,7 @@ TEST(NetworkReceiver, IgnoresTruncatedHeader)
 {
     std::atomic<int> count{0};
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
     ASSERT_TRUE(rx.start());
@@ -230,7 +231,7 @@ TEST(NetworkReceiver, IgnoresPayloadSmallerThanDeclared)
 {
     std::atomic<int> count{0};
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
     });
     ASSERT_TRUE(rx.start());
@@ -238,12 +239,12 @@ TEST(NetworkReceiver, IgnoresPayloadSmallerThanDeclared)
     ASSERT_NE(ep.port, 0);
 
     PacketHeader h{};
-    h.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    h.messageType  = static_cast<std::uint8_t>(MessageType::Snapshot);
-    h.payloadSize  = 10;
-    h.sequenceId   = 1;
-    h.tickId       = 1;
-    auto hdr       = h.encode();
+    h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    h.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+    h.payloadSize = 10;
+    h.sequenceId  = 1;
+    h.tickId      = 1;
+    auto hdr      = h.encode();
     std::vector<std::uint8_t> data(hdr.begin(), hdr.end());
 
     ASSERT_TRUE(sendPacket(data, ep));
@@ -288,7 +289,7 @@ TEST(NetworkReceiver, ReceivesMultiplePackets)
     std::condition_variable cv;
 
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
-        (void)pkt;
+        (void) pkt;
         ++count;
         cv.notify_one();
     });

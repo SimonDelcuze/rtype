@@ -6,8 +6,7 @@
 
 NetworkReceiver::NetworkReceiver(const IpEndpoint& bindEndpoint, SnapshotHandler handler)
     : bindEndpoint_(bindEndpoint), handler_(std::move(handler))
-{
-}
+{}
 
 NetworkReceiver::~NetworkReceiver()
 {
@@ -24,8 +23,8 @@ bool NetworkReceiver::start()
         return false;
     }
     actualEndpoint_ = socket_.localEndpoint();
-    running_ = true;
-    thread_  = std::thread(&NetworkReceiver::loop, this);
+    running_        = true;
+    thread_         = std::thread(&NetworkReceiver::loop, this);
     return true;
 }
 
