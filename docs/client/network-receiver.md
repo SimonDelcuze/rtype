@@ -21,12 +21,15 @@ The client spawns a dedicated UDP receive thread that listens for server snapsho
 ## Integration example
 ```cpp
 ThreadSafeQueue<std::vector<std::uint8_t>> snapshotQueue;
+ThreadSafeQueue<SnapshotParseResult> parsedSnapshots;
 NetworkReceiver receiver(IpEndpoint::v4(0, 0, 0, 0, 50000),
     [&](std::vector<std::uint8_t>&& pkt) { snapshotQueue.push(std::move(pkt)); });
 receiver.start();
-// Game loop...
+NetworkMessageHandler handler(snapshotQueue, parsedSnapshots);
+// Game loop: handler.poll() in a system to dispatch to parsedSnapshots
 receiver.stop();
 ```
 
 ## Tests
 - `tests/client/network/NetworkReceiverTests.cpp` covers acceptance, filtering, trimming, and robustness (invalid magic/version, wrong packet type/message type, truncated header, short payload, multiple packets).
+- `tests/client/network/NetworkMessageHandlerTests.cpp` checks that the main-thread handler dispatches snapshots to the parsed queue and ignores invalid/non-snapshot packets.
