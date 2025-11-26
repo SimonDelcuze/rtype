@@ -108,7 +108,7 @@ TEST_F(HUDSystemFixture, UpdatesContentEachFrame)
 {
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
+    auto& text  = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
     auto& score = registry.emplace<ScoreComponent>(e, ScoreComponent::create(0));
 
     system.update(registry, 0.0F);
@@ -183,7 +183,7 @@ TEST_F(HUDSystemFixture, TextWithoutScoreOrLivesUnchanged)
 {
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
+    auto& text   = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
     text.content = "Static";
 
     system.update(registry, 0.0F);
@@ -215,7 +215,7 @@ TEST_F(HUDSystemFixture, UpdatesAfterLivesChange)
 {
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
+    auto& text  = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
     auto& lives = registry.emplace<LivesComponent>(e, LivesComponent::create(3, 3));
 
     system.update(registry, 0.0F);
@@ -230,7 +230,7 @@ TEST_F(HUDSystemFixture, UpdatesAfterScoreChange)
 {
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
+    auto& text  = registry.emplace<TextComponent>(e, TextComponent::create("", 20, sf::Color::White));
     auto& score = registry.emplace<ScoreComponent>(e, ScoreComponent::create(0));
 
     system.update(registry, 0.0F);

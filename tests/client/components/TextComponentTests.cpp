@@ -26,7 +26,7 @@ TEST(TextComponent, CreateSetsFields)
 
 TEST(TextComponent, CopyPreservesValues)
 {
-    auto original = TextComponent::create("hud", 18, sf::Color::Green);
+    auto original    = TextComponent::create("hud", 18, sf::Color::Green);
     original.content = "Hello";
     TextComponent copy(original);
 
@@ -39,10 +39,10 @@ TEST(TextComponent, CopyPreservesValues)
 
 TEST(TextComponent, AssignmentPreservesValues)
 {
-    auto a = TextComponent::create("a", 12, sf::Color::Blue);
-    a.content = "A";
+    auto a          = TextComponent::create("a", 12, sf::Color::Blue);
+    a.content       = "A";
     TextComponent b = TextComponent::create("b", 14, sf::Color::Red);
-    b.content        = "B";
+    b.content       = "B";
 
     b = a;
 
@@ -130,8 +130,8 @@ TEST(TextComponent, ResetRestoresDefaults)
 
 TEST(TextComponent, MultipleInstancesIndependent)
 {
-    auto a = TextComponent::create("a", 10, sf::Color::Red);
-    auto b = TextComponent::create("b", 20, sf::Color::Blue);
+    auto a    = TextComponent::create("a", 10, sf::Color::Red);
+    auto b    = TextComponent::create("b", 20, sf::Color::Blue);
     a.content = "X";
     b.content = "Y";
 
