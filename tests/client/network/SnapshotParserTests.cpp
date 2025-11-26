@@ -65,15 +65,15 @@ namespace
 TEST(SnapshotParser, ParsesSingleEntityWithFields)
 {
     std::vector<std::uint8_t> data;
-    data.push_back(7);        // entity type
-    writeFloat(data, 1.5F);   // posX
-    writeFloat(data, -2.5F);  // posY
-    writeFloat(data, 0.5F);   // velX
-    writeFloat(data, -0.25F); // velY
-    writeU16(data, 50);       // health
-    data.push_back(3);        // status
-    writeFloat(data, 0.1F);   // orientation
-    data.push_back(1);        // dead
+    data.push_back(7);
+    writeFloat(data, 1.5F);
+    writeFloat(data, -2.5F);
+    writeFloat(data, 0.5F);
+    writeFloat(data, -0.25F);
+    writeU16(data, 50);
+    data.push_back(3);
+    writeFloat(data, 0.1F);
+    data.push_back(1);
 
     auto payload = entityPayload(42, 0x1FF, data);
     auto pkt     = buildSnapshot(1, {payload});
@@ -134,7 +134,7 @@ TEST(SnapshotParser, ParsesZeroEntities)
 TEST(SnapshotParser, RejectsTruncatedEntityHeader)
 {
     auto payload = entityPayload(1, 0xFFFF, {});
-    payload.resize(5); // truncate
+    payload.resize(5);
     auto pkt    = buildSnapshot(1, {payload});
     auto parsed = SnapshotParser::parse(pkt);
     EXPECT_FALSE(parsed.has_value());
@@ -143,7 +143,7 @@ TEST(SnapshotParser, RejectsTruncatedEntityHeader)
 TEST(SnapshotParser, RejectsMissingFieldData)
 {
     std::vector<std::uint8_t> data;
-    data.push_back(1); // type present, but no actual type byte
+    data.push_back(1);
     auto payload = entityPayload(1, 0x001, data);
     auto pkt     = buildSnapshot(1, {payload});
     auto parsed  = SnapshotParser::parse(pkt);
@@ -152,7 +152,7 @@ TEST(SnapshotParser, RejectsMissingFieldData)
 
 TEST(SnapshotParser, RejectsPayloadTooShortForCount)
 {
-    auto pkt    = buildSnapshot(2, {}); // declares 2, provides none
+    auto pkt    = buildSnapshot(2, {});
     auto parsed = SnapshotParser::parse(pkt);
     EXPECT_FALSE(parsed.has_value());
 }
@@ -162,12 +162,12 @@ TEST(SnapshotParser, ParsesMultipleEntities)
     std::vector<std::uint8_t> e1data;
     e1data.push_back(2);
     writeFloat(e1data, 10.0F);
-    auto e1 = entityPayload(10, 0x003, e1data); // type + posX
+    auto e1 = entityPayload(10, 0x003, e1data);
 
     std::vector<std::uint8_t> e2data;
     writeFloat(e2data, -1.0F);
     writeFloat(e2data, 2.0F);
-    auto e2 = entityPayload(20, 0x006, e2data); // posY + velX
+    auto e2 = entityPayload(20, 0x006, e2data);
 
     auto pkt    = buildSnapshot(2, {e1, e2});
     auto parsed = SnapshotParser::parse(pkt);
