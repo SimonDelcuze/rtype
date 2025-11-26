@@ -8,11 +8,16 @@ namespace
     {
         float x = 0.0F;
         float y = 0.0F;
+
+        Position() = default;
+        Position(float xVal, float yVal) : x(xVal), y(yVal) {}
     };
 
     struct Health
     {
         int value = 100;
+
+        explicit Health(int v) : value(v) {}
     };
 } // namespace
 TEST(Registry, CreatesAndReusesEntityIds)
@@ -49,7 +54,7 @@ TEST(Registry, DestroyEntityRemovesComponents)
     Registry registry;
     const EntityId entity = registry.createEntity();
     registry.emplace<Position>(entity, 1.0F, 2.0F);
-    registry.emplace<Health>(entity, 50);
+    registry.emplace<Health>(entity, Health{50});
 
     registry.destroyEntity(entity);
     EXPECT_FALSE(registry.isAlive(entity));
