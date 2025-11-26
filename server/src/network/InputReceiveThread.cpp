@@ -1,12 +1,35 @@
 #include "network/InputReceiveThread.hpp"
 
+#include "Logger.hpp"
+
 #include <array>
 #include <chrono>
+#include <sstream>
+#include <string>
 #include <thread>
 
 namespace
 {
     constexpr std::chrono::milliseconds kPollDelay(1);
+    std::string endpointToString(const IpEndpoint& ep)
+    {
+        std::ostringstream ss;
+        ss << static_cast<int>(ep.addr[0]) << '.' << static_cast<int>(ep.addr[1]) << '.'
+           << static_cast<int>(ep.addr[2]) << '.' << static_cast<int>(ep.addr[3]) << ':' << ep.port;
+        return ss.str();
+    }
+    std::string parseStatusToString(InputParseStatus status)
+    {
+        switch (status) {
+        case InputParseStatus::Ok:
+            return "ok";
+        case InputParseStatus::DecodeFailed:
+            return "decode_failed";
+        case InputParseStatus::InvalidFlags:
+            return "invalid_flags";
+        }
+        return "unknown";
+    }
 }
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue)
@@ -81,21 +104,28 @@ void InputReceiveThread::run()
             continue;
         }
         auto parsed = parseInputPacket(buf.data(), r.size);
-        if (!parsed)
+        if (!parsed.input) {
+            Logger::instance().warn("input_drop status=" + parseStatusToString(parsed.status) +
+                                    " from=" + endpointToString(src) + " size=" + std::to_string(r.size));
             continue;
+        }
         auto now = std::chrono::steady_clock::now();
         EndpointKey key{src.addr, src.port};
         {
             std::lock_guard<std::mutex> lock(sessionMutex_);
             auto it = sessions_.find(key);
-            if (it != sessions_.end() && parsed->sequenceId <= it->second.lastSequenceId)
+            if (it != sessions_.end() && parsed.input->sequenceId <= it->second.lastSequenceId) {
+                Logger::instance().warn("input_drop status=stale_sequence from=" + endpointToString(src) +
+                                        " seq=" + std::to_string(parsed.input->sequenceId) +
+                                        " last=" + std::to_string(it->second.lastSequenceId));
                 continue;
+            }
             auto& state          = sessions_[key];
-            state.lastSequenceId = parsed->sequenceId;
+            state.lastSequenceId = parsed.input->sequenceId;
             state.lastPacketTime = now;
             lastAccepted_        = key;
         }
-        ReceivedInput ev{*parsed, src};
+        ReceivedInput ev{*parsed.input, src};
         queue_.push(std::move(ev));
     }
 }
