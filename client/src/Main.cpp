@@ -12,6 +12,7 @@
 #include "systems/AnimationSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
+#include "systems/ReplicationSystem.hpp"
 
 #include <SFML/Window/VideoMode.hpp>
 #include <iostream>
@@ -50,6 +51,7 @@ int main()
     registry.emplace<AnimationComponent>(player, AnimationComponent::create(8, 0.1F));
     registry.emplace<LayerComponent>(player, LayerComponent::create(0));
     GameLoop gameLoop;
+    gameLoop.addSystem(std::make_shared<ReplicationSystem>(parsedSnapshots));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(messageHandler));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
