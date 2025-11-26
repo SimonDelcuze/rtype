@@ -1,9 +1,9 @@
 #include "network/InputReceiveThread.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <cmath>
 #include <gtest/gtest.h>
 #include <limits>
 #include <optional>
