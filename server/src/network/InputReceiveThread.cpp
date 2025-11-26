@@ -14,23 +14,23 @@ namespace
     std::string endpointToString(const IpEndpoint& ep)
     {
         std::ostringstream ss;
-        ss << static_cast<int>(ep.addr[0]) << '.' << static_cast<int>(ep.addr[1]) << '.'
-           << static_cast<int>(ep.addr[2]) << '.' << static_cast<int>(ep.addr[3]) << ':' << ep.port;
+        ss << static_cast<int>(ep.addr[0]) << '.' << static_cast<int>(ep.addr[1]) << '.' << static_cast<int>(ep.addr[2])
+           << '.' << static_cast<int>(ep.addr[3]) << ':' << ep.port;
         return ss.str();
     }
     std::string parseStatusToString(InputParseStatus status)
     {
         switch (status) {
-        case InputParseStatus::Ok:
-            return "ok";
-        case InputParseStatus::DecodeFailed:
-            return "decode_failed";
-        case InputParseStatus::InvalidFlags:
-            return "invalid_flags";
+            case InputParseStatus::Ok:
+                return "ok";
+            case InputParseStatus::DecodeFailed:
+                return "decode_failed";
+            case InputParseStatus::InvalidFlags:
+                return "invalid_flags";
         }
         return "unknown";
     }
-}
+} // namespace
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue)
     : bind_(bindTo), queue_(outQueue)
