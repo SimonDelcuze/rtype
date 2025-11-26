@@ -1,13 +1,14 @@
 #include "graphics/TextureManager.hpp"
 
-#include <stdexcept>
+#include "errors/AssetLoadError.hpp"
+
 #include <utility>
 
 const sf::Texture& TextureManager::load(const std::string& id, const std::string& path)
 {
     sf::Texture texture{};
     if (!texture.loadFromFile(path)) {
-        throw std::runtime_error("Failed to load texture at path: " + path);
+        throw AssetLoadError("Failed to load texture at path: " + path);
     }
     const auto it = textures_.find(id);
     if (it != textures_.end()) {

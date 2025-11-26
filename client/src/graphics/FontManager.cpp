@@ -1,13 +1,14 @@
 #include "graphics/FontManager.hpp"
 
-#include <stdexcept>
+#include "errors/AssetLoadError.hpp"
+
 #include <utility>
 
 const sf::Font& FontManager::load(const std::string& id, const std::string& path)
 {
     sf::Font font{};
     if (!font.openFromFile(path)) {
-        throw std::runtime_error("Failed to load font at path: " + path);
+        throw AssetLoadError("Failed to load font at path: " + path);
     }
     const auto it = fonts_.find(id);
     if (it != fonts_.end()) {
