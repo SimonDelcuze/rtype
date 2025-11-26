@@ -63,7 +63,6 @@ TEST_F(HUDSystemFixture, SkipsEntityWithoutTransform)
 
     system.update(registry, 0.0F);
 
-    // Not in the view, so untouched
     EXPECT_EQ(registry.get<TextComponent>(e).content, "");
 }
 
