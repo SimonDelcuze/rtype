@@ -8,6 +8,7 @@ It defines the fixed-size packet header shared by all messages and explains the 
 ## **Contents**
 
 - [Packet Header](packet-header.md)
+- [Delta-State Packet](delta-state.md)
 
 ***
 
@@ -17,4 +18,3 @@ It defines the fixed-size packet header shared by all messages and explains the 
 - Deterministic, big-endian (network order) encoding
 - Cross-platform and compiler-agnostic representation
 - Simple encode/decode without dynamic allocation
-
