@@ -2,9 +2,10 @@
 
 #include <gtest/gtest.h>
 
-TEST(LayerComponent, DefaultLayerIsZero)
+TEST(LayerComponent, DefaultLayerIsEntities)
 {
     LayerComponent layer;
+    EXPECT_EQ(layer.layer, RenderLayer::Entities);
     EXPECT_EQ(layer.layer, 0);
 }
 
@@ -46,4 +47,25 @@ TEST(LayerComponent, InstancesAreIndependent)
     a.layer = 99;
     EXPECT_EQ(a.layer, 99);
     EXPECT_EQ(b.layer, 4);
+}
+
+TEST(LayerComponent, RenderLayerConstants)
+{
+    EXPECT_LT(RenderLayer::Background, RenderLayer::Entities);
+    EXPECT_LT(RenderLayer::Midground, RenderLayer::Entities);
+    EXPECT_LT(RenderLayer::Entities, RenderLayer::Effects);
+    EXPECT_LT(RenderLayer::Effects, RenderLayer::UI);
+    EXPECT_LT(RenderLayer::UI, RenderLayer::HUD);
+    EXPECT_LT(RenderLayer::HUD, RenderLayer::Debug);
+}
+
+TEST(LayerComponent, CreateWithRenderLayerConstants)
+{
+    auto background = LayerComponent::create(RenderLayer::Background);
+    auto entities   = LayerComponent::create(RenderLayer::Entities);
+    auto hud        = LayerComponent::create(RenderLayer::HUD);
+
+    EXPECT_EQ(background.layer, -100);
+    EXPECT_EQ(entities.layer, 0);
+    EXPECT_EQ(hud.layer, 150);
 }
