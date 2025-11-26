@@ -4,7 +4,7 @@
 
 namespace
 {
-constexpr std::uint16_t allowedFlags =
+    constexpr std::uint16_t allowedFlags =
         static_cast<std::uint16_t>(InputFlag::MoveUp) | static_cast<std::uint16_t>(InputFlag::MoveDown) |
         static_cast<std::uint16_t>(InputFlag::MoveLeft) | static_cast<std::uint16_t>(InputFlag::MoveRight) |
         static_cast<std::uint16_t>(InputFlag::Fire);
