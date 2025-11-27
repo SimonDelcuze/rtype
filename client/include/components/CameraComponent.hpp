@@ -1,5 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <limits>
+
+using EntityId = std::uint32_t;
+
 struct CameraComponent
 {
     float x        = 0.0F;
@@ -9,6 +14,10 @@ struct CameraComponent
     float offsetY  = 0.0F;
     float rotation = 0.0F;
     bool active    = true;
+
+    EntityId targetEntity  = std::numeric_limits<EntityId>::max();
+    float followSmoothness = 5.0F;
+    bool followEnabled     = false;
 
     static CameraComponent create(float x, float y, float zoom = 1.0F);
 
@@ -27,6 +36,10 @@ struct CameraComponent
     void reset();
 
     void clampZoom(float minZoom, float maxZoom);
+
+    void setTarget(EntityId entity, float smoothness = 5.0F);
+
+    void clearTarget();
 };
 
 inline CameraComponent CameraComponent::create(float x, float y, float zoom)
@@ -75,12 +88,15 @@ inline void CameraComponent::rotate(float degrees)
 
 inline void CameraComponent::reset()
 {
-    x        = 0.0F;
-    y        = 0.0F;
-    zoom     = 1.0F;
-    offsetX  = 0.0F;
-    offsetY  = 0.0F;
-    rotation = 0.0F;
+    x                = 0.0F;
+    y                = 0.0F;
+    zoom             = 1.0F;
+    offsetX          = 0.0F;
+    offsetY          = 0.0F;
+    rotation         = 0.0F;
+    targetEntity     = std::numeric_limits<EntityId>::max();
+    followSmoothness = 5.0F;
+    followEnabled    = false;
 }
 
 inline void CameraComponent::clampZoom(float minZoom, float maxZoom)
@@ -90,4 +106,17 @@ inline void CameraComponent::clampZoom(float minZoom, float maxZoom)
     } else if (zoom > maxZoom) {
         zoom = maxZoom;
     }
+}
+
+inline void CameraComponent::setTarget(EntityId entity, float smoothness)
+{
+    targetEntity     = entity;
+    followSmoothness = smoothness;
+    followEnabled    = true;
+}
+
+inline void CameraComponent::clearTarget()
+{
+    targetEntity  = std::numeric_limits<EntityId>::max();
+    followEnabled = false;
 }
