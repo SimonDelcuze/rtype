@@ -22,6 +22,11 @@ struct CameraComponent {
     float offsetY = 0.0F;   // Offset Y (for screen shake, etc.)
     float rotation = 0.0F;  // Rotation in degrees
     bool active = true;     // Whether this camera is active
+
+    // Target following
+    EntityId targetEntity = 0;       // Entity to follow (0 = none)
+    float followSmoothness = 5.0F;   // How fast camera follows (higher = faster)
+    bool followEnabled = false;      // Whether following is active
 };
 ```
 
@@ -75,6 +80,22 @@ camera.rotate(10.0F);       // Rotate by additional 10 degrees
 camera.reset();  // Reset to default values (0, 0, zoom 1.0)
 ```
 
+### Target Following
+
+```cpp
+// Set entity to follow with smoothness factor
+camera.setTarget(playerEntity, 10.0F);  // Follow player with smoothness 10
+
+// Clear target (stop following)
+camera.clearTarget();
+```
+
+**Following behavior:**
+- `followSmoothness` controls how fast the camera converges to the target (higher = faster)
+- The camera smoothly interpolates to the target position using deltaTime
+- Following is automatically disabled if the target entity dies
+- Following works with world bounds clamping
+
 ## CameraSystem
 
 The CameraSystem applies CameraComponent properties to the SFML render window's view.
@@ -89,9 +110,10 @@ CameraSystem cameraSystem(window);
 ### Update Loop
 
 ```cpp
-void gameLoop() {
+void gameLoop(float deltaTime) {
     // Update camera based on active CameraComponent component
-    cameraSystem.update(registry);
+    // deltaTime is required for smooth following
+    cameraSystem.update(registry, deltaTime);
 
     // Render using the updated view
     // (view is automatically set on the window)
@@ -159,10 +181,27 @@ if (activeCameraId != 0) {
 
 ## Usage Examples
 
-### Basic Camera Follow
+### Automatic Smooth Camera Follow (Recommended)
 
 ```cpp
-// Update camera to follow player
+// Set up camera to automatically follow player
+EntityId player = getPlayerEntity();
+EntityId camera = getCameraEntity();
+
+auto& cam = registry.get<CameraComponent>(camera);
+
+// Camera will smoothly follow the player entity
+cam.setTarget(player, 5.0F);  // 5.0 = smoothness factor
+
+// In game loop, just call update with deltaTime
+// The camera will automatically follow the target
+cameraSystem.update(registry, deltaTime);
+```
+
+### Manual Camera Follow
+
+```cpp
+// Manual control: Update camera to follow player
 EntityId player = getPlayerEntity();
 EntityId camera = getCameraEntity();
 
@@ -172,10 +211,10 @@ auto& cam = registry.get<CameraComponent>(camera);
 cam.setPosition(playerTransform.x, playerTransform.y);
 ```
 
-### Smooth Camera Follow
+### Custom Smooth Following Logic
 
 ```cpp
-// Smooth camera interpolation
+// Custom smooth camera interpolation
 const auto& playerPos = registry.get<TransformComponent>(player);
 auto& cam = registry.get<CameraComponent>(camera);
 
