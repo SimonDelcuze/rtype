@@ -62,4 +62,5 @@
   * [AudioSystem](client/systems/audio-system.md)
   * [CameraSystem](client/camera-system.md)
   * [InterpolationSystem](client/systems/interpolation-system.md)
+  * [ReconciliationSystem](client/reconciliation-system.md)
   * [HUDSystem](client/systems/hud-system.md)
