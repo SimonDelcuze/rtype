@@ -1,7 +1,10 @@
 #include "systems/CameraSystem.hpp"
 
+#include "components/TransformComponent.hpp"
+
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 CameraSystem::CameraSystem(sf::RenderWindow& window) : window_(window)
 {
@@ -11,22 +14,31 @@ CameraSystem::CameraSystem(sf::RenderWindow& window) : window_(window)
     view_.setSize(baseViewSize_);
 }
 
-void CameraSystem::update(Registry& registry)
+void CameraSystem::update(Registry& registry, float deltaTime)
 {
     EntityId cameraId = findActiveCamera(registry);
-    if (cameraId == 0) {
+    if (cameraId == std::numeric_limits<EntityId>::max()) {
         return;
     }
+
     activeCameraId_ = cameraId;
+
     if (!registry.has<CameraComponent>(cameraId)) {
         return;
     }
+
+    auto& camera = registry.get<CameraComponent>(cameraId);
+
+    if (camera.followEnabled) {
+        updateCameraFollow(registry, camera, deltaTime);
+    }
+
     if (worldBoundsEnabled_) {
-        auto& camera = registry.get<CameraComponent>(cameraId);
         clampToWorldBounds(camera);
     }
-    const auto& camera = registry.get<CameraComponent>(cameraId);
-    applyCamera(camera);
+
+    const auto& finalCamera = registry.get<CameraComponent>(cameraId);
+    applyCamera(finalCamera);
     window_.setView(view_);
 }
 
@@ -70,7 +82,7 @@ EntityId CameraSystem::findActiveCamera(Registry& registry)
             }
         }
     }
-    return 0;
+    return std::numeric_limits<EntityId>::max();
 }
 
 void CameraSystem::applyCamera(const CameraComponent& camera)
@@ -102,4 +114,32 @@ void CameraSystem::clampToWorldBounds(CameraComponent& camera)
     } else {
         camera.y = std::clamp(camera.y, minY, maxY);
     }
+}
+
+void CameraSystem::updateCameraFollow(Registry& registry, CameraComponent& camera, float deltaTime)
+{
+    if (camera.targetEntity == std::numeric_limits<EntityId>::max() || !registry.isAlive(camera.targetEntity)) {
+        camera.followEnabled = false;
+        return;
+    }
+
+    if (!registry.has<TransformComponent>(camera.targetEntity)) {
+        return;
+    }
+
+    const auto& targetTransform = registry.get<TransformComponent>(camera.targetEntity);
+
+    float targetX = targetTransform.x;
+    float targetY = targetTransform.y;
+
+    float lerpFactor = camera.followSmoothness * deltaTime;
+    if (lerpFactor > 1.0F) {
+        lerpFactor = 1.0F;
+    }
+
+    float dx = (targetX - camera.x) * lerpFactor;
+    float dy = (targetY - camera.y) * lerpFactor;
+
+    camera.x += dx;
+    camera.y += dy;
 }
