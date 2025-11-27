@@ -1,6 +1,7 @@
 #include "components/CameraComponent.hpp"
 
 #include <gtest/gtest.h>
+#include <limits>
 
 TEST(CameraComponent, DefaultValues)
 {
@@ -151,4 +152,42 @@ TEST(CameraComponent, ActiveFlag)
 
     camera.active = false;
     EXPECT_FALSE(camera.active);
+}
+
+TEST(CameraComponentTests, SetTargetEnablesFollow)
+{
+    CameraComponent camera;
+
+    EXPECT_FALSE(camera.followEnabled);
+    EXPECT_EQ(camera.targetEntity, std::numeric_limits<EntityId>::max());
+
+    camera.setTarget(42, 8.0F);
+
+    EXPECT_TRUE(camera.followEnabled);
+    EXPECT_EQ(camera.targetEntity, 42u);
+    EXPECT_FLOAT_EQ(camera.followSmoothness, 8.0F);
+}
+
+TEST(CameraComponentTests, SetTargetDefaultSmoothness)
+{
+    CameraComponent camera;
+
+    camera.setTarget(100);
+
+    EXPECT_TRUE(camera.followEnabled);
+    EXPECT_EQ(camera.targetEntity, 100u);
+    EXPECT_FLOAT_EQ(camera.followSmoothness, 5.0F);
+}
+
+TEST(CameraComponentTests, ClearTargetDisablesFollow)
+{
+    CameraComponent camera;
+    camera.setTarget(42, 10.0F);
+
+    EXPECT_TRUE(camera.followEnabled);
+
+    camera.clearTarget();
+
+    EXPECT_FALSE(camera.followEnabled);
+    EXPECT_EQ(camera.targetEntity, std::numeric_limits<EntityId>::max());
 }
