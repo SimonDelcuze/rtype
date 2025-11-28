@@ -1,6 +1,7 @@
 #pragma once
 
 #include "network/DeltaStatePacket.hpp"
+#include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/PlayerDisconnectedPacket.hpp"
 #include "network/UdpSocket.hpp"
@@ -23,6 +24,7 @@ class SendThread
     void publish(const DeltaStatePacket& packet);
     void broadcast(const PlayerDisconnectedPacket& packet);
     void broadcast(const EntitySpawnPacket& packet);
+    void broadcast(const EntityDestroyedPacket& packet);
     IpEndpoint endpoint() const;
 
   private:
