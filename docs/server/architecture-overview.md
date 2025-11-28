@@ -1,4 +1,4 @@
-# Architecture Overview
+#Architecture Overview
 
 The server architecture is designed to maintain a **stable, deterministic, and authoritative simulation** of the R-Type game world.\
 It runs independently from the clients and ensures that all players receive a consistent and validated version of the game state.
@@ -39,6 +39,7 @@ It applies all gameplay rules using ECS systems:
 * Damage application
 * Entity destruction
 * Snapshot generation
+* Event packets: player disconnects, entity spawns, entity destructions
 
 The ECS Registry contains **all authoritative gameplay components**.
 

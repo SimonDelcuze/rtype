@@ -16,6 +16,7 @@ The Receive Thread performs the following tasks:
 * Parsing input data (movement, aiming, firing, etc.).
 * Rejecting malformed or suspicious packets.
 * Pushing validated input events into a thread-safe queue for the main game loop.
+* Emitting client timeout events when no packets arrive for a configurable duration.
 
 This thread never interacts directly with the ECS registry or gameplay systems.\
 Its only responsibility is to prepare sanitized client input for the main loop.

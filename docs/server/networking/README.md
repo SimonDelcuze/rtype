@@ -9,6 +9,7 @@ It defines the fixed-size packet header shared by all messages and explains the 
 
 - [Packet Header](packet-header.md)
 - [Delta-State Packet](delta-state.md)
+- [Entity/Event Packets](entity-events.md)
 
 ***
 

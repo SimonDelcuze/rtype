@@ -1,4 +1,4 @@
-# Introduction
+#Introduction
 
 The **Server** is the authoritative core of the entire R-Type game.\
 It runs the full simulation, enforces the rules, validates client actions, and ensures that every player shares the same game state.
@@ -31,6 +31,7 @@ The server ensures inputs are:
 * filtered
 * safe
 * applied deterministically
+* timed out if silent for too long, then disconnected cleanly
 
 #### Running the entire gameplay simulation
 
@@ -42,6 +43,7 @@ The server executes:
 * Collisions
 * Damage calculation
 * Entity destruction and spawning
+* Event packets for spawns, destroys, and disconnects
 
 #### Managing all entities and components
 
