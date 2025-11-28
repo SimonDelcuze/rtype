@@ -1,4 +1,4 @@
-# RType UDP Protocol Documentation
+#RType UDP Protocol Documentation
 
 ## Protocol Overview
 
@@ -41,6 +41,9 @@ This design keeps network usage low while maintaining accurate and responsive sy
   - 0x19: SERVER_BROADCAST
   - 0x1A: SERVER_DISCONNECT
   - 0x1B: SERVER_ACKNOWLEDGE
+  - 0x1C: SERVER_PLAYER_DISCONNECTED
+  - 0x1D: SERVER_ENTITY_SPAWN
+  - 0x1E: SERVER_ENTITY_DESTROYED
 - **Sequence Number** (2 bytes): Incremental number for packet ordering.
 - **Tick ID** (4 bytes): Current server tick when the packet is sent.
 - **Payload Length** (2 bytes): Length of the payload in bytes.

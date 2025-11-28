@@ -35,6 +35,7 @@
 * [Systems](server/systems.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
+  * [Entity/Event Packets](server/networking/entity-events.md)
 
 ## Client
 
