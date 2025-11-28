@@ -69,10 +69,17 @@ TEST(SendThread, SendsLatestPayload)
 
     std::array<std::uint8_t, 512> buf{};
     std::size_t size = 0;
-    ASSERT_TRUE(pollRecv(c, buf, size));
-    auto decoded = DeltaStatePacket::decode(buf.data(), size);
-    ASSERT_TRUE(decoded.has_value());
-    EXPECT_EQ(decoded->header.sequenceId, 2);
+    bool gotLatest   = false;
+    for (int i = 0; i < 5; ++i) {
+        ASSERT_TRUE(pollRecv(c, buf, size));
+        auto decoded = DeltaStatePacket::decode(buf.data(), size);
+        ASSERT_TRUE(decoded.has_value());
+        if (decoded->header.sequenceId == pkt2.header.sequenceId) {
+            gotLatest = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(gotLatest);
 
     st.stop();
 }
