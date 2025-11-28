@@ -11,6 +11,7 @@
 #include "input/InputSystem.hpp"
 #include "network/NetworkMessageHandler.hpp"
 #include "network/NetworkReceiver.hpp"
+#include "network/NetworkSender.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
@@ -29,6 +30,7 @@ namespace
         ThreadSafeQueue<SnapshotParseResult> parsed;
         std::unique_ptr<NetworkReceiver> receiver;
         std::unique_ptr<NetworkMessageHandler> handler;
+        std::unique_ptr<NetworkSender> sender;
     };
 
     bool startReceiver(NetPipelines& net, std::uint16_t port)
@@ -44,6 +46,22 @@ namespace
         return true;
     }
 
+    bool startSender(NetPipelines& net, InputBuffer& buffer, std::uint32_t playerId, const IpEndpoint& remote)
+    {
+        net.sender = std::make_unique<NetworkSender>(
+            buffer,
+            remote,
+            playerId,
+            std::chrono::milliseconds(16),
+            IpEndpoint::v4(0, 0, 0, 0, 0),
+            [](const IError& err) { std::cerr << "NetworkSender error: " << err.what() << '\n'; });
+        if (!net.sender->start()) {
+            std::cerr << "Failed to start NetworkSender\n";
+            return false;
+        }
+        return true;
+    }
+
     EntityId createPlayer(Registry& registry, TextureManager& textures)
     {
         EntityId player     = registry.createEntity();
@@ -55,7 +73,7 @@ namespace
         registry.emplace<LayerComponent>(player, LayerComponent::create(0));
         return player;
     }
-} // namespace
+}
 
 int main()
 {
@@ -66,6 +84,7 @@ int main()
     InputBuffer inputBuffer;
     NetPipelines net;
     startReceiver(net, 50000);
+    startSender(net, inputBuffer, 1, IpEndpoint::v4(127, 0, 0, 1, 50001));
 
     try {
         createPlayer(registry, textureManager);
@@ -88,6 +107,9 @@ int main()
     int rc = gameLoop.run(window, registry);
     if (net.receiver) {
         net.receiver->stop();
+    }
+    if (net.sender) {
+        net.sender->stop();
     }
     return rc;
 }
