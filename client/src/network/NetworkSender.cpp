@@ -2,9 +2,9 @@
 
 NetworkSender::NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
                              std::chrono::milliseconds interval, IpEndpoint bind, ErrorHandler onError)
-    : buffer_(&buffer), remote_(remote), bind_(bind), interval_(interval), playerId_(playerId), onError_(std::move(onError))
-{
-}
+    : buffer_(&buffer), remote_(remote), bind_(bind), interval_(interval), playerId_(playerId),
+      onError_(std::move(onError))
+{}
 
 NetworkSender::~NetworkSender()
 {
@@ -21,10 +21,10 @@ bool NetworkSender::start()
         return false;
     }
     socket_.setNonBlocking(true);
-    stopRequested_ = false;
-    running_       = true;
+    stopRequested_  = false;
+    running_        = true;
     actualEndpoint_ = socket_.localEndpoint();
-    thread_        = std::thread(&NetworkSender::loop, this);
+    thread_         = std::thread(&NetworkSender::loop, this);
     return true;
 }
 

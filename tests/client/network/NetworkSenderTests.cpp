@@ -13,13 +13,13 @@
 
 namespace
 {
-IpEndpoint ensureLoopback(IpEndpoint ep)
-{
-    if (ep.addr == std::array<std::uint8_t, 4>{0, 0, 0, 0}) {
-        ep.addr = {127, 0, 0, 1};
+    IpEndpoint ensureLoopback(IpEndpoint ep)
+    {
+        if (ep.addr == std::array<std::uint8_t, 4>{0, 0, 0, 0}) {
+            ep.addr = {127, 0, 0, 1};
+        }
+        return ep;
     }
-    return ep;
-}
 } // namespace
 
 TEST(NetworkSender, SendsInputPacketToRemote)
@@ -100,8 +100,7 @@ TEST(NetworkSender, ReportsErrorOnSendFailure)
     InputBuffer buffer;
     std::atomic<bool> gotError = false;
     NetworkSender sender(buffer, IpEndpoint::v4(0, 0, 0, 0, 0), 1, std::chrono::milliseconds(5),
-                         IpEndpoint::v4(0, 0, 0, 0, 0),
-                         [&](const IError& err) {
+                         IpEndpoint::v4(0, 0, 0, 0, 0), [&](const IError& err) {
                              (void) err;
                              gotError = true;
                          });

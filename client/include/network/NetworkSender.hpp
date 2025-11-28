@@ -16,8 +16,8 @@ class NetworkSender
     using ErrorHandler = std::function<void(const IError&)>;
 
     NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
-                  std::chrono::milliseconds interval = std::chrono::milliseconds(16), IpEndpoint bind = IpEndpoint::v4(0, 0, 0, 0, 0),
-                  ErrorHandler onError = nullptr);
+                  std::chrono::milliseconds interval = std::chrono::milliseconds(16),
+                  IpEndpoint bind = IpEndpoint::v4(0, 0, 0, 0, 0), ErrorHandler onError = nullptr);
     ~NetworkSender();
 
     bool start();

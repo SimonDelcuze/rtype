@@ -49,11 +49,7 @@ namespace
     bool startSender(NetPipelines& net, InputBuffer& buffer, std::uint32_t playerId, const IpEndpoint& remote)
     {
         net.sender = std::make_unique<NetworkSender>(
-            buffer,
-            remote,
-            playerId,
-            std::chrono::milliseconds(16),
-            IpEndpoint::v4(0, 0, 0, 0, 0),
+            buffer, remote, playerId, std::chrono::milliseconds(16), IpEndpoint::v4(0, 0, 0, 0, 0),
             [](const IError& err) { std::cerr << "NetworkSender error: " << err.what() << '\n'; });
         if (!net.sender->start()) {
             std::cerr << "Failed to start NetworkSender\n";
@@ -73,7 +69,7 @@ namespace
         registry.emplace<LayerComponent>(player, LayerComponent::create(0));
         return player;
     }
-}
+} // namespace
 
 int main()
 {
