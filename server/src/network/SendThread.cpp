@@ -69,6 +69,16 @@ void SendThread::broadcast(const EntitySpawnPacket& packet)
     }
 }
 
+void SendThread::broadcast(const EntityDestroyedPacket& packet)
+{
+    auto payload = packet.encode();
+    if (!running_)
+        return;
+    for (const auto& c : clients_) {
+        socket_.sendTo(payload.data(), payload.size(), c);
+    }
+}
+
 IpEndpoint SendThread::endpoint() const
 {
     return socket_.localEndpoint();

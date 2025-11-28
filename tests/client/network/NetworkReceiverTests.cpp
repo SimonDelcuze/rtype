@@ -61,11 +61,14 @@ namespace
 
     bool sendPacket(const std::vector<std::uint8_t>& data, const IpEndpoint& dst)
     {
+        IpEndpoint target = dst;
+        if (target.addr == std::array<std::uint8_t, 4>{0, 0, 0, 0})
+            target.addr = {127, 0, 0, 1};
         UdpSocket sender;
         if (!sender.open(IpEndpoint::v4(0, 0, 0, 0, 0))) {
             return false;
         }
-        auto res = sender.sendTo(data.data(), data.size(), dst);
+        auto res = sender.sendTo(data.data(), data.size(), target);
         return res.ok();
     }
 } // namespace
