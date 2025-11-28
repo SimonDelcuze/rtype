@@ -255,3 +255,72 @@ TEST(PlayerInputSystem, NoMovementFlagsZeroesVelocity)
     EXPECT_FLOAT_EQ(vel.vx, 0.0F);
     EXPECT_FLOAT_EQ(vel.vy, 0.0F);
 }
+
+TEST(PlayerInputSystem, InputMovesPlayerWithMovementSystem)
+{
+    Registry registry;
+    EntityId p = registry.createEntity();
+    auto& t    = registry.emplace<TransformComponent>(p);
+    t.x        = 1.0F;
+    t.y        = 2.0F;
+    registry.emplace<PlayerInputComponent>(p);
+    registry.emplace<VelocityComponent>(p);
+
+    PlayerInputSystem inputSys(4.0F);
+    std::vector<ReceivedInput> inputs;
+    inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::MoveRight)));
+    inputSys.update(registry, inputs);
+
+    MovementSystem move;
+    move.update(registry, 0.25F);
+
+    auto& nt = registry.get<TransformComponent>(p);
+    EXPECT_FLOAT_EQ(nt.x, 2.0F);
+    EXPECT_FLOAT_EQ(nt.y, 2.0F);
+}
+
+TEST(PlayerInputSystem, StaleInputDoesNotMovePlayer)
+{
+    Registry registry;
+    EntityId p     = registry.createEntity();
+    auto& t        = registry.emplace<TransformComponent>(p);
+    t.x            = 0.0F;
+    t.y            = 0.0F;
+    auto& pic      = registry.emplace<PlayerInputComponent>(p);
+    pic.sequenceId = 5;
+    registry.emplace<VelocityComponent>(p);
+
+    PlayerInputSystem inputSys(3.0F);
+    std::vector<ReceivedInput> inputs;
+    inputs.push_back(makeInput(p, 4, static_cast<std::uint16_t>(InputFlag::MoveUp)));
+    inputSys.update(registry, inputs);
+
+    MovementSystem move;
+    move.update(registry, 1.0F);
+
+    auto& nt = registry.get<TransformComponent>(p);
+    EXPECT_FLOAT_EQ(nt.x, 0.0F);
+    EXPECT_FLOAT_EQ(nt.y, 0.0F);
+}
+
+TEST(PlayerInputSystem, LatestInputDeterminesMovementThisFrame)
+{
+    Registry registry;
+    EntityId p = registry.createEntity();
+    registry.emplace<TransformComponent>(p);
+    registry.emplace<PlayerInputComponent>(p);
+    registry.emplace<VelocityComponent>(p);
+
+    PlayerInputSystem inputSys(6.0F);
+    std::vector<ReceivedInput> inputs;
+    inputs.push_back(makeInput(p, 2, static_cast<std::uint16_t>(InputFlag::MoveLeft)));
+    inputs.push_back(makeInput(p, 3, static_cast<std::uint16_t>(InputFlag::MoveDown)));
+    inputSys.update(registry, inputs);
+
+    MovementSystem move;
+    move.update(registry, 0.5F);
+
+    auto& t = registry.get<TransformComponent>(p);
+    EXPECT_FLOAT_EQ(t.x, 0.0F);
+    EXPECT_FLOAT_EQ(t.y, 3.0F);
+}
