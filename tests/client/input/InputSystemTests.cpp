@@ -175,3 +175,87 @@ TEST(InputSystem, FireOnlyKeepsDefaultAngle)
     EXPECT_EQ(out.flags, InputMapper::FireFlag);
     EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
+
+TEST(InputSystem, MovementWithFireKeepsMovementAngle)
+{
+    InputBuffer buffer;
+    FakeMapper mapper;
+    mapper.nextFlags  = InputMapper::FireFlag | InputMapper::LeftFlag;
+    std::uint32_t seq = 0;
+    float x = 0.0F, y = 0.0F;
+    InputSystem sys(buffer, mapper, seq, x, y);
+    Registry registry;
+    sys.update(registry, 0.0F);
+    InputCommand out{};
+    ASSERT_TRUE(buffer.tryPop(out));
+    EXPECT_EQ(out.flags, mapper.nextFlags);
+    EXPECT_FLOAT_EQ(out.angle, 180.0F);
+}
+
+TEST(InputSystem, SetsDiagonalDownLeftAngle)
+{
+    InputBuffer buffer;
+    FakeMapper mapper;
+    mapper.nextFlags  = InputMapper::DownFlag | InputMapper::LeftFlag;
+    std::uint32_t seq = 0;
+    float x = 0.0F, y = 0.0F;
+    InputSystem sys(buffer, mapper, seq, x, y);
+    Registry registry;
+    sys.update(registry, 0.0F);
+    InputCommand out{};
+    ASSERT_TRUE(buffer.tryPop(out));
+    EXPECT_FLOAT_EQ(out.angle, 135.0F);
+}
+
+TEST(InputSystem, SetsDiagonalUpRightAngle)
+{
+    InputBuffer buffer;
+    FakeMapper mapper;
+    mapper.nextFlags  = InputMapper::UpFlag | InputMapper::RightFlag;
+    std::uint32_t seq = 0;
+    float x = 0.0F, y = 0.0F;
+    InputSystem sys(buffer, mapper, seq, x, y);
+    Registry registry;
+    sys.update(registry, 0.0F);
+    InputCommand out{};
+    ASSERT_TRUE(buffer.tryPop(out));
+    EXPECT_FLOAT_EQ(out.angle, 315.0F);
+}
+
+TEST(InputSystem, SequenceNotIncrementedWhenNoInput)
+{
+    InputBuffer buffer;
+    FakeMapper mapper;
+    mapper.nextFlags  = 0;
+    std::uint32_t seq = 10;
+    float x = 0.0F, y = 0.0F;
+    InputSystem sys(buffer, mapper, seq, x, y);
+    Registry registry;
+    sys.update(registry, 0.0F);
+    EXPECT_EQ(seq, 10u);
+    InputCommand out{};
+    EXPECT_FALSE(buffer.tryPop(out));
+}
+
+TEST(InputSystem, UsesLatestPositionEachDispatch)
+{
+    InputBuffer buffer;
+    FakeMapper mapper;
+    mapper.nextFlags  = InputMapper::RightFlag;
+    std::uint32_t seq = 0;
+    float x = 1.0F, y = 2.0F;
+    InputSystem sys(buffer, mapper, seq, x, y);
+    Registry registry;
+    sys.update(registry, 0.0F);
+    x = 5.0F;
+    y = -3.0F;
+    sys.update(registry, 0.0F);
+    InputCommand first{};
+    InputCommand second{};
+    ASSERT_TRUE(buffer.tryPop(first));
+    ASSERT_TRUE(buffer.tryPop(second));
+    EXPECT_FLOAT_EQ(first.posX, 1.0F);
+    EXPECT_FLOAT_EQ(first.posY, 2.0F);
+    EXPECT_FLOAT_EQ(second.posX, 5.0F);
+    EXPECT_FLOAT_EQ(second.posY, -3.0F);
+}
