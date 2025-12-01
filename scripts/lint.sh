@@ -11,11 +11,20 @@ if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
 fi
 
 BASE_REF="${LINT_BASE_REF:-origin/main}"
-changed_files=$(git diff --name-only "${BASE_REF}"...HEAD -- '*.cpp' '*.hpp')
+changed_files=$(git diff --name-only --diff-filter=d "${BASE_REF}"...HEAD -- '*.cpp' '*.hpp')
 
 if [ -z "$changed_files" ]; then
     echo "[lint.sh] No changed C++ files to lint (base=${BASE_REF})."
     exit 0
 fi
 
-clang-tidy -p "$BUILD_DIR" --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet $changed_files
+CLANG_TIDY_CMD="clang-tidy -p \"$BUILD_DIR\" --header-filter='^(client|server|shared)/' --extra-arg=-w --quiet"
+
+if command -v xcrun &> /dev/null; then
+    SDK_PATH="$(xcrun --show-sdk-path 2>/dev/null || true)"
+    if [ -n "$SDK_PATH" ]; then
+        CLANG_TIDY_CMD="$CLANG_TIDY_CMD --extra-arg=-isysroot --extra-arg=\"$SDK_PATH\""
+    fi
+fi
+
+eval $CLANG_TIDY_CMD $changed_files
