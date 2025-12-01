@@ -63,14 +63,14 @@ TEST_F(InterpolationControllerTests, SetModeChangesMode)
 
 TEST_F(InterpolationControllerTests, SetModeNoneSnapsToTarget)
 {
-    EntityId entity  = registry.createEntity();
-    auto& interp     = registry.emplace<InterpolationComponent>(entity);
-    auto& transform  = registry.emplace<TransformComponent>(entity);
+    EntityId entity = registry.createEntity();
+    auto& interp    = registry.emplace<InterpolationComponent>(entity);
+    auto& transform = registry.emplace<TransformComponent>(entity);
 
-    interp.targetX  = 100.0F;
-    interp.targetY  = 200.0F;
-    transform.x     = 10.0F;
-    transform.y     = 20.0F;
+    interp.targetX = 100.0F;
+    interp.targetY = 200.0F;
+    transform.x    = 10.0F;
+    transform.y    = 20.0F;
 
     controller.setMode(registry, entity, InterpolationMode::None);
 
@@ -126,12 +126,12 @@ TEST_F(InterpolationControllerTests, ClampToTargetSnapsAndDisables)
     auto& interp    = registry.emplace<InterpolationComponent>(entity);
     auto& transform = registry.emplace<TransformComponent>(entity);
 
-    interp.targetX         = 100.0F;
-    interp.targetY         = 200.0F;
+    interp.targetX           = 100.0F;
+    interp.targetY           = 200.0F;
     interp.interpolationTime = 1.0F;
-    interp.elapsedTime     = 0.5F;
-    transform.x            = 50.0F;
-    transform.y            = 100.0F;
+    interp.elapsedTime       = 0.5F;
+    transform.x              = 50.0F;
+    transform.y              = 100.0F;
 
     controller.clampToTarget(registry, entity);
 
@@ -146,15 +146,15 @@ TEST_F(InterpolationControllerTests, ResetClearsAllFields)
     EntityId entity = registry.createEntity();
     auto& interp    = registry.emplace<InterpolationComponent>(entity);
 
-    interp.previousX  = 10.0F;
-    interp.previousY  = 20.0F;
-    interp.targetX    = 100.0F;
-    interp.targetY    = 200.0F;
+    interp.previousX   = 10.0F;
+    interp.previousY   = 20.0F;
+    interp.targetX     = 100.0F;
+    interp.targetY     = 200.0F;
     interp.elapsedTime = 0.5F;
-    interp.velocityX  = 5.0F;
-    interp.velocityY  = -3.0F;
-    interp.mode       = InterpolationMode::Extrapolate;
-    interp.enabled    = false;
+    interp.velocityX   = 5.0F;
+    interp.velocityY   = -3.0F;
+    interp.mode        = InterpolationMode::Extrapolate;
+    interp.enabled     = false;
 
     controller.reset(registry, entity);
 
