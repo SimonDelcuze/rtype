@@ -51,7 +51,7 @@ struct Play3DSoundEvent
     std::string soundName;
     float x;
     float y;
-    float volume       = 1.0F;
-    float minDistance  = 100.0F;
-    float attenuation  = 1.0F;
+    float volume      = 1.0F;
+    float minDistance = 100.0F;
+    float attenuation = 1.0F;
 };

@@ -14,9 +14,9 @@ class EventBusIntegrationTests : public ::testing::Test
 
 TEST_F(EventBusIntegrationTests, EntityDamagedEventFlow)
 {
-    bool called    = false;
+    bool called     = false;
     EntityId target = 0;
-    int damage     = 0;
+    int damage      = 0;
 
     bus.subscribe<EntityDamagedEvent>([&](const EntityDamagedEvent& e) {
         called = true;
@@ -73,7 +73,7 @@ TEST_F(EventBusIntegrationTests, MultipleSubscribersReceiveSameEvent)
 
 TEST_F(EventBusIntegrationTests, DifferentEventTypesAreIndependent)
 {
-    bool audioEventCalled = false;
+    bool audioEventCalled  = false;
     bool renderEventCalled = false;
 
     bus.subscribe<PlaySoundEvent>([&](const PlaySoundEvent&) { audioEventCalled = true; });
@@ -256,12 +256,11 @@ TEST_F(EventBusIntegrationTests, PlayerLifecycleEvents)
 {
     std::vector<std::string> lifecycle;
 
-    bus.subscribe<EntitySpawnedEvent>(
-        [&](const EntitySpawnedEvent& e) {
-            if (e.entityType == "player") {
-                lifecycle.push_back("spawn");
-            }
-        });
+    bus.subscribe<EntitySpawnedEvent>([&](const EntitySpawnedEvent& e) {
+        if (e.entityType == "player") {
+            lifecycle.push_back("spawn");
+        }
+    });
 
     bus.subscribe<PlayerDiedEvent>([&](const PlayerDiedEvent&) { lifecycle.push_back("died"); });
 
@@ -284,9 +283,9 @@ TEST_F(EventBusIntegrationTests, PlayerLifecycleEvents)
 
 TEST_F(EventBusIntegrationTests, ComplexGameplayScenario)
 {
-    int totalScore        = 0;
-    int soundsPlayed      = 0;
-    int particlesSpawned  = 0;
+    int totalScore         = 0;
+    int soundsPlayed       = 0;
+    int particlesSpawned   = 0;
     int notificationsShown = 0;
 
     bus.subscribe<PlayerScoredEvent>([&](const PlayerScoredEvent& e) { totalScore += e.pointsGained; });

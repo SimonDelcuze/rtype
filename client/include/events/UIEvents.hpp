@@ -45,8 +45,7 @@ struct ShowDialogEvent
 };
 
 struct HideDialogEvent
-{
-};
+{};
 
 struct UpdateAmmoDisplayEvent
 {
@@ -78,8 +77,7 @@ struct UpdateBossHealthBarEvent
 };
 
 struct HideBossHealthBarEvent
-{
-};
+{};
 
 struct ShowLevelTransitionEvent
 {
@@ -89,12 +87,10 @@ struct ShowLevelTransitionEvent
 };
 
 struct ShowPauseMenuEvent
-{
-};
+{};
 
 struct HidePauseMenuEvent
-{
-};
+{};
 
 struct ShowGameOverScreenEvent
 {
