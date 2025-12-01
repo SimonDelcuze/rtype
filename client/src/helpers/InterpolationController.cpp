@@ -19,7 +19,7 @@ void InterpolationController::setTarget(Registry& registry, EntityId entityId, f
 }
 
 void InterpolationController::setTargetWithVelocity(Registry& registry, EntityId entityId, float x, float y, float vx,
-                                                     float vy)
+                                                    float vy)
 {
     if (!registry.isAlive(entityId)) {
         return;
@@ -99,12 +99,12 @@ void InterpolationController::clampToTarget(Registry& registry, EntityId entityI
         return;
     }
 
-    auto& interp        = registry.get<InterpolationComponent>(entityId);
-    auto& transform     = registry.get<TransformComponent>(entityId);
-    transform.x         = interp.targetX;
-    transform.y         = interp.targetY;
-    interp.elapsedTime  = interp.interpolationTime;
-    interp.enabled      = false;
+    auto& interp       = registry.get<InterpolationComponent>(entityId);
+    auto& transform    = registry.get<TransformComponent>(entityId);
+    transform.x        = interp.targetX;
+    transform.y        = interp.targetY;
+    interp.elapsedTime = interp.interpolationTime;
+    interp.enabled     = false;
 }
 
 void InterpolationController::reset(Registry& registry, EntityId entityId)
@@ -117,16 +117,16 @@ void InterpolationController::reset(Registry& registry, EntityId entityId)
         return;
     }
 
-    auto& interp         = registry.get<InterpolationComponent>(entityId);
-    interp.previousX     = 0.0F;
-    interp.previousY     = 0.0F;
-    interp.targetX       = 0.0F;
-    interp.targetY       = 0.0F;
-    interp.elapsedTime   = 0.0F;
-    interp.velocityX     = 0.0F;
-    interp.velocityY     = 0.0F;
-    interp.mode          = InterpolationMode::Linear;
-    interp.enabled       = true;
+    auto& interp       = registry.get<InterpolationComponent>(entityId);
+    interp.previousX   = 0.0F;
+    interp.previousY   = 0.0F;
+    interp.targetX     = 0.0F;
+    interp.targetY     = 0.0F;
+    interp.elapsedTime = 0.0F;
+    interp.velocityX   = 0.0F;
+    interp.velocityY   = 0.0F;
+    interp.mode        = InterpolationMode::Linear;
+    interp.enabled     = true;
 }
 
 void InterpolationController::setInterpolationTime(Registry& registry, EntityId entityId, float time)
