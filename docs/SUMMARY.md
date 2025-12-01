@@ -46,6 +46,7 @@
   * [Game Loop Thread (Scheduler)](client/threads/game-loop-thread-scheduler.md)
   * [Send Thread](client/threads/send-thread.md)
 * [Prediction & Reconciliation](client/prediction-and-reconciliation.md)
+* [EventBus: Publish/Subscribe](client/event-bus.md)
 * [Asset Management](asset-manifest.md)
 * [Scene Graph & Layering](client/scene-graph-layering.md)
 * [Collision Masks & Hitboxes](collision-masks.md)
