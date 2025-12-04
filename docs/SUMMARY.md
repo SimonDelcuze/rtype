@@ -79,5 +79,6 @@
   * [HUDSystem](client/systems/hud-system.md)
   * [BackgroundScrollSystem](client/systems/background-scroll.md)
   * [ReplicationSystem](client/systems/replication-system.md)
+  * [LevelInitSystem](client/level-init-system.md)
 * [Helpers](client/helpers.md)
   * [InterpolationController](client/interpolation-controller.md)

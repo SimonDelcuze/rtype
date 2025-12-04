@@ -2,6 +2,7 @@
 
 #include "errors/AssetLoadError.hpp"
 
+#include <SFML/Graphics/Image.hpp>
 #include <utility>
 
 const sf::Texture& TextureManager::load(const std::string& id, const std::string& path)
@@ -45,4 +46,31 @@ void TextureManager::clear()
 std::size_t TextureManager::size() const
 {
     return textures_.size();
+}
+
+void TextureManager::createPlaceholder()
+{
+    constexpr unsigned int kSize = 32;
+    sf::Image img({kSize, kSize}, sf::Color::Magenta);
+    sf::Texture tex;
+    if (tex.loadFromImage(img)) {
+        placeholder_ = std::move(tex);
+    }
+}
+
+const sf::Texture& TextureManager::getPlaceholder()
+{
+    if (!placeholder_) {
+        createPlaceholder();
+    }
+    return *placeholder_;
+}
+
+const sf::Texture& TextureManager::getOrPlaceholder(const std::string& id)
+{
+    auto* tex = get(id);
+    if (tex != nullptr) {
+        return *tex;
+    }
+    return getPlaceholder();
 }
