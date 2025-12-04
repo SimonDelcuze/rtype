@@ -6,6 +6,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 struct SpriteComponent
 {
@@ -14,6 +15,7 @@ struct SpriteComponent
     std::uint32_t frameHeight  = 0;
     std::uint32_t columns      = 1;
     std::uint32_t currentFrame = 0;
+    std::vector<sf::IntRect> customFrames;
 
     SpriteComponent() = default;
     explicit SpriteComponent(const sf::Texture& texture);
