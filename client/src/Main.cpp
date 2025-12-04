@@ -111,7 +111,7 @@ int main()
     float playerPosY            = 0.0F;
     InputMapper mapper;
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
-    gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed));
+    gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, typeRegistry));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, typeRegistry, manifest, textureManager, levelState));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());

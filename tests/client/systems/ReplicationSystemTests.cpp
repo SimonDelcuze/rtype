@@ -1,12 +1,16 @@
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
+#include "components/LayerComponent.hpp"
+#include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
+#include "level/EntityTypeRegistry.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ReplicationSystem.hpp"
 
+#include <SFML/Graphics/Texture.hpp>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -21,11 +25,12 @@ template <typename... Components> static std::size_t countView(Registry& registr
 }
 
 static SnapshotParseResult makeSnapshot(std::uint32_t tick, std::uint32_t entityId, float x, float y, float vx,
-                                        float vy, std::int16_t hp, bool dead = false)
+                                        float vy, std::int16_t hp, bool dead = false, std::uint8_t typeId = 1)
 {
     SnapshotEntity e{};
     e.entityId   = entityId;
     e.updateMask = 0x1F | (dead ? (1u << 8) : 0u) | (1u << 5);
+    e.entityType = typeId;
     e.posX       = x;
     e.posY       = y;
     e.velX       = vx;
@@ -49,10 +54,30 @@ static SnapshotParseResult makeCustomSnapshot(std::uint32_t tick, const std::vec
     return res;
 }
 
+static sf::Texture& dummyTexture()
+{
+    static sf::Texture tex;
+    static bool init = false;
+    if (!init) {
+        (void) tex.resize({1u, 1u});
+        init = true;
+    }
+    return tex;
+}
+
+static void registerType(EntityTypeRegistry& types, std::uint16_t id)
+{
+    RenderTypeData data{};
+    data.texture = &dummyTexture();
+    types.registerType(id, data);
+}
+
 TEST(ReplicationSystem, NoSnapshotLeavesRegistryEmpty)
 {
     ThreadSafeQueue<SnapshotParseResult> queue;
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -64,7 +89,9 @@ TEST(ReplicationSystem, CreatesAndUpdatesEntity)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeSnapshot(1, 10, 5.0F, 6.0F, 1.0F, 2.0F, 50));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -113,7 +140,9 @@ TEST(ReplicationSystem, DestroysWhenDeadFlag)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeSnapshot(1, 20, 0.0F, 0.0F, 0.0F, 0.0F, 10, true));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -131,20 +160,25 @@ TEST(ReplicationSystem, MultipleEntitiesCreated)
 {
     SnapshotEntity a{};
     a.entityId   = 1;
-    a.updateMask = 0x06;
+    a.updateMask = 0x07;
+    a.entityType = 1;
     a.posX       = 1.0F;
     a.posY       = 2.0F;
 
     SnapshotEntity b{};
     b.entityId   = 2;
-    b.updateMask = 0x18;
+    b.updateMask = 0x19;
+    b.entityType = 2;
     b.velX       = 3.0F;
     b.velY       = 4.0F;
 
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {a, b}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    registerType(types, 2);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -158,14 +192,17 @@ TEST(ReplicationSystem, VelocityOnlyDoesNotCreateTransform)
 {
     SnapshotEntity e{};
     e.entityId   = 5;
-    e.updateMask = 0x18;
+    e.updateMask = 0x19;
+    e.entityType = 1;
     e.velX       = 7.0F;
     e.velY       = 8.0F;
 
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {e}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -179,14 +216,17 @@ TEST(ReplicationSystem, TransformOnlyNoVelocity)
 {
     SnapshotEntity e{};
     e.entityId   = 6;
-    e.updateMask = 0x06;
+    e.updateMask = 0x07;
+    e.entityType = 1;
     e.posX       = 9.0F;
     e.posY       = -1.0F;
 
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {e}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -202,7 +242,9 @@ TEST(ReplicationSystem, UpdatesExistingEntityAndPreservesMaxHealth)
     queue.push(makeSnapshot(1, 30, 1.0F, 2.0F, 0.0F, 0.0F, 10));
     queue.push(makeSnapshot(2, 30, 3.0F, 4.0F, 5.0F, 6.0F, 8));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -229,7 +271,9 @@ TEST(ReplicationSystem, HealthDoesNotLowerMax)
     queue.push(makeSnapshot(1, 31, 0.0F, 0.0F, 0.0F, 0.0F, 50));
     queue.push(makeSnapshot(2, 31, 0.0F, 0.0F, 0.0F, 0.0F, 10));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -245,7 +289,9 @@ TEST(ReplicationSystem, ResetsInterpolationOnNewSnapshot)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeSnapshot(1, 40, 0.0F, 0.0F, 0.0F, 0.0F, 5));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -269,7 +315,9 @@ TEST(ReplicationSystem, PositionNotOverwrittenWhenMissingFields)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeSnapshot(1, 50, 2.0F, 3.0F, 0.0F, 0.0F, 5));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -291,14 +339,17 @@ TEST(ReplicationSystem, InterpolationNotCreatedWithoutPosition)
 {
     SnapshotEntity e{};
     e.entityId   = 60;
-    e.updateMask = 0x18;
+    e.updateMask = 0x19;
+    e.entityType = 1;
     e.velX       = 1.0F;
     e.velY       = 2.0F;
 
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {e}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -312,7 +363,10 @@ TEST(ReplicationSystem, MultipleSnapshotsInQueueAreConsumed)
     queue.push(makeSnapshot(1, 70, 0.0F, 0.0F, 0.0F, 0.0F, 1));
     queue.push(makeSnapshot(2, 71, 1.0F, 1.0F, 0.0F, 0.0F, 1));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    registerType(types, 2);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -325,7 +379,9 @@ TEST(ReplicationSystem, ReusesEntityMappingForSameRemoteId)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeSnapshot(1, 80, 1.0F, 1.0F, 0.0F, 0.0F, 5));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -347,7 +403,8 @@ TEST(ReplicationSystem, StatusFieldIgnoredButEntityCreated)
 {
     SnapshotEntity e{};
     e.entityId      = 90;
-    e.updateMask    = 0x46;
+    e.updateMask    = 0x47;
+    e.entityType    = 1;
     e.posX          = 4.0F;
     e.posY          = 5.0F;
     e.statusEffects = 3;
@@ -355,7 +412,9 @@ TEST(ReplicationSystem, StatusFieldIgnoredButEntityCreated)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {e}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -368,6 +427,7 @@ TEST(ReplicationSystem, DeadFlagDoesNotLeaveComponents)
     SnapshotEntity e{};
     e.entityId   = 100;
     e.updateMask = 0x1BF;
+    e.entityType = 1;
     e.posX       = 1.0F;
     e.posY       = 1.0F;
     e.velX       = 0.0F;
@@ -378,7 +438,9 @@ TEST(ReplicationSystem, DeadFlagDoesNotLeaveComponents)
     ThreadSafeQueue<SnapshotParseResult> queue;
     queue.push(makeCustomSnapshot(1, {e}));
 
-    ReplicationSystem sys(queue);
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -386,4 +448,47 @@ TEST(ReplicationSystem, DeadFlagDoesNotLeaveComponents)
     EXPECT_EQ(countView<TransformComponent>(registry), 0u);
     EXPECT_EQ(countView<VelocityComponent>(registry), 0u);
     EXPECT_EQ(countView<HealthComponent>(registry), 0u);
+}
+
+TEST(ReplicationSystem, SkipsCreationWhenTypeMissing)
+{
+    SnapshotEntity e{};
+    e.entityId   = 200;
+    e.updateMask = 0x06;
+    e.posX       = 3.0F;
+    e.posY       = 4.0F;
+
+    ThreadSafeQueue<SnapshotParseResult> queue;
+    queue.push(makeCustomSnapshot(1, {e}));
+
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
+    Registry registry;
+    sys.initialize();
+    sys.update(registry, 0.0F);
+
+    EXPECT_EQ(registry.entityCount(), 0u);
+}
+
+TEST(ReplicationSystem, SkipsCreationWhenTypeUnknown)
+{
+    SnapshotEntity e{};
+    e.entityId   = 201;
+    e.updateMask = 0x07;
+    e.entityType = 9;
+    e.posX       = 1.0F;
+    e.posY       = 2.0F;
+
+    ThreadSafeQueue<SnapshotParseResult> queue;
+    queue.push(makeCustomSnapshot(1, {e}));
+
+    EntityTypeRegistry types;
+    registerType(types, 1);
+    ReplicationSystem sys(queue, types);
+    Registry registry;
+    sys.initialize();
+    sys.update(registry, 0.0F);
+
+    EXPECT_EQ(registry.entityCount(), 0u);
 }

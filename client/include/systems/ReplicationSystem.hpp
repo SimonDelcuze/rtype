@@ -1,22 +1,25 @@
 #pragma once
 
 #include "concurrency/ThreadSafeQueue.hpp"
+#include "level/EntityTypeRegistry.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
+#include <optional>
 #include <unordered_map>
 
 class ReplicationSystem : public ISystem
 {
   public:
-    explicit ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots);
+    ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types);
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;
     void cleanup() override;
 
   private:
-    EntityId ensureEntity(Registry& registry, std::uint32_t remoteId);
+    std::optional<EntityId> ensureEntity(Registry& registry, const SnapshotEntity& entity);
+    void applyArchetype(Registry& registry, EntityId id, std::uint16_t typeId);
     void applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity);
@@ -26,5 +29,6 @@ class ReplicationSystem : public ISystem
     void applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t tickId);
 
     ThreadSafeQueue<SnapshotParseResult>* snapshots_;
+    const EntityTypeRegistry* types_;
     std::unordered_map<std::uint32_t, EntityId> remoteToLocal_;
 };
