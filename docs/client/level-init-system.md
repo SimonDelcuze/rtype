@@ -7,7 +7,7 @@ The Level Init System handles `SERVER_LEVEL_INIT (0x30)` messages from the serve
 When the server sends a `LevelInit` message, the client:
 1. Parses the binary payload to extract level metadata
 2. Resolves asset IDs (sprites, backgrounds, music) via the local manifest
-3. Builds an `EntityTypeRegistry` mapping `typeId` to render data
+3. Builds an `EntityTypeRegistry` mapping `typeId` to render data (textures + animation)
 4. Updates the current `LevelState`
 
 ## Components
@@ -61,6 +61,11 @@ struct RenderTypeData
     std::uint8_t frameCount;
     float frameDuration;
     std::uint8_t layer;
+    std::uint32_t frameWidth;
+    std::uint32_t frameHeight;
+    std::uint32_t columns;
+    const AnimationClip* animation; // optional, from animation registry
+    std::string spriteId;
 };
 
 class EntityTypeRegistry
@@ -93,7 +98,18 @@ When processing a `LevelInit`:
    - If found, load texture via `TextureManager`
    - If not found, log warning and use placeholder (magenta 32x32)
 
-2. The placeholder ensures the game continues running even with missing assets
+2. Resolve animation clip:
+   - If `animId` is provided, first try exact clip id in the animation registry.
+   - If not found, try `labels[spriteId][animId]` to map a label (e.g. `row4`) to a clip id.
+   - Fallback: use the clip whose id matches `spriteId`, or no animation if none exists.
+
+3. Populate `RenderTypeData` with:
+   - Texture pointer
+   - `frameCount`, `frameDuration`, `frameWidth/Height`, `columns` from the chosen clip if any
+   - `animation` pointer to the clip (for custom frames)
+   - Layer from the archetype
+
+4. The placeholder ensures the game continues running even with missing assets
 
 ## Integration
 
@@ -119,6 +135,7 @@ NetworkReceiver → NetworkMessageHandler → LevelInitParser
                   ↓                           ↓                           ↓
            LevelState update         EntityTypeRegistry         Asset preloading
            (levelId, seed)           (typeId → texture)         via TextureManager
+                                   + animation clip
 ```
 
 ## Related
