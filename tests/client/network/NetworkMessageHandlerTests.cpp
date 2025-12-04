@@ -1,4 +1,5 @@
 #include "concurrency/ThreadSafeQueue.hpp"
+#include "network/LevelInitData.hpp"
 #include "network/NetworkMessageHandler.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/SnapshotParser.hpp"
@@ -74,7 +75,8 @@ TEST(NetworkMessageHandler, DispatchesSnapshotToParsedQueue)
 {
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
-    NetworkMessageHandler handler(raw, parsed);
+    ThreadSafeQueue<LevelInitData> levelInit;
+    NetworkMessageHandler handler(raw, parsed, levelInit);
 
     raw.push(makeSnapshotPacket());
     handler.poll();
@@ -93,7 +95,8 @@ TEST(NetworkMessageHandler, IgnoresNonSnapshot)
 {
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
-    NetworkMessageHandler handler(raw, parsed);
+    ThreadSafeQueue<LevelInitData> levelInit;
+    NetworkMessageHandler handler(raw, parsed, levelInit);
 
     raw.push(makeNonSnapshotPacket());
     handler.poll();
@@ -106,7 +109,8 @@ TEST(NetworkMessageHandler, IgnoresInvalidHeader)
 {
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
-    NetworkMessageHandler handler(raw, parsed);
+    ThreadSafeQueue<LevelInitData> levelInit;
+    NetworkMessageHandler handler(raw, parsed, levelInit);
 
     std::vector<std::uint8_t> pkt(10, 0);
     raw.push(pkt);
@@ -120,7 +124,8 @@ TEST(NetworkMessageHandler, IgnoresCrcMismatch)
 {
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
-    NetworkMessageHandler handler(raw, parsed);
+    ThreadSafeQueue<LevelInitData> levelInit;
+    NetworkMessageHandler handler(raw, parsed, levelInit);
 
     auto pkt = makeSnapshotPacket();
     pkt.back() ^= 0xFF;
@@ -135,7 +140,8 @@ TEST(NetworkMessageHandler, NoCrashOnEmptyQueue)
 {
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
-    NetworkMessageHandler handler(raw, parsed);
+    ThreadSafeQueue<LevelInitData> levelInit;
+    NetworkMessageHandler handler(raw, parsed, levelInit);
     handler.poll();
     SnapshotParseResult out;
     EXPECT_FALSE(parsed.tryPop(out));

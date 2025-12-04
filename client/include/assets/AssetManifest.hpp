@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,9 +33,11 @@ class AssetManifest
 
     const std::vector<TextureEntry>& getTextures() const;
     std::vector<TextureEntry> getTexturesByType(const std::string& type) const;
+    std::optional<TextureEntry> findTextureById(const std::string& id) const;
 
     const std::vector<SoundEntry>& getSounds() const;
     std::vector<SoundEntry> getSoundsByType(const std::string& type) const;
+    std::optional<SoundEntry> findSoundById(const std::string& id) const;
 
     const std::vector<FontEntry>& getFonts() const;
     std::vector<FontEntry> getFontsByType(const std::string& type) const;

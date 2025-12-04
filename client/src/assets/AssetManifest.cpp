@@ -130,3 +130,23 @@ std::vector<FontEntry> AssetManifest::getFontsByType(const std::string& type) co
     }
     return result;
 }
+
+std::optional<TextureEntry> AssetManifest::findTextureById(const std::string& id) const
+{
+    for (const auto& entry : textures_) {
+        if (entry.id == id) {
+            return entry;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<SoundEntry> AssetManifest::findSoundById(const std::string& id) const
+{
+    for (const auto& entry : sounds_) {
+        if (entry.id == id) {
+            return entry;
+        }
+    }
+    return std::nullopt;
+}

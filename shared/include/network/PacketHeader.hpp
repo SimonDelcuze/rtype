@@ -19,6 +19,8 @@ enum class MessageType : std::uint8_t
     EntitySpawn        = 0x1D,
     EntityDestroyed    = 0x1E,
     Snapshot           = 0x14,
+    LevelInit          = 0x30,
+    LevelTransition    = 0x31,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
 };

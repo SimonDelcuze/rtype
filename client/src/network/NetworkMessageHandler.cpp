@@ -1,8 +1,11 @@
 #include "network/NetworkMessageHandler.hpp"
 
+#include "network/LevelInitParser.hpp"
+
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
-                                             ThreadSafeQueue<SnapshotParseResult>& snapshotQueue)
-    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue)
+                                             ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
+                                             ThreadSafeQueue<LevelInitData>& levelInitQueue)
+    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue)
 {}
 
 void NetworkMessageHandler::poll()
@@ -37,6 +40,15 @@ void NetworkMessageHandler::handleSnapshot(const std::vector<std::uint8_t>& data
     snapshotQueue_.push(std::move(*parsed));
 }
 
+void NetworkMessageHandler::handleLevelInit(const std::vector<std::uint8_t>& data)
+{
+    auto parsed = LevelInitParser::parse(data);
+    if (!parsed.has_value()) {
+        return;
+    }
+    levelInitQueue_.push(std::move(*parsed));
+}
+
 void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
 {
     auto hdr = decodeHeader(data);
@@ -45,6 +57,10 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Snapshot)) {
         handleSnapshot(data);
+        return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::LevelInit)) {
+        handleLevelInit(data);
         return;
     }
 }

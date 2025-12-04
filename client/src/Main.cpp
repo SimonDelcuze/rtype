@@ -1,3 +1,4 @@
+#include "assets/AssetManifest.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
@@ -9,11 +10,15 @@
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
 #include "input/InputSystem.hpp"
+#include "level/EntityTypeRegistry.hpp"
+#include "level/LevelState.hpp"
+#include "network/LevelInitData.hpp"
 #include "network/NetworkMessageHandler.hpp"
 #include "network/NetworkReceiver.hpp"
 #include "network/NetworkSender.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
+#include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
@@ -28,6 +33,7 @@ namespace
     {
         ThreadSafeQueue<std::vector<std::uint8_t>> raw;
         ThreadSafeQueue<SnapshotParseResult> parsed;
+        ThreadSafeQueue<LevelInitData> levelInit;
         std::unique_ptr<NetworkReceiver> receiver;
         std::unique_ptr<NetworkMessageHandler> handler;
         std::unique_ptr<NetworkSender> sender;
@@ -42,7 +48,7 @@ namespace
             std::cerr << "Failed to start NetworkReceiver on port " << port << '\n';
             return false;
         }
-        net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed);
+        net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit);
         return true;
     }
 
@@ -79,6 +85,16 @@ int main()
     Registry registry;
     InputBuffer inputBuffer;
     NetPipelines net;
+    EntityTypeRegistry typeRegistry;
+    LevelState levelState{};
+
+    AssetManifest manifest;
+    try {
+        manifest = AssetManifest::fromFile("client/assets/assets.json");
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to load asset manifest: " << e.what() << '\n';
+    }
+
     startReceiver(net, 50000);
     startSender(net, inputBuffer, 1, IpEndpoint::v4(127, 0, 0, 1, 50001));
 
@@ -96,6 +112,8 @@ int main()
     InputMapper mapper;
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed));
+    gameLoop.addSystem(
+        std::make_shared<LevelInitSystem>(net.levelInit, typeRegistry, manifest, textureManager, levelState));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
