@@ -7,7 +7,7 @@
 TEST(FontManager, LoadGetAndClear)
 {
     FontManager manager;
-    const auto& font = manager.load("test_font", assetPath("fonts/test.ttf"));
+    const auto& font = manager.load("test_font", assetPath("fonts/ui.ttf"));
 
     EXPECT_NE(&font, nullptr);
 
@@ -22,8 +22,8 @@ TEST(FontManager, LoadGetAndClear)
 TEST(FontManager, LoadTwiceReplacesExisting)
 {
     FontManager manager;
-    const auto& first  = manager.load("test_font", assetPath("fonts/test.ttf"));
-    const auto& second = manager.load("test_font", assetPath("fonts/test.ttf"));
+    const auto& first  = manager.load("test_font", assetPath("fonts/ui.ttf"));
+    const auto& second = manager.load("test_font", assetPath("fonts/ui.ttf"));
 
     EXPECT_NE(&first, nullptr);
     EXPECT_NE(&second, nullptr);
@@ -53,14 +53,14 @@ TEST(FontManager, HasReturnsTrueForLoaded)
 {
     FontManager manager;
     EXPECT_FALSE(manager.has("test_font"));
-    manager.load("test_font", assetPath("fonts/test.ttf"));
+    manager.load("test_font", assetPath("fonts/ui.ttf"));
     EXPECT_TRUE(manager.has("test_font"));
 }
 
 TEST(FontManager, RemoveDeletesFont)
 {
     FontManager manager;
-    manager.load("test_font", assetPath("fonts/test.ttf"));
+    manager.load("test_font", assetPath("fonts/ui.ttf"));
     EXPECT_TRUE(manager.has("test_font"));
 
     manager.remove("test_font");
@@ -79,10 +79,10 @@ TEST(FontManager, SizeReturnsCorrectCount)
     FontManager manager;
     EXPECT_EQ(manager.size(), 0u);
 
-    manager.load("font1", assetPath("fonts/test.ttf"));
+    manager.load("font1", assetPath("fonts/ui.ttf"));
     EXPECT_EQ(manager.size(), 1u);
 
-    manager.load("font2", assetPath("fonts/test.ttf"));
+    manager.load("font2", assetPath("fonts/ui.ttf"));
     EXPECT_EQ(manager.size(), 2u);
 
     manager.remove("font1");
@@ -95,10 +95,10 @@ TEST(FontManager, SizeReturnsCorrectCount)
 TEST(FontManager, ReloadPreservesId)
 {
     FontManager manager;
-    manager.load("test_font", assetPath("fonts/test.ttf"));
+    manager.load("test_font", assetPath("fonts/ui.ttf"));
     const sf::Font* first = manager.get("test_font");
 
-    manager.load("test_font", assetPath("fonts/test.ttf"));
+    manager.load("test_font", assetPath("fonts/ui.ttf"));
     const sf::Font* second = manager.get("test_font");
 
     EXPECT_NE(first, nullptr);
@@ -109,8 +109,8 @@ TEST(FontManager, ReloadPreservesId)
 TEST(FontManager, MultipleFontsIndependent)
 {
     FontManager manager;
-    manager.load("font1", assetPath("fonts/test.ttf"));
-    manager.load("font2", assetPath("fonts/test.ttf"));
+    manager.load("font1", assetPath("fonts/ui.ttf"));
+    manager.load("font2", assetPath("fonts/ui.ttf"));
 
     EXPECT_NE(manager.get("font1"), manager.get("font2"));
     EXPECT_EQ(manager.size(), 2u);

@@ -139,7 +139,7 @@ TEST(AssetLoaderTests, LoadFromManifestLoadsSounds)
     std::string json = R"({
         "sounds": [
             {"id": "test_sound", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"}
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"}
         ]
     })";
 
@@ -164,7 +164,7 @@ TEST(AssetLoaderTests, LoadFromManifestTexturesAndSounds)
         ],
         "sounds": [
             {"id": "snd1", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"}
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"}
         ]
     })";
 
@@ -189,9 +189,9 @@ TEST(AssetLoaderTests, LoadFromManifestCallbackCountsTexturesAndSounds)
         ],
         "sounds": [
             {"id": "snd1", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"},
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"},
             {"id": "snd2", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"}
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"}
         ]
     })";
 
@@ -223,7 +223,7 @@ TEST(AssetLoaderTests, LoadFromManifestLoadsFonts)
     std::string json = R"({
         "fonts": [
             {"id": "test_font", "path": ")" +
-                       assetPath("fonts/test.ttf") + R"(", "type": "ui"}
+                       assetPath("fonts/ui.ttf") + R"(", "type": "ui"}
         ]
     })";
 
@@ -248,11 +248,11 @@ TEST(AssetLoaderTests, LoadFromManifestAllAssetTypes)
         ],
         "sounds": [
             {"id": "snd1", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"}
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"}
         ],
         "fonts": [
             {"id": "fnt1", "path": ")" +
-                       assetPath("fonts/test.ttf") + R"(", "type": "ui"}
+                       assetPath("fonts/ui.ttf") + R"(", "type": "ui"}
         ]
     })";
 
@@ -278,13 +278,13 @@ TEST(AssetLoaderTests, LoadFromManifestCallbackCountsAllAssets)
         ],
         "sounds": [
             {"id": "snd1", "path": ")" +
-                       assetPath("sounds/beep.wav") + R"(", "type": "sfx"}
+                       assetPath("sounds/laser.wav") + R"(", "type": "sfx"}
         ],
         "fonts": [
             {"id": "fnt1", "path": ")" +
-                       assetPath("fonts/test.ttf") + R"(", "type": "ui"},
+                       assetPath("fonts/ui.ttf") + R"(", "type": "ui"},
             {"id": "fnt2", "path": ")" +
-                       assetPath("fonts/test.ttf") + R"(", "type": "game"}
+                       assetPath("fonts/ui.ttf") + R"(", "type": "game"}
         ]
     })";
 
