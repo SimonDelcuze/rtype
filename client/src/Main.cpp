@@ -7,17 +7,17 @@
 #include "ecs/Registry.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
+#include "level/EntityTypeRegistry.hpp"
+#include "animation/AnimationManifest.hpp"
+#include "animation/AnimationRegistry.hpp"
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
 #include "input/InputSystem.hpp"
-#include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
-#include "network/LevelInitData.hpp"
-#include "network/NetworkMessageHandler.hpp"
-#include "network/NetworkReceiver.hpp"
-#include "network/NetworkSender.hpp"
+#include "network/ClientInit.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
+#include "systems/BackgroundScrollSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
@@ -26,56 +26,8 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <iostream>
 #include <memory>
-
-namespace
-{
-    struct NetPipelines
-    {
-        ThreadSafeQueue<std::vector<std::uint8_t>> raw;
-        ThreadSafeQueue<SnapshotParseResult> parsed;
-        ThreadSafeQueue<LevelInitData> levelInit;
-        std::unique_ptr<NetworkReceiver> receiver;
-        std::unique_ptr<NetworkMessageHandler> handler;
-        std::unique_ptr<NetworkSender> sender;
-    };
-
-    bool startReceiver(NetPipelines& net, std::uint16_t port)
-    {
-        net.receiver = std::make_unique<NetworkReceiver>(
-            IpEndpoint::v4(0, 0, 0, 0, port),
-            [&](std::vector<std::uint8_t>&& packet) { net.raw.push(std::move(packet)); });
-        if (!net.receiver->start()) {
-            std::cerr << "Failed to start NetworkReceiver on port " << port << '\n';
-            return false;
-        }
-        net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit);
-        return true;
-    }
-
-    bool startSender(NetPipelines& net, InputBuffer& buffer, std::uint32_t playerId, const IpEndpoint& remote)
-    {
-        net.sender = std::make_unique<NetworkSender>(
-            buffer, remote, playerId, std::chrono::milliseconds(16), IpEndpoint::v4(0, 0, 0, 0, 0),
-            [](const IError& err) { std::cerr << "NetworkSender error: " << err.what() << '\n'; });
-        if (!net.sender->start()) {
-            std::cerr << "Failed to start NetworkSender\n";
-            return false;
-        }
-        return true;
-    }
-
-    EntityId createPlayer(Registry& registry, TextureManager& textures)
-    {
-        EntityId player     = registry.createEntity();
-        const auto& texture = textures.load("player", "client/assets/sprites/r-typesheet1.png");
-        auto& sprite        = registry.emplace<SpriteComponent>(player, SpriteComponent(texture));
-        sprite.setFrameSize(32, 32, 8);
-        registry.emplace<TransformComponent>(player, TransformComponent::create(200.0F, 200.0F));
-        registry.emplace<AnimationComponent>(player, AnimationComponent::create(8, 0.1F));
-        registry.emplace<LayerComponent>(player, LayerComponent::create(0));
-        return player;
-    }
-} // namespace
+#include <thread>
+#include <atomic>
 
 int main()
 {
@@ -86,6 +38,9 @@ int main()
     InputBuffer inputBuffer;
     NetPipelines net;
     EntityTypeRegistry typeRegistry;
+    AnimationAtlas animationAtlas = AnimationManifest::loadFromFile("client/assets/animations.json");
+    AnimationRegistry& animations = animationAtlas.clips;
+    AnimationLabels animationLabels{animationAtlas.labels};
     LevelState levelState{};
 
     AssetManifest manifest;
@@ -95,15 +50,47 @@ int main()
         std::cerr << "Failed to load asset manifest: " << e.what() << '\n';
     }
 
-    startReceiver(net, 50000);
-    startSender(net, inputBuffer, 1, IpEndpoint::v4(127, 0, 0, 1, 50001));
-
-    try {
-        createPlayer(registry, textureManager);
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to load player texture: " << e.what() << '\n';
+    IpEndpoint serverEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+    std::atomic<bool> handshakeDone{false};
+    if (!startReceiver(net, 50000, handshakeDone)) {
         return 1;
     }
+    if (!startSender(net, inputBuffer, 1, serverEp)) {
+        return 1;
+    }
+    std::thread welcomeThread([&] { sendWelcomeLoop(serverEp, handshakeDone); });
+
+    // fallback registration in case no LevelInit arrives immediately
+    auto registerType = [&](std::uint16_t typeId, const std::string& textureId, std::uint8_t layer) {
+        RenderTypeData data{};
+        data.spriteId = textureId;
+        if (animations.has(textureId)) {
+            data.animation = animations.get(textureId);
+            auto clip      = animations.get(textureId);
+            if (clip != nullptr && !clip->frames.empty()) {
+                data.frameCount    = static_cast<std::uint8_t>(clip->frames.size());
+                data.frameDuration = clip->frameTime;
+                data.frameWidth    = static_cast<std::uint32_t>(clip->frames.front().width);
+                data.frameHeight   = static_cast<std::uint32_t>(clip->frames.front().height);
+                data.columns       = 1;
+            }
+        }
+        auto tex = manifest.findTextureById(textureId);
+        if (tex) {
+            if (!textureManager.has(tex->id)) {
+                textureManager.load(tex->id, "client/assets/" + tex->path);
+            }
+            data.texture = textureManager.get(tex->id);
+        } else {
+            data.texture = &textureManager.getPlaceholder();
+        }
+        data.layer = layer;
+        typeRegistry.registerType(typeId, data);
+    };
+
+    registerType(1, "player_ship", static_cast<std::uint8_t>(RenderLayer::Entities));
+    registerType(2, "enemy_ship", static_cast<std::uint8_t>(RenderLayer::Entities));
+    registerType(3, "bullet", static_cast<std::uint8_t>(RenderLayer::Entities));
 
     GameLoop gameLoop;
     std::uint32_t inputSequence = 0;
@@ -111,14 +98,19 @@ int main()
     float playerPosY            = 0.0F;
     InputMapper mapper;
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
-    gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, typeRegistry));
-    gameLoop.addSystem(
-        std::make_shared<LevelInitSystem>(net.levelInit, typeRegistry, manifest, textureManager, levelState));
-    gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
+    gameLoop.addSystem(std::make_shared<LevelInitSystem>(net.levelInit, typeRegistry, manifest, textureManager,
+                                                         animations, animationLabels, levelState));
+    gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, typeRegistry));
+    gameLoop.addSystem(std::make_shared<AnimationSystem>());
+    gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
 
     int rc = gameLoop.run(window, registry);
+    handshakeDone.store(true);
+    if (welcomeThread.joinable()) {
+        welcomeThread.join();
+    }
     if (net.receiver) {
         net.receiver->stop();
     }

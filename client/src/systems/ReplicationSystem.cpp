@@ -8,6 +8,7 @@
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
+#include "animation/AnimationRegistry.hpp"
 
 #include <iostream>
 
@@ -20,6 +21,7 @@ void ReplicationSystem::initialize() {}
 void ReplicationSystem::update(Registry& registry, float)
 {
     SnapshotParseResult snapshot;
+    std::size_t processed = 0;
     while (snapshots_->tryPop(snapshot)) {
         for (const auto& entity : snapshot.entities) {
             auto localId = ensureEntity(registry, entity);
@@ -32,6 +34,10 @@ void ReplicationSystem::update(Registry& registry, float)
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
+        processed += snapshot.entities.size();
+    }
+    if (processed > 0) {
+        std::cout << "[client] Replication applied " << processed << " entities\n";
     }
 }
 
@@ -71,13 +77,39 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         return;
     }
     if (data->texture != nullptr) {
-        registry.emplace<SpriteComponent>(id, SpriteComponent(*data->texture));
+        SpriteComponent sprite(*data->texture);
+        if (data->animation != nullptr) {
+            const auto* clip = reinterpret_cast<const AnimationClip*>(data->animation);
+            sprite.customFrames.clear();
+            sprite.customFrames.reserve(clip->frames.size());
+            for (const auto& f : clip->frames) {
+                sprite.customFrames.emplace_back(sf::Vector2i{f.x, f.y}, sf::Vector2i{f.width, f.height});
+            }
+            if (!sprite.customFrames.empty()) {
+                sprite.setFrame(0);
+            }
+        }
+        if (data->frameWidth > 0 && data->frameHeight > 0) {
+            sprite.setFrameSize(data->frameWidth, data->frameHeight,
+                                data->columns == 0 ? 1 : data->columns);
+        }
+        registry.emplace<SpriteComponent>(id, sprite);
     } else {
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
     }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
     if (data->frameCount > 1) {
-        registry.emplace<AnimationComponent>(id, AnimationComponent::create(data->frameCount, data->frameDuration));
+        auto anim = AnimationComponent::create(data->frameCount, data->frameDuration);
+        if (data->animation != nullptr) {
+            const auto* clip = reinterpret_cast<const AnimationClip*>(data->animation);
+            anim.frameIndices.clear();
+            for (std::uint32_t i = 0; i < clip->frames.size(); ++i) {
+                anim.frameIndices.push_back(i);
+            }
+            anim.frameTime = clip->frameTime;
+            anim.loop      = clip->loop;
+        }
+        registry.emplace<AnimationComponent>(id, anim);
     }
 }
 
