@@ -1,14 +1,19 @@
 #include "systems/ReplicationSystem.hpp"
 
+#include "components/AnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
+#include "components/LayerComponent.hpp"
+#include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
 
 #include <iostream>
 
-ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots) : snapshots_(&snapshots) {}
+ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
+    : snapshots_(&snapshots), types_(&types)
+{}
 
 void ReplicationSystem::initialize() {}
 
@@ -17,12 +22,15 @@ void ReplicationSystem::update(Registry& registry, float)
     SnapshotParseResult snapshot;
     while (snapshots_->tryPop(snapshot)) {
         for (const auto& entity : snapshot.entities) {
-            auto localId = ensureEntity(registry, entity.entityId);
-            applyEntity(registry, localId, entity);
-            if (!registry.isAlive(localId)) {
+            auto localId = ensureEntity(registry, entity);
+            if (!localId.has_value()) {
                 continue;
             }
-            applyInterpolation(registry, localId, entity, snapshot.header.tickId);
+            applyEntity(registry, *localId, entity);
+            if (!registry.isAlive(*localId)) {
+                continue;
+            }
+            applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
     }
 }
@@ -32,15 +40,45 @@ void ReplicationSystem::cleanup()
     remoteToLocal_.clear();
 }
 
-EntityId ReplicationSystem::ensureEntity(Registry& registry, std::uint32_t remoteId)
+std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, const SnapshotEntity& entity)
 {
+    auto remoteId = entity.entityId;
     auto it = remoteToLocal_.find(remoteId);
     if (it != remoteToLocal_.end() && registry.isAlive(it->second)) {
         return it->second;
     }
+
+    if (!entity.entityType.has_value()) {
+        std::cerr << "[ReplicationSystem] Missing entityType for remoteId " << remoteId << '\n';
+        return std::nullopt;
+    }
+    if (!types_->has(*entity.entityType)) {
+        std::cerr << "[ReplicationSystem] Unknown entityType " << static_cast<int>(*entity.entityType)
+                  << " for remoteId " << remoteId << '\n';
+        return std::nullopt;
+    }
+
     EntityId id              = registry.createEntity();
     remoteToLocal_[remoteId] = id;
-    return id;
+    applyArchetype(registry, id, *entity.entityType);
+    return std::optional<EntityId>(id);
+}
+
+void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uint16_t typeId)
+{
+    const auto* data = types_->get(typeId);
+    if (data == nullptr) {
+        return;
+    }
+    if (data->texture != nullptr) {
+        registry.emplace<SpriteComponent>(id, SpriteComponent(*data->texture));
+    } else {
+        registry.emplace<SpriteComponent>(id, SpriteComponent{});
+    }
+    registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
+    if (data->frameCount > 1) {
+        registry.emplace<AnimationComponent>(id, AnimationComponent::create(data->frameCount, data->frameDuration));
+    }
 }
 
 void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity)
@@ -119,6 +157,12 @@ void ReplicationSystem::applyDead(Registry& registry, EntityId id, const Snapsho
     }
     if (*entity.dead && registry.isAlive(id)) {
         registry.destroyEntity(id);
+        for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end(); ++it) {
+            if (it->second == id) {
+                remoteToLocal_.erase(it);
+                break;
+            }
+        }
     }
 }
 
