@@ -37,10 +37,9 @@ std::uint16_t LevelInitParser::readU16(const std::vector<std::uint8_t>& buf, std
 
 std::uint32_t LevelInitParser::readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset)
 {
-    std::uint32_t val = (static_cast<std::uint32_t>(buf[offset]) << 24) |
-                        (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
-                        (static_cast<std::uint32_t>(buf[offset + 2]) << 8) |
-                        static_cast<std::uint32_t>(buf[offset + 3]);
+    std::uint32_t val =
+        (static_cast<std::uint32_t>(buf[offset]) << 24) | (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
+        (static_cast<std::uint32_t>(buf[offset + 2]) << 8) | static_cast<std::uint32_t>(buf[offset + 3]);
     offset += 4;
     return val;
 }
@@ -48,14 +47,12 @@ std::uint32_t LevelInitParser::readU32(const std::vector<std::uint8_t>& buf, std
 std::string LevelInitParser::readString(const std::vector<std::uint8_t>& buf, std::size_t& offset)
 {
     std::uint8_t len = buf[offset++];
-    std::string str(buf.begin() + static_cast<long>(offset),
-                    buf.begin() + static_cast<long>(offset + len));
+    std::string str(buf.begin() + static_cast<long>(offset), buf.begin() + static_cast<long>(offset + len));
     offset += len;
     return str;
 }
 
-std::optional<ArchetypeEntry> LevelInitParser::parseArchetype(const std::vector<std::uint8_t>& buf,
-                                                              std::size_t& offset,
+std::optional<ArchetypeEntry> LevelInitParser::parseArchetype(const std::vector<std::uint8_t>& buf, std::size_t& offset,
                                                               std::size_t total)
 {
     if (!ensureAvailable(offset, 2, total)) {

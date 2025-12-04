@@ -11,11 +11,8 @@
 class LevelInitSystem : public ISystem
 {
   public:
-    LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue,
-                    EntityTypeRegistry& typeRegistry,
-                    const AssetManifest& manifest,
-                    TextureManager& textures,
-                    LevelState& state);
+    LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue, EntityTypeRegistry& typeRegistry,
+                    const AssetManifest& manifest, TextureManager& textures, LevelState& state);
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;

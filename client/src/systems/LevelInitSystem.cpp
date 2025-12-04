@@ -2,20 +2,12 @@
 
 #include <iostream>
 
-LevelInitSystem::LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue,
-                                 EntityTypeRegistry& typeRegistry,
-                                 const AssetManifest& manifest,
-                                 TextureManager& textures,
-                                 LevelState& state)
-    : queue_(&queue),
-      typeRegistry_(&typeRegistry),
-      manifest_(&manifest),
-      textures_(&textures),
-      state_(&state)
+LevelInitSystem::LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue, EntityTypeRegistry& typeRegistry,
+                                 const AssetManifest& manifest, TextureManager& textures, LevelState& state)
+    : queue_(&queue), typeRegistry_(&typeRegistry), manifest_(&manifest), textures_(&textures), state_(&state)
 {}
 
-void LevelInitSystem::initialize()
-{}
+void LevelInitSystem::initialize() {}
 
 void LevelInitSystem::update(Registry&, float)
 {
@@ -25,8 +17,7 @@ void LevelInitSystem::update(Registry&, float)
     }
 }
 
-void LevelInitSystem::cleanup()
-{}
+void LevelInitSystem::cleanup() {}
 
 void LevelInitSystem::processLevelInit(const LevelInitData& data)
 {

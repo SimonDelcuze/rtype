@@ -31,11 +31,8 @@ namespace
         buf.insert(buf.end(), s.begin(), s.end());
     }
 
-    std::vector<std::uint8_t> buildLevelInit(std::uint16_t levelId,
-                                             std::uint32_t seed,
-                                             const std::string& bgId,
-                                             const std::string& musicId,
-                                             const std::vector<ArchetypeEntry>& archetypes)
+    std::vector<std::uint8_t> buildLevelInit(std::uint16_t levelId, std::uint32_t seed, const std::string& bgId,
+                                             const std::string& musicId, const std::vector<ArchetypeEntry>& archetypes)
     {
         PacketHeader h{};
         h.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);

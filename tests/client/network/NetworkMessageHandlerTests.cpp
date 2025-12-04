@@ -146,4 +146,3 @@ TEST(NetworkMessageHandler, NoCrashOnEmptyQueue)
     SnapshotParseResult out;
     EXPECT_FALSE(parsed.tryPop(out));
 }
-

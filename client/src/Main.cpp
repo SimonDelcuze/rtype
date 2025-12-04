@@ -112,8 +112,8 @@ int main()
     InputMapper mapper;
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed));
-    gameLoop.addSystem(std::make_shared<LevelInitSystem>(
-        net.levelInit, typeRegistry, manifest, textureManager, levelState));
+    gameLoop.addSystem(
+        std::make_shared<LevelInitSystem>(net.levelInit, typeRegistry, manifest, textureManager, levelState));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
