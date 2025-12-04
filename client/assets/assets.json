@@ -34,7 +34,7 @@
     },
     {
       "id": "theme_music",
-      "path": "music/theme.ogg",
+      "path": "music/theme.wav",
       "type": "music"
     }
   ],
