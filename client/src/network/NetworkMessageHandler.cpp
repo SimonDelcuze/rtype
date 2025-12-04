@@ -4,8 +4,10 @@
 
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-                                             ThreadSafeQueue<LevelInitData>& levelInitQueue)
-    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue)
+                                             ThreadSafeQueue<LevelInitData>& levelInitQueue,
+                                             std::atomic<bool>* handshakeFlag)
+    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
+      handshakeFlag_(handshakeFlag)
 {}
 
 void NetworkMessageHandler::poll()
@@ -38,6 +40,9 @@ void NetworkMessageHandler::handleSnapshot(const std::vector<std::uint8_t>& data
         return;
     }
     snapshotQueue_.push(std::move(*parsed));
+    if (handshakeFlag_ != nullptr) {
+        handshakeFlag_->store(true);
+    }
 }
 
 void NetworkMessageHandler::handleLevelInit(const std::vector<std::uint8_t>& data)
@@ -47,6 +52,9 @@ void NetworkMessageHandler::handleLevelInit(const std::vector<std::uint8_t>& dat
         return;
     }
     levelInitQueue_.push(std::move(*parsed));
+    if (handshakeFlag_ != nullptr) {
+        handshakeFlag_->store(true);
+    }
 }
 
 void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)

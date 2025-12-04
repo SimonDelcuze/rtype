@@ -81,7 +81,8 @@ bool NetworkReceiver::handlePacket(const std::uint8_t* data, std::size_t len)
     if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ServerToClient)) {
         return false;
     }
-    if (hdr->messageType != static_cast<std::uint8_t>(MessageType::Snapshot)) {
+    if (hdr->messageType != static_cast<std::uint8_t>(MessageType::Snapshot) &&
+        hdr->messageType != static_cast<std::uint8_t>(MessageType::LevelInit)) {
         return false;
     }
     const std::size_t payloadSize = hdr->payloadSize;
