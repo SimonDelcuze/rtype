@@ -43,7 +43,7 @@ void ReplicationSystem::cleanup()
 std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, const SnapshotEntity& entity)
 {
     auto remoteId = entity.entityId;
-    auto it = remoteToLocal_.find(remoteId);
+    auto it       = remoteToLocal_.find(remoteId);
     if (it != remoteToLocal_.end() && registry.isAlive(it->second)) {
         return it->second;
     }
