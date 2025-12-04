@@ -9,8 +9,8 @@
 #include <iostream>
 
 LevelInitSystem::LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue, EntityTypeRegistry& typeRegistry,
-                                 const AssetManifest& manifest, TextureManager& textures,
-                                 AnimationRegistry& animations, AnimationLabels& labels, LevelState& state)
+                                 const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
+                                 AnimationLabels& labels, LevelState& state)
     : queue_(&queue), typeRegistry_(&typeRegistry), manifest_(&manifest), textures_(&textures),
       animations_(&animations), labels_(&labels), state_(&state)
 {}
@@ -45,8 +45,8 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
 void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)
 {
     RenderTypeData renderData = buildRenderData(entry);
-    if (renderData.texture == nullptr || (entry.animId.size() && renderData.animation == nullptr &&
-                                          animations_ != nullptr && labels_ != nullptr)) {
+    if (renderData.texture == nullptr ||
+        (entry.animId.size() && renderData.animation == nullptr && animations_ != nullptr && labels_ != nullptr)) {
         return;
     }
     typeRegistry_->registerType(entry.typeId, renderData);

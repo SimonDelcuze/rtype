@@ -1,10 +1,10 @@
 #pragma once
 
+#include "animation/AnimationLabels.hpp"
+#include "animation/AnimationRegistry.hpp"
 #include "assets/AssetManifest.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "graphics/TextureManager.hpp"
-#include "animation/AnimationRegistry.hpp"
-#include "animation/AnimationLabels.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
 #include "network/LevelInitData.hpp"
@@ -15,8 +15,7 @@ class LevelInitSystem : public ISystem
   public:
     LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue, EntityTypeRegistry& typeRegistry,
                     const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
-                    AnimationLabels& labels,
-                    LevelState& state);
+                    AnimationLabels& labels, LevelState& state);
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;

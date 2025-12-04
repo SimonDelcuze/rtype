@@ -28,9 +28,9 @@ void sendClientHelloOnce(const IpEndpoint& server)
         return;
     }
     auto pkt = buildClientHello(0);
-    std::cout << "[SEND] ClientHello -> " << static_cast<int>(server.addr[0]) << "."
-              << static_cast<int>(server.addr[1]) << "." << static_cast<int>(server.addr[2]) << "."
-              << static_cast<int>(server.addr[3]) << ":" << server.port << '\n';
+    std::cout << "[SEND] ClientHello -> " << static_cast<int>(server.addr[0]) << "." << static_cast<int>(server.addr[1])
+              << "." << static_cast<int>(server.addr[2]) << "." << static_cast<int>(server.addr[3]) << ":"
+              << server.port << '\n';
     auto res = sock.sendTo(pkt.data(), pkt.size(), server);
     std::cout << "[SEND] bytes=" << res.size << " err=" << static_cast<int>(res.error) << '\n';
 }

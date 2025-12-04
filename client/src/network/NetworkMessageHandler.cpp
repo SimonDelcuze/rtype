@@ -6,8 +6,7 @@ NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::ui
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                                              ThreadSafeQueue<LevelInitData>& levelInitQueue,
                                              std::atomic<bool>* handshakeFlag)
-    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
-      handshakeFlag_(handshakeFlag)
+    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue), handshakeFlag_(handshakeFlag)
 {}
 
 void NetworkMessageHandler::poll()

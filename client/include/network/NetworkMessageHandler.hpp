@@ -5,8 +5,8 @@
 #include "network/PacketHeader.hpp"
 #include "network/SnapshotParser.hpp"
 
-#include <cstdint>
 #include <atomic>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
