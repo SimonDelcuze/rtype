@@ -1,5 +1,6 @@
 #include "systems/ReplicationSystem.hpp"
 
+#include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
@@ -8,7 +9,6 @@
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
-#include "animation/AnimationRegistry.hpp"
 
 #include <iostream>
 
@@ -90,8 +90,7 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
             }
         }
         if (data->frameWidth > 0 && data->frameHeight > 0) {
-            sprite.setFrameSize(data->frameWidth, data->frameHeight,
-                                data->columns == 0 ? 1 : data->columns);
+            sprite.setFrameSize(data->frameWidth, data->frameHeight, data->columns == 0 ? 1 : data->columns);
         }
         registry.emplace<SpriteComponent>(id, sprite);
     } else {

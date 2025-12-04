@@ -1,3 +1,5 @@
+#include "animation/AnimationManifest.hpp"
+#include "animation/AnimationRegistry.hpp"
 #include "assets/AssetManifest.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -7,12 +9,10 @@
 #include "ecs/Registry.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
-#include "level/EntityTypeRegistry.hpp"
-#include "animation/AnimationManifest.hpp"
-#include "animation/AnimationRegistry.hpp"
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
 #include "input/InputSystem.hpp"
+#include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
 #include "network/ClientInit.hpp"
 #include "scheduler/GameLoop.hpp"
@@ -24,10 +24,10 @@
 #include "systems/ReplicationSystem.hpp"
 
 #include <SFML/Window/VideoMode.hpp>
+#include <atomic>
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <atomic>
 
 int main()
 {

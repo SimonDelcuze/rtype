@@ -2,8 +2,8 @@
 
 #include <SFML/Graphics/Texture.hpp>
 #include <cstdint>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 struct RenderTypeData
 {
