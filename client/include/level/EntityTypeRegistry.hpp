@@ -3,13 +3,19 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <cstdint>
 #include <unordered_map>
+#include <string>
 
 struct RenderTypeData
 {
     const sf::Texture* texture = nullptr;
     std::uint8_t frameCount    = 1;
     float frameDuration        = 0.1F;
+    std::uint32_t frameWidth   = 0;
+    std::uint32_t frameHeight  = 0;
+    std::uint32_t columns      = 1;
     std::uint8_t layer         = 0;
+    const void* animation      = nullptr; // opaque pointer to animation clip (client-side registry)
+    std::string spriteId;
 };
 
 class EntityTypeRegistry

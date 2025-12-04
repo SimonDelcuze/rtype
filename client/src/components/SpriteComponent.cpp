@@ -10,6 +10,10 @@ SpriteComponent::SpriteComponent(const sf::Texture& texture) : sprite(sf::Sprite
 void SpriteComponent::setTexture(const sf::Texture& texture)
 {
     sprite.emplace(texture);
+    if (!customFrames.empty()) {
+        setFrame(currentFrame);
+        return;
+    }
     if (frameWidth == 0 || frameHeight == 0) {
         const sf::Vector2u size = texture.getSize();
         sprite->setTextureRect(
@@ -44,7 +48,15 @@ void SpriteComponent::setFrameSize(std::uint32_t width, std::uint32_t height, st
 void SpriteComponent::setFrame(std::uint32_t frameIndex)
 {
     currentFrame = frameIndex;
-    if (!sprite || frameWidth == 0 || frameHeight == 0) {
+    if (!sprite) {
+        return;
+    }
+    if (!customFrames.empty()) {
+        std::uint32_t idx = frameIndex % static_cast<std::uint32_t>(customFrames.size());
+        sprite->setTextureRect(customFrames[idx]);
+        return;
+    }
+    if (frameWidth == 0 || frameHeight == 0) {
         return;
     }
     std::uint32_t col = frameIndex % columns;

@@ -1,0 +1,64 @@
+{
+  "animations": [
+    {
+      "id": "player_ship_row1",
+      "frameTime": 0.5,
+      "loop": true,
+      "frames": [
+        { "x": 0, "y": 0, "width": 34, "height": 18 },
+        { "x": 33, "y": 0, "width": 34, "height": 18 },
+        { "x": 66, "y": 0, "width": 34, "height": 18 },
+        { "x": 99, "y": 0, "width": 34, "height": 18 },
+        { "x": 132, "y": 0, "width": 34, "height": 18 }
+      ]
+    },
+    {
+      "id": "player_ship_row2",
+      "frameTime": 0.5,
+      "loop": true,
+      "frames": [
+        { "x": 0, "y": 18, "width": 34, "height": 18 },
+        { "x": 33, "y": 18, "width": 34, "height": 18 },
+        { "x": 66, "y": 18, "width": 34, "height": 18 },
+        { "x": 99, "y": 18, "width": 34, "height": 18 },
+        { "x": 132, "y": 18, "width": 34, "height": 18 }
+      ]
+    },
+    {
+      "id": "player_ship_row3",
+      "frameTime": 0.5,
+      "loop": true,
+      "frames": [
+        { "x": 0, "y": 36, "width": 34, "height": 18 },
+        { "x": 33, "y": 36, "width": 34, "height": 18 },
+        { "x": 66, "y": 36, "width": 34, "height": 18 },
+        { "x": 99, "y": 36, "width": 34, "height": 18 },
+        { "x": 132, "y": 36, "width": 34, "height": 18 }
+      ]
+    },
+    {
+      "id": "player_ship_row4",
+      "frameTime": 0.5,
+      "loop": true,
+      "frames": [
+        { "x": 0, "y": 54, "width": 34, "height": 18 },
+        { "x": 33, "y": 54, "width": 34, "height": 18 },
+        { "x": 66, "y": 54, "width": 34, "height": 18 },
+        { "x": 99, "y": 54, "width": 34, "height": 18 },
+        { "x": 132, "y": 54, "width": 34, "height": 18 }
+      ]
+    }
+  ],
+  "labels": {
+    "player_ship": {
+      "row1": "player_ship_row1",
+      "row2": "player_ship_row2",
+      "row3": "player_ship_row3",
+      "row4": "player_ship_row4",
+      "player1": "player_ship_row1",
+      "player2": "player_ship_row2",
+      "player3": "player_ship_row3",
+      "player4": "player_ship_row4"
+    }
+  }
+}
