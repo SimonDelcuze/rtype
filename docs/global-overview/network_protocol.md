@@ -198,6 +198,36 @@ from processing corrupted snapshots or malformed data.
   - Acknowledged Sequence Number (2 bytes)
   - Acknowledged Message Type (1 byte)
 
+### SERVER_LEVEL_INIT (0x30)
+- Sent before a level starts to announce content ids and archetypes.
+- Payload (binary, length-prefixed strings):
+  - Level ID (2 bytes)
+  - Seed (4 bytes)
+  - Background ID (len + bytes)
+  - Music ID (len + bytes)
+  - Archetype Count (1 byte)
+    - For each archetype:
+      - Type ID (2 bytes)
+      - Sprite ID (len + bytes)
+      - Animation ID (len + bytes, 0 = none)
+      - Layer (1 byte)
+- Client maps these ids to its manifest; unknown ids should log and use placeholders. Seed is stored for deterministic behavior.
+
+### SERVER_LEVEL_TRANSITION (0x31)
+- Sent when a level ends to announce the next one.
+- Payload:
+  - Next Level ID (2 bytes)
+  - Next Seed (4 bytes)
+  - Reason (1 byte: 0 completed, 1 failed, 2 skipped, 3 server-initiated)
+- Client tears down current level entities and can preload assets for the next level immediately.
+
+## Multi-level flow (client expectations)
+- **Delivery of level messages**: LevelInit and LevelTransition should be retried until the client reacts (e.g., sends a small ACK) so a dropped UDP packet does not stall the game.
+- **Entity typing**: The first snapshot that mentions a new entityId must include `entityType`; otherwise the client cannot instantiate it. After a level change, treat all entities as unknown until a snapshot with `entityType` arrives.
+- **Level isolation**: Snapshots for a previous level must be ignored once a transition is applied (track currentLevelId and drop mismatched snapshots).
+- **Cleanup on transition**: On LevelTransition, the client destroys all entities from the prior level and resets interpolation/prediction state before accepting entities for the next level.
+- **Asset readiness**: The client may show a loading/transition screen while preloading the assets announced in LevelInit; gameplay should start only after preload completes or placeholders are applied.
+
 ## Reason Codes
 
 Several messages in the protocol (such as `CLIENT_DISCONNECT`, `SERVER_KICK`, `SERVER_BAN`, and `SERVER_DISCONNECT`) include a **Reason Code** field.  

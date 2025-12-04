@@ -8,12 +8,18 @@
 
 * [Introduction](global-overview/introduction.md)
 * [Installation Guide](global-overview/installation-guide.md)
+* [Core Components](core-components.md)
+* [Network Protocol](global-overview/network_protocol.md)
 * [ECS Architecture](global-overview/ecs-architecture/README.md)
   * [Registry](global-overview/ecs-architecture/registry.md)
   * [Components Overview](global-overview/ecs-architecture/components-overview.md)
   * [Systems Overview](global-overview/ecs-architecture/systems-overview.md)
   * [Scheduler Architecture](global-overview/ecs-architecture/scheduler-architecture.md)
   * [Event Bus](global-overview/ecs-architecture/event-bus.md)
+
+## Protocol
+
+* [Level Messages & Entity Typing](protocol/level-messages.md)
 
 ## Server
 
@@ -35,6 +41,7 @@
 * [Systems](server/systems.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
+  * [Delta State Snapshots](server/networking/delta-state.md)
   * [Entity/Event Packets](server/networking/entity-events.md)
 
 ## Client
@@ -51,6 +58,11 @@
 * [Scene Graph & Layering](client/scene-graph-layering.md)
 * [Collision Masks & Hitboxes](collision-masks.md)
 * [Error Handling](client/error-handling.md)
+* [Input Pipeline](client/input-pipeline.md)
+* [Networking](client/network-receiver.md)
+  * [Network Receiver](client/network-receiver.md)
+  * [Network Sender](client/network-sender.md)
+  * [Snapshot Parser](client/snapshot-parser.md)
 * [Components](client/components.md)
   * [AnimationComponent](client/components/animation-component.md)
   * [SpriteComponent](client/components/sprite-component.md)
@@ -61,9 +73,11 @@
 * [Systems](client/systems.md)
   * [AnimationSystem](client/systems/animation-system.md)
   * [AudioSystem](client/systems/audio-system.md)
-  * [CameraSystem](client/camera-system.md)
+  * [CameraSystem](client/systems/camera-system.md)
   * [InterpolationSystem](client/systems/interpolation-system.md)
-  * [ReconciliationSystem](client/reconciliation-system.md)
+  * [ReconciliationSystem](client/systems/reconciliation-system.md)
   * [HUDSystem](client/systems/hud-system.md)
+  * [BackgroundScrollSystem](client/systems/background-scroll.md)
+  * [ReplicationSystem](client/systems/replication-system.md)
 * [Helpers](client/helpers.md)
   * [InterpolationController](client/interpolation-controller.md)
