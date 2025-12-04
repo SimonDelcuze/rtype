@@ -6,6 +6,7 @@
 #include "network/SnapshotParser.hpp"
 
 #include <cstdint>
+#include <atomic>
 #include <optional>
 #include <vector>
 
@@ -14,7 +15,7 @@ class NetworkMessageHandler
   public:
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-                          ThreadSafeQueue<LevelInitData>& levelInitQueue);
+                          ThreadSafeQueue<LevelInitData>& levelInitQueue, std::atomic<bool>* handshakeFlag = nullptr);
 
     void poll();
 
@@ -27,4 +28,5 @@ class NetworkMessageHandler
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue_;
     ThreadSafeQueue<SnapshotParseResult>& snapshotQueue_;
     ThreadSafeQueue<LevelInitData>& levelInitQueue_;
+    std::atomic<bool>* handshakeFlag_;
 };
