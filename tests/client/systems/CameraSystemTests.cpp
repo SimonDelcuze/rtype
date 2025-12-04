@@ -13,6 +13,9 @@ class CameraSystemTests : public ::testing::Test
     void SetUp() override
     {
         window = std::make_unique<sf::RenderWindow>(sf::VideoMode({800u, 600u}), "Test", sf::Style::None);
+        if (!window->isOpen()) {
+            GTEST_SKIP() << "RenderWindow not available (no X11/display)";
+        }
     }
 
     void TearDown() override
