@@ -1,8 +1,19 @@
 #include "network/NetworkSender.hpp"
 
 NetworkSender::NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
-                             std::chrono::milliseconds interval, IpEndpoint bind, ErrorHandler onError)
-    : buffer_(&buffer), remote_(remote), bind_(bind), interval_(interval), playerId_(playerId),
+                             std::chrono::milliseconds interval, IpEndpoint bind, ErrorHandler onError,
+                             std::shared_ptr<UdpSocket> sharedSocket)
+    : buffer_(&buffer),
+      remote_(remote),
+      bind_(bind),
+      actualEndpoint_{},
+      socket_(std::move(sharedSocket)),
+      ownsSocket_(false),
+      thread_{},
+      stopRequested_{false},
+      running_{false},
+      interval_(interval),
+      playerId_(playerId),
       onError_(std::move(onError))
 {}
 
@@ -16,14 +27,20 @@ bool NetworkSender::start()
     if (running_) {
         return false;
     }
-    if (!socket_.open(bind_)) {
-        reportError(NetworkSendError("NetworkSender failed to open socket"));
-        return false;
+    if (socket_ == nullptr) {
+        socket_     = std::make_shared<UdpSocket>();
+        ownsSocket_ = true;
     }
-    socket_.setNonBlocking(true);
+    if (!socket_->isOpen()) {
+        if (!socket_->open(bind_)) {
+            reportError(NetworkSendError("NetworkSender failed to open socket"));
+            return false;
+        }
+    }
+    socket_->setNonBlocking(true);
     stopRequested_  = false;
     running_        = true;
-    actualEndpoint_ = socket_.localEndpoint();
+    actualEndpoint_ = socket_->localEndpoint();
     thread_         = std::thread(&NetworkSender::loop, this);
     return true;
 }
@@ -34,7 +51,9 @@ void NetworkSender::stop()
     if (thread_.joinable()) {
         thread_.join();
     }
-    socket_.close();
+    if (ownsSocket_ && socket_ != nullptr) {
+        socket_->close();
+    }
     running_ = false;
 }
 
@@ -68,7 +87,7 @@ void NetworkSender::sendCommand(const InputCommand& cmd)
 {
     auto packet = buildPacket(cmd);
     auto data   = packet.encode();
-    auto res    = socket_.sendTo(data.data(), data.size(), remote_);
+    auto res    = socket_->sendTo(data.data(), data.size(), remote_);
     if (!res.ok()) {
         reportError(NetworkSendSocketError("NetworkSender sendTo failed"));
     }

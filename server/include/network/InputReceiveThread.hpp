@@ -3,6 +3,7 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "events/ClientTimeoutEvent.hpp"
 #include "network/InputParser.hpp"
+#include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
 
 #include <array>
@@ -26,9 +27,19 @@ struct ClientState
     std::chrono::steady_clock::time_point lastPacketTime{};
 };
 
+struct ControlEvent
+{
+    PacketHeader header{};
+    IpEndpoint from{};
+};
+
 class InputReceiveThread
 {
   public:
+    InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
+                       ThreadSafeQueue<ControlEvent>& controlQueue,
+                       ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue = nullptr,
+                       std::chrono::milliseconds timeout                 = std::chrono::seconds(5));
     InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
                        ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue = nullptr,
                        std::chrono::milliseconds timeout                 = std::chrono::seconds(5));
@@ -66,6 +77,7 @@ class InputReceiveThread
 
     IpEndpoint bind_;
     ThreadSafeQueue<ReceivedInput>& queue_;
+    ThreadSafeQueue<ControlEvent>& controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue_;
     std::chrono::milliseconds timeout_;
     std::atomic<bool> running_{false};

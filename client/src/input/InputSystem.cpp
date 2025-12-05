@@ -1,5 +1,16 @@
 #include "input/InputSystem.hpp"
 
+#include "components/TagComponent.hpp"
+#include "components/TransformComponent.hpp"
+#include "components/VelocityComponent.hpp"
+
+#include <cmath>
+
+namespace
+{
+    constexpr float kMoveSpeed = 250.0F;
+}
+
 InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
                          float& posY)
     : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY)
@@ -7,13 +18,35 @@ InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t
 
 void InputSystem::initialize() {}
 
-void InputSystem::update(Registry& registry, float)
+void InputSystem::update(Registry& registry, float deltaTime)
 {
-    (void) registry;
-    auto flags = mapper_->pollFlags();
-    if (flags == 0) {
-        return;
+    if (!positionInitialized_) {
+        auto view = registry.view<TransformComponent, TagComponent>();
+        for (auto id : view) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (!tag.hasTag(EntityTag::Player))
+                continue;
+            const auto& t = registry.get<TransformComponent>(id);
+            *posX_         = t.x;
+            *posY_         = t.y;
+            positionInitialized_ = true;
+            break;
+        }
     }
+
+    fireElapsed_ += deltaTime;
+
+    auto flags   = mapper_->pollFlags();
+    bool changed = flags != lastFlags_;
+
+    const bool firePressed = (flags & InputMapper::FireFlag) != 0;
+    bool fireAllowed       = firePressed && (changed || fireElapsed_ >= fireCooldown_);
+    if (!fireAllowed)
+        flags &= static_cast<std::uint16_t>(~InputMapper::FireFlag);
+    if (fireAllowed)
+        fireElapsed_ = 0.0F;
+
+    bool inactive = flags == 0;
 
     const bool left  = (flags & InputMapper::LeftFlag) != 0;
     const bool right = (flags & InputMapper::RightFlag) != 0;
@@ -39,8 +72,56 @@ void InputSystem::update(Registry& registry, float)
         angle = 90.0F;
     }
 
+    float dx = 0.0F;
+    float dy = 0.0F;
+    if (left)
+        dx -= 1.0F;
+    if (right)
+        dx += 1.0F;
+    if (up)
+        dy -= 1.0F;
+    if (down)
+        dy += 1.0F;
+    if (dx != 0.0F || dy != 0.0F) {
+        float len = std::sqrt(dx * dx + dy * dy);
+        if (len > 0.0F) {
+            dx /= len;
+            dy /= len;
+        }
+        *posX_ += dx * kMoveSpeed * deltaTime;
+        *posY_ += dy * kMoveSpeed * deltaTime;
+        auto view = registry.view<TransformComponent, TagComponent>();
+        for (auto id : view) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (!tag.hasTag(EntityTag::Player))
+                continue;
+            auto& t = registry.get<TransformComponent>(id);
+            t.x     = *posX_;
+            t.y     = *posY_;
+            break;
+        }
+    }
+    if (inactive && changed) {
+        // ensure local velocity is stopped immediately when keys are released
+        auto view = registry.view<TransformComponent, TagComponent, VelocityComponent>();
+        for (auto id : view) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (!tag.hasTag(EntityTag::Player))
+                continue;
+            auto& vel = registry.get<VelocityComponent>(id);
+            vel.vx    = 0.0F;
+            vel.vy    = 0.0F;
+            break;
+        }
+    }
+
+    if (inactive && !changed) {
+        return;
+    }
+
     InputCommand cmd = buildCommand(flags, angle);
     buffer_->push(cmd);
+    lastFlags_ = flags;
 }
 
 void InputSystem::cleanup() {}

@@ -49,6 +49,19 @@ void SendThread::publish(const DeltaStatePacket& packet)
     latest_ = packet.encode();
 }
 
+void SendThread::publish(const std::vector<std::uint8_t>& payload)
+{
+    std::lock_guard<std::mutex> lock(payloadMutex_);
+    latest_ = payload;
+}
+
+void SendThread::sendTo(const std::vector<std::uint8_t>& payload, const IpEndpoint& dst)
+{
+    if (!running_)
+        return;
+    socket_.sendTo(payload.data(), payload.size(), dst);
+}
+
 void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
 {
     auto payload = packet.encode();

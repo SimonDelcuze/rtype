@@ -47,6 +47,23 @@
         { "x": 99, "y": 54, "width": 34, "height": 18 },
         { "x": 132, "y": 54, "width": 34, "height": 18 }
       ]
+    },
+    {
+      "id": "bullet",
+      "frameTime": 0.25,
+      "loop": true,
+      "frames": [
+        { "x": 231, "y": 99, "width": 18, "height": 19 },
+        { "x": 248, "y": 99, "width": 18, "height": 19 },
+        { "x": 199, "y": 116, "width": 34, "height": 19 },
+        { "x": 233, "y": 116, "width": 34, "height": 19 },
+        { "x": 167, "y": 133, "width": 50, "height": 19 },
+        { "x": 217, "y": 133, "width": 50, "height": 19 },
+        { "x":135, "y": 151, "width": 66, "height": 19 },
+        { "x": 200, "y": 151, "width": 66, "height": 19 },
+        { "x": 103, "y": 169, "width": 82, "height": 19 },
+        { "x": 184, "y": 169, "width": 82, "height": 19 }
+      ]
     }
   ],
   "labels": {
@@ -59,6 +76,9 @@
       "player2": "player_ship_row2",
       "player3": "player_ship_row3",
       "player4": "player_ship_row4"
+    },
+    "bullet": {
+      "bullet1": "bullet"
     }
   }
 }

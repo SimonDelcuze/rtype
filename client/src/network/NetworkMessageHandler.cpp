@@ -62,6 +62,12 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     if (!hdr.has_value()) {
         return;
     }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::GameStart)) {
+        if (handshakeFlag_ != nullptr) {
+            handshakeFlag_->store(true);
+        }
+        return;
+    }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Snapshot)) {
         handleSnapshot(data);
         return;
