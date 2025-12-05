@@ -3,17 +3,8 @@
 NetworkSender::NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
                              std::chrono::milliseconds interval, IpEndpoint bind, ErrorHandler onError,
                              std::shared_ptr<UdpSocket> sharedSocket)
-    : buffer_(&buffer),
-      remote_(remote),
-      bind_(bind),
-      actualEndpoint_{},
-      socket_(std::move(sharedSocket)),
-      ownsSocket_(false),
-      thread_{},
-      stopRequested_{false},
-      running_{false},
-      interval_(interval),
-      playerId_(playerId),
+    : buffer_(&buffer), remote_(remote), bind_(bind), actualEndpoint_{}, socket_(std::move(sharedSocket)),
+      ownsSocket_(false), thread_{}, stopRequested_{false}, running_{false}, interval_(interval), playerId_(playerId),
       onError_(std::move(onError))
 {}
 

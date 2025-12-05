@@ -23,7 +23,7 @@ class InputSystem : public ISystem
     float* posX_;
     float* posY_;
     bool positionInitialized_ = false;
-    std::uint16_t lastFlags_   = 0;
-    float fireCooldown_        = 0.5F;
-    float fireElapsed_         = 0.0F;
+    std::uint16_t lastFlags_  = 0;
+    float fireCooldown_       = 0.5F;
+    float fireElapsed_        = 0.0F;
 };

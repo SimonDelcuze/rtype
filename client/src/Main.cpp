@@ -43,8 +43,8 @@ namespace
     }
 
     void registerType(EntityTypeRegistry& types, TextureManager& textures, const AssetManifest& manifest,
-                      AnimationRegistry& animations, std::uint16_t typeId,
-                      const std::string& textureId, std::uint8_t layer)
+                      AnimationRegistry& animations, std::uint16_t typeId, const std::string& textureId,
+                      std::uint8_t layer)
     {
         RenderTypeData data{};
         data.spriteId = textureId;
@@ -122,7 +122,7 @@ namespace
         gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
         gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     }
-}
+} // namespace
 
 int main()
 {
@@ -136,8 +136,8 @@ int main()
     AnimationRegistry& animations = animationAtlas.clips;
     AnimationLabels animationLabels{animationAtlas.labels};
     LevelState levelState{};
-    AssetManifest manifest   = loadManifest();
-    IpEndpoint serverEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+    AssetManifest manifest = loadManifest();
+    IpEndpoint serverEp    = IpEndpoint::v4(127, 0, 0, 1, 50010);
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
     if (!setupNetwork(net, inputBuffer, serverEp, handshakeDone, welcomeThread))

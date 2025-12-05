@@ -36,7 +36,7 @@ namespace
 std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick)
 {
     std::vector<std::uint8_t> payload;
-    auto view = registry.view<TransformComponent>();
+    auto view           = registry.view<TransformComponent>();
     std::uint16_t count = 0;
     for (auto id : view) {
         (void) id;
