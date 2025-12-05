@@ -5,31 +5,34 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 #include <thread>
 #include <vector>
 
 class NetworkReceiver
 {
   public:
-    using SnapshotHandler = std::function<void(std::vector<std::uint8_t>&&)>;
+    using SnapshotHandler = std::function<void(std::vector<std::uint8_t>&&)>; 
 
-    NetworkReceiver(const IpEndpoint& bindEndpoint, SnapshotHandler handler);
-    ~NetworkReceiver();
+    NetworkReceiver(const IpEndpoint& bindEndpoint, SnapshotHandler handler,
+                    std::shared_ptr<UdpSocket> sharedSocket = nullptr);
+    ~NetworkReceiver(); 
 
-    bool start();
-    void stop();
-    bool running() const;
+    bool start(); 
+    void stop(); 
+    bool running() const; 
     IpEndpoint endpoint() const;
 
   private:
-    void loop();
-    bool handlePacket(const std::uint8_t* data, std::size_t len);
+    void loop(); 
+    bool handlePacket(const std::uint8_t* data, std::size_t len); 
 
-    IpEndpoint bindEndpoint_;
-    IpEndpoint actualEndpoint_{};
-    SnapshotHandler handler_;
-    UdpSocket socket_;
-    std::thread thread_;
-    std::atomic<bool> running_{false};
+    IpEndpoint bindEndpoint_; 
+    IpEndpoint actualEndpoint_{}; 
+    SnapshotHandler handler_; 
+    std::shared_ptr<UdpSocket> socket_; 
+    bool ownsSocket_{false};
+    std::thread thread_; 
+    std::atomic<bool> running_{false}; 
     std::atomic<bool> stopRequested_{false};
 };

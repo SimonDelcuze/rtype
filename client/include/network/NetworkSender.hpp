@@ -8,6 +8,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <thread>
 
 class NetworkSender
@@ -17,7 +18,8 @@ class NetworkSender
 
     NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
                   std::chrono::milliseconds interval = std::chrono::milliseconds(16),
-                  IpEndpoint bind = IpEndpoint::v4(0, 0, 0, 0, 0), ErrorHandler onError = nullptr);
+                  IpEndpoint bind = IpEndpoint::v4(0, 0, 0, 0, 0), ErrorHandler onError = nullptr,
+                  std::shared_ptr<UdpSocket> sharedSocket = nullptr);
     ~NetworkSender();
 
     bool start();
@@ -35,7 +37,8 @@ class NetworkSender
     IpEndpoint remote_;
     IpEndpoint bind_;
     IpEndpoint actualEndpoint_;
-    UdpSocket socket_;
+    std::shared_ptr<UdpSocket> socket_;
+    bool ownsSocket_{false};
     std::thread thread_;
     std::atomic<bool> stopRequested_{false};
     std::atomic<bool> running_{false};

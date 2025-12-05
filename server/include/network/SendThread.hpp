@@ -22,6 +22,8 @@ class SendThread
     bool isRunning() const;
     void setClients(const std::vector<IpEndpoint>& clients);
     void publish(const DeltaStatePacket& packet);
+    void publish(const std::vector<std::uint8_t>& payload);
+    void sendTo(const std::vector<std::uint8_t>& payload, const IpEndpoint& dst);
     void broadcast(const PlayerDisconnectedPacket& packet);
     void broadcast(const EntitySpawnPacket& packet);
     void broadcast(const EntityDestroyedPacket& packet);

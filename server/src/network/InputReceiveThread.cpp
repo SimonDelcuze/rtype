@@ -34,9 +34,10 @@ namespace
 } // namespace
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
+                                       ThreadSafeQueue<ControlEvent>& controlQueue,
                                        ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue,
                                        std::chrono::milliseconds timeout)
-    : bind_(bindTo), queue_(outQueue), timeoutQueue_(timeoutQueue), timeout_(timeout)
+    : bind_(bindTo), queue_(outQueue), controlQueue_(controlQueue), timeoutQueue_(timeoutQueue), timeout_(timeout)
 {
     lastTimeoutCheck_ = std::chrono::steady_clock::now();
 }
@@ -45,6 +46,12 @@ InputReceiveThread::~InputReceiveThread()
 {
     stop();
 }
+
+InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
+                                       ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue,
+                                       std::chrono::milliseconds timeout)
+    : InputReceiveThread(bindTo, outQueue, *new ThreadSafeQueue<ControlEvent>(), timeoutQueue, timeout)
+{}
 
 bool InputReceiveThread::start()
 {
@@ -114,30 +121,62 @@ void InputReceiveThread::run()
                 continue;
             continue;
         }
-        auto parsed = parseInputPacket(buf.data(), r.size);
-        if (!parsed.input) {
-            Logger::instance().warn("input_drop status=" + parseStatusToString(parsed.status) +
-                                    " from=" + endpointToString(src) + " size=" + std::to_string(r.size));
+        auto hdr = PacketHeader::decode(buf.data(), r.size);
+        if (!hdr) {
+            Logger::instance().warn("input_drop status=decode_failed from=" + endpointToString(src) +
+                                    " size=" + std::to_string(r.size));
             continue;
         }
-        now = std::chrono::steady_clock::now();
-        EndpointKey key{src.addr, src.port};
-        {
-            std::lock_guard<std::mutex> lock(sessionMutex_);
-            auto it = sessions_.find(key);
-            if (it != sessions_.end() && parsed.input->sequenceId <= it->second.lastSequenceId) {
+        if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ClientToServer)) {
+            continue;
+        }
+
+        if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Input)) {
+            EndpointKey key{src.addr, src.port};
+            bool stale = false;
+            {
+                std::lock_guard<std::mutex> lock(sessionMutex_);
+                auto it = sessions_.find(key);
+                if (it != sessions_.end() && hdr->sequenceId <= it->second.lastSequenceId)
+                    stale = true;
+            }
+            if (stale) {
                 Logger::instance().warn("input_drop status=stale_sequence from=" + endpointToString(src) +
-                                        " seq=" + std::to_string(parsed.input->sequenceId) +
-                                        " last=" + std::to_string(it->second.lastSequenceId));
+                                        " size=" + std::to_string(r.size));
                 continue;
             }
-            auto& state          = sessions_[key];
-            state.lastSequenceId = parsed.input->sequenceId;
-            state.lastPacketTime = now;
-            lastAccepted_        = key;
+            auto parsed = parseInputPacket(buf.data(), r.size);
+            if (!parsed.input) {
+                Logger::instance().warn("input_drop status=" + parseStatusToString(parsed.status) +
+                                        " from=" + endpointToString(src) + " size=" + std::to_string(r.size));
+                continue;
+            }
+            now = std::chrono::steady_clock::now();
+            {
+                std::lock_guard<std::mutex> lock(sessionMutex_);
+                auto& state          = sessions_[key];
+                state.lastSequenceId = parsed.input->sequenceId;
+                state.lastPacketTime = now;
+                lastAccepted_        = key;
+            }
+            ReceivedInput ev{*parsed.input, src};
+            queue_.push(std::move(ev));
+            continue;
         }
-        ReceivedInput ev{*parsed.input, src};
-        queue_.push(std::move(ev));
+
+        if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
+            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
+            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
+            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientPing)) {
+            ControlEvent ev{};
+            ev.header = *hdr;
+            ev.from   = src;
+            controlQueue_.push(std::move(ev));
+            continue;
+        }
+
+        Logger::instance().warn("input_drop status=decode_failed from=" + endpointToString(src) +
+                                " size=" + std::to_string(r.size));
     }
 }
 
