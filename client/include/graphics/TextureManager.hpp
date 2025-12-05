@@ -1,9 +1,11 @@
 #pragma once
 
+#include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 class TextureManager
 {
@@ -20,7 +22,12 @@ class TextureManager
 
   private:
     void createPlaceholder();
+    bool isHeadless() const;
 
     std::unordered_map<std::string, sf::Texture> textures_;
+    std::unordered_map<std::string, sf::Image> images_;
+    std::unordered_set<std::string> headlessIds_;
     std::optional<sf::Texture> placeholder_;
+    mutable bool headlessMode_{false};
+    mutable bool headlessChecked_{false};
 };
