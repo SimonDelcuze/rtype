@@ -9,10 +9,10 @@
 bool TextureManager::isHeadless() const
 {
     if (!headlessChecked_) {
-        const char* ci = std::getenv("CI");
+        const char* ci            = std::getenv("CI");
         const char* githubActions = std::getenv("GITHUB_ACTIONS");
-        headlessMode_ = (ci != nullptr) || (githubActions != nullptr);
-        headlessChecked_ = true;
+        headlessMode_             = (ci != nullptr) || (githubActions != nullptr);
+        headlessChecked_          = true;
     }
     return headlessMode_;
 }
@@ -23,11 +23,11 @@ const sf::Texture& TextureManager::load(const std::string& id, const std::string
     if (!image.loadFromFile(path)) {
         throw AssetLoadError("Failed to load texture at path: " + path);
     }
-    
+
     if (isHeadless()) {
         images_[id] = image;
         headlessIds_.insert(id);
-        
+
         try {
             sf::Texture tex;
             if (!tex.loadFromImage(image)) {
@@ -104,7 +104,7 @@ void TextureManager::createPlaceholder()
     if (isHeadless()) {
         return;
     }
-    
+
     constexpr unsigned int kSize = 32;
     sf::Image img({kSize, kSize}, sf::Color::Magenta);
     sf::Texture tex;
@@ -123,7 +123,7 @@ const sf::Texture& TextureManager::getPlaceholder()
         static sf::Texture fallback;
         return fallback;
     }
-    
+
     if (!placeholder_) {
         createPlaceholder();
     }
