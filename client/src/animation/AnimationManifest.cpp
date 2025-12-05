@@ -19,7 +19,6 @@ static AnimationClip parseClip(const nlohmann::json& clipJson)
             clip.frames.push_back(frame);
         }
     }
-    // optional "rows" helper for uneven sprite sheets
     if (clip.frames.empty() && clipJson.contains("rows") && clipJson["rows"].is_array()) {
         int y = 0;
         for (const auto& row : clipJson["rows"]) {

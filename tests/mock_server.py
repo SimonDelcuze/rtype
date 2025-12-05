@@ -186,7 +186,7 @@ def main():
             print("[INFO] handshake complete")
             break
 
-    player_variant = 5
+    player_variant = 1
     level_seed = random.randint(0, 0xFFFFFFFF)
     level_init = build_level_init(
         sequence=0,

@@ -14,7 +14,7 @@ struct RenderTypeData
     std::uint32_t frameHeight  = 0;
     std::uint32_t columns      = 1;
     std::uint8_t layer         = 0;
-    const void* animation      = nullptr; // opaque pointer to animation clip (client-side registry)
+    const void* animation      = nullptr;
     std::string spriteId;
 };
 

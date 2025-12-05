@@ -60,7 +60,6 @@ int main()
     }
     std::thread welcomeThread([&] { sendWelcomeLoop(serverEp, handshakeDone); });
 
-    // fallback registration in case no LevelInit arrives immediately
     auto registerType = [&](std::uint16_t typeId, const std::string& textureId, std::uint8_t layer) {
         RenderTypeData data{};
         data.spriteId = textureId;
