@@ -96,8 +96,8 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
         }
     }
     net.receiver = std::make_unique<NetworkReceiver>(
-        IpEndpoint::v4(0, 0, 0, 0, port),
-        [&](std::vector<std::uint8_t>&& packet) { net.raw.push(std::move(packet)); }, net.socket);
+        IpEndpoint::v4(0, 0, 0, 0, port), [&](std::vector<std::uint8_t>&& packet) { net.raw.push(std::move(packet)); },
+        net.socket);
     if (!net.receiver->start()) {
         std::cerr << "Failed to start NetworkReceiver on port " << port << '\n';
         return false;

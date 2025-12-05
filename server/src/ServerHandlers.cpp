@@ -1,6 +1,5 @@
-#include "server/ServerRunner.hpp"
-
 #include "Logger.hpp"
+#include "server/ServerRunner.hpp"
 
 #include <random>
 
@@ -14,8 +13,8 @@ void ServerApp::handleControl()
 
 void ServerApp::handleControlMessage(const ControlEvent& ctrl)
 {
-    auto key   = endpointKey(ctrl.from);
-    auto& sess = sessions_[key];
+    auto key      = endpointKey(ctrl.from);
+    auto& sess    = sessions_[key];
     sess.endpoint = ctrl.from;
     if (sess.playerId == 0)
         sess.playerId = static_cast<std::uint32_t>(sessions_.size());
@@ -81,7 +80,7 @@ std::vector<ReceivedInput> ServerApp::mapInputs(const std::vector<ReceivedInput>
         auto it = playerEntities_.find(playerId);
         if (it == playerEntities_.end())
             continue;
-        ReceivedInput copy = input;
+        ReceivedInput copy  = input;
         copy.input.playerId = it->second;
         mapped.push_back(copy);
     }

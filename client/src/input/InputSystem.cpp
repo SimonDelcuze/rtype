@@ -26,9 +26,9 @@ void InputSystem::update(Registry& registry, float deltaTime)
             const auto& tag = registry.get<TagComponent>(id);
             if (!tag.hasTag(EntityTag::Player))
                 continue;
-            const auto& t = registry.get<TransformComponent>(id);
-            *posX_         = t.x;
-            *posY_         = t.y;
+            const auto& t        = registry.get<TransformComponent>(id);
+            *posX_               = t.x;
+            *posY_               = t.y;
             positionInitialized_ = true;
             break;
         }

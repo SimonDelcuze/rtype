@@ -14,7 +14,7 @@ namespace
         if (signal == SIGINT || signal == SIGTERM)
             g_running = false;
     }
-}
+} // namespace
 
 void run_server()
 {

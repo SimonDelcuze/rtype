@@ -45,8 +45,8 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
 
         bool fire = (ev.input.flags & static_cast<std::uint16_t>(InputFlag::Fire)) != 0;
         if (fire && registry.has<TransformComponent>(id)) {
-            float dirX = std::cos(comp.angle);
-            float dirY = std::sin(comp.angle);
+            float dirX       = std::cos(comp.angle);
+            float dirY       = std::sin(comp.angle);
             EntityId missile = registry.createEntity();
             auto& mt         = registry.emplace<TransformComponent>(missile);
             mt.x             = ev.input.x;
