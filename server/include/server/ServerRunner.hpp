@@ -7,6 +7,8 @@
 #include "network/SendThread.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
+#include "systems/MonsterMovementSystem.hpp"
+#include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
@@ -43,6 +45,8 @@ class ServerApp
     std::unordered_map<std::string, ClientSession> sessions_;
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
+    MonsterMovementSystem monsterMovementSys_;
+    MonsterSpawnSystem monsterSpawnSys_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent> timeoutQueue_;

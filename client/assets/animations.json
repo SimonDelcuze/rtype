@@ -59,11 +59,16 @@
         { "x": 233, "y": 116, "width": 34, "height": 19 },
         { "x": 167, "y": 133, "width": 50, "height": 19 },
         { "x": 217, "y": 133, "width": 50, "height": 19 },
-        { "x":135, "y": 151, "width": 66, "height": 19 },
+        { "x": 135, "y": 151, "width": 66, "height": 19 },
         { "x": 200, "y": 151, "width": 66, "height": 19 },
         { "x": 103, "y": 169, "width": 82, "height": 19 },
         { "x": 184, "y": 169, "width": 82, "height": 19 }
       ]
+    },
+    {
+      "id": "enemy_ship_row1",
+      "loop": false,
+      "frames": [{ "x": 2, "y": 14, "width": 47, "height": 44 }]
     }
   ],
   "labels": {
@@ -76,6 +81,9 @@
       "player2": "player_ship_row2",
       "player3": "player_ship_row3",
       "player4": "player_ship_row4"
+    },
+    "enemy_ship": {
+      "enemy1": "enemy_ship_row1"
     },
     "bullet": {
       "bullet1": "bullet"
