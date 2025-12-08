@@ -7,7 +7,7 @@
 #include <iostream>
 
 int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
-                    std::atomic<bool>& runningFlag)
+                  std::atomic<bool>& runningFlag)
 {
     sf::Clock clock;
 
