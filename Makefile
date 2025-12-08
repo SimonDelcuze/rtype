@@ -1,9 +1,12 @@
 SHELL := /bin/bash
 
-.PHONY: all client server shared tests test_client test_server test_shared format lint pre_pr clean fclean re
+.PHONY: all client server shared tests test_client test_server test_shared format lint pre_pr clean fclean re rebuild
 
 all:
 	./scripts/build.sh
+
+rebuild:
+	cmake --build build
 
 client:
 	./scripts/build.sh client

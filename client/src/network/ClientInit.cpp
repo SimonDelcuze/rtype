@@ -1,5 +1,7 @@
 #include "network/ClientInit.hpp"
 
+#include "Logger.hpp"
+
 #include <iostream>
 
 std::vector<std::uint8_t> buildClientHello(std::uint16_t sequence)
@@ -23,7 +25,7 @@ std::vector<std::uint8_t> buildClientHello(std::uint16_t sequence)
 void sendClientHelloOnce(const IpEndpoint& server, UdpSocket& socket)
 {
     auto pkt = buildClientHello(0);
-    auto res = socket.sendTo(pkt.data(), pkt.size(), server);
+    socket.sendTo(pkt.data(), pkt.size(), server);
 }
 
 std::vector<std::uint8_t> buildSimplePacket(std::uint8_t messageType, std::uint16_t sequence)
@@ -47,23 +49,19 @@ std::vector<std::uint8_t> buildSimplePacket(std::uint8_t messageType, std::uint1
 void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket)
 {
     auto pkt = buildSimplePacket(static_cast<std::uint8_t>(MessageType::ClientJoinRequest), sequence);
-    auto res = socket.sendTo(pkt.data(), pkt.size(), server);
+    socket.sendTo(pkt.data(), pkt.size(), server);
 }
 
 void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket)
 {
     auto pkt = buildSimplePacket(static_cast<std::uint8_t>(MessageType::ClientReady), sequence);
-    std::cout << "[SEND] ClientReady seq=" << sequence << '\n';
-    auto res = socket.sendTo(pkt.data(), pkt.size(), server);
-    std::cout << "[SEND] bytes=" << res.size << " err=" << static_cast<int>(res.error) << '\n';
+    socket.sendTo(pkt.data(), pkt.size(), server);
 }
 
 void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket)
 {
     auto pkt = buildSimplePacket(static_cast<std::uint8_t>(MessageType::ClientPing), sequence);
-    std::cout << "[SEND] ClientPing seq=" << sequence << '\n';
-    auto res = socket.sendTo(pkt.data(), pkt.size(), server);
-    std::cout << "[SEND] bytes=" << res.size << " err=" << static_cast<int>(res.error) << '\n';
+    socket.sendTo(pkt.data(), pkt.size(), server);
 }
 
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket)
@@ -97,7 +95,7 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
         return false;
     }
     net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit, &handshakeFlag);
-    std::cout << "[INFO] receiver started on port " << port << '\n';
+    Logger::instance().info("Receiver started on port " + std::to_string(port));
     return true;
 }
 
@@ -110,8 +108,10 @@ bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clie
         std::cerr << "Failed to start NetworkSender\n";
         return false;
     }
-    std::cout << "[INFO] sender started to " << static_cast<int>(server.addr[0]) << "."
-              << static_cast<int>(server.addr[1]) << "." << static_cast<int>(server.addr[2]) << "."
-              << static_cast<int>(server.addr[3]) << ":" << server.port << " as clientId=" << clientId << '\n';
+    Logger::instance().info("Sender started to " + std::to_string(static_cast<int>(server.addr[0])) + "." +
+                           std::to_string(static_cast<int>(server.addr[1])) + "." +
+                           std::to_string(static_cast<int>(server.addr[2])) + "." +
+                           std::to_string(static_cast<int>(server.addr[3])) + ":" +
+                           std::to_string(server.port) + " as clientId=" + std::to_string(clientId));
     return true;
 }
