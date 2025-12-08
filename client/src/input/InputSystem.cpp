@@ -102,7 +102,6 @@ void InputSystem::update(Registry& registry, float deltaTime)
         }
     }
     if (inactive && changed) {
-        // ensure local velocity is stopped immediately when keys are released
         auto view = registry.view<TransformComponent, TagComponent, VelocityComponent>();
         for (auto id : view) {
             const auto& tag = registry.get<TagComponent>(id);

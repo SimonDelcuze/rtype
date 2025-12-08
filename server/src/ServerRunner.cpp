@@ -137,30 +137,17 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 void ServerApp::resetGame()
 {
     Logger::instance().info("Resetting game state...");
-
-    // Clear registry
     registry_.clear();
-
-    // Clear player entities mapping
     playerEntities_.clear();
-
-    // Clear sessions and clients
     sessions_.clear();
     clients_.clear();
     sendThread_.setClients(clients_);
-
-    // Reset game state
     currentTick_ = 0;
     gameStarted_ = false;
-
-    // Clear event bus
     eventBus_.clear();
-
-    // Clear queues
     ControlEvent ctrl;
     while (controlQueue_.tryPop(ctrl))
         ;
-
     ReceivedInput input;
     while (inputQueue_.tryPop(input))
         ;
@@ -168,6 +155,5 @@ void ServerApp::resetGame()
     ClientTimeoutEvent timeout;
     while (timeoutQueue_.tryPop(timeout))
         ;
-
     Logger::instance().info("Game state reset complete");
 }
