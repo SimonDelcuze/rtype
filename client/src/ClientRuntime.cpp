@@ -123,8 +123,8 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
 {
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
-    gameLoop.addSystem(std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels,
-                                                         levelState));
+    gameLoop.addSystem(
+        std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, types));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
@@ -159,7 +159,7 @@ void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool
 int runClient(const ClientOptions& options)
 {
     configureLogger(options.verbose);
-    Window window = createMainWindow();
+    Window window       = createMainWindow();
     auto serverEndpoint = selectServerEndpoint(window, options.useDefault);
     if (!serverEndpoint)
         return 0;
