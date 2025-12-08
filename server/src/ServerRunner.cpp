@@ -3,7 +3,6 @@
 #include "Logger.hpp"
 
 #include <chrono>
-#include <iostream>
 #include <random>
 #include <thread>
 
@@ -89,7 +88,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
     auto collisions = collisionSys_.detect(registry_);
     if (!collisions.empty()) {
-        std::cout << "[ServerRunner] Detected " << collisions.size() << " collision(s)\n";
+        Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
         for (const auto& col : collisions) {
             std::string aTag = "Unknown";
             std::string bTag = "Unknown";
@@ -111,8 +110,8 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
                 else if (tag.hasTag(EntityTag::Projectile))
                     bTag = "Projectile";
             }
-            std::cout << "[ServerRunner]   Collision: " << aTag << " (ID:" << col.a << ") <-> " << bTag
-                      << " (ID:" << col.b << ")\n";
+            Logger::instance().info("  Collision: " + aTag + " (ID:" + std::to_string(col.a) + ") <-> " +
+                                   bTag + " (ID:" + std::to_string(col.b) + ")");
         }
     }
     damageSys_.apply(registry_, collisions);
@@ -124,7 +123,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
         }
     }
     if (!toDestroy.empty()) {
-        std::cout << "[ServerRunner] Destroying " << toDestroy.size() << " dead entity(ies)\n";
+        Logger::instance().info("Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
     }
     destructionSys_.update(registry_, toDestroy);
 
