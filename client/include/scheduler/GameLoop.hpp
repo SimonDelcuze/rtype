@@ -5,9 +5,15 @@
 #include "network/UdpSocket.hpp"
 #include "scheduler/ClientScheduler.hpp"
 
+#include <atomic>
+#include <cstdint>
+#include <memory>
+
 class GameLoop : public ClientScheduler
 {
   public:
-    int run(Window& window, Registry& registry, UdpSocket* networkSocket = nullptr,
-            const IpEndpoint* serverEndpoint = nullptr);
+    GameLoop() = default;
+
+    int run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
+            std::atomic<bool>& runningFlag);
 };

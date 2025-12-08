@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <csignal>
 
 namespace
 {
@@ -142,6 +143,15 @@ namespace
     }
 } // namespace
 
+std::atomic<bool> g_running{true};
+
+void signalHandler(int signum)
+{
+    (void)signum;
+    Logger::instance().info("Received signal " + std::to_string(signum) + ", stopping...");
+    g_running = false;
+}
+
 int main(int argc, char* argv[])
 {
     // Parse command line arguments
@@ -200,6 +210,9 @@ int main(int argc, char* argv[])
         return 1;
     setupTypes(typeRegistry, textureManager, manifest, animations);
 
+    // Register signal handler
+    std::signal(SIGINT, signalHandler);
+
     GameLoop gameLoop;
     std::uint32_t inputSequence = 0;
     float playerPosX            = 0.0F;
@@ -207,7 +220,7 @@ int main(int argc, char* argv[])
     InputMapper mapper;
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window);
-    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEp);
+    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEp, g_running);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     Logger::instance().info("R-Type Client shutting down");
