@@ -1,3 +1,4 @@
+#include "Logger.hpp"
 #include "animation/AnimationManifest.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "assets/AssetManifest.hpp"
@@ -14,7 +15,6 @@
 #include "input/InputSystem.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
-#include "Logger.hpp"
 #include "network/ClientInit.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
@@ -55,15 +55,15 @@ namespace
             auto* tex = textures.get(playerTexEntry->id);
             if (tex != nullptr) {
                 RenderTypeData data{};
-                data.texture = tex;
-                data.layer = 0;
-                data.spriteId = "player_ship";
-                auto size = tex->getSize();
-                data.frameCount = 6;
+                data.texture       = tex;
+                data.layer         = 0;
+                data.spriteId      = "player_ship";
+                auto size          = tex->getSize();
+                data.frameCount    = 6;
                 data.frameDuration = 0.08F;
-                data.columns = 6;
-                data.frameWidth = data.columns == 0 ? size.x : static_cast<std::uint32_t>(size.x / data.columns);
-                data.frameHeight = 14;
+                data.columns       = 6;
+                data.frameWidth    = data.columns == 0 ? size.x : static_cast<std::uint32_t>(size.x / data.columns);
+                data.frameHeight   = 14;
                 registry.registerType(1, data);
             }
         }
@@ -75,8 +75,8 @@ namespace
             auto* tex = textures.get(enemyTexEntry->id);
             if (tex != nullptr) {
                 RenderTypeData data{};
-                data.texture = tex;
-                data.layer = 1;
+                data.texture  = tex;
+                data.layer    = 1;
                 data.spriteId = "enemy_ship";
                 registry.registerType(2, data);
             }
@@ -90,8 +90,8 @@ namespace
             auto* tex = textures.get(bulletTexEntry->id);
             if (tex != nullptr) {
                 RenderTypeData data{};
-                data.texture = tex;
-                data.layer = 1;
+                data.texture  = tex;
+                data.layer    = 1;
                 data.spriteId = "bullet";
                 registry.registerType(3, data);
             }

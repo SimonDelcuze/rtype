@@ -8,5 +8,6 @@
 class GameLoop : public ClientScheduler
 {
   public:
-    int run(Window& window, Registry& registry, UdpSocket* networkSocket = nullptr, const IpEndpoint* serverEndpoint = nullptr);
+    int run(Window& window, Registry& registry, UdpSocket* networkSocket = nullptr,
+            const IpEndpoint* serverEndpoint = nullptr);
 };
