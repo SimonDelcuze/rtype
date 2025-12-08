@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ClientConfig.hpp"
+#include "animation/AnimationLabels.hpp"
+#include "animation/AnimationManifest.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "assets/AssetManifest.hpp"
 #include "graphics/TextureManager.hpp"
