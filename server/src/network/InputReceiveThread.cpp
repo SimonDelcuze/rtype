@@ -167,7 +167,8 @@ void InputReceiveThread::run()
         if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
             hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
             hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
-            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientPing)) {
+            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientPing) ||
+            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
             ControlEvent ev{};
             ev.header = *hdr;
             ev.from   = src;

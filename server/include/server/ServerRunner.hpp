@@ -42,6 +42,8 @@ class ServerApp
     LevelDefinition buildLevel() const;
     bool ready() const;
     std::uint32_t nextSeed() const;
+    void resetGame();
+    void onDisconnect(const IpEndpoint& endpoint);
 
     Registry registry_;
     std::map<std::uint32_t, EntityId> playerEntities_;

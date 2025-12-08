@@ -33,9 +33,6 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
     state_->levelId = data.levelId;
     state_->seed    = data.seed;
     state_->active  = true;
-    std::cout << "[client] LevelInit: levelId=" << data.levelId << " seed=" << data.seed
-              << " background=" << data.backgroundId << " archetypes=" << data.archetypes.size() << '\n';
-
     applyBackground(registry, data);
     for (const auto& entry : data.archetypes) {
         resolveEntityType(entry);

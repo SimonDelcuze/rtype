@@ -151,7 +151,7 @@ int main()
     InputMapper mapper;
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window);
-    int rc = gameLoop.run(window, registry);
+    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEp);
     stopNetwork(net, welcomeThread, handshakeDone);
     return rc;
 }

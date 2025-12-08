@@ -23,11 +23,7 @@ std::vector<std::uint8_t> buildClientHello(std::uint16_t sequence)
 void sendClientHelloOnce(const IpEndpoint& server, UdpSocket& socket)
 {
     auto pkt = buildClientHello(0);
-    std::cout << "[SEND] ClientHello -> " << static_cast<int>(server.addr[0]) << "." << static_cast<int>(server.addr[1])
-              << "." << static_cast<int>(server.addr[2]) << "." << static_cast<int>(server.addr[3]) << ":"
-              << server.port << '\n';
     auto res = socket.sendTo(pkt.data(), pkt.size(), server);
-    std::cout << "[SEND] bytes=" << res.size << " err=" << static_cast<int>(res.error) << '\n';
 }
 
 std::vector<std::uint8_t> buildSimplePacket(std::uint8_t messageType, std::uint16_t sequence)
@@ -51,9 +47,7 @@ std::vector<std::uint8_t> buildSimplePacket(std::uint8_t messageType, std::uint1
 void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket)
 {
     auto pkt = buildSimplePacket(static_cast<std::uint8_t>(MessageType::ClientJoinRequest), sequence);
-    std::cout << "[SEND] ClientJoinRequest seq=" << sequence << '\n';
     auto res = socket.sendTo(pkt.data(), pkt.size(), server);
-    std::cout << "[SEND] bytes=" << res.size << " err=" << static_cast<int>(res.error) << '\n';
 }
 
 void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket)

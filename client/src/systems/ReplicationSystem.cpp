@@ -36,9 +36,6 @@ void ReplicationSystem::update(Registry& registry, float)
         }
         processed += snapshot.entities.size();
     }
-    if (processed > 0) {
-        std::cout << "[client] Replication applied " << processed << " entities\n";
-    }
 }
 
 void ReplicationSystem::cleanup()
