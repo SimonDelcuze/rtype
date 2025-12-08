@@ -1,6 +1,6 @@
 #include "systems/DamageSystem.hpp"
 
-#include <iostream>
+#include "Logger.hpp"
 
 DamageSystem::DamageSystem(EventBus& bus) : bus_(bus) {}
 
@@ -51,8 +51,9 @@ void DamageSystem::apply(Registry& registry, const std::vector<Collision>& colli
                 std::int32_t dmg = 25;
                 std::int32_t before = h.current;
                 h.damage(dmg);
-                std::cout << "[DamageSystem] Player (ID:" << entityA << ") damaged Enemy (ID:" << entityB 
-                          << ") for " << dmg << " damage. Health: " << before << " -> " << h.current << "\n";
+                Logger::instance().info("Player (ID:" + std::to_string(entityA) + ") damaged Enemy (ID:" + 
+                                       std::to_string(entityB) + ") for " + std::to_string(dmg) + 
+                                       " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
                 DamageEvent ev{};
                 ev.attacker  = entityA;
                 ev.target    = entityB;
@@ -65,8 +66,9 @@ void DamageSystem::apply(Registry& registry, const std::vector<Collision>& colli
                 std::int32_t dmg = 10;
                 std::int32_t before = h.current;
                 h.damage(dmg);
-                std::cout << "[DamageSystem] Enemy (ID:" << entityA << ") damaged Player (ID:" << entityB 
-                          << ") for " << dmg << " damage. Health: " << before << " -> " << h.current << "\n";
+                Logger::instance().info("Enemy (ID:" + std::to_string(entityA) + ") damaged Player (ID:" + 
+                                       std::to_string(entityB) + ") for " + std::to_string(dmg) + 
+                                       " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
                 DamageEvent ev{};
                 ev.attacker  = entityA;
                 ev.target    = entityB;
