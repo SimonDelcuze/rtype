@@ -41,6 +41,10 @@ class ServerApp
     void processTimeouts();
     LevelDefinition buildLevel() const;
     bool ready() const;
+
+    void cleanupOffscreenEntities();
+    void logCollisions(const std::vector<Collision>& collisions);
+    std::string getEntityTagName(EntityId id) const;
     std::uint32_t nextSeed() const;
 
     Registry registry_;
