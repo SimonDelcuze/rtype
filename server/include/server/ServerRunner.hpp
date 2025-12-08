@@ -46,6 +46,8 @@ class ServerApp
     void logCollisions(const std::vector<Collision>& collisions);
     std::string getEntityTagName(EntityId id) const;
     std::uint32_t nextSeed() const;
+    void resetGame();
+    void onDisconnect(const IpEndpoint& endpoint);
 
     Registry registry_;
     std::map<std::uint32_t, EntityId> playerEntities_;
