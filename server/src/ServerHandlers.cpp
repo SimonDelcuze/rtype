@@ -41,8 +41,6 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     clients_.push_back(ctrl.from);
     sendThread_.setClients(clients_);
     addPlayerEntity(sess.playerId);
-
-    // Send LevelInit if game already started (late joiner)
     if (gameStarted_) {
         Logger::instance().info("Late joiner detected, sending LevelInit");
         sendThread_.sendTo(buildGameStart(0), ctrl.from);
@@ -145,7 +143,6 @@ void ServerApp::onDisconnect(const IpEndpoint& endpoint)
     if (it != sessions_.end()) {
         auto& sess = it->second;
 
-        // Destroy player entity
         if (playerEntities_.contains(sess.playerId)) {
             EntityId eid = playerEntities_[sess.playerId];
             if (registry_.isAlive(eid)) {
@@ -156,12 +153,8 @@ void ServerApp::onDisconnect(const IpEndpoint& endpoint)
 
         sessions_.erase(it);
     }
-
-    // Remove from clients list
     std::erase_if(clients_, [&](const IpEndpoint& ep) { return endpointKey(ep) == endpointKey(endpoint); });
     sendThread_.setClients(clients_);
-
-    // If no more clients, reset the game
     if (sessions_.empty()) {
         Logger::instance().info("No more clients connected, resetting game");
         resetGame();
