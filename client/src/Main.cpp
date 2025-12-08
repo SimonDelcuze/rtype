@@ -8,6 +8,7 @@
 #include "components/TransformComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
+#include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
 #include "input/InputBuffer.hpp"
@@ -23,6 +24,7 @@
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
+#include "ui/ConnectionMenu.hpp"
 
 #include <SFML/Window/VideoMode.hpp>
 #include <atomic>
@@ -143,11 +145,15 @@ namespace
 int main(int argc, char* argv[])
 {
     // Parse command line arguments
-    bool verbose = false;
+    bool verbose    = false;
+    bool useDefault = false;
+
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--verbose" || arg == "-v") {
             verbose = true;
+        } else if (arg == "--default" || arg == "-d") {
+            useDefault = true;
         }
     }
 
@@ -156,6 +162,28 @@ int main(int argc, char* argv[])
     Logger::instance().info("R-Type Client starting" + std::string(verbose ? " (verbose mode)" : ""));
 
     Window window(sf::VideoMode({1280u, 720u}), "R-Type", true);
+
+    // Get server endpoint (interactive menu or default)
+    IpEndpoint serverEp;
+    if (useDefault) {
+        Logger::instance().info("Using default server: 127.0.0.1:50010");
+        serverEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+    } else {
+        FontManager fontManager;
+        // Show connection menu
+        ConnectionMenu menu(fontManager);
+        while (window.isOpen() && !menu.isDone()) {
+            window.pollEvents([&](const sf::Event& event) { menu.handleEvent(event); });
+            menu.render(window.raw());
+        }
+
+        if (!window.isOpen()) {
+            Logger::instance().info("Connection menu closed");
+            return 0;
+        }
+
+        serverEp = menu.getServerEndpoint();
+    }
     TextureManager textureManager;
     Registry registry;
     InputBuffer inputBuffer;
@@ -166,7 +194,6 @@ int main(int argc, char* argv[])
     AnimationLabels animationLabels{animationAtlas.labels};
     LevelState levelState{};
     AssetManifest manifest = loadManifest();
-    IpEndpoint serverEp    = IpEndpoint::v4(127, 0, 0, 1, 50010);
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
     if (!setupNetwork(net, inputBuffer, serverEp, handshakeDone, welcomeThread))
