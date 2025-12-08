@@ -14,6 +14,7 @@
 #include "input/InputSystem.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
+#include "Logger.hpp"
 #include "network/ClientInit.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/AnimationSystem.hpp"
@@ -27,6 +28,7 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <thread>
 
 namespace
@@ -37,49 +39,79 @@ namespace
         try {
             manifest = AssetManifest::fromFile("client/assets/assets.json");
         } catch (const std::exception& e) {
-            std::cerr << "Failed to load asset manifest: " << e.what() << '\n';
+            Logger::instance().error("Failed to load asset manifest: " + std::string(e.what()));
         }
         return manifest;
     }
 
-    void registerType(EntityTypeRegistry& types, TextureManager& textures, const AssetManifest& manifest,
-                      AnimationRegistry& animations, std::uint16_t typeId, const std::string& textureId,
-                      std::uint8_t layer)
+    void setupTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
+                    AnimationRegistry&)
     {
-        RenderTypeData data{};
-        data.spriteId = textureId;
-        if (animations.has(textureId)) {
-            data.animation = animations.get(textureId);
-            auto clip      = animations.get(textureId);
-            if (clip && !clip->frames.empty()) {
-                data.frameCount    = static_cast<std::uint8_t>(clip->frames.size());
-                data.frameDuration = clip->frameTime;
-                data.frameWidth    = static_cast<std::uint32_t>(clip->frames.front().width);
-                data.frameHeight   = static_cast<std::uint32_t>(clip->frames.front().height);
-                data.columns       = 1;
+        auto playerTexEntry = manifest.findTextureById("player_ship");
+        if (playerTexEntry) {
+            if (!textures.has(playerTexEntry->id)) {
+                textures.load(playerTexEntry->id, "client/assets/" + playerTexEntry->path);
+            }
+            auto* tex = textures.get(playerTexEntry->id);
+            if (tex != nullptr) {
+                RenderTypeData data{};
+                data.texture = tex;
+                data.layer = 0;
+                data.spriteId = "player_ship";
+                auto size = tex->getSize();
+                data.frameCount = 6;
+                data.frameDuration = 0.08F;
+                data.columns = 6;
+                data.frameWidth = data.columns == 0 ? size.x : static_cast<std::uint32_t>(size.x / data.columns);
+                data.frameHeight = 14;
+                registry.registerType(1, data);
             }
         }
-        auto tex = manifest.findTextureById(textureId);
-        if (tex) {
-            if (!textures.has(tex->id))
-                textures.load(tex->id, "client/assets/" + tex->path);
-            data.texture = textures.get(tex->id);
-        } else {
-            data.texture = &textures.getPlaceholder();
+        auto enemyTexEntry = manifest.findTextureById("enemy_ship");
+        if (enemyTexEntry) {
+            if (!textures.has(enemyTexEntry->id)) {
+                textures.load(enemyTexEntry->id, "client/assets/" + enemyTexEntry->path);
+            }
+            auto* tex = textures.get(enemyTexEntry->id);
+            if (tex != nullptr) {
+                RenderTypeData data{};
+                data.texture = tex;
+                data.layer = 1;
+                data.spriteId = "enemy_ship";
+                registry.registerType(2, data);
+            }
         }
-        data.layer = layer;
-        types.registerType(typeId, data);
+
+        auto bulletTexEntry = manifest.findTextureById("bullet");
+        if (bulletTexEntry) {
+            if (!textures.has(bulletTexEntry->id)) {
+                textures.load(bulletTexEntry->id, "client/assets/" + bulletTexEntry->path);
+            }
+            auto* tex = textures.get(bulletTexEntry->id);
+            if (tex != nullptr) {
+                RenderTypeData data{};
+                data.texture = tex;
+                data.layer = 1;
+                data.spriteId = "bullet";
+                registry.registerType(3, data);
+            }
+        }
     }
 
-    void setupTypes(EntityTypeRegistry& types, TextureManager& textures, const AssetManifest& manifest,
-                    AnimationRegistry& animations)
+    void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
+                          const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
+                          AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer,
+                          InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX, float& playerPosY,
+                          Window& window)
     {
-        registerType(types, textures, manifest, animations, 1, "player_ship",
-                     static_cast<std::uint8_t>(RenderLayer::Entities));
-        registerType(types, textures, manifest, animations, 2, "enemy_ship",
-                     static_cast<std::uint8_t>(RenderLayer::Entities));
-        registerType(types, textures, manifest, animations, 3, "bullet",
-                     static_cast<std::uint8_t>(RenderLayer::Entities));
+        gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
+        gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
+        gameLoop.addSystem(std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations,
+                                                             labels, levelState));
+        gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, types));
+        gameLoop.addSystem(std::make_shared<AnimationSystem>());
+        gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
+        gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     }
 
     bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
@@ -106,26 +138,23 @@ namespace
         if (net.sender)
             net.sender->stop();
     }
-
-    void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
-                          const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
-                          AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer,
-                          InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX, float& playerPosY,
-                          Window& window)
-    {
-        gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY));
-        gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
-        gameLoop.addSystem(std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations,
-                                                             labels, levelState));
-        gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, types));
-        gameLoop.addSystem(std::make_shared<AnimationSystem>());
-        gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
-        gameLoop.addSystem(std::make_shared<RenderSystem>(window));
-    }
 } // namespace
 
-int main()
+int main(int argc, char* argv[])
 {
+    // Parse command line arguments
+    bool verbose = false;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--verbose" || arg == "-v") {
+            verbose = true;
+        }
+    }
+
+    // Initialize logger
+    Logger::instance().setVerbose(verbose);
+    Logger::instance().info("R-Type Client starting" + std::string(verbose ? " (verbose mode)" : ""));
+
     Window window(sf::VideoMode({1280u, 720u}), "R-Type", true);
     TextureManager textureManager;
     Registry registry;
@@ -153,5 +182,7 @@ int main()
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window);
     int rc = gameLoop.run(window, registry, net.socket.get(), &serverEp);
     stopNetwork(net, welcomeThread, handshakeDone);
+
+    Logger::instance().info("R-Type Client shutting down");
     return rc;
 }

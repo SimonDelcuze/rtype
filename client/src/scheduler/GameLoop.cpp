@@ -1,5 +1,6 @@
 #include "scheduler/GameLoop.hpp"
 
+#include "Logger.hpp"
 #include "network/PacketHeader.hpp"
 
 #include <SFML/System/Clock.hpp>
@@ -21,6 +22,7 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
 
                     auto packet = header.encode();
                     networkSocket->sendTo(packet.data(), packet.size(), *serverEndpoint);
+                    Logger::instance().info("Sent CLIENT_DISCONNECT to server");
                 }
                 window.close();
             }
