@@ -28,11 +28,11 @@
 
 #include <SFML/Window/VideoMode.hpp>
 #include <atomic>
+#include <csignal>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
-#include <csignal>
 
 namespace
 {
@@ -147,7 +147,7 @@ std::atomic<bool> g_running{true};
 
 void signalHandler(int signum)
 {
-    (void)signum;
+    (void) signum;
     Logger::instance().info("Received signal " + std::to_string(signum) + ", stopping...");
     g_running = false;
 }
