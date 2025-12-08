@@ -109,9 +109,9 @@ bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clie
         return false;
     }
     Logger::instance().info("Sender started to " + std::to_string(static_cast<int>(server.addr[0])) + "." +
-                           std::to_string(static_cast<int>(server.addr[1])) + "." +
-                           std::to_string(static_cast<int>(server.addr[2])) + "." +
-                           std::to_string(static_cast<int>(server.addr[3])) + ":" +
-                           std::to_string(server.port) + " as clientId=" + std::to_string(clientId));
+                            std::to_string(static_cast<int>(server.addr[1])) + "." +
+                            std::to_string(static_cast<int>(server.addr[2])) + "." +
+                            std::to_string(static_cast<int>(server.addr[3])) + ":" + std::to_string(server.port) +
+                            " as clientId=" + std::to_string(clientId));
     return true;
 }
