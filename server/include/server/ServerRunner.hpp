@@ -7,6 +7,9 @@
 #include "network/SendThread.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
+#include "systems/CollisionSystem.hpp"
+#include "systems/DamageSystem.hpp"
+#include "systems/DestructionSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
@@ -14,6 +17,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <events/EventBus.hpp>
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -43,10 +47,14 @@ class ServerApp
     std::map<std::uint32_t, EntityId> playerEntities_;
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
+    EventBus eventBus_;
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
-    MonsterMovementSystem monsterMovementSys_;
     MonsterSpawnSystem monsterSpawnSys_;
+    MonsterMovementSystem monsterMovementSys_;
+    CollisionSystem collisionSys_;
+    DamageSystem damageSys_;
+    DestructionSystem destructionSys_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent> timeoutQueue_;

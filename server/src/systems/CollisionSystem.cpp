@@ -1,6 +1,7 @@
 #include "systems/CollisionSystem.hpp"
 
 #include <cmath>
+#include <iostream>
 
 std::optional<std::array<float, 4>> CollisionSystem::buildAabb(const TransformComponent& t,
                                                                const HitboxComponent& h) const
@@ -29,6 +30,7 @@ std::vector<Collision> CollisionSystem::detect(Registry& registry) const
     std::vector<std::array<float, 4>> aabbs;
     ids.reserve(registry.entityCount());
     aabbs.reserve(registry.entityCount());
+
     for (EntityId id : registry.view<TransformComponent, HitboxComponent>()) {
         if (!registry.isAlive(id))
             continue;
@@ -37,9 +39,11 @@ std::vector<Collision> CollisionSystem::detect(Registry& registry) const
         auto aabb = buildAabb(t, h);
         if (!aabb)
             continue;
+
         ids.push_back(id);
         aabbs.push_back(*aabb);
     }
+
     std::vector<Collision> out;
     for (std::size_t i = 0; i < ids.size(); ++i) {
         for (std::size_t j = i + 1; j < ids.size(); ++j) {
