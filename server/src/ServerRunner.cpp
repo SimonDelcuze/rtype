@@ -28,8 +28,9 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
 
 bool ServerApp::start()
 {
-    if (!receiveThread_.start())
+    if (!receiveThread_.start()) {
         return false;
+    }
     if (!sendThread_.start()) {
         receiveThread_.stop();
         return false;
@@ -61,59 +62,19 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {
     handleControl();
     maybeStartGame();
-    if (!gameStarted_)
+    if (!gameStarted_) {
         return;
+    }
     auto mapped = mapInputs(inputs);
     playerInputSys_.update(registry_, mapped);
     movementSys_.update(registry_, 1.0F / kTickRate);
     monsterMovementSys_.update(registry_, 1.0F / kTickRate);
     monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
 
-    std::vector<EntityId> offscreenEntities;
-    for (EntityId id : registry_.view<TransformComponent, TagComponent>()) {
-        if (!registry_.isAlive(id))
-            continue;
-        auto& t   = registry_.get<TransformComponent>(id);
-        auto& tag = registry_.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Enemy) && t.x < -100.0F) {
-            offscreenEntities.push_back(id);
-        }
-    }
-    if (!offscreenEntities.empty()) {
-        Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
-        for (EntityId id : offscreenEntities) {
-            registry_.destroyEntity(id);
-        }
-    }
+    cleanupOffscreenEntities();
 
     auto collisions = collisionSys_.detect(registry_);
-    if (!collisions.empty()) {
-        Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
-        for (const auto& col : collisions) {
-            std::string aTag = "Unknown";
-            std::string bTag = "Unknown";
-            if (registry_.has<TagComponent>(col.a)) {
-                auto& tag = registry_.get<TagComponent>(col.a);
-                if (tag.hasTag(EntityTag::Player))
-                    aTag = "Player";
-                else if (tag.hasTag(EntityTag::Enemy))
-                    aTag = "Enemy";
-                else if (tag.hasTag(EntityTag::Projectile))
-                    aTag = "Projectile";
-            }
-            if (registry_.has<TagComponent>(col.b)) {
-                auto& tag = registry_.get<TagComponent>(col.b);
-                if (tag.hasTag(EntityTag::Player))
-                    bTag = "Player";
-                else if (tag.hasTag(EntityTag::Enemy))
-                    bTag = "Enemy";
-                else if (tag.hasTag(EntityTag::Projectile))
-                    bTag = "Projectile";
-            }
-            Logger::instance().info("  Collision: " + aTag + " (ID:" + std::to_string(col.a) + ") <-> " +
-                                   bTag + " (ID:" + std::to_string(col.b) + ")");
-        }
-    }
+    logCollisions(collisions);
     damageSys_.apply(registry_, collisions);
 
     std::vector<EntityId> toDestroy;
@@ -128,7 +89,69 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     destructionSys_.update(registry_, toDestroy);
 
     auto snapshot = buildSnapshotPacket(registry_, currentTick_);
-    if (!snapshot.empty())
+    if (!snapshot.empty()) {
         sendThread_.publish(snapshot);
+    }
     currentTick_++;
+}
+
+void ServerApp::cleanupOffscreenEntities()
+{
+    std::vector<EntityId> offscreenEntities;
+    for (EntityId id : registry_.view<TransformComponent, TagComponent>()) {
+        if (!registry_.isAlive(id)) {
+            continue;
+        }
+        auto& t   = registry_.get<TransformComponent>(id);
+        auto& tag = registry_.get<TagComponent>(id);
+        if (tag.hasTag(EntityTag::Enemy) && t.x < -100.0F) {
+            offscreenEntities.push_back(id);
+        }
+    }
+    if (!offscreenEntities.empty()) {
+        Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
+        for (EntityId id : offscreenEntities) {
+            registry_.destroyEntity(id);
+        }
+    }
+}
+
+std::string ServerApp::getEntityTagName(EntityId id) const
+{
+    if (!registry_.has<TagComponent>(id)) {
+        return "Unknown";
+    }
+    const auto& tag = registry_.get<TagComponent>(id);
+    if (tag.hasTag(EntityTag::Player)) {
+        return "Player";
+    }
+    if (tag.hasTag(EntityTag::Enemy)) {
+        return "Enemy";
+    }
+    if (tag.hasTag(EntityTag::Projectile)) {
+        return "Projectile";
+    }
+    return "Unknown";
+}
+
+void ServerApp::logCollisions(const std::vector<Collision>& collisions)
+{
+    if (collisions.empty()) {
+        return;
+    }
+    Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
+    for (const auto& col : collisions) {
+        std::string aTag = getEntityTagName(col.a);
+        std::string bTag = getEntityTagName(col.b);
+        std::string msg  = "  Collision: ";
+        msg += aTag;
+        msg += " (ID:";
+        msg += std::to_string(col.a);
+        msg += ") <-> ";
+        msg += bTag;
+        msg += " (ID:";
+        msg += std::to_string(col.b);
+        msg += ")";
+        Logger::instance().info(msg);
+    }
 }
