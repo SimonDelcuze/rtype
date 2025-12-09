@@ -115,8 +115,8 @@ TEST(PlayerInputSystem, CreatesMissileOnFire)
     t.y             = 5.0F;
     auto& pic       = registry.emplace<PlayerInputComponent>(p);
     pic.angle       = 0.0F;
-    float expectedX = t.x;
-    float expectedY = t.y;
+    float expectedX = 10.0F;
+    float expectedY = 5.0F;
 
     PlayerInputSystem sys(1.0F, 6.0F, 2.5F, 3);
     std::vector<ReceivedInput> inputs;
