@@ -13,13 +13,23 @@ void ServerApp::handleControl()
 
 void ServerApp::handleControlMessage(const ControlEvent& ctrl)
 {
-    auto key      = endpointKey(ctrl.from);
+    auto key  = endpointKey(ctrl.from);
+    auto type = ctrl.header.messageType;
+
+    if (gameStarted_) {
+        if (type == static_cast<std::uint8_t>(MessageType::ClientHello) ||
+            type == static_cast<std::uint8_t>(MessageType::ClientJoinRequest)) {
+            Logger::instance().warn("Rejecting connection - game already started");
+            sendThread_.sendTo(buildJoinDeny(ctrl.header.sequenceId), ctrl.from);
+            return;
+        }
+    }
+
     auto& sess    = sessions_[key];
     sess.endpoint = ctrl.from;
     if (sess.playerId == 0)
         sess.playerId = static_cast<std::uint32_t>(sessions_.size());
 
-    auto type = ctrl.header.messageType;
     if (type == static_cast<std::uint8_t>(MessageType::ClientHello)) {
         sess.hello = true;
         sendThread_.sendTo(buildServerHello(ctrl.header.sequenceId), ctrl.from);
@@ -36,18 +46,17 @@ void ServerApp::handleControlMessage(const ControlEvent& ctrl)
 
 void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 {
+    if (gameStarted_) {
+        Logger::instance().warn("Rejecting join request - game already started");
+        sendThread_.sendTo(buildJoinDeny(ctrl.header.sequenceId), ctrl.from);
+        return;
+    }
+
     sess.join = true;
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
     clients_.push_back(ctrl.from);
     sendThread_.setClients(clients_);
     addPlayerEntity(sess.playerId);
-    if (gameStarted_) {
-        Logger::instance().info("Late joiner detected, sending LevelInit");
-        sendThread_.sendTo(buildGameStart(0), ctrl.from);
-        sess.started = true;
-        sendThread_.sendTo(buildLevelInitPacket(buildLevel()), ctrl.from);
-        sess.levelSent = true;
-    }
 }
 
 void ServerApp::addPlayerEntity(std::uint32_t playerId)
@@ -66,6 +75,9 @@ void ServerApp::maybeStartGame()
 {
     if (gameStarted_ || !ready())
         return;
+
+    Logger::instance().info("All players ready, starting game");
+
     auto startPkt = buildGameStart(0);
     for (auto& [_, s] : sessions_) {
         sendThread_.sendTo(startPkt, s.endpoint);
@@ -78,6 +90,10 @@ void ServerApp::maybeStartGame()
     }
     gameStarted_ = true;
 }
+
+void ServerApp::startCountdown() {}
+
+void ServerApp::updateCountdown(float) {}
 
 std::vector<ReceivedInput> ServerApp::mapInputs(const std::vector<ReceivedInput>& inputs)
 {

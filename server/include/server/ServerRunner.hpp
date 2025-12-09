@@ -41,6 +41,8 @@ class ServerApp
     void processTimeouts();
     LevelDefinition buildLevel() const;
     bool ready() const;
+    void startCountdown();
+    void updateCountdown(float dt);
 
     void cleanupOffscreenEntities();
     void logCollisions(const std::vector<Collision>& collisions);
@@ -69,5 +71,8 @@ class ServerApp
     GameLoopThread gameLoop_;
     std::uint32_t currentTick_{0};
     bool gameStarted_{false};
+    bool countdownActive_{false};
+    float countdownTimer_{3.0F};
+    int lastCountdownValue_{4};
     std::atomic<bool>* running_{nullptr};
 };

@@ -93,6 +93,20 @@ std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence)
     return out;
 }
 
+std::vector<std::uint8_t> buildJoinDeny(std::uint16_t sequence)
+{
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::ServerJoinDeny);
+    hdr.sequenceId  = sequence;
+    hdr.payloadSize = 0;
+    auto hdrBytes   = hdr.encode();
+    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+    auto crc = PacketHeader::crc32(out.data(), out.size());
+    writeU32(out, crc);
+    return out;
+}
+
 std::vector<std::uint8_t> buildGameStart(std::uint16_t sequence)
 {
     PacketHeader hdr{};
@@ -102,6 +116,35 @@ std::vector<std::uint8_t> buildGameStart(std::uint16_t sequence)
     hdr.payloadSize = 0;
     auto hdrBytes   = hdr.encode();
     std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+    auto crc = PacketHeader::crc32(out.data(), out.size());
+    writeU32(out, crc);
+    return out;
+}
+
+std::vector<std::uint8_t> buildAllReady(std::uint16_t sequence)
+{
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::AllReady);
+    hdr.sequenceId  = sequence;
+    hdr.payloadSize = 0;
+    auto hdrBytes   = hdr.encode();
+    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+    auto crc = PacketHeader::crc32(out.data(), out.size());
+    writeU32(out, crc);
+    return out;
+}
+
+std::vector<std::uint8_t> buildCountdownTick(std::uint16_t sequence, std::uint8_t value)
+{
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::CountdownTick);
+    hdr.sequenceId  = sequence;
+    hdr.payloadSize = 1;
+    auto hdrBytes   = hdr.encode();
+    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+    out.push_back(value);
     auto crc = PacketHeader::crc32(out.data(), out.size());
     writeU32(out, crc);
     return out;
