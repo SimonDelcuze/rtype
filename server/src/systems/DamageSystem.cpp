@@ -32,21 +32,21 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
     if (!registry.has<HealthComponent>(targetId)) {
         return;
     }
-    
+
     auto& missile = registry.get<MissileComponent>(missileId);
-    
+
     if (registry.has<TagComponent>(targetId)) {
         auto& targetTag = registry.get<TagComponent>(targetId);
-        
+
         if (missile.fromPlayer && !targetTag.hasTag(EntityTag::Enemy)) {
             return;
         }
-        
+
         if (!missile.fromPlayer && !targetTag.hasTag(EntityTag::Player)) {
             return;
         }
     }
-    
+
     auto& h          = registry.get<HealthComponent>(targetId);
     std::int32_t dmg = missile.damage;
     if (registry.has<MissileComponent>(targetId)) {
@@ -57,13 +57,12 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
 
     EntityId attacker =
         registry.has<OwnershipComponent>(missileId) ? registry.get<OwnershipComponent>(missileId).ownerId : missileId;
-    
-    Logger::instance().info((missile.fromPlayer ? "Player" : "Enemy") + std::string(" missile (ID:") + 
-                           std::to_string(missileId) + ") damaged " + 
-                           (missile.fromPlayer ? "Enemy" : "Player") + " (ID:" + std::to_string(targetId) + 
-                           ") for " + std::to_string(dmg) + " damage. Health: " + 
-                           std::to_string(before) + " -> " + std::to_string(h.current));
-    
+
+    Logger::instance().info((missile.fromPlayer ? "Player" : "Enemy") + std::string(" missile (ID:") +
+                            std::to_string(missileId) + ") damaged " + (missile.fromPlayer ? "Enemy" : "Player") +
+                            " (ID:" + std::to_string(targetId) + ") for " + std::to_string(dmg) +
+                            " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
+
     emitDamageEvent(attacker, targetId, std::min(before, dmg), h.current);
 }
 
