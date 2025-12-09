@@ -45,16 +45,17 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
 
         bool fire = (ev.input.flags & static_cast<std::uint16_t>(InputFlag::Fire)) != 0;
         if (fire && registry.has<TransformComponent>(id)) {
-            float dirX       = std::cos(comp.angle);
-            float dirY       = std::sin(comp.angle);
-            EntityId missile = registry.createEntity();
-            auto& mt         = registry.emplace<TransformComponent>(missile);
-            mt.x             = ev.input.x;
-            mt.y             = ev.input.y;
-            mt.rotation      = comp.angle;
-            auto& mv         = registry.emplace<VelocityComponent>(missile);
-            mv.vx            = dirX * missileSpeed_;
-            mv.vy            = dirY * missileSpeed_;
+            auto& playerTransform = registry.get<TransformComponent>(id);
+            float dirX            = std::cos(comp.angle);
+            float dirY            = std::sin(comp.angle);
+            EntityId missile      = registry.createEntity();
+            auto& mt              = registry.emplace<TransformComponent>(missile);
+            mt.x                  = playerTransform.x;
+            mt.y                  = playerTransform.y;
+            mt.rotation           = comp.angle;
+            auto& mv              = registry.emplace<VelocityComponent>(missile);
+            mv.vx                 = dirX * missileSpeed_;
+            mv.vy                 = dirY * missileSpeed_;
             registry.emplace<MissileComponent>(missile, MissileComponent{missileDamage_, missileLifetime_, true});
             registry.emplace<OwnershipComponent>(missile, OwnershipComponent::create(id, 0));
             registry.emplace<TagComponent>(missile, TagComponent::create(EntityTag::Projectile));
