@@ -21,7 +21,6 @@ void ReplicationSystem::initialize() {}
 void ReplicationSystem::update(Registry& registry, float)
 {
     SnapshotParseResult snapshot;
-    std::size_t processed = 0;
     while (snapshots_->tryPop(snapshot)) {
         for (const auto& entity : snapshot.entities) {
             auto localId = ensureEntity(registry, entity);
@@ -34,7 +33,6 @@ void ReplicationSystem::update(Registry& registry, float)
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
-        processed += snapshot.entities.size();
     }
 }
 
