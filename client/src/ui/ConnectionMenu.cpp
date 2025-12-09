@@ -25,7 +25,7 @@ namespace
         auto& transform  = registry.emplace<TransformComponent>(entity);
         transform.x      = 0.0F;
         transform.y      = 0.0F;
-        transform.scaleX = 2.0F;
+        transform.scaleX = 2.25F;
         transform.scaleY = 2.0F;
 
         SpriteComponent sprite(*tex);
@@ -156,4 +156,27 @@ ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
     }
 
     return result;
+}
+
+void ConnectionMenu::setError(Registry& registry, const std::string& message)
+{
+    if (errorText_ != 0 && registry.isAlive(errorText_)) {
+        registry.destroyEntity(errorText_);
+    }
+
+    EntityId entity = registry.createEntity();
+    auto& transform = registry.emplace<TransformComponent>(entity);
+    transform.x     = 440.0F;
+    transform.y     = 620.0F;
+
+    auto text    = TextComponent::create("ui", 20, sf::Color::Red);
+    text.content = message;
+    registry.emplace<TextComponent>(entity, text);
+    errorText_ = entity;
+}
+
+void ConnectionMenu::reset()
+{
+    done_       = false;
+    useDefault_ = false;
 }

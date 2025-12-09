@@ -62,6 +62,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {
     handleControl();
     maybeStartGame();
+    updateCountdown(1.0F / kTickRate);
     if (!gameStarted_) {
         return;
     }

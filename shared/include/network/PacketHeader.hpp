@@ -30,6 +30,8 @@ enum class MessageType : std::uint8_t
     PlayerDisconnected = 0x1C,
     EntitySpawn        = 0x1D,
     EntityDestroyed    = 0x1E,
+    AllReady           = 0x1F,
+    CountdownTick      = 0x20,
     LevelInit          = 0x30,
     LevelTransition    = 0x31,
     Handshake          = ClientHello,

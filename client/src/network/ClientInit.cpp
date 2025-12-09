@@ -70,10 +70,16 @@ void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpS
     while (!stopFlag.load()) {
         sendClientHelloOnce(server, socket);
         sendJoinRequestOnce(server, ++seq, socket);
-        sendClientReadyOnce(server, ++seq, socket);
         sendPingOnce(server, ++seq, socket);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+}
+
+void sendClientReady(const IpEndpoint& server, UdpSocket& socket)
+{
+    static std::atomic<std::uint16_t> readySeq{1000};
+    sendClientReadyOnce(server, readySeq++, socket);
+    Logger::instance().info("CLIENT_READY sent to server");
 }
 
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag)
@@ -94,7 +100,9 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
         std::cerr << "Failed to start NetworkReceiver on port " << port << '\n';
         return false;
     }
-    net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit, &handshakeFlag);
+    net.handler = std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit, &handshakeFlag,
+                                                          &net.allReady, &net.countdownValue, &net.gameStartReceived,
+                                                          &net.joinDenied, &net.joinAccepted);
     Logger::instance().info("Receiver started on port " + std::to_string(port));
     return true;
 }

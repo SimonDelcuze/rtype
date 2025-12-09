@@ -24,10 +24,13 @@ class ConnectionMenu : public IMenu
     void render(Registry& registry, Window& window) override;
 
     Result getResult(Registry& registry) const;
+    void setError(Registry& registry, const std::string& message);
+    void reset();
 
   private:
     FontManager& fonts_;
     TextureManager& textures_;
-    bool done_       = false;
-    bool useDefault_ = false;
+    bool done_          = false;
+    bool useDefault_    = false;
+    EntityId errorText_ = 0;
 };

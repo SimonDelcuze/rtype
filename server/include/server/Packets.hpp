@@ -30,4 +30,7 @@ std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick)
 std::vector<std::uint8_t> buildPong(const PacketHeader& req);
 std::vector<std::uint8_t> buildServerHello(std::uint16_t sequence);
 std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence);
+std::vector<std::uint8_t> buildJoinDeny(std::uint16_t sequence);
 std::vector<std::uint8_t> buildGameStart(std::uint16_t sequence);
+std::vector<std::uint8_t> buildAllReady(std::uint16_t sequence);
+std::vector<std::uint8_t> buildCountdownTick(std::uint16_t sequence, std::uint8_t value);

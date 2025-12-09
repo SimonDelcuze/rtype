@@ -21,6 +21,11 @@ struct NetPipelines
     std::unique_ptr<NetworkReceiver> receiver;
     std::unique_ptr<NetworkMessageHandler> handler;
     std::unique_ptr<NetworkSender> sender;
+    std::atomic<bool> allReady{false};
+    std::atomic<int> countdownValue{-1};
+    std::atomic<bool> gameStartReceived{false};
+    std::atomic<bool> joinDenied{false};
+    std::atomic<bool> joinAccepted{false};
 };
 
 #include <atomic>
@@ -31,5 +36,6 @@ void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSo
 void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
+void sendClientReady(const IpEndpoint& server, UdpSocket& socket);
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag);
 bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clientId, const IpEndpoint& server);
