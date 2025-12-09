@@ -1,55 +1,33 @@
 #pragma once
 
 #include "graphics/FontManager.hpp"
-#include "network/UdpSocket.hpp"
+#include "graphics/TextureManager.hpp"
+#include "ui/IMenu.hpp"
 
-#include <SFML/Graphics.hpp>
-#include <string>
-
-class ConnectionMenu
+class ConnectionMenu : public IMenu
 {
   public:
-    ConnectionMenu(FontManager& fonts);
-
-    void handleEvent(const sf::Event& event);
-    void render(sf::RenderWindow& window);
-
-    bool isDone() const
+    struct Result
     {
-        return done_;
-    }
-    IpEndpoint getServerEndpoint() const;
+        bool connected  = false;
+        bool useDefault = false;
+        std::string ip;
+        std::string port;
+    };
+
+    ConnectionMenu(FontManager& fonts, TextureManager& textures);
+
+    void create(Registry& registry) override;
+    void destroy(Registry& registry) override;
+    bool isDone() const override;
+    void handleEvent(Registry& registry, const sf::Event& event) override;
+    void render(Registry& registry, Window& window) override;
+
+    Result getResult(Registry& registry) const;
 
   private:
-    void handleTextInput(char c);
-    void handleBackspace();
-    void handleMouseClick(int x, int y);
-    void connectToServer();
-    void useDefaultServer();
-
-    void drawLabels(sf::RenderWindow& window);
-    void drawInputs(sf::RenderWindow& window);
-    void drawButtons(sf::RenderWindow& window);
-
-    bool isPointInRect(int x, int y, const sf::RectangleShape& rect) const;
-
-    const sf::Font* font_;
-
-    bool done_;
-    bool useDefault_;
-
-    std::string ipInput_;
-    std::string portInput_;
-    enum class ActiveField
-    {
-        None,
-        IP,
-        Port
-    };
-    ActiveField activeField_;
-
-    sf::RectangleShape ipBox_;
-    sf::RectangleShape portBox_;
-    sf::RectangleShape connectButton_;
-    sf::RectangleShape defaultButton_;
+    FontManager& fonts_;
+    TextureManager& textures_;
+    bool done_       = false;
+    bool useDefault_ = false;
 };
