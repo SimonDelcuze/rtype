@@ -24,5 +24,6 @@ void MonsterSpawnSystem::update(Registry& registry, float deltaTime)
         registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Enemy));
         registry.emplace<HealthComponent>(e, HealthComponent::create(50));
         registry.emplace<HitboxComponent>(e, HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true));
+        registry.emplace<EnemyShootingComponent>(e, EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F));
     }
 }

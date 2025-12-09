@@ -10,6 +10,7 @@
 #include "systems/CollisionSystem.hpp"
 #include "systems/DamageSystem.hpp"
 #include "systems/DestructionSystem.hpp"
+#include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
@@ -60,6 +61,7 @@ class ServerApp
     MovementSystem movementSys_;
     MonsterSpawnSystem monsterSpawnSys_;
     MonsterMovementSystem monsterMovementSys_;
+    EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;
     DamageSystem damageSys_;
     DestructionSystem destructionSys_;
