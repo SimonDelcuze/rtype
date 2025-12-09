@@ -17,7 +17,7 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
                        {MovementComponent::linear(150.0F), MovementComponent::sine(150.0F, 100.0F, 0.5F),
                         MovementComponent::zigzag(150.0F, 80.0F, 1.0F)},
                        static_cast<std::uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())),
-      monsterMovementSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
+      monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
@@ -70,6 +70,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     movementSys_.update(registry_, 1.0F / kTickRate);
     monsterMovementSys_.update(registry_, 1.0F / kTickRate);
     monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
+    enemyShootingSys_.update(registry_, 1.0F / kTickRate);
 
     cleanupOffscreenEntities();
 
