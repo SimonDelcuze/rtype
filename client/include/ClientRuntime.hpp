@@ -23,8 +23,6 @@ extern std::atomic<bool> g_running;
 Window createMainWindow();
 std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault);
 AssetManifest loadManifest();
-void setupTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
-                AnimationRegistry& animations);
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
