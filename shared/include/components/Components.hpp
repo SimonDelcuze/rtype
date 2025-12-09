@@ -1,5 +1,6 @@
 #pragma once
 
+#include "components/EnemyShootingComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/HitboxComponent.hpp"
 #include "components/LivesComponent.hpp"
