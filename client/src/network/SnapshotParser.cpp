@@ -1,7 +1,10 @@
 #include "network/SnapshotParser.hpp"
 
+#include "Logger.hpp"
+
 #include <bit>
 #include <cstddef>
+#include <string>
 
 std::optional<SnapshotParseResult> SnapshotParser::parse(const std::vector<std::uint8_t>& data)
 {
@@ -66,7 +69,12 @@ bool SnapshotParser::validateSizes(const std::vector<std::uint8_t>& data, const 
 {
     const std::size_t payloadSize = header.payloadSize;
     const std::size_t expected    = PacketHeader::kSize + payloadSize + PacketHeader::kCrcSize;
-    return data.size() >= expected;
+    if (data.size() < expected) {
+        Logger::instance().warn("[Net] Snapshot size mismatch: expected>=" + std::to_string(expected) +
+                                " got=" + std::to_string(data.size()) + " payloadSize=" + std::to_string(payloadSize));
+        return false;
+    }
+    return true;
 }
 
 bool SnapshotParser::validateCrc(const std::vector<std::uint8_t>& data, const PacketHeader& header)

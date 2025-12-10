@@ -1,5 +1,6 @@
 #include "systems/ReplicationSystem.hpp"
 
+#include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
@@ -9,23 +10,78 @@
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
+#include "network/EntityDestroyedPacket.hpp"
+#include "network/EntitySpawnPacket.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <unordered_set>
 
+ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots,
+                                     ThreadSafeQueue<EntitySpawnPacket>& spawns,
+                                     ThreadSafeQueue<EntityDestroyedPacket>& destroys, const EntityTypeRegistry& types)
+    : snapshots_(&snapshots), spawnQueue_(&spawns), destroyQueue_(&destroys), types_(&types)
+{}
+
+namespace
+{
+    ThreadSafeQueue<EntitySpawnPacket>& dummySpawnQueue()
+    {
+        static ThreadSafeQueue<EntitySpawnPacket> q;
+        return q;
+    }
+    ThreadSafeQueue<EntityDestroyedPacket>& dummyDestroyQueue()
+    {
+        static ThreadSafeQueue<EntityDestroyedPacket> q;
+        return q;
+    }
+} // namespace
+
 ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
-    : snapshots_(&snapshots), types_(&types)
+    : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)
 {}
 
 void ReplicationSystem::initialize() {}
 
 void ReplicationSystem::update(Registry& registry, float)
 {
+    static std::uint32_t lastSnapshotTick = 0;
+    static auto lastSnapshotTime          = std::chrono::steady_clock::now();
+    static auto nextStaleLog              = std::chrono::steady_clock::now();
+
+    EntitySpawnPacket spawnPkt;
+    while (spawnQueue_->tryPop(spawnPkt)) {
+        if (!types_->has(spawnPkt.entityType)) {
+            Logger::instance().warn("[Replication] Unknown type in spawn: " + std::to_string(spawnPkt.entityType));
+            continue;
+        }
+        EntityId id                       = registry.createEntity();
+        remoteToLocal_[spawnPkt.entityId] = id;
+        applyArchetype(registry, id, spawnPkt.entityType);
+        TransformComponent t{};
+        t.x = spawnPkt.posX;
+        t.y = spawnPkt.posY;
+        registry.emplace<TransformComponent>(id, t);
+    }
+
+    EntityDestroyedPacket destroyPkt;
+    while (destroyQueue_->tryPop(destroyPkt)) {
+        auto it = remoteToLocal_.find(destroyPkt.entityId);
+        if (it != remoteToLocal_.end()) {
+            if (registry.isAlive(it->second)) {
+                registry.destroyEntity(it->second);
+            }
+            remoteToLocal_.erase(it);
+        }
+    }
+
     SnapshotParseResult snapshot;
     while (snapshots_->tryPop(snapshot)) {
-        std::unordered_set<std::uint32_t> seen{};
+        lastSnapshotTick = snapshot.header.tickId;
+        lastSnapshotTime = std::chrono::steady_clock::now();
+        Logger::instance().info("[Replication] snapshot tick=" + std::to_string(snapshot.header.tickId) +
+                                " entities=" + std::to_string(snapshot.entities.size()));
         for (const auto& entity : snapshot.entities) {
-            seen.insert(entity.entityId);
             auto localId = ensureEntity(registry, entity);
             if (!localId.has_value()) {
                 continue;
@@ -36,16 +92,16 @@ void ReplicationSystem::update(Registry& registry, float)
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
-        for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
-            if (seen.find(it->first) == seen.end()) {
-                if (registry.isAlive(it->second)) {
-                    registry.destroyEntity(it->second);
-                }
-                it = remoteToLocal_.erase(it);
-            } else {
-                ++it;
-            }
-        }
+    }
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - lastSnapshotTime > std::chrono::seconds(1) && now >= nextStaleLog) {
+        Logger::instance().warn(
+            "[Replication] No snapshots for " +
+            std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotTime).count()) +
+            "ms lastTick=" + std::to_string(lastSnapshotTick) + " entities=" + std::to_string(registry.entityCount()) +
+            " mapped=" + std::to_string(remoteToLocal_.size()));
+        nextStaleLog = now + std::chrono::seconds(1);
     }
 }
 

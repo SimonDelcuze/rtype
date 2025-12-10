@@ -4,6 +4,7 @@
 #include "network/PacketHeader.hpp"
 
 #include <SFML/System/Clock.hpp>
+#include <chrono>
 #include <iostream>
 
 int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
@@ -22,7 +23,14 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
         const float deltaTime = std::min(clock.restart().asSeconds(), 0.1F);
 
         window.clear();
+        auto updateStart = std::chrono::steady_clock::now();
         ClientScheduler::update(registry, deltaTime);
+        auto updateEnd = std::chrono::steady_clock::now();
+        auto updateMs  = std::chrono::duration_cast<std::chrono::milliseconds>(updateEnd - updateStart).count();
+        if (updateMs > 30) {
+            Logger::instance().warn("[Perf] ClientScheduler update took " + std::to_string(updateMs) +
+                                    "ms entities=" + std::to_string(registry.entityCount()));
+        }
         window.display();
     }
 

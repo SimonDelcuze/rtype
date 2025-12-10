@@ -21,6 +21,7 @@
 #include <events/EventBus.hpp>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class ServerApp
@@ -77,4 +78,5 @@ class ServerApp
     float countdownTimer_{3.0F};
     int lastCountdownValue_{4};
     std::atomic<bool>* running_{nullptr};
+    std::unordered_set<EntityId> knownEntities_;
 };
