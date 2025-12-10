@@ -1,11 +1,11 @@
 #include "systems/LevelInitSystem.hpp"
 
+#include "Logger.hpp"
 #include "components/BackgroundScrollComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
-#include "Logger.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -55,8 +55,7 @@ void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)
         ss << " animId=" << entry.animId;
     }
     ss << " texture=" << (renderData.texture ? "ok" : "missing")
-       << " frames=" << static_cast<int>(renderData.frameCount)
-       << " layer=" << static_cast<int>(renderData.layer);
+       << " frames=" << static_cast<int>(renderData.frameCount) << " layer=" << static_cast<int>(renderData.layer);
     Logger::instance().info(ss.str());
 
     typeRegistry_->registerType(entry.typeId, renderData);

@@ -11,6 +11,7 @@
 #include "ecs/Registry.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
     : snapshots_(&snapshots), types_(&types)
@@ -22,7 +23,9 @@ void ReplicationSystem::update(Registry& registry, float)
 {
     SnapshotParseResult snapshot;
     while (snapshots_->tryPop(snapshot)) {
+        std::unordered_set<std::uint32_t> seen{};
         for (const auto& entity : snapshot.entities) {
+            seen.insert(entity.entityId);
             auto localId = ensureEntity(registry, entity);
             if (!localId.has_value()) {
                 continue;
@@ -32,6 +35,16 @@ void ReplicationSystem::update(Registry& registry, float)
                 continue;
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
+        }
+        for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
+            if (seen.find(it->first) == seen.end()) {
+                if (registry.isAlive(it->second)) {
+                    registry.destroyEntity(it->second);
+                }
+                it = remoteToLocal_.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 }
