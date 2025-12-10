@@ -19,6 +19,21 @@
       "id": "bullet",
       "path": "sprites/bullet.png",
       "type": "sprite"
+    },
+    {
+      "id": "obstacle_mountain_small",
+      "path": "sprites/obstacle_mountain_small.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_mountain_medium",
+      "path": "sprites/obstacle_mountain_medium.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_mountain_large",
+      "path": "sprites/obstacle_mountain_large.png",
+      "type": "sprite"
     }
   ],
   "sounds": [

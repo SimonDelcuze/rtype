@@ -1,6 +1,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 
 #include "Logger.hpp"
+#include "config/EntityTypeIds.hpp"
 
 #include <cmath>
 
@@ -50,6 +51,7 @@ void EnemyShootingSystem::update(Registry& registry, float deltaTime)
 
             registry.emplace<OwnershipComponent>(projectile, OwnershipComponent::create(id, 0));
 
+            registry.emplace<TypeComponent>(projectile, TypeComponent::create(toTypeId(EntityTypeId::Projectile)));
             registry.emplace<TagComponent>(projectile, TagComponent::create(EntityTag::Projectile));
 
             registry.emplace<HitboxComponent>(projectile, HitboxComponent::create(20.0F, 20.0F, 0.0F, 0.0F, true));

@@ -1,12 +1,15 @@
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
+#include "config/WorldConfig.hpp"
 #include "graphics/FontManager.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 Window createMainWindow()
 {
-    return Window(sf::VideoMode({1280u, 720u}), "R-Type", true);
+    return Window(
+        sf::VideoMode({static_cast<unsigned int>(WorldConfig::Width), static_cast<unsigned int>(WorldConfig::Height)}),
+        "R-Type", true);
 }
 
 void showErrorMessage(Window& window, const std::string& message, float displayTime)

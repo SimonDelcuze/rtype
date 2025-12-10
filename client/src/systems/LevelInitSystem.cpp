@@ -5,6 +5,7 @@
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "config/WorldConfig.hpp"
 #include "ecs/Registry.hpp"
 
 #include <iostream>
@@ -174,6 +175,7 @@ void LevelInitSystem::applyBackground(Registry& registry, const LevelInitData& d
     EntityId e = registry.createEntity();
     registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(-50.0F, 0.0F, 0.0F));
+    registry.emplace<BackgroundScrollComponent>(e,
+                                                BackgroundScrollComponent::create(WorldConfig::BackgroundSpeedX, 0.0F, 0.0F));
     registry.emplace<LayerComponent>(e, LayerComponent::create(RenderLayer::Background));
 }

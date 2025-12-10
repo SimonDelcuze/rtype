@@ -16,6 +16,7 @@ class DamageSystem
   private:
     void applyMissileDamage(Registry& registry, EntityId missileId, EntityId targetId);
     void applyDirectCollisionDamage(Registry& registry, EntityId entityA, EntityId entityB);
+    void applyObstacleCollision(Registry& registry, EntityId obstacleId, EntityId otherId);
     void emitDamageEvent(EntityId attacker, EntityId target, std::int32_t amount, std::int32_t remaining);
 
     EventBus& bus_;

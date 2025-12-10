@@ -13,6 +13,9 @@ void DamageSystem::apply(Registry& registry, const std::vector<Collision>& colli
         applyMissileDamage(registry, first, second);
         applyMissileDamage(registry, second, first);
 
+        applyObstacleCollision(registry, first, second);
+        applyObstacleCollision(registry, second, first);
+
         if (!registry.has<MissileComponent>(first) && !registry.has<MissileComponent>(second)) {
             applyDirectCollisionDamage(registry, first, second);
             applyDirectCollisionDamage(registry, second, first);
@@ -100,6 +103,40 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
                                 " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
         emitDamageEvent(entityA, entityB, std::min(before, dmg), h.current);
     }
+}
+
+void DamageSystem::applyObstacleCollision(Registry& registry, EntityId obstacleId, EntityId otherId)
+{
+    if (!registry.isAlive(obstacleId) || !registry.isAlive(otherId)) {
+        return;
+    }
+    if (!registry.has<TagComponent>(obstacleId) || !registry.has<TagComponent>(otherId)) {
+        return;
+    }
+
+    const auto& obstacleTag = registry.get<TagComponent>(obstacleId);
+    if (!obstacleTag.hasTag(EntityTag::Obstacle)) {
+        return;
+    }
+
+    const auto& otherTag = registry.get<TagComponent>(otherId);
+    if (!otherTag.hasTag(EntityTag::Player)) {
+        return;
+    }
+    if (!registry.has<HealthComponent>(otherId)) {
+        return;
+    }
+
+    auto& health      = registry.get<HealthComponent>(otherId);
+    std::int32_t prev = health.current;
+    if (prev <= 0) {
+        return;
+    }
+    health.damage(prev);
+
+    Logger::instance().info("Obstacle (ID:" + std::to_string(obstacleId) + ") destroyed Player (ID:" +
+                            std::to_string(otherId) + ")");
+    emitDamageEvent(obstacleId, otherId, prev, health.current);
 }
 
 void DamageSystem::emitDamageEvent(EntityId attacker, EntityId target, std::int32_t amount, std::int32_t remaining)

@@ -1,4 +1,6 @@
 #include "Logger.hpp"
+#include "config/EntityTypeIds.hpp"
+#include "config/RenderLayers.hpp"
 #include "server/ServerRunner.hpp"
 
 #include <random>
@@ -67,6 +69,7 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<HealthComponent>(entity, HealthComponent::create(100));
     registry_.emplace<PlayerInputComponent>(entity);
     registry_.emplace<TagComponent>(entity, TagComponent::create(EntityTag::Player));
+    registry_.emplace<TypeComponent>(entity, TypeComponent::create(toTypeId(EntityTypeId::Player)));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
     playerEntities_[playerId] = entity;
 }
@@ -83,7 +86,9 @@ void ServerApp::maybeStartGame()
         sendThread_.sendTo(startPkt, s.endpoint);
         s.started = true;
     }
-    auto levelPkt = buildLevelInitPacket(buildLevel());
+    auto level    = buildLevel();
+    obstacleSpawnSys_.setSeed(level.seed);
+    auto levelPkt = buildLevelInitPacket(level);
     for (auto& [_, s] : sessions_) {
         sendThread_.sendTo(levelPkt, s.endpoint);
         s.levelSent = true;
@@ -121,16 +126,26 @@ void ServerApp::processTimeouts()
     }
 }
 
-LevelDefinition ServerApp::buildLevel() const
+LevelDefinition ServerApp::buildLevel()
 {
     LevelDefinition lvl{};
     lvl.levelId      = 1;
-    lvl.seed         = nextSeed();
+    levelSeed_       = nextSeed();
+    lvl.seed         = levelSeed_;
     lvl.backgroundId = "space_background";
     lvl.musicId      = "theme_music";
-    lvl.archetypes.push_back(LevelArchetype{1, "player_ship", "player1", 0});
-    lvl.archetypes.push_back(LevelArchetype{2, "enemy_ship", "enemy1", 0});
-    lvl.archetypes.push_back(LevelArchetype{3, "bullet", "bullet", 0});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::Player), "player_ship", "player1",
+                                            static_cast<std::uint8_t>(RenderLayer::Entities)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::Enemy), "enemy_ship", "enemy1",
+                                            static_cast<std::uint8_t>(RenderLayer::Entities)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::Projectile), "bullet", "bullet",
+                                            static_cast<std::uint8_t>(RenderLayer::Entities)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleSmall), "obstacle_mountain_small", "",
+                                            static_cast<std::uint8_t>(RenderLayer::Midground)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleMedium), "obstacle_mountain_medium", "",
+                                            static_cast<std::uint8_t>(RenderLayer::Midground)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleLarge), "obstacle_mountain_large", "",
+                                            static_cast<std::uint8_t>(RenderLayer::Midground)});
     return lvl;
 }
 

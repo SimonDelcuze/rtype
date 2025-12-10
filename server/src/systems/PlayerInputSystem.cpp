@@ -1,5 +1,7 @@
 #include "systems/PlayerInputSystem.hpp"
 
+#include "config/EntityTypeIds.hpp"
+
 #include <cmath>
 
 PlayerInputSystem::PlayerInputSystem(float speed, float missileSpeed, float missileLifetime, std::int32_t missileDamage)
@@ -60,7 +62,9 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             mv.vy                 = dirY * missileSpeed_;
             registry.emplace<MissileComponent>(missile, MissileComponent{missileDamage_, missileLifetime_, true});
             registry.emplace<OwnershipComponent>(missile, OwnershipComponent::create(id, 0));
+            registry.emplace<TypeComponent>(missile, TypeComponent::create(toTypeId(EntityTypeId::Projectile)));
             registry.emplace<TagComponent>(missile, TagComponent::create(EntityTag::Projectile));
+            registry.emplace<HitboxComponent>(missile, HitboxComponent::create(20.0F, 20.0F, 0.0F, 0.0F, true));
         }
     }
 }

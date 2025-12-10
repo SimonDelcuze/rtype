@@ -1,9 +1,12 @@
 #include "server/ServerRunner.hpp"
 
 #include "Logger.hpp"
+#include "config/EntityTypeIds.hpp"
+#include "config/WorldConfig.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
@@ -14,11 +17,21 @@ namespace
 
     std::uint8_t typeForEntity(const Registry& registry, EntityId id)
     {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile))
-            return 3;
-        return 2;
+        if (registry.has<TypeComponent>(id)) {
+            return static_cast<std::uint8_t>(registry.get<TypeComponent>(id).typeId);
+        }
+        if (registry.has<TagComponent>(id)) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (tag.hasTag(EntityTag::Player))
+                return static_cast<std::uint8_t>(toTypeId(EntityTypeId::Player));
+            if (tag.hasTag(EntityTag::Projectile))
+                return static_cast<std::uint8_t>(toTypeId(EntityTypeId::Projectile));
+            if (tag.hasTag(EntityTag::Obstacle))
+                return static_cast<std::uint8_t>(toTypeId(EntityTypeId::ObstacleSmall));
+            if (tag.hasTag(EntityTag::Enemy))
+                return static_cast<std::uint8_t>(toTypeId(EntityTypeId::Enemy));
+        }
+        return static_cast<std::uint8_t>(toTypeId(EntityTypeId::Enemy));
     }
 } // namespace
 
@@ -28,6 +41,13 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
                        {MovementComponent::linear(150.0F), MovementComponent::sine(150.0F, 100.0F, 0.5F),
                         MovementComponent::zigzag(150.0F, 80.0F, 1.0F)},
                        static_cast<std::uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())),
+      obstacleSpawnSys_(ObstacleSpawnConfig{},
+                        {ObstacleVariant{toTypeId(EntityTypeId::ObstacleSmall), "obstacle_mountain_small", 220.0F,
+                                         170.0F, 180.0F, 140.0F},
+                         ObstacleVariant{toTypeId(EntityTypeId::ObstacleMedium), "obstacle_mountain_medium", 280.0F,
+                                         210.0F, 230.0F, 180.0F},
+                         ObstacleVariant{toTypeId(EntityTypeId::ObstacleLarge), "obstacle_mountain_large", 360.0F,
+                                         260.0F, 300.0F, 210.0F}}),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -79,6 +99,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     }
     auto mapped = mapInputs(inputs);
     playerInputSys_.update(registry_, mapped);
+    obstacleSpawnSys_.update(registry_, 1.0F / kTickRate);
     movementSys_.update(registry_, 1.0F / kTickRate);
     monsterMovementSys_.update(registry_, 1.0F / kTickRate);
     monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
@@ -141,13 +162,20 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 void ServerApp::cleanupOffscreenEntities()
 {
     std::vector<EntityId> offscreenEntities;
+    const float leftBound =
+        std::min(-150.0F, obstacleSpawnSys_.cleanupLeftBound()); // allow larger sprites to exit fully
+    const float rightBound = std::max(WorldConfig::Width + 600.0F, obstacleSpawnSys_.cleanupRightBound());
+
     for (EntityId id : registry_.view<TransformComponent, TagComponent>()) {
         if (!registry_.isAlive(id)) {
             continue;
         }
         auto& t   = registry_.get<TransformComponent>(id);
         auto& tag = registry_.get<TagComponent>(id);
-        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
+        bool removableTag =
+            tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile) || tag.hasTag(EntityTag::Obstacle);
+        bool outOfBounds = t.x < leftBound || t.x > rightBound;
+        if (removableTag && outOfBounds) {
             offscreenEntities.push_back(id);
         }
     }
@@ -176,6 +204,12 @@ std::string ServerApp::getEntityTagName(EntityId id) const
     }
     if (tag.hasTag(EntityTag::Projectile)) {
         return "Projectile";
+    }
+    if (tag.hasTag(EntityTag::Obstacle)) {
+        return "Obstacle";
+    }
+    if (tag.hasTag(EntityTag::Background)) {
+        return "Background";
     }
     return "Unknown";
 }
@@ -212,6 +246,7 @@ void ServerApp::resetGame()
     sendThread_.setClients(clients_);
     sendThread_.clearLatest();
     currentTick_ = 0;
+    levelSeed_   = 0;
     gameStarted_ = false;
     eventBus_.clear();
     knownEntities_.clear();

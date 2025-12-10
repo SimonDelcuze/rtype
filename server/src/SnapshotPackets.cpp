@@ -1,5 +1,7 @@
 #include "server/Packets.hpp"
 
+#include "config/EntityTypeIds.hpp"
+
 #include <bit>
 
 namespace
@@ -25,11 +27,21 @@ namespace
 
     std::uint16_t typeForEntity(const Registry& registry, EntityId id)
     {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile))
-            return 3;
-        return 2;
+        if (registry.has<TypeComponent>(id)) {
+            return registry.get<TypeComponent>(id).typeId;
+        }
+        if (registry.has<TagComponent>(id)) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (tag.hasTag(EntityTag::Player))
+                return toTypeId(EntityTypeId::Player);
+            if (tag.hasTag(EntityTag::Projectile))
+                return toTypeId(EntityTypeId::Projectile);
+            if (tag.hasTag(EntityTag::Obstacle))
+                return toTypeId(EntityTypeId::ObstacleSmall);
+            if (tag.hasTag(EntityTag::Enemy))
+                return toTypeId(EntityTypeId::Enemy);
+        }
+        return toTypeId(EntityTypeId::Enemy);
     }
 
     std::vector<std::uint8_t> buildEntityBlock(const Registry& registry, EntityId id)

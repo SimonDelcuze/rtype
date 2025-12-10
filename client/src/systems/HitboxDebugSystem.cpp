@@ -29,8 +29,8 @@ void HitboxDebugSystem::update(Registry& registry)
             continue;
         }
 
-        float hitboxX = transform.x + hitbox.offsetX;
-        float hitboxY = transform.y + hitbox.offsetY;
+        float hitboxX = transform.x + hitbox.offsetX - hitbox.width / 2.0F;
+        float hitboxY = transform.y + hitbox.offsetY - hitbox.height / 2.0F;
 
         sf::RectangleShape rect;
         rect.setPosition(sf::Vector2f{hitboxX, hitboxY});

@@ -14,6 +14,7 @@
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <atomic>
@@ -41,7 +42,7 @@ class ServerApp
     void tick(const std::vector<ReceivedInput>& inputs);
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
     void processTimeouts();
-    LevelDefinition buildLevel() const;
+    LevelDefinition buildLevel();
     bool ready() const;
     void startCountdown();
     void updateCountdown(float dt);
@@ -61,6 +62,7 @@ class ServerApp
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
     MonsterSpawnSystem monsterSpawnSys_;
+    ObstacleSpawnSystem obstacleSpawnSys_;
     MonsterMovementSystem monsterMovementSys_;
     EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;
@@ -73,6 +75,7 @@ class ServerApp
     SendThread sendThread_;
     GameLoopThread gameLoop_;
     std::uint32_t currentTick_{0};
+    std::uint32_t levelSeed_{0};
     bool gameStarted_{false};
     bool countdownActive_{false};
     float countdownTimer_{3.0F};

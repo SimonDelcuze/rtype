@@ -13,6 +13,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
+#include <cstdint>
 #include <chrono>
 #include <iostream>
 #include <unordered_set>
@@ -160,7 +161,8 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     } else {
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
     }
-    registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
+    auto signedLayer = static_cast<int>(static_cast<std::int8_t>(data->layer));
+    registry.emplace<LayerComponent>(id, LayerComponent::create(signedLayer));
     if (data->frameCount > 1) {
         auto anim = AnimationComponent::create(data->frameCount, data->frameDuration);
         if (data->animation != nullptr) {
