@@ -61,6 +61,7 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             registry.emplace<MissileComponent>(missile, MissileComponent{missileDamage_, missileLifetime_, true});
             registry.emplace<OwnershipComponent>(missile, OwnershipComponent::create(id, 0));
             registry.emplace<TagComponent>(missile, TagComponent::create(EntityTag::Projectile));
+            registry.emplace<HitboxComponent>(missile, HitboxComponent::create(20.0F, 20.0F, 0.0F, 0.0F, true));
         }
     }
 }
