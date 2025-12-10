@@ -27,6 +27,8 @@ struct LevelDefinition
 
 std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl);
 std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick);
+std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, uint32_t tick,
+                                                           std::size_t maxPayloadBytes = 1000);
 std::vector<std::uint8_t> buildPong(const PacketHeader& req);
 std::vector<std::uint8_t> buildServerHello(std::uint16_t sequence);
 std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence);

@@ -20,6 +20,7 @@ enum class MessageType : std::uint8_t
     ServerJoinDeny     = 0x12,
     ServerPong         = 0x13,
     Snapshot           = 0x14,
+    SnapshotChunk      = 0x21,
     GameStart          = 0x15,
     GameEnd            = 0x16,
     ServerKick         = 0x17,

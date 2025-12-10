@@ -2,6 +2,8 @@
 
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "level/EntityTypeRegistry.hpp"
+#include "network/EntityDestroyedPacket.hpp"
+#include "network/EntitySpawnPacket.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
@@ -11,6 +13,8 @@
 class ReplicationSystem : public ISystem
 {
   public:
+    ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, ThreadSafeQueue<EntitySpawnPacket>& spawns,
+                      ThreadSafeQueue<EntityDestroyedPacket>& destroys, const EntityTypeRegistry& types);
     ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types);
 
     void initialize() override;
@@ -29,6 +33,8 @@ class ReplicationSystem : public ISystem
     void applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t tickId);
 
     ThreadSafeQueue<SnapshotParseResult>* snapshots_;
+    ThreadSafeQueue<EntitySpawnPacket>* spawnQueue_;
+    ThreadSafeQueue<EntityDestroyedPacket>* destroyQueue_;
     const EntityTypeRegistry* types_;
     std::unordered_map<std::uint32_t, EntityId> remoteToLocal_;
 };

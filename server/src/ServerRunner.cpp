@@ -1,6 +1,8 @@
 #include "server/ServerRunner.hpp"
 
 #include "Logger.hpp"
+#include "network/EntityDestroyedPacket.hpp"
+#include "network/EntitySpawnPacket.hpp"
 
 #include <chrono>
 #include <random>
@@ -9,7 +11,16 @@
 namespace
 {
     constexpr double kTickRate = 60.0;
-}
+
+    std::uint8_t typeForEntity(const Registry& registry, EntityId id)
+    {
+        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
+            return 1;
+        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile))
+            return 3;
+        return 2;
+    }
+} // namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
     : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
@@ -87,12 +98,42 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     }
     if (!toDestroy.empty()) {
         Logger::instance().info("Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
+        for (EntityId id : toDestroy) {
+            EntityDestroyedPacket pkt{};
+            pkt.entityId = id;
+            sendThread_.broadcast(pkt);
+        }
     }
     destructionSys_.update(registry_, toDestroy);
+    std::unordered_set<EntityId> current;
+    for (EntityId id : registry_.view<TransformComponent>()) {
+        if (registry_.isAlive(id)) {
+            current.insert(id);
+            if (!knownEntities_.contains(id)) {
+                EntitySpawnPacket pkt{};
+                pkt.entityId   = id;
+                pkt.entityType = typeForEntity(registry_, id);
+                auto& t        = registry_.get<TransformComponent>(id);
+                pkt.posX       = t.x;
+                pkt.posY       = t.y;
+                sendThread_.broadcast(pkt);
+            }
+        }
+    }
+    for (EntityId oldId : knownEntities_) {
+        if (!current.contains(oldId)) {
+            EntityDestroyedPacket pkt{};
+            pkt.entityId = oldId;
+            sendThread_.broadcast(pkt);
+        }
+    }
+    knownEntities_ = std::move(current);
 
-    auto snapshot = buildSnapshotPacket(registry_, currentTick_);
-    if (!snapshot.empty()) {
-        sendThread_.publish(snapshot);
+    auto snapshots = buildSnapshotChunks(registry_, currentTick_, 1000);
+    for (const auto& pkt : snapshots) {
+        for (const auto& c : clients_) {
+            sendThread_.sendTo(pkt, c);
+        }
     }
     currentTick_++;
 }
@@ -106,13 +147,16 @@ void ServerApp::cleanupOffscreenEntities()
         }
         auto& t   = registry_.get<TransformComponent>(id);
         auto& tag = registry_.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Enemy) && t.x < -100.0F) {
+        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
             offscreenEntities.push_back(id);
         }
     }
     if (!offscreenEntities.empty()) {
         Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
         for (EntityId id : offscreenEntities) {
+            EntityDestroyedPacket pkt{};
+            pkt.entityId = id;
+            sendThread_.broadcast(pkt);
             registry_.destroyEntity(id);
         }
     }
@@ -170,6 +214,7 @@ void ServerApp::resetGame()
     currentTick_ = 0;
     gameStarted_ = false;
     eventBus_.clear();
+    knownEntities_.clear();
     ControlEvent ctrl;
     while (controlQueue_.tryPop(ctrl))
         ;
