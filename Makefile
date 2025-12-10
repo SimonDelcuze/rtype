@@ -51,3 +51,6 @@ fclean: clean
 	rm -f rtype_client rtype_server rtype_client_tests rtype_server_tests rtype_shared_tests
 
 re: fclean all
+
+coverage:
+	./scripts/coverage.sh

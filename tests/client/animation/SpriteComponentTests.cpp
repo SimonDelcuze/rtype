@@ -38,7 +38,7 @@ TEST(SpriteComponent, SetFrame)
 TEST(SpriteComponent, SetFrameUpdatesTextureRect)
 {
     sf::Texture texture;
-    texture.resize({128, 32});
+    ASSERT_TRUE(texture.resize({128, 32}));
 
     SpriteComponent sprite;
     sprite.setTexture(texture);
@@ -62,7 +62,7 @@ TEST(SpriteComponent, SetFrameUpdatesTextureRect)
 TEST(SpriteComponent, SetFrameWithMultipleRows)
 {
     sf::Texture texture;
-    texture.resize({64, 64});
+    ASSERT_TRUE(texture.resize({64, 64}));
 
     SpriteComponent sprite;
     sprite.setTexture(texture);
@@ -94,7 +94,7 @@ TEST(SpriteComponent, SetFrameWithMultipleRows)
 TEST(SpriteComponent, SetPositionAndScale)
 {
     sf::Texture texture;
-    texture.resize({32, 32});
+    ASSERT_TRUE(texture.resize({32, 32}));
 
     SpriteComponent sprite;
     sprite.setTexture(texture);
@@ -123,7 +123,7 @@ TEST(SpriteComponent, SetFrameIgnoredWhenNoFrameSize)
 TEST(SpriteComponent, ConstructorWithTexture)
 {
     sf::Texture texture;
-    texture.resize({64, 64});
+    ASSERT_TRUE(texture.resize({64, 64}));
 
     SpriteComponent sprite(texture);
 
