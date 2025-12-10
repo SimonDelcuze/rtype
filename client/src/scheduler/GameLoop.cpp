@@ -19,7 +19,7 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
             }
         });
 
-        const float deltaTime = clock.restart().asSeconds();
+        const float deltaTime = std::min(clock.restart().asSeconds(), 0.1F); // clamp to avoid giant spikes
 
         window.clear();
         ClientScheduler::update(registry, deltaTime);
