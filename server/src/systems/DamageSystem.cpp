@@ -64,6 +64,14 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
                             " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
 
     emitDamageEvent(attacker, targetId, std::min(before, dmg), h.current);
+
+    if (registry.has<HealthComponent>(missileId)) {
+        registry.get<HealthComponent>(missileId).current = 0;
+        Logger::instance().info("Missile (ID:" + std::to_string(missileId) + ") marked for destruction after collision");
+    } else {
+        registry.emplace<HealthComponent>(missileId, HealthComponent::create(0));
+        Logger::instance().info("Missile (ID:" + std::to_string(missileId) + ") marked for destruction after collision (no health component)");
+    }
 }
 
 void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entityA, EntityId entityB)
