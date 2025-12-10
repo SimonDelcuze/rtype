@@ -166,9 +166,13 @@ void BackgroundScrollSystem::update(Registry& registry, float deltaTime)
         return;
     }
     applyScaleAndOffsets(entries, windowHeight);
+    ensureCoverage(registry, entries, windowWidth);
+
+    entries.clear();
+    collectEntries(registry, entries);
+
     float minX = std::numeric_limits<float>::infinity();
     float maxX = -std::numeric_limits<float>::infinity();
     moveAndTrack(entries, deltaTime, minX, maxX);
-    ensureCoverage(registry, entries, windowWidth);
     wrapAndSwap(entries, windowHeight);
 }

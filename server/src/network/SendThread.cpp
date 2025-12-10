@@ -92,6 +92,12 @@ void SendThread::broadcast(const EntityDestroyedPacket& packet)
     }
 }
 
+void SendThread::clearLatest()
+{
+    std::lock_guard<std::mutex> lock(payloadMutex_);
+    latest_.clear();
+}
+
 IpEndpoint SendThread::endpoint() const
 {
     return socket_.localEndpoint();
