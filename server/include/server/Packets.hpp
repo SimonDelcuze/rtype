@@ -8,6 +8,17 @@
 #include <string>
 #include <vector>
 
+struct SnapshotChunkBlock
+{
+    std::vector<std::uint8_t> data;
+};
+
+struct SnapshotChunkPacket
+{
+    std::vector<std::uint8_t> data;
+    std::uint16_t entityCount = 0;
+};
+
 struct LevelArchetype
 {
     std::uint16_t typeId;
