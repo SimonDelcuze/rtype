@@ -27,6 +27,7 @@ class SendThread
     void broadcast(const PlayerDisconnectedPacket& packet);
     void broadcast(const EntitySpawnPacket& packet);
     void broadcast(const EntityDestroyedPacket& packet);
+    void clearLatest();
     IpEndpoint endpoint() const;
 
   private:

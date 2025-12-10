@@ -5,8 +5,10 @@
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
+#include <sstream>
 
 LevelInitSystem::LevelInitSystem(ThreadSafeQueue<LevelInitData>& queue, EntityTypeRegistry& typeRegistry,
                                  const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
@@ -46,6 +48,17 @@ void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)
         (entry.animId.size() && renderData.animation == nullptr && animations_ != nullptr && labels_ != nullptr)) {
         return;
     }
+
+    std::ostringstream ss;
+    ss << "[LevelInit] Register typeId=" << entry.typeId << " spriteId=" << entry.spriteId;
+    if (!entry.animId.empty()) {
+        ss << " animId=" << entry.animId;
+    }
+    ss << " texture=" << (renderData.texture ? "ok" : "missing")
+       << " frames=" << static_cast<int>(renderData.frameCount)
+       << " layer=" << static_cast<int>(renderData.layer);
+    Logger::instance().info(ss.str());
+
     typeRegistry_->registerType(entry.typeId, renderData);
 }
 
@@ -143,6 +156,7 @@ void LevelInitSystem::applyBackground(Registry& registry, const LevelInitData& d
     if (!entry) {
         return;
     }
+    Logger::instance().info("[LevelInit] Background id=" + data.backgroundId + " path=" + entry->path);
     if (!textures_->has(entry->id)) {
         try {
             textures_->load(entry->id, "client/assets/" + entry->path);

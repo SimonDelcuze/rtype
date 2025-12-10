@@ -166,6 +166,7 @@ void ServerApp::resetGame()
     sessions_.clear();
     clients_.clear();
     sendThread_.setClients(clients_);
+    sendThread_.clearLatest();
     currentTick_ = 0;
     gameStarted_ = false;
     eventBus_.clear();
