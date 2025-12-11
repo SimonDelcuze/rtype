@@ -27,6 +27,7 @@ class InputSystem : public ISystem
     void destroyChargeFx(Registry& registry);
     void updateChargeFx(Registry& registry, float x, float y);
     bool ensurePlayerPosition(Registry& registry);
+    void updateChargeMeter(Registry& registry, float progress);
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
 
@@ -45,4 +46,8 @@ class InputSystem : public ISystem
     float fireHoldTime_     = 0.0F;
     bool fireHeldLastFrame_ = false;
     std::optional<EntityId> chargeFxId_;
+    std::optional<EntityId> playerId_;
+    std::optional<EntityId> chargeMeterId_;
+    const float chargeFxDelay_ = 0.1F;
+    const float maxChargeTime_ = 0.7F;
 };

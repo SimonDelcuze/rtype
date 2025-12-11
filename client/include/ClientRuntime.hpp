@@ -42,7 +42,8 @@ AssetManifest loadManifest();
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
-                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window);
+                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
+                      FontManager& fontManager);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);
@@ -57,7 +58,8 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage);
 std::optional<int> runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager);
+                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
+                                  FontManager& fontManager);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage);
 int runClient(const ClientOptions& options);
