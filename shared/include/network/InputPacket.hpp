@@ -10,12 +10,18 @@
 
 enum class InputFlag : std::uint16_t
 {
-    None      = 0,
-    MoveUp    = 1 << 0,
-    MoveDown  = 1 << 1,
-    MoveLeft  = 1 << 2,
-    MoveRight = 1 << 3,
-    Fire      = 1 << 4
+    None       = 0,
+    MoveUp     = 1 << 0,
+    MoveDown   = 1 << 1,
+    MoveLeft   = 1 << 2,
+    MoveRight  = 1 << 3,
+    Fire       = 1 << 4,
+    Charge1    = 1 << 5,
+    Charge2    = 1 << 6,
+    Charge3    = 1 << 7,
+    Charge4    = 1 << 8,
+    Charge5    = 1 << 9,
+    ChargeMask = Charge1 | Charge2 | Charge3 | Charge4 | Charge5
 };
 
 constexpr InputFlag operator|(InputFlag a, InputFlag b)
