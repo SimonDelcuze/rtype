@@ -1,10 +1,14 @@
 #include "input/InputSystem.hpp"
 
 #include "Logger.hpp"
+#include "components/AnimationComponent.hpp"
+#include "components/LayerComponent.hpp"
+#include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 
+#include <SFML/Graphics/Rect.hpp>
 #include <chrono>
 #include <cmath>
 
@@ -14,66 +18,52 @@ namespace
 }
 
 InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
+                         float& posY, TextureManager& textures, AnimationRegistry& animations)
+    : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY),
+      textures_(&textures), animations_(&animations)
+{}
+
+InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
                          float& posY)
-    : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY)
+    : InputSystem(buffer, mapper, sequenceCounter, posX, posY, dummyTextures(), dummyAnimations())
 {}
 
 void InputSystem::initialize() {}
 
 void InputSystem::update(Registry& registry, float deltaTime)
 {
-    if (!positionInitialized_) {
-        auto view = registry.view<TransformComponent, TagComponent>();
-        for (auto id : view) {
-            const auto& tag = registry.get<TagComponent>(id);
-            if (!tag.hasTag(EntityTag::Player))
-                continue;
-            const auto& t        = registry.get<TransformComponent>(id);
-            *posX_               = t.x;
-            *posY_               = t.y;
-            positionInitialized_ = true;
-            break;
-        }
-    }
+    ensurePlayerPosition(registry);
 
     fireElapsed_ += deltaTime;
     repeatElapsed_ += deltaTime;
 
-    auto flags   = mapper_->pollFlags();
-    bool changed = flags != lastSentFlags_;
+    auto flags           = mapper_->pollFlags();
+    std::uint16_t moves  = static_cast<std::uint16_t>(flags & ~InputMapper::FireFlag);
+    bool changedMovement = moves != lastSentMoveFlags_;
 
     const bool firePressed = (flags & InputMapper::FireFlag) != 0;
-    bool fireAllowed       = firePressed && (changed || fireElapsed_ >= fireCooldown_);
-    if (!fireAllowed)
-        flags &= static_cast<std::uint16_t>(~InputMapper::FireFlag);
-    if (fireAllowed)
-        fireElapsed_ = 0.0F;
+    if (firePressed) {
+        fireHoldTime_ += deltaTime;
+        if (fireHoldTime_ >= 0.1F) {
+            ensureChargeFx(registry, *posX_, *posY_);
+            updateChargeFx(registry, *posX_, *posY_);
+        }
+    }
+    if (!firePressed && fireHeldLastFrame_) {
+        destroyChargeFx(registry);
+        sendChargedFireCommand();
+        fireHoldTime_ = 0.0F;
+    }
+    fireHeldLastFrame_ = firePressed;
 
-    bool inactive = flags == 0;
+    bool inactive = moves == 0;
 
-    const bool left  = (flags & InputMapper::LeftFlag) != 0;
-    const bool right = (flags & InputMapper::RightFlag) != 0;
-    const bool up    = (flags & InputMapper::UpFlag) != 0;
-    const bool down  = (flags & InputMapper::DownFlag) != 0;
+    const bool left  = (moves & InputMapper::LeftFlag) != 0;
+    const bool right = (moves & InputMapper::RightFlag) != 0;
+    const bool up    = (moves & InputMapper::UpFlag) != 0;
+    const bool down  = (moves & InputMapper::DownFlag) != 0;
 
     float angle = 0.0F;
-    if (left && up) {
-        angle = 225.0F;
-    } else if (left && down) {
-        angle = 135.0F;
-    } else if (right && up) {
-        angle = 315.0F;
-    } else if (right && down) {
-        angle = 45.0F;
-    } else if (left) {
-        angle = 180.0F;
-    } else if (right) {
-        angle = 0.0F;
-    } else if (up) {
-        angle = 270.0F;
-    } else if (down) {
-        angle = 90.0F;
-    }
 
     float dx = 0.0F;
     float dy = 0.0F;
@@ -104,7 +94,7 @@ void InputSystem::update(Registry& registry, float deltaTime)
             break;
         }
     }
-    if (inactive && changed) {
+    if (inactive && changedMovement) {
         auto view = registry.view<TransformComponent, TagComponent, VelocityComponent>();
         for (auto id : view) {
             const auto& tag = registry.get<TagComponent>(id);
@@ -117,22 +107,22 @@ void InputSystem::update(Registry& registry, float deltaTime)
         }
     }
 
-    if (inactive && !changed) {
+    if (inactive && !changedMovement) {
         return;
     }
 
-    const bool shouldSend = changed || repeatElapsed_ >= repeatInterval_ || deltaTime == 0.0F;
+    const bool shouldSend = changedMovement || repeatElapsed_ >= repeatInterval_ || deltaTime == 0.0F;
     if (!shouldSend) {
         return;
     }
 
-    InputCommand cmd = buildCommand(flags, angle);
+    InputCommand cmd = buildCommand(moves, angle);
     auto now         = std::chrono::steady_clock::now().time_since_epoch();
     cmd.captureTimestampNs =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
     buffer_->push(cmd);
-    lastSentFlags_ = flags;
-    repeatElapsed_ = 0.0F;
+    lastSentMoveFlags_ = moves;
+    repeatElapsed_     = 0.0F;
 }
 
 void InputSystem::cleanup() {}
@@ -153,4 +143,109 @@ std::uint32_t InputSystem::nextSequence()
     std::uint32_t seq = *sequenceCounter_;
     ++(*sequenceCounter_);
     return seq;
+}
+
+void InputSystem::sendChargedFireCommand()
+{
+    std::uint16_t flags = InputMapper::FireFlag;
+    const float t       = fireHoldTime_;
+    if (t >= 1.0F) {
+        flags |= InputMapper::Charge5Flag;
+    } else if (t >= 0.7F) {
+        flags |= InputMapper::Charge4Flag;
+    } else if (t >= 0.5F) {
+        flags |= InputMapper::Charge3Flag;
+    } else if (t >= 0.3F) {
+        flags |= InputMapper::Charge2Flag;
+    } else {
+        flags |= InputMapper::Charge1Flag;
+    }
+
+    InputCommand cmd = buildCommand(flags, 0.0F);
+    auto now         = std::chrono::steady_clock::now().time_since_epoch();
+    cmd.captureTimestampNs =
+        static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+    buffer_->push(cmd);
+}
+
+void InputSystem::ensureChargeFx(Registry& registry, float x, float y)
+{
+    if (chargeFxId_.has_value() && registry.isAlive(*chargeFxId_)) {
+        return;
+    }
+    if (!textures_->has("bullet")) {
+        try {
+            textures_->load("bullet", "client/assets/sprites/bullet.png");
+        } catch (...) {
+        }
+    }
+    const auto* tex  = textures_->get("bullet");
+    const auto* clip = animations_->get("bullet_charge_warmup");
+    if (tex == nullptr) {
+        tex = &textures_->getPlaceholder();
+    }
+    if (clip == nullptr || clip->frames.empty()) {
+        return;
+    }
+    EntityId e = registry.createEntity();
+    registry.emplace<TransformComponent>(e, TransformComponent::create(x + 20.0F, y));
+    auto& s = registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
+    s.customFrames.reserve(clip->frames.size());
+    for (const auto& f : clip->frames) {
+        s.customFrames.emplace_back(sf::Vector2i{f.x, f.y}, sf::Vector2i{f.width, f.height});
+    }
+    s.setFrame(0);
+    auto anim = AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime, true);
+    anim.loop = true;
+    registry.emplace<AnimationComponent>(e, anim);
+    registry.emplace<LayerComponent>(e, LayerComponent::create(RenderLayer::Effects));
+    chargeFxId_ = e;
+}
+
+void InputSystem::destroyChargeFx(Registry& registry)
+{
+    if (chargeFxId_.has_value() && registry.isAlive(*chargeFxId_)) {
+        registry.destroyEntity(*chargeFxId_);
+    }
+    chargeFxId_.reset();
+}
+
+void InputSystem::updateChargeFx(Registry& registry, float /*x*/, float /*y*/)
+{
+    if (!chargeFxId_.has_value() || !registry.isAlive(*chargeFxId_)) {
+        chargeFxId_.reset();
+        return;
+    }
+    ensurePlayerPosition(registry);
+    auto& t = registry.get<TransformComponent>(*chargeFxId_);
+    t.x     = *posX_ + 27.0F;
+    t.y     = *posY_ - 6.0F;
+}
+
+TextureManager& InputSystem::dummyTextures()
+{
+    static TextureManager mgr;
+    return mgr;
+}
+
+AnimationRegistry& InputSystem::dummyAnimations()
+{
+    static AnimationRegistry reg;
+    return reg;
+}
+
+bool InputSystem::ensurePlayerPosition(Registry& registry)
+{
+    auto view = registry.view<TransformComponent, TagComponent>();
+    for (auto id : view) {
+        const auto& tag = registry.get<TagComponent>(id);
+        if (!tag.hasTag(EntityTag::Player))
+            continue;
+        const auto& t        = registry.get<TransformComponent>(id);
+        *posX_               = t.x;
+        *posY_               = t.y;
+        positionInitialized_ = true;
+        return true;
+    }
+    return false;
 }

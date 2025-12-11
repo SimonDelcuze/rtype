@@ -11,6 +11,8 @@ class PlayerInputSystem
     void update(Registry& registry, const std::vector<ReceivedInput>& inputs) const;
 
   private:
+    int chargeLevelFromFlags(std::uint16_t flags) const;
+
     float speed_;
     float missileSpeed_;
     float missileLifetime_;

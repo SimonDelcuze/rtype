@@ -7,6 +7,7 @@
 #include "components/InterpolationComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
+#include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
@@ -81,17 +82,49 @@ void ReplicationSystem::update(Registry& registry, float)
         lastSnapshotTime = std::chrono::steady_clock::now();
         Logger::instance().info("[Replication] snapshot tick=" + std::to_string(snapshot.header.tickId) +
                                 " entities=" + std::to_string(snapshot.entities.size()));
+
+        std::unordered_set<std::uint32_t> seenThisTick;
+        seenThisTick.reserve(snapshot.entities.size());
+
         for (const auto& entity : snapshot.entities) {
             auto localId = ensureEntity(registry, entity);
             if (!localId.has_value()) {
                 continue;
             }
+            seenThisTick.insert(entity.entityId);
+            lastSeenTick_[entity.entityId] = snapshot.header.tickId;
             applyEntity(registry, *localId, entity);
             if (!registry.isAlive(*localId)) {
                 continue;
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
+
+        for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
+            if (seenThisTick.contains(it->first)) {
+                ++it;
+                continue;
+            }
+            if (registry.isAlive(it->second)) {
+                registry.destroyEntity(it->second);
+            }
+            lastSeenTick_.erase(it->first);
+            it = remoteToLocal_.erase(it);
+        }
+    }
+
+    const std::uint32_t staleThreshold = lastSnapshotTick > 5 ? lastSnapshotTick - 5 : 0;
+    for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
+        auto seenIt = lastSeenTick_.find(it->first);
+        if (seenIt != lastSeenTick_.end() && seenIt->second < staleThreshold) {
+            if (registry.isAlive(it->second)) {
+                registry.destroyEntity(it->second);
+            }
+            lastSeenTick_.erase(seenIt);
+            it = remoteToLocal_.erase(it);
+            continue;
+        }
+        ++it;
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -161,6 +194,15 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
     }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
+    if (!registry.has<TagComponent>(id)) {
+        EntityTag tag = EntityTag::Enemy;
+        if (typeId == 1) {
+            tag = EntityTag::Player;
+        } else if (typeId >= 3) {
+            tag = EntityTag::Projectile;
+        }
+        registry.emplace<TagComponent>(id, TagComponent::create(tag));
+    }
     if (data->frameCount > 1) {
         auto anim = AnimationComponent::create(data->frameCount, data->frameDuration);
         if (data->animation != nullptr) {

@@ -7,18 +7,20 @@ The client loads `client/assets/animations.json` to cut spritesheets and choose 
 ```json
 {
   "animations": [
-    { "id": "player_ship_row1", "frameTime": 0.5, "loop": true,
-      "frames": [
-        { "x": 0, "y": 0, "width": 34, "height": 18 },
-        { "x": 33, "y": 0, "width": 34, "height": 18 }
-      ]
-    },
-    { "id": "player_ship_row2", "frameTime": 0.5, "loop": true,
-      "frames": [
-        { "x": 0, "y": 18, "width": 34, "height": 18 },
-        { "x": 33, "y": 18, "width": 34, "height": 18 }
-      ]
-    }
+    { "id": "player_ship_row1", "frameTime": 0.5, "loop": true, "frames": [
+      { "x": 0, "y": 0, "width": 34, "height": 18 },
+      { "x": 33, "y": 0, "width": 34, "height": 18 }
+    ]},
+    { "id": "player_ship_row2", "frameTime": 0.5, "loop": true, "frames": [
+      { "x": 0, "y": 18, "width": 34, "height": 18 },
+      { "x": 33, "y": 18, "width": 34, "height": 18 }
+    ]},
+    { "id": "bullet_basic", "frameTime": 0.12, "loop": true, "frames": [
+      { "x": 248, "y": 88, "width": 18, "height": 7 }
+    ]},
+    { "id": "bullet_charge_lvl1", "frameTime": 0.12, "loop": true, "frames": [
+      { "x": 231, "y": 99, "width": 18, "height": 19 }
+    ]}
   ],
   "labels": {
     "player_ship": {
@@ -26,6 +28,15 @@ The client loads `client/assets/animations.json` to cut spritesheets and choose 
       "row2": "player_ship_row2",
       "player1": "player_ship_row1",
       "player2": "player_ship_row2"
+    },
+    "bullet": {
+      "base": "bullet_basic",
+      "charge": "bullet_charge_warmup",
+      "charge1": "bullet_charge_lvl1",
+      "charge2": "bullet_charge_lvl2",
+      "charge3": "bullet_charge_lvl3",
+      "charge4": "bullet_charge_lvl4",
+      "charge5": "bullet_charge_lvl5"
     }
   }
 }
@@ -52,3 +63,4 @@ The chosen clip sets:
 
 - Server never handles assets; it just sends `spriteId` and optionally `animId` in `LevelInit`.
 - Example: to pick a different row of the player sheet, send `spriteId="player_ship"` and `animId="player3"` (mapped via labels to the right row).
+- For bullets, the base animation id is `bullet_basic`; charge levels are `bullet_charge_lvl1`..`bullet_charge_lvl5` (or use the `charge`/`chargeN` labels for the sprite `bullet`).

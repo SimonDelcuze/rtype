@@ -4,6 +4,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
@@ -16,8 +17,25 @@ namespace
     {
         if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
             return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile))
-            return 3;
+        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
+            int charge = 1;
+            if (registry.has<MissileComponent>(id)) {
+                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
+            }
+            switch (charge) {
+                case 1:
+                    return 3;
+                case 2:
+                    return 4;
+                case 3:
+                    return 5;
+                case 4:
+                    return 6;
+                case 5:
+                default:
+                    return 8;
+            }
+        }
         return 2;
     }
 } // namespace
@@ -84,6 +102,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
     enemyShootingSys_.update(registry_, 1.0F / kTickRate);
 
+    cleanupExpiredMissiles(1.0F / kTickRate);
     cleanupOffscreenEntities();
 
     auto collisions = collisionSys_.detect(registry_);
@@ -129,13 +148,36 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     }
     knownEntities_ = std::move(current);
 
-    auto snapshots = buildSnapshotChunks(registry_, currentTick_, 1000);
-    for (const auto& pkt : snapshots) {
-        for (const auto& c : clients_) {
-            sendThread_.sendTo(pkt, c);
-        }
+    auto snapshotPkt = buildSnapshotPacket(registry_, currentTick_);
+    for (const auto& c : clients_) {
+        sendThread_.sendTo(snapshotPkt, c);
     }
     currentTick_++;
+}
+
+void ServerApp::cleanupExpiredMissiles(float deltaTime)
+{
+    std::vector<EntityId> expired;
+    for (EntityId id : registry_.view<MissileComponent>()) {
+        if (!registry_.isAlive(id)) {
+            continue;
+        }
+        auto& missile = registry_.get<MissileComponent>(id);
+        missile.lifetime -= deltaTime;
+        if (missile.lifetime <= 0.0F) {
+            expired.push_back(id);
+        }
+    }
+    if (expired.empty()) {
+        return;
+    }
+    Logger::instance().info("Cleaning up " + std::to_string(expired.size()) + " expired missile(s)");
+    for (EntityId id : expired) {
+        EntityDestroyedPacket pkt{};
+        pkt.entityId = id;
+        sendThread_.broadcast(pkt);
+        registry_.destroyEntity(id);
+    }
 }
 
 void ServerApp::cleanupOffscreenEntities()

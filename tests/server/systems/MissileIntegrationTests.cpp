@@ -46,7 +46,7 @@ TEST(MissileIntegration, MissileFiresAndMovesForward)
         auto& mv = registry.get<VelocityComponent>(id);
         auto& mc = registry.get<MissileComponent>(id);
         EXPECT_FLOAT_EQ(mt.x, mv.vx * 0.5F);
-        EXPECT_FLOAT_EQ(mt.y, mv.vy * 0.5F);
+        EXPECT_FLOAT_EQ(mt.y, 3.0F + mv.vy * 0.5F);
         EXPECT_FLOAT_EQ(mc.lifetime, 2.0F);
         EXPECT_TRUE(mc.fromPlayer);
     }
