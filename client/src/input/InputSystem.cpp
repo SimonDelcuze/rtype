@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/ChargeMeterComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
@@ -44,15 +45,21 @@ void InputSystem::update(Registry& registry, float deltaTime)
     const bool firePressed = (flags & InputMapper::FireFlag) != 0;
     if (firePressed) {
         fireHoldTime_ += deltaTime;
-        if (fireHoldTime_ >= 0.1F) {
+        if (fireHoldTime_ >= chargeFxDelay_) {
             ensureChargeFx(registry, *posX_, *posY_);
             updateChargeFx(registry, *posX_, *posY_);
         }
+        float progress = std::clamp((fireHoldTime_ - chargeFxDelay_) / maxChargeTime_, 0.0F, 1.0F);
+        updateChargeMeter(registry, progress);
     }
     if (!firePressed && fireHeldLastFrame_) {
         destroyChargeFx(registry);
         sendChargedFireCommand();
         fireHoldTime_ = 0.0F;
+        updateChargeMeter(registry, 0.0F);
+    }
+    if (!firePressed && !fireHeldLastFrame_) {
+        updateChargeMeter(registry, 0.0F);
     }
     fireHeldLastFrame_ = firePressed;
 
@@ -148,17 +155,25 @@ std::uint32_t InputSystem::nextSequence()
 void InputSystem::sendChargedFireCommand()
 {
     std::uint16_t flags = InputMapper::FireFlag;
-    const float t       = fireHoldTime_;
-    if (t >= 1.0F) {
+    if (fireHoldTime_ < chargeFxDelay_) {
+        InputCommand cmd = buildCommand(flags, 0.0F);
+        auto now         = std::chrono::steady_clock::now().time_since_epoch();
+        cmd.captureTimestampNs =
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+        buffer_->push(cmd);
+        return;
+    }
+
+    const float effective = std::max(0.0F, fireHoldTime_ - chargeFxDelay_);
+    const float p         = std::clamp(effective / maxChargeTime_, 0.0F, 1.0F);
+    if (p >= 1.0F) {
         flags |= InputMapper::Charge5Flag;
-    } else if (t >= 0.7F) {
+    } else if (p >= 0.6F) {
         flags |= InputMapper::Charge4Flag;
-    } else if (t >= 0.5F) {
+    } else if (p >= 0.4F) {
         flags |= InputMapper::Charge3Flag;
-    } else if (t >= 0.3F) {
-        flags |= InputMapper::Charge2Flag;
     } else {
-        flags |= InputMapper::Charge1Flag;
+        flags |= InputMapper::Charge2Flag;
     }
 
     InputCommand cmd = buildCommand(flags, 0.0F);
@@ -234,6 +249,22 @@ AnimationRegistry& InputSystem::dummyAnimations()
     return reg;
 }
 
+void InputSystem::updateChargeMeter(Registry& registry, float progress)
+{
+    EntityId id{};
+    if (chargeMeterId_.has_value() && registry.isAlive(*chargeMeterId_)) {
+        id = *chargeMeterId_;
+    } else {
+        id             = registry.createEntity();
+        chargeMeterId_ = id;
+    }
+    if (!registry.has<ChargeMeterComponent>(id)) {
+        registry.emplace<ChargeMeterComponent>(id);
+    }
+    auto& meter    = registry.get<ChargeMeterComponent>(id);
+    meter.progress = progress;
+}
+
 bool InputSystem::ensurePlayerPosition(Registry& registry)
 {
     auto view = registry.view<TransformComponent, TagComponent>();
@@ -244,6 +275,7 @@ bool InputSystem::ensurePlayerPosition(Registry& registry)
         const auto& t        = registry.get<TransformComponent>(id);
         *posX_               = t.x;
         *posY_               = t.y;
+        playerId_            = id;
         positionInitialized_ = true;
         return true;
     }

@@ -22,7 +22,8 @@ AssetManifest loadManifest()
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
-                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window)
+                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
+                      FontManager& fontManager)
 {
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
                                                      textures, animations));
@@ -33,4 +34,5 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
+    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager));
 }
