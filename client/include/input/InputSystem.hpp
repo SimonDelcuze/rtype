@@ -22,8 +22,10 @@ class InputSystem : public ISystem
     std::uint32_t* sequenceCounter_;
     float* posX_;
     float* posY_;
-    bool positionInitialized_ = false;
-    std::uint16_t lastFlags_  = 0;
-    float fireCooldown_       = 0.5F;
-    float fireElapsed_        = 0.0F;
+    bool positionInitialized_    = false;
+    std::uint16_t lastSentFlags_ = 0;
+    float fireCooldown_          = 0.5F;
+    float fireElapsed_           = 0.0F;
+    float repeatInterval_        = 0.05F;
+    float repeatElapsed_         = 0.0F;
 };

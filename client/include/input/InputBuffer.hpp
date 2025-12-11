@@ -7,11 +7,12 @@
 
 struct InputCommand
 {
-    std::uint16_t flags      = 0;
-    std::uint32_t sequenceId = 0;
-    float posX               = 0.0F;
-    float posY               = 0.0F;
-    float angle              = 0.0F;
+    std::uint16_t flags              = 0;
+    std::uint32_t sequenceId         = 0;
+    float posX                       = 0.0F;
+    float posY                       = 0.0F;
+    float angle                      = 0.0F;
+    std::uint64_t captureTimestampNs = 0;
 };
 
 class InputBuffer
