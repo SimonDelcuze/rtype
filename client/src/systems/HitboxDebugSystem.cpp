@@ -1,13 +1,14 @@
 #include "systems/HitboxDebugSystem.hpp"
 
 #include "components/HitboxComponent.hpp"
+#include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 
 #include <SFML/Graphics/RectangleShape.hpp>
 
 HitboxDebugSystem::HitboxDebugSystem(Window& window) : window_(window) {}
 
-void HitboxDebugSystem::update(Registry& registry)
+void HitboxDebugSystem::update(Registry& registry, float)
 {
     if (!enabled_) {
         return;
@@ -19,6 +20,14 @@ void HitboxDebugSystem::update(Registry& registry)
         }
 
         if (!registry.has<HitboxComponent>(entity) || !registry.has<TransformComponent>(entity)) {
+            continue;
+        }
+        if (registry.has<TagComponent>(entity)) {
+            const auto& tag = registry.get<TagComponent>(entity);
+            if (!tag.hasTag(EntityTag::Obstacle)) {
+                continue;
+            }
+        } else {
             continue;
         }
 

@@ -3,11 +3,14 @@
 #include "input/InputSystem.hpp"
 #include "systems/AnimationSystem.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
+#include "systems/HitboxDebugSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
+
+#include <SFML/Graphics/Color.hpp>
 
 AssetManifest loadManifest()
 {
@@ -32,4 +35,9 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
+    auto hitboxDebug = std::make_shared<HitboxDebugSystem>(window);
+    hitboxDebug->setEnabled(true);
+    hitboxDebug->setColor(sf::Color(255, 80, 80, 200));
+    hitboxDebug->setThickness(2.0F);
+    gameLoop.addSystem(hitboxDebug);
 }

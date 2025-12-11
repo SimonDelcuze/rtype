@@ -16,8 +16,10 @@ struct ObstacleVariant
     std::string topSpriteId;
     float spriteWidth  = 0.0F;
     float spriteHeight = 0.0F;
-    float hitboxWidth  = 0.0F;
-    float hitboxHeight = 0.0F;
+    float hitboxWidth     = 0.0F;
+    float hitboxHeight    = 0.0F;
+    float bottomOffsetY   = 0.0F;
+    float topOffsetY      = 0.0F;
 };
 
 struct ObstacleSpawnConfig

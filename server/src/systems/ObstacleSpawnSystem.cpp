@@ -77,9 +77,10 @@ void ObstacleSpawnSystem::spawnOne(Registry& registry, const ObstacleVariant& va
         e, TypeComponent::create(topSpawn && variant.topTypeId != 0 ? variant.topTypeId : variant.typeId));
 
     const float marginX = std::max(0.0F, (variant.spriteWidth - variant.hitboxWidth) / 2.0F);
-    const float marginY = std::max(0.0F, (variant.spriteHeight - variant.hitboxHeight) / 2.0F);
     const float offsetX = marginX + variant.hitboxWidth / 2.0F;
-    const float offsetY = marginY + variant.hitboxHeight / 2.0F;
+
+    const float colorOffsetY = topSpawn ? variant.topOffsetY : variant.bottomOffsetY;
+    const float offsetY      = colorOffsetY + variant.hitboxHeight / 2.0F;
 
     registry.emplace<HitboxComponent>(
         e, HitboxComponent::create(variant.hitboxWidth, variant.hitboxHeight, offsetX, offsetY, true));
