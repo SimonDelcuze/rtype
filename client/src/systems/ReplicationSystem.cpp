@@ -46,8 +46,9 @@ void ReplicationSystem::initialize() {}
 void ReplicationSystem::update(Registry& registry, float)
 {
     static std::uint32_t lastSnapshotTick = 0;
-    static auto lastSnapshotTime          = std::chrono::steady_clock::now();
-    static auto nextStaleLog              = std::chrono::steady_clock::now();
+    (void) lastSnapshotTick;
+    static auto lastSnapshotTime = std::chrono::steady_clock::now();
+    static auto nextStaleLog     = std::chrono::steady_clock::now();
 
     EntitySpawnPacket spawnPkt;
     while (spawnQueue_->tryPop(spawnPkt)) {

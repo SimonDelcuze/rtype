@@ -1,9 +1,11 @@
 #include "input/InputSystem.hpp"
 
+#include "Logger.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 
+#include <chrono>
 #include <cmath>
 
 namespace
@@ -35,9 +37,10 @@ void InputSystem::update(Registry& registry, float deltaTime)
     }
 
     fireElapsed_ += deltaTime;
+    repeatElapsed_ += deltaTime;
 
     auto flags   = mapper_->pollFlags();
-    bool changed = flags != lastFlags_;
+    bool changed = flags != lastSentFlags_;
 
     const bool firePressed = (flags & InputMapper::FireFlag) != 0;
     bool fireAllowed       = firePressed && (changed || fireElapsed_ >= fireCooldown_);
@@ -118,9 +121,18 @@ void InputSystem::update(Registry& registry, float deltaTime)
         return;
     }
 
+    const bool shouldSend = changed || repeatElapsed_ >= repeatInterval_ || deltaTime == 0.0F;
+    if (!shouldSend) {
+        return;
+    }
+
     InputCommand cmd = buildCommand(flags, angle);
+    auto now         = std::chrono::steady_clock::now().time_since_epoch();
+    cmd.captureTimestampNs =
+        static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
     buffer_->push(cmd);
-    lastFlags_ = flags;
+    lastSentFlags_ = flags;
+    repeatElapsed_ = 0.0F;
 }
 
 void InputSystem::cleanup() {}

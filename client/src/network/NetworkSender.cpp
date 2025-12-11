@@ -1,5 +1,9 @@
 #include "network/NetworkSender.hpp"
 
+#include "Logger.hpp"
+
+#include <chrono>
+
 NetworkSender::NetworkSender(InputBuffer& buffer, IpEndpoint remote, std::uint32_t playerId,
                              std::chrono::milliseconds interval, IpEndpoint bind, ErrorHandler onError,
                              std::shared_ptr<UdpSocket> sharedSocket)
