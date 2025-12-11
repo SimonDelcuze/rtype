@@ -9,7 +9,10 @@ enum class EntityTypeId : std::uint16_t
     Projectile     = 3,
     ObstacleSmall  = 4,
     ObstacleMedium = 5,
-    ObstacleLarge  = 6
+    ObstacleLarge  = 6,
+    ObstacleTopSmall  = 7,
+    ObstacleTopMedium = 8,
+    ObstacleTopLarge  = 9
 };
 
 constexpr std::uint16_t toTypeId(EntityTypeId type)

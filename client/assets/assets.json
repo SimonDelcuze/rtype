@@ -26,13 +26,28 @@
       "type": "sprite"
     },
     {
+      "id": "obstacle_mountain_small_top",
+      "path": "sprites/obstacle_mountain_small_top.png",
+      "type": "sprite"
+    },
+    {
       "id": "obstacle_mountain_medium",
       "path": "sprites/obstacle_mountain_medium.png",
       "type": "sprite"
     },
     {
+      "id": "obstacle_mountain_medium_top",
+      "path": "sprites/obstacle_mountain_medium_top.png",
+      "type": "sprite"
+    },
+    {
       "id": "obstacle_mountain_large",
       "path": "sprites/obstacle_mountain_large.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_mountain_large_top",
+      "path": "sprites/obstacle_mountain_large_top.png",
       "type": "sprite"
     }
   ],
