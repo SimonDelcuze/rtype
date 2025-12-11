@@ -85,6 +85,9 @@ std::optional<int> runGameSession(Window& window, const ClientOptions& options, 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window);
 
-    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEndpoint, g_running);
+    auto onEvent = [&](const sf::Event& event) {
+        mapper.handleEvent(event);
+    };
+    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEndpoint, g_running, onEvent);
     return rc;
 }

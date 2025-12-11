@@ -8,12 +8,15 @@
 #include <iostream>
 
 int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
-                  std::atomic<bool>& runningFlag)
+                  std::atomic<bool>& runningFlag, const std::function<void(const sf::Event&)>& onEvent)
 {
     sf::Clock clock;
 
     while (window.isOpen() && runningFlag) {
         window.pollEvents([&](const sf::Event& event) {
+            if (onEvent) {
+                onEvent(event);
+            }
             if (event.is<sf::Event::Closed>()) {
                 runningFlag = false;
                 window.close();

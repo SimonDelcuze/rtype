@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
 
 class GameLoop : public ClientScheduler
@@ -15,5 +16,5 @@ class GameLoop : public ClientScheduler
     GameLoop() = default;
 
     int run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
-            std::atomic<bool>& runningFlag);
+            std::atomic<bool>& runningFlag, const std::function<void(const sf::Event&)>& onEvent = {});
 };
