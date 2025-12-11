@@ -39,5 +39,5 @@ make fclean       # Full clean (binaries + build artifacts)
 
 ## Notes
 - Runtime binaries are in `build/` (or per your CMake config), with CMake runtime dir set to repo root.
-- Dependencies stay within the build tree; no system-wide install needed (aside des libs bas niveau OS).
+- Dependencies stay within the build tree; no system-wide install needed (except for low-level OS libraries).
 - Optionally set `CPM_SOURCE_CACHE` (env var) or `-DCPM_SOURCE_CACHE=/path/cache` to avoid re-downloading dependencies in CI/CD.
