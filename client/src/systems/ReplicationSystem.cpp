@@ -46,7 +46,6 @@ void ReplicationSystem::initialize() {}
 void ReplicationSystem::update(Registry& registry, float)
 {
     static std::uint32_t lastSnapshotTick = 0;
-    (void) lastSnapshotTick;
     static auto lastSnapshotTime = std::chrono::steady_clock::now();
     static auto nextStaleLog     = std::chrono::steady_clock::now();
 
