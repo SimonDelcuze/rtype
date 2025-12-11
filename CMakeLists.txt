@@ -5,13 +5,29 @@ project(rtype
     LANGUAGES CXX
 )
 
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+    set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-include(FetchContent)
+set(CPM_DOWNLOAD_VERSION 0.38.6)
+set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM.cmake")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/cmake")
+if(NOT EXISTS "${CPM_DOWNLOAD_LOCATION}")
+    message(STATUS "Downloading CPM.cmake v${CPM_DOWNLOAD_VERSION}")
+    file(DOWNLOAD
+        "https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake"
+        "${CPM_DOWNLOAD_LOCATION}"
+        TLS_VERIFY ON
+    )
+endif()
+include(${CPM_DOWNLOAD_LOCATION})
 
 if (MSVC)
     set(RTYPE_COMPILE_OPTIONS /W4 /permissive- /EHsc)
@@ -32,25 +48,23 @@ add_library(rtype_shared OBJECT
 
 target_compile_options(rtype_shared PRIVATE ${RTYPE_COMPILE_OPTIONS})
 
-# Fetch SFML at configure time (no external package manager needed)
 set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
 set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
-FetchContent_Declare(
-    sfml
-    GIT_REPOSITORY https://github.com/SFML/SFML.git
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+CPMAddPackage(
+    NAME SFML
+    GITHUB_REPOSITORY SFML/SFML
     GIT_TAG 3.0.2
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(sfml)
 
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
+CPMAddPackage(
+    NAME nlohmann_json
+    GITHUB_REPOSITORY nlohmann/json
     GIT_TAG v3.11.3
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(json)
 
 target_include_directories(rtype_shared
     PUBLIC
