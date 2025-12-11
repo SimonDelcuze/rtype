@@ -130,7 +130,12 @@ LevelDefinition ServerApp::buildLevel() const
     lvl.musicId      = "theme_music";
     lvl.archetypes.push_back(LevelArchetype{1, "player_ship", "player1", 0});
     lvl.archetypes.push_back(LevelArchetype{2, "enemy_ship", "enemy1", 0});
-    lvl.archetypes.push_back(LevelArchetype{3, "bullet", "bullet", 0});
+    lvl.archetypes.push_back(LevelArchetype{3, "bullet", "bullet_basic", 0});
+    lvl.archetypes.push_back(LevelArchetype{4, "bullet", "bullet_charge_lvl1", 0});
+    lvl.archetypes.push_back(LevelArchetype{5, "bullet", "bullet_charge_lvl2", 0});
+    lvl.archetypes.push_back(LevelArchetype{6, "bullet", "bullet_charge_lvl3", 0});
+    lvl.archetypes.push_back(LevelArchetype{7, "bullet", "bullet_charge_lvl4", 0});
+    lvl.archetypes.push_back(LevelArchetype{8, "bullet", "bullet_charge_lvl5", 0});
     return lvl;
 }
 

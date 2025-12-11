@@ -47,6 +47,7 @@ class ServerApp
     void updateCountdown(float dt);
 
     void cleanupOffscreenEntities();
+    void cleanupExpiredMissiles(float deltaTime);
     void logCollisions(const std::vector<Collision>& collisions);
     std::string getEntityTagName(EntityId id) const;
     std::uint32_t nextSeed() const;
