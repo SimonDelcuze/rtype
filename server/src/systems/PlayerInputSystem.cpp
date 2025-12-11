@@ -51,10 +51,10 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             float dirX            = std::cos(comp.angle);
             float dirY            = std::sin(comp.angle);
             EntityId missile      = registry.createEntity();
-            auto& mt    = registry.emplace<TransformComponent>(missile);
-            mt.x        = playerX;
-            mt.y        = playerY + 3.0F;
-            mt.rotation = comp.angle;
+            auto& mt              = registry.emplace<TransformComponent>(missile);
+            mt.x                  = playerX;
+            mt.y                  = playerY + 3.0F;
+            mt.rotation           = comp.angle;
             auto& mv              = registry.emplace<VelocityComponent>(missile);
             const int chargeLevel = chargeLevelFromFlags(ev.input.flags);
             const float speed     = missileSpeed_ * (1.0F + 0.1F * static_cast<float>(chargeLevel - 1));

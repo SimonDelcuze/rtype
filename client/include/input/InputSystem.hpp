@@ -5,6 +5,7 @@
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
 #include "systems/ISystem.hpp"
+
 #include <optional>
 
 class InputSystem : public ISystem
@@ -34,14 +35,14 @@ class InputSystem : public ISystem
     std::uint32_t* sequenceCounter_;
     float* posX_;
     float* posY_;
-    bool positionInitialized_    = false;
+    bool positionInitialized_        = false;
     std::uint16_t lastSentMoveFlags_ = 0;
     TextureManager* textures_;
     AnimationRegistry* animations_;
-    float fireElapsed_                  = 0.0F;
-    float repeatInterval_               = 0.05F;
-    float repeatElapsed_                = 0.0F;
-    float fireHoldTime_                 = 0.0F;
-    bool fireHeldLastFrame_             = false;
+    float fireElapsed_      = 0.0F;
+    float repeatInterval_   = 0.05F;
+    float repeatElapsed_    = 0.0F;
+    float fireHoldTime_     = 0.0F;
+    bool fireHeldLastFrame_ = false;
     std::optional<EntityId> chargeFxId_;
 };

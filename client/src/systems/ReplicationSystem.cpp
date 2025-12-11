@@ -36,7 +36,7 @@ namespace
         static ThreadSafeQueue<EntityDestroyedPacket> q;
         return q;
     }
-}
+} // namespace
 
 ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
     : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)

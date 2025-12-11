@@ -45,8 +45,8 @@ void EnemyShootingSystem::update(Registry& registry, float deltaTime)
             pv.vx    = -shooting.projectileSpeed;
             pv.vy    = 0.0F;
 
-            registry.emplace<MissileComponent>(projectile, MissileComponent{shooting.projectileDamage,
-                                                                            shooting.projectileLifetime, false, 1});
+            registry.emplace<MissileComponent>(
+                projectile, MissileComponent{shooting.projectileDamage, shooting.projectileLifetime, false, 1});
 
             registry.emplace<OwnershipComponent>(projectile, OwnershipComponent::create(id, 0));
 
