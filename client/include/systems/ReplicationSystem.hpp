@@ -37,4 +37,5 @@ class ReplicationSystem : public ISystem
     ThreadSafeQueue<EntityDestroyedPacket>* destroyQueue_;
     const EntityTypeRegistry* types_;
     std::unordered_map<std::uint32_t, EntityId> remoteToLocal_;
+    std::unordered_map<std::uint32_t, std::uint32_t> lastSeenTick_;
 };
