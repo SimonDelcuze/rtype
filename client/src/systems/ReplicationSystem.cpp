@@ -80,8 +80,6 @@ void ReplicationSystem::update(Registry& registry, float)
     while (snapshots_->tryPop(snapshot)) {
         lastSnapshotTick = snapshot.header.tickId;
         lastSnapshotTime = std::chrono::steady_clock::now();
-        Logger::instance().info("[Replication] snapshot tick=" + std::to_string(snapshot.header.tickId) +
-                                " entities=" + std::to_string(snapshot.entities.size()));
 
         std::unordered_set<std::uint32_t> seenThisTick;
         seenThisTick.reserve(snapshot.entities.size());

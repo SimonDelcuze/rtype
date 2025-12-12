@@ -236,7 +236,6 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
             std::uint32_t tick = hdr->tickId;
             auto now           = std::chrono::steady_clock::now();
             if (tick != lastTick || now - lastTime > std::chrono::seconds(1)) {
-                Logger::instance().info("[Net] Snapshot tick=" + std::to_string(tick));
                 lastTick = tick;
                 lastTime = now;
             }

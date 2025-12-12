@@ -3,49 +3,19 @@
 #include "Logger.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "server/SpawnConfig.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
 
-namespace
-{
-    constexpr double kTickRate = 60.0;
-
-    std::uint8_t typeForEntity(const Registry& registry, EntityId id)
-    {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
-            int charge = 1;
-            if (registry.has<MissileComponent>(id)) {
-                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
-            }
-            switch (charge) {
-                case 1:
-                    return 3;
-                case 2:
-                    return 4;
-                case 3:
-                    return 5;
-                case 4:
-                    return 6;
-                case 5:
-                default:
-                    return 8;
-            }
-        }
-        return 2;
-    }
-} // namespace
-
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
     : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
-      monsterSpawnSys_(MonsterSpawnConfig{.spawnInterval = 2.0F, .spawnX = 1200.0F, .yMin = 300.0F, .yMax = 500.0F},
-                       {MovementComponent::linear(150.0F), MovementComponent::sine(150.0F, 100.0F, 0.5F),
-                        MovementComponent::zigzag(150.0F, 80.0F, 1.0F)},
-                       static_cast<std::uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())),
+      monsterSpawnSys_([] {
+          auto setup = buildSpawnSetupForLevel(1);
+          return MonsterSpawnSystem(std::move(setup.first), std::move(setup.second));
+      }()),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -87,162 +57,6 @@ void ServerApp::stop()
     receiveThread_.stop();
 }
 
-void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
-{
-    handleControl();
-    maybeStartGame();
-    updateCountdown(1.0F / kTickRate);
-    if (!gameStarted_) {
-        return;
-    }
-    auto mapped = mapInputs(inputs);
-    playerInputSys_.update(registry_, mapped);
-    movementSys_.update(registry_, 1.0F / kTickRate);
-    monsterMovementSys_.update(registry_, 1.0F / kTickRate);
-    monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
-    enemyShootingSys_.update(registry_, 1.0F / kTickRate);
-
-    cleanupExpiredMissiles(1.0F / kTickRate);
-    cleanupOffscreenEntities();
-
-    auto collisions = collisionSys_.detect(registry_);
-    logCollisions(collisions);
-    damageSys_.apply(registry_, collisions);
-
-    std::vector<EntityId> toDestroy;
-    for (EntityId id : registry_.view<HealthComponent>()) {
-        if (registry_.isAlive(id) && registry_.get<HealthComponent>(id).current <= 0) {
-            toDestroy.push_back(id);
-        }
-    }
-    if (!toDestroy.empty()) {
-        Logger::instance().info("Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
-        for (EntityId id : toDestroy) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = id;
-            sendThread_.broadcast(pkt);
-        }
-    }
-    destructionSys_.update(registry_, toDestroy);
-    std::unordered_set<EntityId> current;
-    for (EntityId id : registry_.view<TransformComponent>()) {
-        if (registry_.isAlive(id)) {
-            current.insert(id);
-            if (!knownEntities_.contains(id)) {
-                EntitySpawnPacket pkt{};
-                pkt.entityId   = id;
-                pkt.entityType = typeForEntity(registry_, id);
-                auto& t        = registry_.get<TransformComponent>(id);
-                pkt.posX       = t.x;
-                pkt.posY       = t.y;
-                sendThread_.broadcast(pkt);
-            }
-        }
-    }
-    for (EntityId oldId : knownEntities_) {
-        if (!current.contains(oldId)) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = oldId;
-            sendThread_.broadcast(pkt);
-        }
-    }
-    knownEntities_ = std::move(current);
-
-    auto snapshotPkt = buildSnapshotPacket(registry_, currentTick_);
-    for (const auto& c : clients_) {
-        sendThread_.sendTo(snapshotPkt, c);
-    }
-    currentTick_++;
-}
-
-void ServerApp::cleanupExpiredMissiles(float deltaTime)
-{
-    std::vector<EntityId> expired;
-    for (EntityId id : registry_.view<MissileComponent>()) {
-        if (!registry_.isAlive(id)) {
-            continue;
-        }
-        auto& missile = registry_.get<MissileComponent>(id);
-        missile.lifetime -= deltaTime;
-        if (missile.lifetime <= 0.0F) {
-            expired.push_back(id);
-        }
-    }
-    if (expired.empty()) {
-        return;
-    }
-    Logger::instance().info("Cleaning up " + std::to_string(expired.size()) + " expired missile(s)");
-    for (EntityId id : expired) {
-        EntityDestroyedPacket pkt{};
-        pkt.entityId = id;
-        sendThread_.broadcast(pkt);
-        registry_.destroyEntity(id);
-    }
-}
-
-void ServerApp::cleanupOffscreenEntities()
-{
-    std::vector<EntityId> offscreenEntities;
-    for (EntityId id : registry_.view<TransformComponent, TagComponent>()) {
-        if (!registry_.isAlive(id)) {
-            continue;
-        }
-        auto& t   = registry_.get<TransformComponent>(id);
-        auto& tag = registry_.get<TagComponent>(id);
-        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
-            offscreenEntities.push_back(id);
-        }
-    }
-    if (!offscreenEntities.empty()) {
-        Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
-        for (EntityId id : offscreenEntities) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = id;
-            sendThread_.broadcast(pkt);
-            registry_.destroyEntity(id);
-        }
-    }
-}
-
-std::string ServerApp::getEntityTagName(EntityId id) const
-{
-    if (!registry_.has<TagComponent>(id)) {
-        return "Unknown";
-    }
-    const auto& tag = registry_.get<TagComponent>(id);
-    if (tag.hasTag(EntityTag::Player)) {
-        return "Player";
-    }
-    if (tag.hasTag(EntityTag::Enemy)) {
-        return "Enemy";
-    }
-    if (tag.hasTag(EntityTag::Projectile)) {
-        return "Projectile";
-    }
-    return "Unknown";
-}
-
-void ServerApp::logCollisions(const std::vector<Collision>& collisions)
-{
-    if (collisions.empty()) {
-        return;
-    }
-    Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
-    for (const auto& col : collisions) {
-        std::string aTag = getEntityTagName(col.a);
-        std::string bTag = getEntityTagName(col.b);
-        std::string msg  = "  Collision: ";
-        msg += aTag;
-        msg += " (ID:";
-        msg += std::to_string(col.a);
-        msg += ") <-> ";
-        msg += bTag;
-        msg += " (ID:";
-        msg += std::to_string(col.b);
-        msg += ")";
-        Logger::instance().info(msg);
-    }
-}
 
 void ServerApp::resetGame()
 {
@@ -268,4 +82,5 @@ void ServerApp::resetGame()
     while (timeoutQueue_.tryPop(timeout))
         ;
     Logger::instance().info("Game state reset complete");
+    monsterSpawnSys_.reset();
 }
