@@ -25,7 +25,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
         return ClientLoopResult{exitCode.has_value() ? false : true, exitCode};
     }
 
-    auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager);
+    auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager);
     stopNetwork(net, welcomeThread, handshakeDone);
     Logger::instance().info("R-Type Client shutting down");
 

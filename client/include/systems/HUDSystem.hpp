@@ -22,3 +22,4 @@ class HUDSystem : public ISystem
     Window& window_;
     FontManager& fonts_;
 };
+#include "components/ChargeMeterComponent.hpp"

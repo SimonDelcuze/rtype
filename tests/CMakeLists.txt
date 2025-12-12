@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP ON
+include(${CPM_DOWNLOAD_LOCATION})
+CPMAddPackage(
+    NAME GTest
+    GITHUB_REPOSITORY google/googletest
+    GIT_TAG v1.14.0
+    OPTIONS
+        "INSTALL_GTEST OFF"
+        "gtest_disable_pthreads ON"
+        "BUILD_GMOCK OFF"
 )
-set(BUILD_GMOCK OFF CACHE BOOL " " FORCE)
-set(INSTALL_GTEST OFF CACHE BOOL " " FORCE)
-set(gtest_disable_pthreads ON CACHE BOOL " " FORCE)
-
-FetchContent_MakeAvailable(googletest)
 
 add_library(rtype_gtest INTERFACE)
 target_link_libraries(rtype_gtest

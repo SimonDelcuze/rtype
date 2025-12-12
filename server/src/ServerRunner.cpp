@@ -5,6 +5,7 @@
 #include "config/WorldConfig.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "server/SpawnConfig.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -51,6 +52,11 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
                          ObstacleVariant{toTypeId(EntityTypeId::ObstacleLarge),
                                          toTypeId(EntityTypeId::ObstacleTopLarge), "obstacle_mountain_large",
                                          "obstacle_mountain_large_top", 360.0F, 260.0F, 360.0F, 171.0F, 89.0F, 0.0F}}),
+ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
+    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterSpawnSys_([] {
+          auto setup = buildSpawnSetupForLevel(1);
+          return MonsterSpawnSystem(std::move(setup.first), std::move(setup.second));
+      }()),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -264,4 +270,5 @@ void ServerApp::resetGame()
     while (timeoutQueue_.tryPop(timeout))
         ;
     Logger::instance().info("Game state reset complete");
+    monsterSpawnSys_.reset();
 }

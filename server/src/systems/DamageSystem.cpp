@@ -6,12 +6,14 @@ DamageSystem::DamageSystem(EventBus& bus) : bus_(bus) {}
 
 void DamageSystem::apply(Registry& registry, const std::vector<Collision>& collisions)
 {
+    std::vector<EntityId> missilesToDestroy;
+
     for (const auto& col : collisions) {
         EntityId first  = col.a;
         EntityId second = col.b;
 
-        applyMissileDamage(registry, first, second);
-        applyMissileDamage(registry, second, first);
+        applyMissileDamage(registry, first, second, missilesToDestroy);
+        applyMissileDamage(registry, second, first, missilesToDestroy);
 
         applyObstacleCollision(registry, first, second);
         applyObstacleCollision(registry, second, first);
@@ -21,10 +23,23 @@ void DamageSystem::apply(Registry& registry, const std::vector<Collision>& colli
             applyDirectCollisionDamage(registry, second, first);
         }
     }
+
+    for (EntityId missileId : missilesToDestroy) {
+        if (!registry.isAlive(missileId)) {
+            continue;
+        }
+        if (!registry.has<HealthComponent>(missileId)) {
+            registry.emplace<HealthComponent>(missileId, HealthComponent::create(0));
+            Logger::instance().info("Missile (ID:" + std::to_string(missileId) +
+                                    ") marked for destruction after collision");
+        }
+    }
+
     bus_.process();
 }
 
-void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, EntityId targetId)
+void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, EntityId targetId,
+                                      std::vector<EntityId>& missilesToDestroy)
 {
     if (!registry.isAlive(missileId) || !registry.isAlive(targetId)) {
         return;
@@ -67,6 +82,8 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
                             " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
 
     emitDamageEvent(attacker, targetId, std::min(before, dmg), h.current);
+
+    missilesToDestroy.push_back(missileId);
 }
 
 void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entityA, EntityId entityB)

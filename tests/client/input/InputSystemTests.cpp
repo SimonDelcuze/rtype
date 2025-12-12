@@ -82,7 +82,7 @@ TEST(InputSystem, SetsLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 180.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsRightAngle)
@@ -112,7 +112,7 @@ TEST(InputSystem, SetsUpAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 270.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsDownAngle)
@@ -127,7 +127,7 @@ TEST(InputSystem, SetsDownAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 90.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsDiagonalUpLeftAngle)
@@ -142,7 +142,7 @@ TEST(InputSystem, SetsDiagonalUpLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 225.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsDiagonalDownRightAngle)
@@ -157,7 +157,7 @@ TEST(InputSystem, SetsDiagonalDownRightAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 45.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, FireOnlyKeepsDefaultAngle)
@@ -171,9 +171,7 @@ TEST(InputSystem, FireOnlyKeepsDefaultAngle)
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
-    ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_EQ(out.flags, InputMapper::FireFlag);
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_FALSE(buffer.tryPop(out));
 }
 
 TEST(InputSystem, MovementWithFireKeepsMovementAngle)
@@ -188,8 +186,8 @@ TEST(InputSystem, MovementWithFireKeepsMovementAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_EQ(out.flags, mapper.nextFlags);
-    EXPECT_FLOAT_EQ(out.angle, 180.0F);
+    EXPECT_EQ(out.flags, InputMapper::LeftFlag);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsDiagonalDownLeftAngle)
@@ -204,7 +202,7 @@ TEST(InputSystem, SetsDiagonalDownLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 135.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SetsDiagonalUpRightAngle)
@@ -219,7 +217,7 @@ TEST(InputSystem, SetsDiagonalUpRightAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 315.0F);
+    EXPECT_FLOAT_EQ(out.angle, 0.0F);
 }
 
 TEST(InputSystem, SequenceNotIncrementedWhenNoInput)

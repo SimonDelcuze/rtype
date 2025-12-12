@@ -116,7 +116,7 @@ TEST(PlayerInputSystem, CreatesMissileOnFire)
     auto& pic       = registry.emplace<PlayerInputComponent>(p);
     pic.angle       = 0.0F;
     float expectedX = 10.0F;
-    float expectedY = 5.0F;
+    float expectedY = 8.0F;
 
     PlayerInputSystem sys(1.0F, 6.0F, 2.5F, 3);
     std::vector<ReceivedInput> inputs;
@@ -177,7 +177,7 @@ TEST(PlayerInputSystem, MissileMovesWithMovementSystem)
         ++missiles;
         auto& mt = registry.get<TransformComponent>(id);
         EXPECT_NEAR(mt.x, 0.0F, 1e-5);
-        EXPECT_NEAR(mt.y, 2.0F, 1e-5);
+        EXPECT_NEAR(mt.y, 5.0F, 1e-5);
     }
     EXPECT_EQ(missiles, 1u);
 }

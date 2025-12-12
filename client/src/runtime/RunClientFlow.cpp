@@ -52,7 +52,8 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
 }
 
 std::optional<int> runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager)
+                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
+                                  FontManager& fontManager)
 {
     Registry registry;
     EntityTypeRegistry typeRegistry;
@@ -83,8 +84,9 @@ std::optional<int> runGameSession(Window& window, const ClientOptions& options, 
     InputMapper mapper;
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window);
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager);
 
-    int rc = gameLoop.run(window, registry, net.socket.get(), &serverEndpoint, g_running);
+    auto onEvent = [&](const sf::Event& event) { mapper.handleEvent(event); };
+    int rc       = gameLoop.run(window, registry, net.socket.get(), &serverEndpoint, g_running, onEvent);
     return rc;
 }

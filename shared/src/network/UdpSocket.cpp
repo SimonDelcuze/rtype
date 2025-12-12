@@ -143,7 +143,7 @@ bool UdpSocket::open(const IpEndpoint& bindTo)
         ::closesocket(s);
         return false;
     }
-    fd_ = reinterpret_cast<std::intptr_t>(s);
+    fd_ = static_cast<std::intptr_t>(s);
     setNonBlocking(true);
     return true;
 #else
@@ -169,7 +169,7 @@ void UdpSocket::close()
 {
 #ifdef _WIN32
     if (fd_ != -1) {
-        SOCKET s = reinterpret_cast<SOCKET>(fd_);
+        SOCKET s = static_cast<SOCKET>(fd_);
         ::closesocket(s);
         fd_ = -1;
     }
@@ -191,7 +191,7 @@ bool UdpSocket::setNonBlocking(bool enable)
     if (fd_ == -1)
         return false;
 #ifdef _WIN32
-    SOCKET s    = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s    = static_cast<SOCKET>(fd_);
     u_long mode = enable ? 1UL : 0UL;
     return ::ioctlsocket(s, FIONBIO, &mode) == 0;
 #else
@@ -211,7 +211,7 @@ bool UdpSocket::setRecvBuffer(int bytes)
     if (fd_ == -1)
         return false;
 #ifdef _WIN32
-    SOCKET s = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s = static_cast<SOCKET>(fd_);
     return ::setsockopt(s, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<const char*>(&bytes), sizeof(bytes)) == 0;
 #else
     return ::setsockopt(static_cast<int>(fd_), SOL_SOCKET, SO_RCVBUF, &bytes, sizeof(bytes)) == 0;
@@ -223,7 +223,7 @@ bool UdpSocket::setSendBuffer(int bytes)
     if (fd_ == -1)
         return false;
 #ifdef _WIN32
-    SOCKET s = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s = static_cast<SOCKET>(fd_);
     return ::setsockopt(s, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<const char*>(&bytes), sizeof(bytes)) == 0;
 #else
     return ::setsockopt(static_cast<int>(fd_), SOL_SOCKET, SO_SNDBUF, &bytes, sizeof(bytes)) == 0;
@@ -236,7 +236,7 @@ UdpResult UdpSocket::sendTo(const std::uint8_t* data, std::size_t len, const IpE
         return {0, UdpError::NotOpen};
     sockaddr_in sa = toSockaddr(dst);
 #ifdef _WIN32
-    SOCKET s = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s = static_cast<SOCKET>(fd_);
     if (len > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         return {0, UdpError::InvalidArgument};
     int sent = ::sendto(s, reinterpret_cast<const char*>(data), static_cast<int>(len), 0,
@@ -258,7 +258,7 @@ UdpResult UdpSocket::recvFrom(std::uint8_t* buf, std::size_t len, IpEndpoint& sr
         return {0, UdpError::NotOpen};
     sockaddr_in sa{};
 #ifdef _WIN32
-    SOCKET s = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s = static_cast<SOCKET>(fd_);
     int sl   = sizeof(sa);
     if (len > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         return {0, UdpError::InvalidArgument};
@@ -284,7 +284,7 @@ IpEndpoint UdpSocket::localEndpoint() const
         return IpEndpoint{{0, 0, 0, 0}, 0};
     sockaddr_in sa{};
 #ifdef _WIN32
-    SOCKET s = reinterpret_cast<SOCKET>(fd_);
+    SOCKET s = static_cast<SOCKET>(fd_);
     int sl   = sizeof(sa);
     if (::getsockname(s, reinterpret_cast<sockaddr*>(&sa), &sl) != 0)
         return IpEndpoint{{0, 0, 0, 0}, 0};

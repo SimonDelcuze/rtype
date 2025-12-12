@@ -55,16 +55,34 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             EntityId missile      = registry.createEntity();
             auto& mt              = registry.emplace<TransformComponent>(missile);
             mt.x                  = playerX;
-            mt.y                  = playerY;
+            mt.y                  = playerY + 3.0F;
             mt.rotation           = comp.angle;
             auto& mv              = registry.emplace<VelocityComponent>(missile);
-            mv.vx                 = dirX * missileSpeed_;
-            mv.vy                 = dirY * missileSpeed_;
-            registry.emplace<MissileComponent>(missile, MissileComponent{missileDamage_, missileLifetime_, true});
+            const int chargeLevel = chargeLevelFromFlags(ev.input.flags);
+            const float speed     = missileSpeed_ * (1.0F + 0.1F * static_cast<float>(chargeLevel - 1));
+            const float lifetime  = missileLifetime_ * (1.0F + 0.1F * static_cast<float>(chargeLevel - 1));
+            const std::int32_t dmg =
+                static_cast<std::int32_t>(static_cast<float>(missileDamage_) * (1.0F + 0.2F * (chargeLevel - 1)));
+            mv.vx = dirX * speed;
+            mv.vy = dirY * speed;
+            registry.emplace<MissileComponent>(missile, MissileComponent{dmg, lifetime, true, chargeLevel});
             registry.emplace<OwnershipComponent>(missile, OwnershipComponent::create(id, 0));
             registry.emplace<TypeComponent>(missile, TypeComponent::create(toTypeId(EntityTypeId::Projectile)));
             registry.emplace<TagComponent>(missile, TagComponent::create(EntityTag::Projectile));
             registry.emplace<HitboxComponent>(missile, HitboxComponent::create(20.0F, 20.0F, 0.0F, 0.0F, true));
         }
     }
+}
+
+int PlayerInputSystem::chargeLevelFromFlags(std::uint16_t flags) const
+{
+    if (flags & static_cast<std::uint16_t>(InputFlag::Charge5))
+        return 5;
+    if (flags & static_cast<std::uint16_t>(InputFlag::Charge4))
+        return 4;
+    if (flags & static_cast<std::uint16_t>(InputFlag::Charge3))
+        return 3;
+    if (flags & static_cast<std::uint16_t>(InputFlag::Charge2))
+        return 2;
+    return 1;
 }

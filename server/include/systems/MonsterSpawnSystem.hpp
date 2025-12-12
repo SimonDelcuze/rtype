@@ -7,25 +7,30 @@
 #include <random>
 #include <vector>
 
-struct MonsterSpawnConfig
+struct SpawnEvent
 {
-    float spawnInterval = 1.0F;
-    float spawnX        = 0.0F;
-    float yMin          = 0.0F;
-    float yMax          = 0.0F;
+    float time           = 0.0F;
+    float x              = 0.0F;
+    float y              = 0.0F;
+    std::size_t pattern  = 0;
+    std::int32_t health  = 50;
+    float scaleX         = 1.0F;
+    float scaleY         = 1.0F;
+    bool shootingEnabled = true;
+    HitboxComponent hitbox;
+    EnemyShootingComponent shooting;
 };
 
 class MonsterSpawnSystem
 {
   public:
-    MonsterSpawnSystem(MonsterSpawnConfig config, std::vector<MovementComponent> patterns, std::uint32_t seed = 1337);
+    MonsterSpawnSystem(std::vector<MovementComponent> patterns, std::vector<SpawnEvent> script);
     void update(Registry& registry, float deltaTime);
+    void reset();
 
   private:
-    MonsterSpawnConfig config_;
     std::vector<MovementComponent> patterns_;
-    float accumulator_ = 0.0F;
-    std::mt19937 rng_;
-    std::uniform_real_distribution<float> yDist_;
-    std::uniform_int_distribution<std::size_t> patternDist_;
+    std::vector<SpawnEvent> script_;
+    float elapsed_         = 0.0F;
+    std::size_t nextIndex_ = 0;
 };

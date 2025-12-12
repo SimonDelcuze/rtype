@@ -1,6 +1,7 @@
 #include "config/EntityTypeIds.hpp"
 #include "server/Packets.hpp"
 
+#include <algorithm>
 #include <bit>
 
 namespace
@@ -41,6 +42,28 @@ namespace
                 return toTypeId(EntityTypeId::Enemy);
         }
         return toTypeId(EntityTypeId::Enemy);
+        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
+            return 1;
+        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
+            int charge = 1;
+            if (registry.has<MissileComponent>(id)) {
+                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
+            }
+            switch (charge) {
+                case 1:
+                    return 3;
+                case 2:
+                    return 4;
+                case 3:
+                    return 5;
+                case 4:
+                    return 6;
+                case 5:
+                default:
+                    return 8;
+            }
+        }
+        return 2;
     }
 
     std::vector<std::uint8_t> buildEntityBlock(const Registry& registry, EntityId id)
