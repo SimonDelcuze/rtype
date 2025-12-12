@@ -10,4 +10,3 @@ std::unique_ptr<ILevel> makeLevel(int levelId)
             return std::make_unique<Level1>();
     }
 }
-

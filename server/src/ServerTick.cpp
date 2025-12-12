@@ -1,8 +1,7 @@
-#include "server/ServerRunner.hpp"
-
 #include "Logger.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "server/ServerRunner.hpp"
 
 #include <algorithm>
 
@@ -33,7 +32,7 @@ namespace
         }
         return 2;
     }
-}
+} // namespace
 
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {

@@ -10,4 +10,3 @@ struct LevelScript
     std::vector<MovementComponent> patterns;
     std::vector<SpawnEvent> spawns;
 };
-

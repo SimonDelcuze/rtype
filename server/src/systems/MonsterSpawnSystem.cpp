@@ -4,12 +4,11 @@
 
 MonsterSpawnSystem::MonsterSpawnSystem(std::vector<MovementComponent> patterns, std::vector<SpawnEvent> script)
     : patterns_(std::move(patterns)), script_(std::move(script))
-{
-}
+{}
 
 void MonsterSpawnSystem::reset()
 {
-    elapsed_  = 0.0F;
+    elapsed_   = 0.0F;
     nextIndex_ = 0;
 }
 
@@ -24,9 +23,9 @@ void MonsterSpawnSystem::update(Registry& registry, float deltaTime)
         const auto& ev = script_[nextIndex_];
         EntityId e     = registry.createEntity();
 
-        auto& t = registry.emplace<TransformComponent>(e);
-        t.x     = ev.x;
-        t.y     = ev.y;
+        auto& t  = registry.emplace<TransformComponent>(e);
+        t.x      = ev.x;
+        t.y      = ev.y;
         t.scaleX = ev.scaleX;
         t.scaleY = ev.scaleY;
 
