@@ -9,7 +9,7 @@ namespace RenderLayer
     constexpr int UI         = 100;
     constexpr int HUD        = 150;
     constexpr int Debug      = 200;
-} // namespace
+} // namespace RenderLayer
 
 struct LayerComponent
 {

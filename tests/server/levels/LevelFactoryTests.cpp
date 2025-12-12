@@ -12,21 +12,21 @@ namespace
         return static_cast<int>((count + modulo - 1) / modulo);
     }
 
-std::vector<std::vector<SpawnEvent>> splitByCounts(std::vector<SpawnEvent> spawns,
-                                                   const std::vector<std::size_t>& counts)
-{
-    std::vector<std::vector<SpawnEvent>> waves;
-    std::sort(spawns.begin(), spawns.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
-    std::size_t idx = 0;
-    for (std::size_t c : counts) {
-        std::vector<SpawnEvent> wave;
-        for (std::size_t i = 0; i < c && idx < spawns.size(); ++i, ++idx) {
-            wave.push_back(spawns[idx]);
+    std::vector<std::vector<SpawnEvent>> splitByCounts(std::vector<SpawnEvent> spawns,
+                                                       const std::vector<std::size_t>& counts)
+    {
+        std::vector<std::vector<SpawnEvent>> waves;
+        std::sort(spawns.begin(), spawns.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
+        std::size_t idx = 0;
+        for (std::size_t c : counts) {
+            std::vector<SpawnEvent> wave;
+            for (std::size_t i = 0; i < c && idx < spawns.size(); ++i, ++idx) {
+                wave.push_back(spawns[idx]);
+            }
+            waves.push_back(std::move(wave));
         }
-        waves.push_back(std::move(wave));
+        return waves;
     }
-    return waves;
-}
 } // namespace
 
 TEST(LevelFactory, ReturnsLevel1)

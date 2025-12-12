@@ -97,7 +97,7 @@ namespace Waves
         }
         return out;
     }
-} // namespace
+} // namespace Waves
 
 std::vector<SpawnEvent> offsetWave(const std::vector<SpawnEvent>& wave, float timeOffset)
 {

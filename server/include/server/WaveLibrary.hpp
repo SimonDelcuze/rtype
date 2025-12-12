@@ -26,6 +26,6 @@ namespace Waves
     std::vector<SpawnEvent> cross(float startTime, float centerX, float centerY, float step, int armLength,
                                   std::size_t patternIndex, std::int32_t hp, const HitboxComponent& hitbox,
                                   const EnemyShootingComponent& shooting);
-} // namespace
+} // namespace Waves
 
 std::vector<SpawnEvent> offsetWave(const std::vector<SpawnEvent>& wave, float timeOffset);
