@@ -33,12 +33,20 @@ class ServerApp
     void stop();
 
   private:
+    static constexpr double kTickRate = 60.0;
+
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
     void onJoin(ClientSession& sess, const ControlEvent& ctrl);
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
     void tick(const std::vector<ReceivedInput>& inputs);
+    void updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs);
+    std::vector<EntityId> collectDeadEntities();
+    void broadcastDestructions(const std::vector<EntityId>& toDestroy);
+    std::unordered_set<EntityId> collectCurrentEntities();
+    void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
+    void sendSnapshots();
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
     void processTimeouts();
     LevelDefinition buildLevel() const;

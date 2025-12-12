@@ -11,10 +11,10 @@ std::optional<std::array<float, 4>> CollisionSystem::buildAabb(const TransformCo
     if (!std::isfinite(t.x) || !std::isfinite(t.y) || !std::isfinite(h.offsetX) || !std::isfinite(h.offsetY) ||
         !std::isfinite(h.width) || !std::isfinite(h.height))
         return std::nullopt;
-    float left   = t.x + h.offsetX - h.width / 2.0F;
-    float right  = t.x + h.offsetX + h.width / 2.0F;
-    float top    = t.y + h.offsetY - h.height / 2.0F;
-    float bottom = t.y + h.offsetY + h.height / 2.0F;
+    float left   = t.x + h.offsetX;
+    float right  = left + h.width;
+    float top    = t.y + h.offsetY;
+    float bottom = top + h.height;
     return std::array<float, 4>{left, right, top, bottom};
 }
 

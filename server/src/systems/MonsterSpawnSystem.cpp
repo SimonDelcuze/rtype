@@ -1,29 +1,45 @@
 #include "systems/MonsterSpawnSystem.hpp"
 
-MonsterSpawnSystem::MonsterSpawnSystem(MonsterSpawnConfig config, std::vector<MovementComponent> patterns,
-                                       std::uint32_t seed)
-    : config_(config), patterns_(std::move(patterns)), rng_(seed), yDist_(config.yMin, config.yMax),
-      patternDist_(0, patterns_.empty() ? 0 : patterns_.size() - 1)
-{}
+#include <algorithm>
+
+MonsterSpawnSystem::MonsterSpawnSystem(std::vector<MovementComponent> patterns, std::vector<SpawnEvent> script)
+    : patterns_(std::move(patterns)), script_(std::move(script))
+{
+}
+
+void MonsterSpawnSystem::reset()
+{
+    elapsed_  = 0.0F;
+    nextIndex_ = 0;
+}
 
 void MonsterSpawnSystem::update(Registry& registry, float deltaTime)
 {
-    if (patterns_.empty())
+    if (patterns_.empty() || script_.empty())
         return;
-    accumulator_ += deltaTime;
-    while (accumulator_ >= config_.spawnInterval) {
-        accumulator_ -= config_.spawnInterval;
-        float y                      = yDist_(rng_);
-        const MovementComponent& pat = patterns_[patternDist_(rng_)];
-        EntityId e                   = registry.createEntity();
-        auto& t                      = registry.emplace<TransformComponent>(e);
-        t.x                          = config_.spawnX;
-        t.y                          = y;
-        registry.emplace<MovementComponent>(e, pat);
+
+    elapsed_ += deltaTime;
+
+    while (nextIndex_ < script_.size() && elapsed_ >= script_[nextIndex_].time) {
+        const auto& ev = script_[nextIndex_];
+        EntityId e     = registry.createEntity();
+
+        auto& t = registry.emplace<TransformComponent>(e);
+        t.x     = ev.x;
+        t.y     = ev.y;
+        t.scaleX = ev.scaleX;
+        t.scaleY = ev.scaleY;
+
+        std::size_t patternIdx = std::min(ev.pattern, patterns_.size() - 1);
+        registry.emplace<MovementComponent>(e, patterns_[patternIdx]);
         registry.emplace<VelocityComponent>(e);
         registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Enemy));
-        registry.emplace<HealthComponent>(e, HealthComponent::create(50));
-        registry.emplace<HitboxComponent>(e, HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true));
-        registry.emplace<EnemyShootingComponent>(e, EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F));
+        registry.emplace<HealthComponent>(e, HealthComponent::create(ev.health));
+        registry.emplace<HitboxComponent>(e, ev.hitbox);
+        if (ev.shootingEnabled) {
+            registry.emplace<EnemyShootingComponent>(e, ev.shooting);
+        }
+
+        ++nextIndex_;
     }
 }

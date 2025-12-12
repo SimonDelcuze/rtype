@@ -29,7 +29,7 @@ namespace
 
     void registerEnemyType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
     {
-        auto entry = manifest.findTextureById("enemy_ship");
+        auto entry = manifest.findTextureById("mob1");
         if (!entry)
             return;
         if (!textures.has(entry->id))
@@ -41,7 +41,7 @@ namespace
         RenderTypeData data{};
         data.texture  = tex;
         data.layer    = 1;
-        data.spriteId = "enemy_ship";
+        data.spriteId = "mob1";
         registry.registerType(2, data);
     }
 

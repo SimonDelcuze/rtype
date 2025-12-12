@@ -14,37 +14,30 @@ static std::size_t countEnemies(Registry& registry)
     return count;
 }
 
-TEST(MonsterSpawnSystem, SpawnsAtInterval)
+static SpawnEvent makeSpawn(float time, float x, float y, std::size_t patternIdx, std::int32_t hp = 50)
 {
-    Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.5F;
-    cfg.spawnX        = 100.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 10.0F;
-    std::vector<MovementComponent> patterns{MovementComponent::linear(5.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 42);
-
-    sys.update(registry, 0.4F);
-    EXPECT_EQ(countEnemies(registry), 0u);
-    sys.update(registry, 0.2F);
-    EXPECT_EQ(countEnemies(registry), 1u);
-    sys.update(registry, 1.0F);
-    EXPECT_EQ(countEnemies(registry), 3u);
+    SpawnEvent ev{};
+    ev.time     = time;
+    ev.x        = x;
+    ev.y        = y;
+    ev.pattern  = patternIdx;
+    ev.health   = hp;
+    ev.scaleX   = 1.0F;
+    ev.scaleY   = 1.0F;
+    ev.shootingEnabled = true;
+    ev.hitbox   = HitboxComponent::create(10.0F, 10.0F);
+    ev.shooting = EnemyShootingComponent::create(1.0F, 100.0F, 1, 1.0F);
+    return ev;
 }
 
-TEST(MonsterSpawnSystem, SpawnsOnRightSideAndWithinYRange)
+TEST(MonsterSpawnSystem, SpawnsAtConfiguredPositions)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.1F;
-    cfg.spawnX        = 500.0F;
-    cfg.yMin          = -5.0F;
-    cfg.yMax          = 5.0F;
     std::vector<MovementComponent> patterns{MovementComponent::linear(2.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 7);
+    std::vector<SpawnEvent> script{makeSpawn(0.1F, 500.0F, -5.0F, 0), makeSpawn(0.1F, 500.0F, 5.0F, 0)};
+    MonsterSpawnSystem sys(patterns, script);
 
-    sys.update(registry, 0.5F);
+    sys.update(registry, 0.2F);
 
     for (EntityId id = 0; id < registry.entityCount(); ++id) {
         if (!registry.isAlive(id))
@@ -59,14 +52,10 @@ TEST(MonsterSpawnSystem, SpawnsOnRightSideAndWithinYRange)
 TEST(MonsterSpawnSystem, AssignsMovementPattern)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.01F;
-    cfg.spawnX        = 0.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 1.0F;
     std::vector<MovementComponent> patterns{MovementComponent::linear(3.0F),
                                             MovementComponent::zigzag(4.0F, 1.0F, 2.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 1234);
+    std::vector<SpawnEvent> script{makeSpawn(0.05F, 0.0F, 0.0F, 0), makeSpawn(0.05F, 0.0F, 0.5F, 1)};
+    MonsterSpawnSystem sys(patterns, script);
 
     sys.update(registry, 0.5F);
 
@@ -88,13 +77,9 @@ TEST(MonsterSpawnSystem, AssignsMovementPattern)
 TEST(MonsterSpawnSystem, NoPatternsNoSpawn)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.1F;
-    cfg.spawnX        = 0.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 1.0F;
     std::vector<MovementComponent> patterns;
-    MonsterSpawnSystem sys(cfg, patterns, 1);
+    std::vector<SpawnEvent> script{makeSpawn(0.1F, 0.0F, 0.0F, 0)};
+    MonsterSpawnSystem sys(patterns, script);
 
     sys.update(registry, 1.0F);
 
@@ -104,13 +89,11 @@ TEST(MonsterSpawnSystem, NoPatternsNoSpawn)
 TEST(MonsterSpawnSystem, MultipleSpawnsInSingleTick)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.2F;
-    cfg.spawnX        = 50.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 1.0F;
     std::vector<MovementComponent> patterns{MovementComponent::sine(1.0F, 1.0F, 1.0F, 0.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 5);
+    std::vector<SpawnEvent> script{
+        makeSpawn(0.1F, 50.0F, 0.0F, 0), makeSpawn(0.15F, 50.0F, 0.5F, 0), makeSpawn(0.2F, 50.0F, 1.0F, 0),
+        makeSpawn(0.25F, 50.0F, 1.5F, 0), makeSpawn(0.3F, 50.0F, 2.0F, 0)};
+    MonsterSpawnSystem sys(patterns, script);
 
     sys.update(registry, 1.0F);
 
@@ -120,13 +103,9 @@ TEST(MonsterSpawnSystem, MultipleSpawnsInSingleTick)
 TEST(MonsterSpawnSystem, SpawnedEntitiesHaveRequiredComponents)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.1F;
-    cfg.spawnX        = 10.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 0.0F;
     std::vector<MovementComponent> patterns{MovementComponent::zigzag(2.0F, 1.0F, 1.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 9);
+    std::vector<SpawnEvent> script{makeSpawn(0.1F, 10.0F, 0.0F, 0)};
+    MonsterSpawnSystem sys(patterns, script);
 
     sys.update(registry, 0.3F);
 
@@ -144,24 +123,20 @@ TEST(MonsterSpawnSystem, SpawnedEntitiesHaveRequiredComponents)
     EXPECT_EQ(checked, countEnemies(registry));
 }
 
-TEST(MonsterSpawnSystem, SpawnDistributionUsesAllPatternsOverTime)
+TEST(MonsterSpawnSystem, SpawnDistributionUsesAllPatterns)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.05F;
-    cfg.spawnX        = 0.0F;
-    cfg.yMin          = 0.0F;
-    cfg.yMax          = 1.0F;
-    std::vector<MovementComponent> patterns{MovementComponent::linear(1.0F),
-                                            MovementComponent::zigzag(2.0F, 1.0F, 1.0F),
+    std::vector<MovementComponent> patterns{MovementComponent::linear(1.0F), MovementComponent::zigzag(2.0F, 1.0F, 1.0F),
                                             MovementComponent::sine(3.0F, 2.0F, 0.5F, 0.1F)};
-    MonsterSpawnSystem sys(cfg, patterns, 42);
+    std::vector<SpawnEvent> script{
+        makeSpawn(0.01F, 0.0F, 0.0F, 0), makeSpawn(0.02F, 0.0F, 0.2F, 1), makeSpawn(0.03F, 0.0F, 0.4F, 2)};
+    MonsterSpawnSystem sys(patterns, script);
 
-    sys.update(registry, 1.0F);
+    sys.update(registry, 0.1F);
 
-    bool hasLinear   = false;
-    bool hasZigzag   = false;
-    bool hasSine     = false;
+    bool hasLinear = false;
+    bool hasZigzag = false;
+    bool hasSine   = false;
     std::size_t seen = 0;
     for (EntityId id = 0; id < registry.entityCount(); ++id) {
         if (!registry.isAlive(id))
@@ -178,46 +153,19 @@ TEST(MonsterSpawnSystem, SpawnDistributionUsesAllPatternsOverTime)
     EXPECT_TRUE(hasLinear);
     EXPECT_TRUE(hasZigzag);
     EXPECT_TRUE(hasSine);
-    EXPECT_GE(seen, 10u);
+    EXPECT_EQ(seen, 3u);
 }
 
 TEST(MonsterSpawnSystem, SpawnsAccumulateAcrossUpdates)
 {
     Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.2F;
-    cfg.spawnX        = 25.0F;
-    cfg.yMin          = -1.0F;
-    cfg.yMax          = 1.0F;
     std::vector<MovementComponent> patterns{MovementComponent::linear(2.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 3);
+    std::vector<SpawnEvent> script{makeSpawn(0.05F, 0.0F, 0.0F, 0), makeSpawn(0.15F, 0.0F, 0.5F, 0),
+                                   makeSpawn(0.25F, 0.0F, 1.0F, 0)};
+    MonsterSpawnSystem sys(patterns, script);
 
-    sys.update(registry, 0.15F);
-    EXPECT_EQ(countEnemies(registry), 0u);
     sys.update(registry, 0.1F);
     EXPECT_EQ(countEnemies(registry), 1u);
-    sys.update(registry, 0.4F);
+    sys.update(registry, 0.2F);
     EXPECT_EQ(countEnemies(registry), 3u);
-}
-
-TEST(MonsterSpawnSystem, RespectsUpperAndLowerYBounds)
-{
-    Registry registry;
-    MonsterSpawnConfig cfg{};
-    cfg.spawnInterval = 0.05F;
-    cfg.spawnX        = 0.0F;
-    cfg.yMin          = -10.0F;
-    cfg.yMax          = -5.0F;
-    std::vector<MovementComponent> patterns{MovementComponent::linear(1.0F)};
-    MonsterSpawnSystem sys(cfg, patterns, 999);
-
-    sys.update(registry, 0.5F);
-
-    for (EntityId id = 0; id < registry.entityCount(); ++id) {
-        if (!registry.isAlive(id))
-            continue;
-        auto& t = registry.get<TransformComponent>(id);
-        EXPECT_GE(t.y, -10.0F);
-        EXPECT_LE(t.y, -5.0F);
-    }
 }
