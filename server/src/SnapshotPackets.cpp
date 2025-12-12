@@ -1,6 +1,5 @@
-#include "server/Packets.hpp"
-
 #include "config/EntityTypeIds.hpp"
+#include "server/Packets.hpp"
 
 #include <bit>
 

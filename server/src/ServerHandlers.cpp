@@ -86,7 +86,7 @@ void ServerApp::maybeStartGame()
         sendThread_.sendTo(startPkt, s.endpoint);
         s.started = true;
     }
-    auto level    = buildLevel();
+    auto level = buildLevel();
     obstacleSpawnSys_.setSeed(level.seed);
     auto levelPkt = buildLevelInitPacket(level);
     for (auto& [_, s] : sessions_) {
@@ -148,8 +148,8 @@ LevelDefinition ServerApp::buildLevel()
                                             static_cast<std::uint8_t>(RenderLayer::Midground)});
     lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleTopSmall), "obstacle_mountain_small_top", "",
                                             static_cast<std::uint8_t>(RenderLayer::Midground)});
-    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleTopMedium), "obstacle_mountain_medium_top", "",
-                                            static_cast<std::uint8_t>(RenderLayer::Midground)});
+    lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleTopMedium), "obstacle_mountain_medium_top",
+                                            "", static_cast<std::uint8_t>(RenderLayer::Midground)});
     lvl.archetypes.push_back(LevelArchetype{toTypeId(EntityTypeId::ObstacleTopLarge), "obstacle_mountain_large_top", "",
                                             static_cast<std::uint8_t>(RenderLayer::Midground)});
     return lvl;

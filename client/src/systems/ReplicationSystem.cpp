@@ -13,8 +13,8 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <unordered_set>
 

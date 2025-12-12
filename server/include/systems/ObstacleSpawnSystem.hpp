@@ -14,12 +14,12 @@ struct ObstacleVariant
     std::uint16_t topTypeId = 0;
     std::string spriteId;
     std::string topSpriteId;
-    float spriteWidth  = 0.0F;
-    float spriteHeight = 0.0F;
-    float hitboxWidth     = 0.0F;
-    float hitboxHeight    = 0.0F;
-    float bottomOffsetY   = 0.0F;
-    float topOffsetY      = 0.0F;
+    float spriteWidth   = 0.0F;
+    float spriteHeight  = 0.0F;
+    float hitboxWidth   = 0.0F;
+    float hitboxHeight  = 0.0F;
+    float bottomOffsetY = 0.0F;
+    float topOffsetY    = 0.0F;
 };
 
 struct ObstacleSpawnConfig
@@ -29,7 +29,7 @@ struct ObstacleSpawnConfig
     float speed         = WorldConfig::BackgroundSpeedX * 1.8F;
     float intervalJitter =
         0.25F; // multiplier variation applied to spawnInterval (e.g. 0.25 -> [0.75, 1.25] * interval)
-    float cleanupMargin = 450.0F;
+    float cleanupMargin  = 450.0F;
     float topSpawnChance = 0.5F;
 };
 
@@ -54,6 +54,6 @@ class ObstacleSpawnSystem
     std::uniform_real_distribution<float> jitterDist_;
     std::bernoulli_distribution topDist_;
     std::uniform_int_distribution<std::size_t> variantDist_;
-    float accumulator_    = 0.0F;
+    float accumulator_     = 0.0F;
     float timeToNextSpawn_ = 0.0F;
 };

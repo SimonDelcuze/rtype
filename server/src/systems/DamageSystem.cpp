@@ -134,8 +134,8 @@ void DamageSystem::applyObstacleCollision(Registry& registry, EntityId obstacleI
     }
     health.damage(prev);
 
-    Logger::instance().info("Obstacle (ID:" + std::to_string(obstacleId) + ") destroyed Player (ID:" +
-                            std::to_string(otherId) + ")");
+    Logger::instance().info("Obstacle (ID:" + std::to_string(obstacleId) +
+                            ") destroyed Player (ID:" + std::to_string(otherId) + ")");
     emitDamageEvent(obstacleId, otherId, prev, health.current);
 }
 

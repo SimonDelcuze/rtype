@@ -10,6 +10,6 @@
 #include "components/PlayerInputComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
-#include "components/TypeComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "components/TypeComponent.hpp"
 #include "components/VelocityComponent.hpp"

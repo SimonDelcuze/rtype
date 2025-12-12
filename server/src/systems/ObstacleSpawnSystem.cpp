@@ -13,10 +13,9 @@ namespace
 } // namespace
 
 ObstacleSpawnSystem::ObstacleSpawnSystem(ObstacleSpawnConfig config, std::vector<ObstacleVariant> variants)
-    : config_(config), variants_(std::move(variants)), jitterDist_(1.0F - clampJitter(config.intervalJitter),
-                                                                   1.0F + clampJitter(config.intervalJitter)),
-      topDist_(config.topSpawnChance),
-      variantDist_(0, variants_.empty() ? 0 : variants_.size() - 1)
+    : config_(config), variants_(std::move(variants)),
+      jitterDist_(1.0F - clampJitter(config.intervalJitter), 1.0F + clampJitter(config.intervalJitter)),
+      topDist_(config.topSpawnChance), variantDist_(0, variants_.empty() ? 0 : variants_.size() - 1)
 {
     std::random_device rd;
     rng_.seed(rd());
@@ -59,8 +58,8 @@ void ObstacleSpawnSystem::scheduleNextSpawn()
 {
     if (variants_.empty())
         return;
-    float multiplier  = jitterDist_(rng_);
-    timeToNextSpawn_  = std::max(0.1F, config_.spawnInterval * multiplier);
+    float multiplier = jitterDist_(rng_);
+    timeToNextSpawn_ = std::max(0.1F, config_.spawnInterval * multiplier);
 }
 
 void ObstacleSpawnSystem::spawnOne(Registry& registry, const ObstacleVariant& variant, bool topSpawn)

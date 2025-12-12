@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ecs/Registry.hpp"
-#include "systems/ISystem.hpp"
 #include "graphics/Window.hpp"
+#include "systems/ISystem.hpp"
 
 #include <SFML/Graphics/Color.hpp>
 
