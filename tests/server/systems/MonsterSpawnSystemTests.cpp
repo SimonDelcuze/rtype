@@ -14,7 +14,8 @@ static std::size_t countEnemies(Registry& registry)
     return count;
 }
 
-static SpawnEvent makeSpawn(float time, float x, float y, std::size_t patternIdx, std::int32_t hp = 50)
+static SpawnEvent makeSpawn(float time, float x, float y, std::size_t patternIdx, std::int32_t hp = 50,
+                            bool shootingEnabled = true)
 {
     SpawnEvent ev{};
     ev.time            = time;
@@ -24,7 +25,7 @@ static SpawnEvent makeSpawn(float time, float x, float y, std::size_t patternIdx
     ev.health          = hp;
     ev.scaleX          = 1.0F;
     ev.scaleY          = 1.0F;
-    ev.shootingEnabled = true;
+    ev.shootingEnabled = shootingEnabled;
     ev.hitbox          = HitboxComponent::create(10.0F, 10.0F);
     ev.shooting        = EnemyShootingComponent::create(1.0F, 100.0F, 1, 1.0F);
     return ev;
@@ -169,4 +170,29 @@ TEST(MonsterSpawnSystem, SpawnsAccumulateAcrossUpdates)
     EXPECT_EQ(countEnemies(registry), 1u);
     sys.update(registry, 0.2F);
     EXPECT_EQ(countEnemies(registry), 3u);
+}
+
+TEST(MonsterSpawnSystem, ShootingEnabledFlagControlsComponent)
+{
+    Registry registry;
+    std::vector<MovementComponent> patterns{MovementComponent::linear(1.0F)};
+    std::vector<SpawnEvent> script{makeSpawn(0.01F, 0.0F, 0.0F, 0, 10, true),
+                                   makeSpawn(0.02F, 0.0F, 0.5F, 0, 10, false)};
+    MonsterSpawnSystem sys(patterns, script);
+
+    sys.update(registry, 0.1F);
+
+    int shooters = 0;
+    int nonShoot = 0;
+    for (EntityId id : registry.view<TransformComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        if (registry.has<EnemyShootingComponent>(id)) {
+            shooters++;
+        } else {
+            nonShoot++;
+        }
+    }
+    EXPECT_EQ(shooters, 1);
+    EXPECT_EQ(nonShoot, 1);
 }

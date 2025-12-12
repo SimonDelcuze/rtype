@@ -122,4 +122,4 @@ namespace Serialization
         return t;
     }
 
-} // namespace Serialization
+} // namespace
