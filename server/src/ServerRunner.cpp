@@ -11,8 +11,7 @@
 #include <thread>
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
-    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
-      monsterSpawnSys_([] {
+    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterSpawnSys_([] {
           auto setup = buildSpawnSetupForLevel(1);
           return MonsterSpawnSystem(std::move(setup.first), std::move(setup.second));
       }()),
@@ -56,7 +55,6 @@ void ServerApp::stop()
     sendThread_.stop();
     receiveThread_.stop();
 }
-
 
 void ServerApp::resetGame()
 {

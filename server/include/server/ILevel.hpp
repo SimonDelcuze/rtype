@@ -5,8 +5,7 @@
 class ILevel
 {
   public:
-    virtual ~ILevel()                                = default;
-    virtual int id() const                           = 0;
-    virtual LevelScript buildScript() const          = 0;
+    virtual ~ILevel()                       = default;
+    virtual int id() const                  = 0;
+    virtual LevelScript buildScript() const = 0;
 };
-
