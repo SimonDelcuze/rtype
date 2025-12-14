@@ -18,7 +18,7 @@ class HitboxDebugSystem
 
   private:
     Window& window_;
-    bool enabled_    = false;
-    sf::Color color_ = sf::Color::Green;
+    bool enabled_    = true;
+    sf::Color color_ = sf::Color::Red;
     float thickness_ = 1.0F;
 };

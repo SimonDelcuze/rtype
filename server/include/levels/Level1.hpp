@@ -24,6 +24,9 @@ class Level1 : public ILevel
 
     std::vector<MovementComponent> makePatterns() const;
     std::vector<SpawnEvent> buildTimeline(const HitboxComponent& hitbox, const EnemyShootingComponent& shooting) const;
-    std::vector<ObstacleSpawn> buildObstacles(const HitboxComponent& hitbox,
-                                              const std::vector<std::array<float, 2>>& hull) const;
+    std::vector<ObstacleSpawn> buildObstacles(const HitboxComponent& topHitbox, const HitboxComponent& midHitbox,
+                                              const HitboxComponent& bottomHitbox,
+                                              const std::vector<std::array<float, 2>>& topHull,
+                                              const std::vector<std::array<float, 2>>& midHull,
+                                              const std::vector<std::array<float, 2>>& bottomHull) const;
 };

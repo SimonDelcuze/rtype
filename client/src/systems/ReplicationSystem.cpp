@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/ColliderComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -196,12 +197,58 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         EntityTag tag = EntityTag::Enemy;
         if (typeId == 1) {
             tag = EntityTag::Player;
-        } else if (typeId == 9) {
+        } else if (typeId == 9 || typeId == 10 || typeId == 11) {
             tag = EntityTag::Obstacle;
         } else if (typeId >= 3 && typeId <= 8) {
             tag = EntityTag::Projectile;
         }
         registry.emplace<TagComponent>(id, TagComponent::create(tag));
+    }
+    if ((typeId == 9 || typeId == 10 || typeId == 11) && !registry.has<ColliderComponent>(id)) {
+        static const std::vector<std::array<float, 2>> topHull{{{0.0F, 0.0F},
+                                                                {146.0F, 0.0F},
+                                                                {146.0F, 4.0F},
+                                                                {144.0F, 7.0F},
+                                                                {139.0F, 14.0F},
+                                                                {137.0F, 16.0F},
+                                                                {129.0F, 22.0F},
+                                                                {24.0F, 22.0F},
+                                                                {4.0F, 6.0F},
+                                                                {0.0F, 2.0F}}};
+        static const std::vector<std::array<float, 2>> midHull{{{0.0F, 24.0F},
+                                                                {2.0F, 20.0F},
+                                                                {8.0F, 10.0F},
+                                                                {10.0F, 8.0F},
+                                                                {19.0F, 2.0F},
+                                                                {21.0F, 1.0F},
+                                                                {72.0F, 1.0F},
+                                                                {90.0F, 6.0F},
+                                                                {93.0F, 7.0F},
+                                                                {101.0F, 11.0F},
+                                                                {104.0F, 14.0F},
+                                                                {104.0F, 46.0F},
+                                                                {21.0F, 46.0F},
+                                                                {19.0F, 45.0F},
+                                                                {11.0F, 39.0F},
+                                                                {1.0F, 29.0F},
+                                                                {0.0F, 27.0F}}};
+        static const std::vector<std::array<float, 2>> botHull{{{0.0F, 35.0F},
+                                                                {1.0F, 33.0F},
+                                                                {6.0F, 26.0F},
+                                                                {8.0F, 24.0F},
+                                                                {16.0F, 18.0F},
+                                                                {18.0F, 17.0F},
+                                                                {71.0F, 0.0F},
+                                                                {80.0F, 0.0F},
+                                                                {83.0F, 1.0F},
+                                                                {119.0F, 17.0F},
+                                                                {125.0F, 21.0F},
+                                                                {138.0F, 30.0F},
+                                                                {143.0F, 34.0F},
+                                                                {145.0F, 39.0F},
+                                                                {0.0F, 39.0F}}};
+        const auto& hull = typeId == 9 ? topHull : (typeId == 10 ? midHull : botHull);
+        registry.emplace<ColliderComponent>(id, ColliderComponent::polygon(hull));
     }
     if (data->frameCount > 1) {
         auto anim = AnimationComponent::create(data->frameCount, data->frameDuration);
