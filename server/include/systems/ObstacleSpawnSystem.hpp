@@ -23,6 +23,8 @@ struct ObstacleSpawn
     std::uint16_t typeId = 9;
     float speedX     = -50.0F;
     float speedY     = 0.0F;
+    float scaleX     = 1.0F;
+    float scaleY     = 1.0F;
     HitboxComponent hitbox;
     ColliderComponent collider;
 };

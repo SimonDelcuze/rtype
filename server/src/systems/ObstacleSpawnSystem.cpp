@@ -27,6 +27,8 @@ void ObstacleSpawnSystem::update(Registry& registry, float deltaTime)
         auto& t           = registry.emplace<TransformComponent>(e);
         t.x               = spawn.x;
         t.y               = resolveY(spawn);
+        t.scaleX          = spawn.scaleX;
+        t.scaleY          = spawn.scaleY;
         registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Obstacle));
         registry.emplace<HealthComponent>(e, HealthComponent::create(spawn.health));
         registry.emplace<VelocityComponent>(e, VelocityComponent::create(spawn.speedX, spawn.speedY));
