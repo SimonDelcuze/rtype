@@ -121,9 +121,9 @@ std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& topHitb
         ColliderComponent::polygon(midHull, midHitbox.offsetX, midHitbox.offsetY, midHitbox.isActive);
     auto bottomCollider =
         ColliderComponent::polygon(bottomHull, bottomHitbox.offsetX, bottomHitbox.offsetY, bottomHitbox.isActive);
-    obstacles.push_back(Obstacles::top(2.0F, 900.0F, topHitbox, 35, 0.0F, -50.0F, 9, topCollider));
+    obstacles.push_back(Obstacles::top(2.0F, 900.0F, topHitbox, 35, 0.0F, -50.0F, 9, topCollider, 2.0F, 2.0F));
     obstacles.push_back(
-        Obstacles::bottom(4.5F, 1150.0F, bottomHitbox, 35, 0.0F, -50.0F, 11, bottomCollider));
-    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, midHitbox, 35, -50.0F, 10, midCollider));
+        Obstacles::bottom(4.5F, 1150.0F, bottomHitbox, 35, 0.0F, -50.0F, 11, bottomCollider, 3.0F, 3.0F));
+    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, midHitbox, 35, -50.0F, 10, midCollider, 1.0F, 1.0F));
     return obstacles;
 }

@@ -43,6 +43,18 @@ ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snaps
     : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)
 {}
 
+namespace
+{
+    std::pair<float, float> defaultScaleForType(std::uint16_t typeId)
+    {
+        if (typeId == 9)
+            return {2.0F, 2.0F};
+        if (typeId == 11)
+            return {3.0F, 3.0F};
+        return {1.0F, 1.0F};
+    }
+} // namespace
+
 void ReplicationSystem::initialize() {}
 
 void ReplicationSystem::update(Registry& registry, float)
@@ -61,6 +73,9 @@ void ReplicationSystem::update(Registry& registry, float)
         remoteToLocal_[spawnPkt.entityId] = id;
         applyArchetype(registry, id, spawnPkt.entityType);
         TransformComponent t{};
+        auto [sx, sy] = defaultScaleForType(spawnPkt.entityType);
+        t.scaleX      = sx;
+        t.scaleY      = sy;
         t.x = spawnPkt.posX;
         t.y = spawnPkt.posY;
         registry.emplace<TransformComponent>(id, t);
@@ -282,6 +297,11 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
     auto* comp = registry.has<TransformComponent>(id) ? &registry.get<TransformComponent>(id) : nullptr;
     if (comp == nullptr) {
         TransformComponent t{};
+        if (entity.entityType.has_value()) {
+            auto [sx, sy] = defaultScaleForType(*entity.entityType);
+            t.scaleX      = sx;
+            t.scaleY      = sy;
+        }
         if (entity.posX.has_value())
             t.x = *entity.posX;
         if (entity.posY.has_value())
