@@ -18,6 +18,7 @@ struct SpawnEvent
     float scaleY         = 1.0F;
     bool shootingEnabled = true;
     HitboxComponent hitbox;
+    ColliderComponent collider;
     EnemyShootingComponent shooting;
 };
 

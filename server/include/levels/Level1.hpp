@@ -2,6 +2,7 @@
 
 #include "server/ILevel.hpp"
 
+#include <array>
 #include <vector>
 
 class Level1 : public ILevel
@@ -23,5 +24,6 @@ class Level1 : public ILevel
 
     std::vector<MovementComponent> makePatterns() const;
     std::vector<SpawnEvent> buildTimeline(const HitboxComponent& hitbox, const EnemyShootingComponent& shooting) const;
-    std::vector<ObstacleSpawn> buildObstacles(const HitboxComponent& hitbox) const;
+    std::vector<ObstacleSpawn> buildObstacles(const HitboxComponent& hitbox,
+                                              const std::vector<std::array<float, 2>>& hull) const;
 };

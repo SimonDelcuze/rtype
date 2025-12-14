@@ -31,6 +31,7 @@ void ObstacleSpawnSystem::update(Registry& registry, float deltaTime)
         registry.emplace<HealthComponent>(e, HealthComponent::create(spawn.health));
         registry.emplace<VelocityComponent>(e, VelocityComponent::create(spawn.speedX, spawn.speedY));
         registry.emplace<HitboxComponent>(e, spawn.hitbox);
+        registry.emplace<ColliderComponent>(e, spawn.collider);
         registry.emplace<RenderTypeComponent>(e, RenderTypeComponent::create(spawn.typeId));
         ++nextIndex_;
     }
