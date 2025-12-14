@@ -14,6 +14,8 @@ namespace
         ev.pattern  = pattern;
         ev.health   = hp;
         ev.hitbox   = hitbox;
+        ev.collider = ColliderComponent::box(hitbox.width, hitbox.height, hitbox.offsetX, hitbox.offsetY,
+                                             hitbox.isActive);
         ev.shooting = shooting;
         return ev;
     }

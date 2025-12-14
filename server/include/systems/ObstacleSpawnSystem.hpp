@@ -24,6 +24,7 @@ struct ObstacleSpawn
     float speedX     = -50.0F;
     float speedY     = 0.0F;
     HitboxComponent hitbox;
+    ColliderComponent collider;
 };
 
 class ObstacleSpawnSystem

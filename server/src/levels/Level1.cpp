@@ -58,17 +58,27 @@ LevelScript Level1::buildScript() const
     const HitboxComponent hitbox         = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
     const HitboxComponent obstacleHitbox = HitboxComponent::create(332.0F, 94.0F, 0.0F, 0.0F, true);
     const EnemyShootingComponent shot    = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
+    const std::vector<std::array<float, 2>> obstacleHull{{{0.0F, 20.0F},
+                                                          {20.0F, 0.0F},
+                                                          {312.0F, 0.0F},
+                                                          {332.0F, 20.0F},
+                                                          {332.0F, 74.0F},
+                                                          {312.0F, 94.0F},
+                                                          {20.0F, 94.0F},
+                                                          {0.0F, 74.0F}}};
 
     level.spawns     = buildTimeline(hitbox, shot);
-    level.obstacles  = buildObstacles(obstacleHitbox);
+    level.obstacles  = buildObstacles(obstacleHitbox, obstacleHull);
     return level;
 }
 
-std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& hitbox) const
+std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& hitbox,
+                                                  const std::vector<std::array<float, 2>>& hull) const
 {
     std::vector<ObstacleSpawn> obstacles;
-    obstacles.push_back(Obstacles::top(2.0F, 900.0F, hitbox, 35));
-    obstacles.push_back(Obstacles::bottom(4.5F, 1150.0F, hitbox, 35));
-    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, hitbox, 35));
+    auto collider = ColliderComponent::polygon(hull, hitbox.offsetX, hitbox.offsetY, hitbox.isActive);
+    obstacles.push_back(Obstacles::top(2.0F, 900.0F, hitbox, 35, 0.0F, -50.0F, 9, collider));
+    obstacles.push_back(Obstacles::bottom(4.5F, 1150.0F, hitbox, 35, 0.0F, -50.0F, 9, collider));
+    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, hitbox, 35, -50.0F, 9, collider));
     return obstacles;
 }
