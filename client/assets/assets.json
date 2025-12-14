@@ -24,6 +24,21 @@
       "id": "mob1",
       "path": "sprites/mob1.png",
       "type": "sprite"
+    },
+    {
+      "id": "obstacle_top",
+      "path": "sprites/obstacle/top.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_middle",
+      "path": "sprites/obstacle/middle.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_bottom",
+      "path": "sprites/obstacle/bottom.png",
+      "type": "sprite"
     }
   ],
   "sounds": [

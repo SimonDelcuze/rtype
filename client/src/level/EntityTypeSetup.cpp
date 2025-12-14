@@ -63,9 +63,10 @@ namespace
         registry.registerType(3, data);
     }
 
-    void registerObstacleType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+    void registerObstacleType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
+                              std::uint16_t typeId, const std::string& textureId)
     {
-        auto entry = manifest.findTextureById("enemy_ship");
+        auto entry = manifest.findTextureById(textureId);
         if (!entry)
             return;
         if (!textures.has(entry->id))
@@ -77,8 +78,8 @@ namespace
         RenderTypeData data{};
         data.texture  = tex;
         data.layer    = 1;
-        data.spriteId = "enemy_ship";
-        registry.registerType(9, data);
+        data.spriteId = textureId;
+        registry.registerType(typeId, data);
     }
 
 } // namespace
@@ -88,5 +89,7 @@ void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures,
     registerPlayerType(registry, textures, manifest);
     registerEnemyType(registry, textures, manifest);
     registerBulletType(registry, textures, manifest);
-    registerObstacleType(registry, textures, manifest);
+    registerObstacleType(registry, textures, manifest, 9, "obstacle_top");
+    registerObstacleType(registry, textures, manifest, 10, "obstacle_middle");
+    registerObstacleType(registry, textures, manifest, 11, "obstacle_bottom");
 }

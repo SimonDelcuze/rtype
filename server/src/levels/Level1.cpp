@@ -55,30 +55,75 @@ LevelScript Level1::buildScript() const
     LevelScript level{};
     level.patterns = makePatterns();
 
-    const HitboxComponent hitbox         = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
-    const HitboxComponent obstacleHitbox = HitboxComponent::create(332.0F, 94.0F, 0.0F, 0.0F, true);
-    const EnemyShootingComponent shot    = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
-    const std::vector<std::array<float, 2>> obstacleHull{{{0.0F, 20.0F},
-                                                          {20.0F, 0.0F},
-                                                          {312.0F, 0.0F},
-                                                          {332.0F, 20.0F},
-                                                          {332.0F, 74.0F},
-                                                          {312.0F, 94.0F},
-                                                          {20.0F, 94.0F},
-                                                          {0.0F, 74.0F}}};
+    const HitboxComponent hitbox        = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
+    const HitboxComponent topHitbox     = HitboxComponent::create(147.0F, 23.0F, 0.0F, 0.0F, true);
+    const HitboxComponent midHitbox     = HitboxComponent::create(105.0F, 47.0F, 0.0F, 0.0F, true);
+    const HitboxComponent bottomHitbox  = HitboxComponent::create(146.0F, 40.0F, 0.0F, 0.0F, true);
+    const EnemyShootingComponent shot = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
+    const std::vector<std::array<float, 2>> topHull{{{0.0F, 0.0F},
+                                                     {146.0F, 0.0F},
+                                                     {146.0F, 4.0F},
+                                                     {144.0F, 7.0F},
+                                                     {139.0F, 14.0F},
+                                                     {137.0F, 16.0F},
+                                                     {129.0F, 22.0F},
+                                                     {24.0F, 22.0F},
+                                                     {4.0F, 6.0F},
+                                                     {0.0F, 2.0F}}};
+    const std::vector<std::array<float, 2>> midHull{{{0.0F, 24.0F},
+                                                     {2.0F, 20.0F},
+                                                     {8.0F, 10.0F},
+                                                     {10.0F, 8.0F},
+                                                     {19.0F, 2.0F},
+                                                     {21.0F, 1.0F},
+                                                     {72.0F, 1.0F},
+                                                     {90.0F, 6.0F},
+                                                     {93.0F, 7.0F},
+                                                     {101.0F, 11.0F},
+                                                     {104.0F, 14.0F},
+                                                     {104.0F, 46.0F},
+                                                     {21.0F, 46.0F},
+                                                     {19.0F, 45.0F},
+                                                     {11.0F, 39.0F},
+                                                     {1.0F, 29.0F},
+                                                     {0.0F, 27.0F}}};
+    const std::vector<std::array<float, 2>> bottomHull{{{0.0F, 35.0F},
+                                                        {1.0F, 33.0F},
+                                                        {6.0F, 26.0F},
+                                                        {8.0F, 24.0F},
+                                                        {16.0F, 18.0F},
+                                                        {18.0F, 17.0F},
+                                                        {71.0F, 0.0F},
+                                                        {80.0F, 0.0F},
+                                                        {83.0F, 1.0F},
+                                                        {119.0F, 17.0F},
+                                                        {125.0F, 21.0F},
+                                                        {138.0F, 30.0F},
+                                                        {143.0F, 34.0F},
+                                                        {145.0F, 39.0F},
+                                                        {0.0F, 39.0F}}};
 
     level.spawns     = buildTimeline(hitbox, shot);
-    level.obstacles  = buildObstacles(obstacleHitbox, obstacleHull);
+    level.obstacles  = buildObstacles(topHitbox, midHitbox, bottomHitbox, topHull, midHull, bottomHull);
     return level;
 }
 
-std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& hitbox,
-                                                  const std::vector<std::array<float, 2>>& hull) const
+std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& topHitbox, const HitboxComponent& midHitbox,
+                                                  const HitboxComponent& bottomHitbox,
+                                                  const std::vector<std::array<float, 2>>& topHull,
+                                                  const std::vector<std::array<float, 2>>& midHull,
+                                                  const std::vector<std::array<float, 2>>& bottomHull) const
 {
     std::vector<ObstacleSpawn> obstacles;
-    auto collider = ColliderComponent::polygon(hull, hitbox.offsetX, hitbox.offsetY, hitbox.isActive);
-    obstacles.push_back(Obstacles::top(2.0F, 900.0F, hitbox, 35, 0.0F, -50.0F, 9, collider));
-    obstacles.push_back(Obstacles::bottom(4.5F, 1150.0F, hitbox, 35, 0.0F, -50.0F, 9, collider));
-    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, hitbox, 35, -50.0F, 9, collider));
+    auto topCollider =
+        ColliderComponent::polygon(topHull, topHitbox.offsetX, topHitbox.offsetY, topHitbox.isActive);
+    auto midCollider =
+        ColliderComponent::polygon(midHull, midHitbox.offsetX, midHitbox.offsetY, midHitbox.isActive);
+    auto bottomCollider =
+        ColliderComponent::polygon(bottomHull, bottomHitbox.offsetX, bottomHitbox.offsetY, bottomHitbox.isActive);
+    obstacles.push_back(Obstacles::top(2.0F, 900.0F, topHitbox, 35, 0.0F, -50.0F, 9, topCollider));
+    obstacles.push_back(
+        Obstacles::bottom(4.5F, 1150.0F, bottomHitbox, 35, 0.0F, -50.0F, 11, bottomCollider));
+    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, midHitbox, 35, -50.0F, 10, midCollider));
     return obstacles;
 }
