@@ -27,8 +27,8 @@ static SpawnEvent makeSpawn(float time, float x, float y, std::size_t patternIdx
     ev.scaleY          = 1.0F;
     ev.shootingEnabled = shootingEnabled;
     ev.hitbox          = HitboxComponent::create(10.0F, 10.0F);
-    ev.collider        = ColliderComponent::box(ev.hitbox.width, ev.hitbox.height, ev.hitbox.offsetX,
-                                         ev.hitbox.offsetY, ev.hitbox.isActive);
+    ev.collider        = ColliderComponent::box(ev.hitbox.width, ev.hitbox.height, ev.hitbox.offsetX, ev.hitbox.offsetY,
+                                                ev.hitbox.isActive);
     ev.shooting        = EnemyShootingComponent::create(1.0F, 100.0F, 1, 1.0F);
     return ev;
 }

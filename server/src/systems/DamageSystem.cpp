@@ -29,7 +29,7 @@ namespace
             return "Projectile";
         return "Target";
     }
-}
+} // namespace
 
 void DamageSystem::apply(Registry& registry, const std::vector<Collision>& collisions)
 {
@@ -108,9 +108,9 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
     const std::string targetName = tagLabel(registry, targetId);
 
     Logger::instance().info((missile.fromPlayer ? "Player" : "Enemy") + std::string(" missile (ID:") +
-                            std::to_string(missileId) + ") damaged " + targetName + " (ID:" +
-                            std::to_string(targetId) + ") for " + std::to_string(dmg) +
-                            " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
+                            std::to_string(missileId) + ") damaged " + targetName + " (ID:" + std::to_string(targetId) +
+                            ") for " + std::to_string(dmg) + " damage. Health: " + std::to_string(before) + " -> " +
+                            std::to_string(h.current));
 
     emitDamageEvent(attacker, targetId, std::min(before, dmg), h.current);
 
@@ -129,12 +129,12 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
         return;
     }
 
-    auto& tagA = registry.get<TagComponent>(entityA);
-    auto& tagB = registry.get<TagComponent>(entityB);
-    bool aIsPlayer   = tagA.hasTag(EntityTag::Player);
-    bool bIsPlayer   = tagB.hasTag(EntityTag::Player);
-    bool aIsHostile  = isHostile(tagA);
-    bool bIsHostile  = isHostile(tagB);
+    auto& tagA      = registry.get<TagComponent>(entityA);
+    auto& tagB      = registry.get<TagComponent>(entityB);
+    bool aIsPlayer  = tagA.hasTag(EntityTag::Player);
+    bool bIsPlayer  = tagB.hasTag(EntityTag::Player);
+    bool aIsHostile = isHostile(tagA);
+    bool bIsHostile = isHostile(tagB);
 
     if (aIsPlayer && bIsHostile) {
         if (!tagB.hasTag(EntityTag::Obstacle)) {
@@ -143,10 +143,9 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
             std::int32_t before    = h.current;
             const std::string name = tagLabel(registry, entityB);
             h.damage(dmg);
-            Logger::instance().info("Player (ID:" + std::to_string(entityA) +
-                                    ") damaged " + name + " (ID:" + std::to_string(entityB) + ") for " +
-                                    std::to_string(dmg) + " damage. Health: " + std::to_string(before) + " -> " +
-                                    std::to_string(h.current));
+            Logger::instance().info("Player (ID:" + std::to_string(entityA) + ") damaged " + name +
+                                    " (ID:" + std::to_string(entityB) + ") for " + std::to_string(dmg) +
+                                    " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
             emitDamageEvent(entityA, entityB, std::min(before, dmg), h.current);
         }
     } else if (aIsHostile && bIsPlayer) {
@@ -156,9 +155,8 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
         h.damage(dmg);
         const std::string attacker = tagLabel(registry, entityA);
         Logger::instance().info(attacker + " (ID:" + std::to_string(entityA) +
-                                ") damaged Player (ID:" + std::to_string(entityB) + ") for " +
-                                std::to_string(dmg) + " damage. Health: " + std::to_string(before) + " -> " +
-                                std::to_string(h.current));
+                                ") damaged Player (ID:" + std::to_string(entityB) + ") for " + std::to_string(dmg) +
+                                " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
         emitDamageEvent(entityA, entityB, std::min(before, dmg), h.current);
     }
 }

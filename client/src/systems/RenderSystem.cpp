@@ -1,12 +1,12 @@
 #include "systems/RenderSystem.hpp"
 
-#include <SFML/Graphics.hpp>
-#include <algorithm>
-
 #include "components/ColliderComponent.hpp"
 #include "components/HitboxComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/TagComponent.hpp"
+
+#include <SFML/Graphics.hpp>
+#include <algorithm>
 
 RenderSystem::RenderSystem(Window& window) : window_(window) {}
 

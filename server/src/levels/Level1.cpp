@@ -55,11 +55,11 @@ LevelScript Level1::buildScript() const
     LevelScript level{};
     level.patterns = makePatterns();
 
-    const HitboxComponent hitbox        = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
-    const HitboxComponent topHitbox     = HitboxComponent::create(147.0F, 23.0F, 0.0F, 0.0F, true);
-    const HitboxComponent midHitbox     = HitboxComponent::create(105.0F, 47.0F, 0.0F, 0.0F, true);
-    const HitboxComponent bottomHitbox  = HitboxComponent::create(146.0F, 40.0F, 0.0F, 0.0F, true);
-    const EnemyShootingComponent shot = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
+    const HitboxComponent hitbox       = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
+    const HitboxComponent topHitbox    = HitboxComponent::create(147.0F, 23.0F, 0.0F, 0.0F, true);
+    const HitboxComponent midHitbox    = HitboxComponent::create(105.0F, 47.0F, 0.0F, 0.0F, true);
+    const HitboxComponent bottomHitbox = HitboxComponent::create(146.0F, 40.0F, 0.0F, 0.0F, true);
+    const EnemyShootingComponent shot  = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
     const std::vector<std::array<float, 2>> topHull{{{0.0F, 0.0F},
                                                      {146.0F, 0.0F},
                                                      {146.0F, 4.0F},
@@ -103,8 +103,8 @@ LevelScript Level1::buildScript() const
                                                         {145.0F, 39.0F},
                                                         {0.0F, 39.0F}}};
 
-    level.spawns     = buildTimeline(hitbox, shot);
-    level.obstacles  = buildObstacles(topHitbox, midHitbox, bottomHitbox, topHull, midHull, bottomHull);
+    level.spawns    = buildTimeline(hitbox, shot);
+    level.obstacles = buildObstacles(topHitbox, midHitbox, bottomHitbox, topHull, midHull, bottomHull);
     return level;
 }
 
@@ -115,17 +115,14 @@ std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& topHitb
                                                   const std::vector<std::array<float, 2>>& bottomHull) const
 {
     std::vector<ObstacleSpawn> obstacles;
-    auto topCollider =
-        ColliderComponent::polygon(topHull, topHitbox.offsetX, topHitbox.offsetY, topHitbox.isActive);
-    auto midCollider =
-        ColliderComponent::polygon(midHull, midHitbox.offsetX, midHitbox.offsetY, midHitbox.isActive);
+    auto topCollider = ColliderComponent::polygon(topHull, topHitbox.offsetX, topHitbox.offsetY, topHitbox.isActive);
+    auto midCollider = ColliderComponent::polygon(midHull, midHitbox.offsetX, midHitbox.offsetY, midHitbox.isActive);
     auto bottomCollider =
         ColliderComponent::polygon(bottomHull, bottomHitbox.offsetX, bottomHitbox.offsetY, bottomHitbox.isActive);
     constexpr float spawnX = 1280.0F + 200.0F; // spawn off-screen right on a 1280 width viewport
     obstacles.push_back(Obstacles::top(0.1F, spawnX, topHitbox, 35, 0.0F, -50.0F, 9, topCollider, 2.0F, 2.0F));
     obstacles.push_back(
         Obstacles::bottom(5.0F, spawnX, bottomHitbox, 35, 0.0F, -50.0F, 11, bottomCollider, 3.0F, 3.0F));
-    obstacles.push_back(
-        Obstacles::at(7.0F, spawnX, 300.0F, midHitbox, 35, -50.0F, 10, midCollider, 1.0F, 1.0F));
+    obstacles.push_back(Obstacles::at(7.0F, spawnX, 300.0F, midHitbox, 35, -50.0F, 10, midCollider, 1.0F, 1.0F));
     return obstacles;
 }

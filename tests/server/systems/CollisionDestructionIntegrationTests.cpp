@@ -155,8 +155,8 @@ TEST(CollisionDestructionIntegration, MissileDoesNotDamageObstacle)
 {
     EventBus bus;
     Registry registry;
-    EntityId missile   = registry.createEntity();
-    EntityId obstacle  = registry.createEntity();
+    EntityId missile  = registry.createEntity();
+    EntityId obstacle = registry.createEntity();
 
     registry.emplace<TransformComponent>(missile, TransformComponent::create(0.0F, 0.0F));
     registry.emplace<HitboxComponent>(missile, HitboxComponent::create(1.0F, 1.0F, 0.0F, 0.0F, true));

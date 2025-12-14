@@ -14,17 +14,17 @@ enum class ObstacleAnchor
 
 struct ObstacleSpawn
 {
-    float time       = 0.0F;
-    float x          = 0.0F;
-    float y          = 0.0F;
+    float time            = 0.0F;
+    float x               = 0.0F;
+    float y               = 0.0F;
     ObstacleAnchor anchor = ObstacleAnchor::Absolute;
-    float margin     = 0.0F;
-    std::int32_t health = 1;
-    std::uint16_t typeId = 9;
-    float speedX     = -50.0F;
-    float speedY     = 0.0F;
-    float scaleX     = 1.0F;
-    float scaleY     = 1.0F;
+    float margin          = 0.0F;
+    std::int32_t health   = 1;
+    std::uint16_t typeId  = 9;
+    float speedX          = -50.0F;
+    float speedY          = 0.0F;
+    float scaleX          = 1.0F;
+    float scaleY          = 1.0F;
     HitboxComponent hitbox;
     ColliderComponent collider;
 };

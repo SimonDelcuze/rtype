@@ -5,8 +5,7 @@
 ObstacleSpawnSystem::ObstacleSpawnSystem(std::vector<ObstacleSpawn> obstacles, float playfieldHeight)
     : obstacles_(std::move(obstacles)), playfieldHeight_(playfieldHeight)
 {
-    std::sort(obstacles_.begin(), obstacles_.end(),
-              [](const auto& a, const auto& b) { return a.time < b.time; });
+    std::sort(obstacles_.begin(), obstacles_.end(), [](const auto& a, const auto& b) { return a.time < b.time; });
 }
 
 void ObstacleSpawnSystem::reset()

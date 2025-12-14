@@ -149,8 +149,7 @@ void ServerApp::cleanupOffscreenEntities()
         }
         auto& t   = registry_.get<TransformComponent>(id);
         auto& tag = registry_.get<TagComponent>(id);
-        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) &&
-            (t.x < -100.0F || t.x > 2000.0F)) {
+        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
             offscreenEntities.push_back(id);
         }
     }

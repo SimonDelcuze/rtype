@@ -159,8 +159,8 @@ namespace
         };
 
         if (s.type == ColliderComponent::Shape::Box) {
-            float w = hasCollider ? collider->width : hitbox->width;
-            float h = hasCollider ? collider->height : hitbox->height;
+            float w  = hasCollider ? collider->width : hitbox->width;
+            float h  = hasCollider ? collider->height : hitbox->height;
             float ox = hasCollider ? collider->offsetX : hitbox->offsetX;
             float oy = hasCollider ? collider->offsetY : hitbox->offsetY;
             if (w <= 0.0F || h <= 0.0F || !finite(w) || !finite(h) || !finite(ox) || !finite(oy))
