@@ -119,7 +119,7 @@ std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& topHitb
     auto midCollider = ColliderComponent::polygon(midHull, midHitbox.offsetX, midHitbox.offsetY, midHitbox.isActive);
     auto bottomCollider =
         ColliderComponent::polygon(bottomHull, bottomHitbox.offsetX, bottomHitbox.offsetY, bottomHitbox.isActive);
-    constexpr float spawnX = 1280.0F + 200.0F; // spawn off-screen right on a 1280 width viewport
+    constexpr float spawnX = 1280.0F + 200.0F;
     obstacles.push_back(Obstacles::top(0.1F, spawnX, topHitbox, 35, 0.0F, -50.0F, 9, topCollider, 2.0F, 2.0F));
     obstacles.push_back(
         Obstacles::bottom(5.0F, spawnX, bottomHitbox, 35, 0.0F, -50.0F, 11, bottomCollider, 3.0F, 3.0F));
