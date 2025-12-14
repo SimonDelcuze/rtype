@@ -42,8 +42,9 @@ TEST(SpawnConfig, BuildSpawnSetupForLevel1MatchesLevelScript)
     auto level  = makeLevel(1);
     auto script = level->buildScript();
 
-    EXPECT_EQ(setup.first.size(), script.patterns.size());
-    EXPECT_EQ(setup.second.size(), script.spawns.size());
+    EXPECT_EQ(setup.patterns.size(), script.patterns.size());
+    EXPECT_EQ(setup.spawns.size(), script.spawns.size());
+    EXPECT_EQ(setup.obstacles.size(), script.obstacles.size());
 }
 
 TEST(LevelFactory, ShooterRatioOffsetsAndHealthFromLevel1)
