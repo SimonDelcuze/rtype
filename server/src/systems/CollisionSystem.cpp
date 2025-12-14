@@ -247,7 +247,6 @@ namespace
             polyA.type  = ColliderComponent::Shape::Polygon;
             return circlePolygon(b, polyA);
         }
-        // Box vs box or box vs polygon handled as polygons
         Shape polyA = a;
         Shape polyB = b;
         polyA.type  = ColliderComponent::Shape::Polygon;
