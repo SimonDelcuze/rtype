@@ -131,71 +131,88 @@ namespace
         return true;
     }
 
-    std::optional<Shape> buildShape(const TransformComponent& t, const ColliderComponent* collider,
-                                    const HitboxComponent* hitbox)
+    bool hasCollisionData(const ColliderComponent* collider, const HitboxComponent* hitbox)
+    {
+        return collider != nullptr || hitbox != nullptr;
+    }
+
+    bool validTransform(const TransformComponent& t)
+    {
+        return finite(t.x) && finite(t.y) && finite(t.scaleX) && finite(t.scaleY);
+    }
+
+    Shape seedShape(const ColliderComponent* collider, const HitboxComponent* hitbox)
     {
         Shape s{};
-        const bool hasCollider = collider != nullptr;
-        const bool hasHitbox   = hitbox != nullptr;
-        if (!hasCollider && !hasHitbox)
-            return std::nullopt;
-        if (hasCollider) {
+        if (collider != nullptr) {
             s.active = collider->isActive;
             s.type   = collider->shape;
         } else {
             s.active = hitbox->isActive;
             s.type   = ColliderComponent::Shape::Box;
         }
-        if (!s.active)
+        return s;
+    }
+
+    Vec2 toWorld(const TransformComponent& t, float px, float py, float ox, float oy, float sx, float sy)
+    {
+        return Vec2{t.x + (px + ox) * sx, t.y + (py + oy) * sy};
+    }
+
+    std::optional<Shape> buildBoxShape(const TransformComponent& t, Shape s, bool hasCollider,
+                                       const ColliderComponent* collider, const HitboxComponent* hitbox, float sx,
+                                       float sy)
+    {
+        float w  = hasCollider ? collider->width : hitbox->width;
+        float h  = hasCollider ? collider->height : hitbox->height;
+        float ox = hasCollider ? collider->offsetX : hitbox->offsetX;
+        float oy = hasCollider ? collider->offsetY : hitbox->offsetY;
+        if (w <= 0.0F || h <= 0.0F || !finite(w) || !finite(h) || !finite(ox) || !finite(oy))
             return std::nullopt;
-        if (!finite(t.x) || !finite(t.y) || !finite(t.scaleX) || !finite(t.scaleY))
+        s.points.push_back(toWorld(t, 0.0F, 0.0F, ox, oy, sx, sy));
+        s.points.push_back(toWorld(t, w, 0.0F, ox, oy, sx, sy));
+        s.points.push_back(toWorld(t, w, h, ox, oy, sx, sy));
+        s.points.push_back(toWorld(t, 0.0F, h, ox, oy, sx, sy));
+        return s;
+    }
+
+    std::optional<Shape> buildCircleShape(const TransformComponent& t, Shape s, const ColliderComponent* collider,
+                                          float sx, float sy)
+    {
+        float r  = collider != nullptr ? collider->radius : 0.0F;
+        float ox = collider != nullptr ? collider->offsetX : 0.0F;
+        float oy = collider != nullptr ? collider->offsetY : 0.0F;
+        if (r <= 0.0F || !finite(r) || !finite(ox) || !finite(oy))
             return std::nullopt;
+        float scaleFactor = std::max(std::abs(sx), std::abs(sy));
+        s.radius          = r * scaleFactor;
+        s.center          = toWorld(t, 0.0F, 0.0F, ox, oy, sx, sy);
+        return s;
+    }
 
-        const float sx = t.scaleX;
-        const float sy = t.scaleY;
-
-        auto toWorld = [&](float px, float py, float ox, float oy) -> Vec2 {
-            return Vec2{t.x + (px + ox) * sx, t.y + (py + oy) * sy};
-        };
-
-        if (s.type == ColliderComponent::Shape::Box) {
-            float w  = hasCollider ? collider->width : hitbox->width;
-            float h  = hasCollider ? collider->height : hitbox->height;
-            float ox = hasCollider ? collider->offsetX : hitbox->offsetX;
-            float oy = hasCollider ? collider->offsetY : hitbox->offsetY;
-            if (w <= 0.0F || h <= 0.0F || !finite(w) || !finite(h) || !finite(ox) || !finite(oy))
+    std::optional<Shape> buildPolygonShape(const TransformComponent& t, Shape s, const ColliderComponent* collider,
+                                           float sx, float sy)
+    {
+        if (collider == nullptr || collider->points.empty())
+            return std::nullopt;
+        float ox = collider->offsetX;
+        float oy = collider->offsetY;
+        if (!finite(ox) || !finite(oy))
+            return std::nullopt;
+        s.points.reserve(collider->points.size());
+        for (const auto& p : collider->points) {
+            if (!finite(p[0]) || !finite(p[1]))
                 return std::nullopt;
-            s.points.push_back(toWorld(0.0F, 0.0F, ox, oy));
-            s.points.push_back(toWorld(w, 0.0F, ox, oy));
-            s.points.push_back(toWorld(w, h, ox, oy));
-            s.points.push_back(toWorld(0.0F, h, ox, oy));
-        } else if (s.type == ColliderComponent::Shape::Circle) {
-            float r  = hasCollider ? collider->radius : 0.0F;
-            float ox = hasCollider ? collider->offsetX : 0.0F;
-            float oy = hasCollider ? collider->offsetY : 0.0F;
-            if (r <= 0.0F || !finite(r) || !finite(ox) || !finite(oy))
-                return std::nullopt;
-            float scaleFactor = std::max(std::abs(sx), std::abs(sy));
-            s.radius          = r * scaleFactor;
-            s.center          = toWorld(0.0F, 0.0F, ox, oy);
-        } else if (s.type == ColliderComponent::Shape::Polygon) {
-            if (collider == nullptr || collider->points.empty())
-                return std::nullopt;
-            float ox = collider->offsetX;
-            float oy = collider->offsetY;
-            if (!finite(ox) || !finite(oy))
-                return std::nullopt;
-            s.points.reserve(collider->points.size());
-            for (const auto& p : collider->points) {
-                if (!finite(p[0]) || !finite(p[1]))
-                    return std::nullopt;
-                s.points.push_back(toWorld(p[0], p[1], ox, oy));
-            }
+            s.points.push_back(toWorld(t, p[0], p[1], ox, oy, sx, sy));
         }
+        return s;
+    }
 
+    bool buildAabb(Shape& s)
+    {
         if (s.type != ColliderComponent::Shape::Circle) {
             if (s.points.size() < 3)
-                return std::nullopt;
+                return false;
             float minX = std::numeric_limits<float>::infinity();
             float maxX = -std::numeric_limits<float>::infinity();
             float minY = std::numeric_limits<float>::infinity();
@@ -207,14 +224,44 @@ namespace
                 maxY = std::max(maxY, p.y);
             }
             s.aabb = {minX, maxX, minY, maxY};
-        } else {
-            float minX = s.center.x - s.radius;
-            float maxX = s.center.x + s.radius;
-            float minY = s.center.y - s.radius;
-            float maxY = s.center.y + s.radius;
-            s.aabb     = {minX, maxX, minY, maxY};
+            return true;
         }
-        return s;
+        float minX = s.center.x - s.radius;
+        float maxX = s.center.x + s.radius;
+        float minY = s.center.y - s.radius;
+        float maxY = s.center.y + s.radius;
+        s.aabb     = {minX, maxX, minY, maxY};
+        return true;
+    }
+
+    std::optional<Shape> buildShape(const TransformComponent& t, const ColliderComponent* collider,
+                                    const HitboxComponent* hitbox)
+    {
+        if (!hasCollisionData(collider, hitbox))
+            return std::nullopt;
+        Shape s      = seedShape(collider, hitbox);
+        bool hasColl = collider != nullptr;
+        if (!s.active)
+            return std::nullopt;
+        if (!validTransform(t))
+            return std::nullopt;
+
+        const float sx = t.scaleX;
+        const float sy = t.scaleY;
+
+        std::optional<Shape> built;
+        if (s.type == ColliderComponent::Shape::Box) {
+            built = buildBoxShape(t, s, hasColl, collider, hitbox, sx, sy);
+        } else if (s.type == ColliderComponent::Shape::Circle) {
+            built = buildCircleShape(t, s, collider, sx, sy);
+        } else if (s.type == ColliderComponent::Shape::Polygon) {
+            built = buildPolygonShape(t, s, collider, sx, sy);
+        }
+        if (!built.has_value())
+            return std::nullopt;
+        if (!buildAabb(*built))
+            return std::nullopt;
+        return built;
     }
 
     bool aabbOverlap(const std::array<float, 4>& a, const std::array<float, 4>& b)
