@@ -50,7 +50,7 @@ void RenderSystem::update(Registry& registry, float /*deltaTime*/)
         window_.draw(sprite);
     }
 
-    constexpr bool kDebugColliders = true;
+    constexpr bool kDebugColliders = false;
     if (!kDebugColliders) {
         return;
     }
