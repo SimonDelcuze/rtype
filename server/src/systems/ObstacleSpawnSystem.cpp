@@ -41,11 +41,14 @@ void ObstacleSpawnSystem::update(Registry& registry, float deltaTime)
 
 float ObstacleSpawnSystem::resolveY(const ObstacleSpawn& spawn) const
 {
+    const float scaleY       = spawn.scaleY;
+    const float scaledHeight = spawn.hitbox.height * scaleY;
+    const float scaledOffset = spawn.hitbox.offsetY * scaleY;
     switch (spawn.anchor) {
         case ObstacleAnchor::Top:
-            return spawn.margin - spawn.hitbox.offsetY;
+            return spawn.margin - scaledOffset;
         case ObstacleAnchor::Bottom:
-            return playfieldHeight_ - spawn.hitbox.height - spawn.hitbox.offsetY - spawn.margin;
+            return playfieldHeight_ - scaledHeight - scaledOffset - spawn.margin;
         case ObstacleAnchor::Absolute:
         default:
             return spawn.y;
