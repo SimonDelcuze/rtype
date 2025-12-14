@@ -63,6 +63,24 @@ namespace
         registry.registerType(3, data);
     }
 
+    void registerObstacleType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+    {
+        auto entry = manifest.findTextureById("enemy_ship");
+        if (!entry)
+            return;
+        if (!textures.has(entry->id))
+            textures.load(entry->id, "client/assets/" + entry->path);
+        auto* tex = textures.get(entry->id);
+        if (tex == nullptr)
+            return;
+
+        RenderTypeData data{};
+        data.texture  = tex;
+        data.layer    = 1;
+        data.spriteId = "enemy_ship";
+        registry.registerType(9, data);
+    }
+
 } // namespace
 
 void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
@@ -70,4 +88,5 @@ void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures,
     registerPlayerType(registry, textures, manifest);
     registerEnemyType(registry, textures, manifest);
     registerBulletType(registry, textures, manifest);
+    registerObstacleType(registry, textures, manifest);
 }

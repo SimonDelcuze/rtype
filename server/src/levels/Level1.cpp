@@ -1,5 +1,6 @@
 #include "levels/Level1.hpp"
 
+#include "server/ObstacleLibrary.hpp"
 #include "server/WaveLibrary.hpp"
 
 std::vector<MovementComponent> Level1::makePatterns() const
@@ -54,9 +55,20 @@ LevelScript Level1::buildScript() const
     LevelScript level{};
     level.patterns = makePatterns();
 
-    const HitboxComponent hitbox      = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
-    const EnemyShootingComponent shot = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
+    const HitboxComponent hitbox         = HitboxComponent::create(50.0F, 50.0F, 0.0F, 0.0F, true);
+    const HitboxComponent obstacleHitbox = HitboxComponent::create(332.0F, 94.0F, 0.0F, 0.0F, true);
+    const EnemyShootingComponent shot    = EnemyShootingComponent::create(1.5F, 300.0F, 5, 3.0F);
 
-    level.spawns = buildTimeline(hitbox, shot);
+    level.spawns     = buildTimeline(hitbox, shot);
+    level.obstacles  = buildObstacles(obstacleHitbox);
     return level;
+}
+
+std::vector<ObstacleSpawn> Level1::buildObstacles(const HitboxComponent& hitbox) const
+{
+    std::vector<ObstacleSpawn> obstacles;
+    obstacles.push_back(Obstacles::top(2.0F, 900.0F, hitbox, 35));
+    obstacles.push_back(Obstacles::bottom(4.5F, 1150.0F, hitbox, 35));
+    obstacles.push_back(Obstacles::at(6.0F, 750.0F, 300.0F, hitbox, 35));
+    return obstacles;
 }

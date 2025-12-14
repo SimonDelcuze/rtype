@@ -2,9 +2,8 @@
 
 #include "levels/LevelFactory.hpp"
 
-std::pair<std::vector<MovementComponent>, std::vector<SpawnEvent>> buildSpawnSetupForLevel(int levelId)
+LevelScript buildSpawnSetupForLevel(int levelId)
 {
-    auto level  = makeLevel(levelId);
-    auto script = level->buildScript();
-    return {std::move(script.patterns), std::move(script.spawns)};
+    auto level = makeLevel(levelId);
+    return level->buildScript();
 }

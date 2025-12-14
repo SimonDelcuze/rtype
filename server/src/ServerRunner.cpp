@@ -11,10 +11,8 @@
 #include <thread>
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
-    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterSpawnSys_([] {
-          auto setup = buildSpawnSetupForLevel(1);
-          return MonsterSpawnSystem(std::move(setup.first), std::move(setup.second));
-      }()),
+    : levelScript_(buildSpawnSetupForLevel(1)), playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
+      monsterSpawnSys_(levelScript_.patterns, levelScript_.spawns), obstacleSpawnSys_(levelScript_.obstacles),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -81,4 +79,5 @@ void ServerApp::resetGame()
         ;
     Logger::instance().info("Game state reset complete");
     monsterSpawnSys_.reset();
+    obstacleSpawnSys_.reset();
 }

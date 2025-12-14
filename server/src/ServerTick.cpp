@@ -1,38 +1,10 @@
 #include "Logger.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "server/EntityTypeResolver.hpp"
 #include "server/ServerRunner.hpp"
 
 #include <algorithm>
-
-namespace
-{
-    std::uint8_t typeForEntity(const Registry& registry, EntityId id)
-    {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
-            int charge = 1;
-            if (registry.has<MissileComponent>(id)) {
-                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
-            }
-            switch (charge) {
-                case 1:
-                    return 3;
-                case 2:
-                    return 4;
-                case 3:
-                    return 5;
-                case 4:
-                    return 6;
-                case 5:
-                default:
-                    return 8;
-            }
-        }
-        return 2;
-    }
-} // namespace
 
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {
@@ -68,6 +40,7 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     movementSys_.update(registry_, deltaTime);
     monsterMovementSys_.update(registry_, deltaTime);
     monsterSpawnSys_.update(registry_, deltaTime);
+    obstacleSpawnSys_.update(registry_, deltaTime);
     enemyShootingSys_.update(registry_, deltaTime);
 
     cleanupExpiredMissiles(deltaTime);
@@ -115,7 +88,7 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
         if (!knownEntities_.contains(id)) {
             EntitySpawnPacket pkt{};
             pkt.entityId   = id;
-            pkt.entityType = typeForEntity(registry_, id);
+            pkt.entityType = resolveEntityType(registry_, id);
             auto& t        = registry_.get<TransformComponent>(id);
             pkt.posX       = t.x;
             pkt.posY       = t.y;
@@ -176,7 +149,8 @@ void ServerApp::cleanupOffscreenEntities()
         }
         auto& t   = registry_.get<TransformComponent>(id);
         auto& tag = registry_.get<TagComponent>(id);
-        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
+        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) &&
+            (t.x < -100.0F || t.x > 2000.0F)) {
             offscreenEntities.push_back(id);
         }
     }
@@ -202,6 +176,9 @@ std::string ServerApp::getEntityTagName(EntityId id) const
     }
     if (tag.hasTag(EntityTag::Enemy)) {
         return "Enemy";
+    }
+    if (tag.hasTag(EntityTag::Obstacle)) {
+        return "Obstacle";
     }
     if (tag.hasTag(EntityTag::Projectile)) {
         return "Projectile";

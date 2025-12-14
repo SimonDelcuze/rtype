@@ -8,6 +8,7 @@
 #include "components/MovementComponent.hpp"
 #include "components/OwnershipComponent.hpp"
 #include "components/PlayerInputComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"

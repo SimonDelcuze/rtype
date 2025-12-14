@@ -196,7 +196,9 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         EntityTag tag = EntityTag::Enemy;
         if (typeId == 1) {
             tag = EntityTag::Player;
-        } else if (typeId >= 3) {
+        } else if (typeId == 9) {
+            tag = EntityTag::Obstacle;
+        } else if (typeId >= 3 && typeId <= 8) {
             tag = EntityTag::Projectile;
         }
         registry.emplace<TagComponent>(id, TagComponent::create(tag));

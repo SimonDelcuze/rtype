@@ -136,6 +136,7 @@ LevelDefinition ServerApp::buildLevel() const
     lvl.archetypes.push_back(LevelArchetype{6, "bullet", "bullet_charge_lvl3", 0});
     lvl.archetypes.push_back(LevelArchetype{7, "bullet", "bullet_charge_lvl4", 0});
     lvl.archetypes.push_back(LevelArchetype{8, "bullet", "bullet_charge_lvl5", 0});
+    lvl.archetypes.push_back(LevelArchetype{9, "enemy_ship", "", 0});
     return lvl;
 }
 

@@ -5,6 +5,7 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
+#include "server/LevelScript.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
 #include "systems/CollisionSystem.hpp"
@@ -13,6 +14,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
+#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
@@ -67,9 +69,11 @@ class ServerApp
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
     EventBus eventBus_;
+    LevelScript levelScript_;
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
     MonsterSpawnSystem monsterSpawnSys_;
+    ObstacleSpawnSystem obstacleSpawnSys_;
     MonsterMovementSystem monsterMovementSys_;
     EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;
