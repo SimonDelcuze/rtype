@@ -1,5 +1,5 @@
-#include "server/Packets.hpp"
 #include "server/EntityTypeResolver.hpp"
+#include "server/Packets.hpp"
 
 #include <algorithm>
 #include <bit>

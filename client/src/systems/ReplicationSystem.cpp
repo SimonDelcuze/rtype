@@ -76,8 +76,8 @@ void ReplicationSystem::update(Registry& registry, float)
         auto [sx, sy] = defaultScaleForType(spawnPkt.entityType);
         t.scaleX      = sx;
         t.scaleY      = sy;
-        t.x = spawnPkt.posX;
-        t.y = spawnPkt.posY;
+        t.x           = spawnPkt.posX;
+        t.y           = spawnPkt.posY;
         registry.emplace<TransformComponent>(id, t);
     }
 

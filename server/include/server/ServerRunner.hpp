@@ -14,8 +14,8 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
-#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <atomic>

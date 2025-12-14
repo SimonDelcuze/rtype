@@ -8,14 +8,14 @@ namespace
                          const HitboxComponent& hitbox, const EnemyShootingComponent& shooting)
     {
         SpawnEvent ev{};
-        ev.time     = time;
-        ev.x        = x;
-        ev.y        = y;
-        ev.pattern  = pattern;
-        ev.health   = hp;
-        ev.hitbox   = hitbox;
-        ev.collider = ColliderComponent::box(hitbox.width, hitbox.height, hitbox.offsetX, hitbox.offsetY,
-                                             hitbox.isActive);
+        ev.time    = time;
+        ev.x       = x;
+        ev.y       = y;
+        ev.pattern = pattern;
+        ev.health  = hp;
+        ev.hitbox  = hitbox;
+        ev.collider =
+            ColliderComponent::box(hitbox.width, hitbox.height, hitbox.offsetX, hitbox.offsetY, hitbox.isActive);
         ev.shooting = shooting;
         return ev;
     }

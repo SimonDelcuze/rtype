@@ -12,13 +12,13 @@ struct ColliderComponent
         Polygon
     };
 
-    Shape shape      = Shape::Box;
-    float offsetX    = 0.0F;
-    float offsetY    = 0.0F;
-    float width      = 0.0F;
-    float height     = 0.0F;
-    float radius     = 0.0F;
-    bool isActive    = true;
+    Shape shape   = Shape::Box;
+    float offsetX = 0.0F;
+    float offsetY = 0.0F;
+    float width   = 0.0F;
+    float height  = 0.0F;
+    float radius  = 0.0F;
+    bool isActive = true;
     std::vector<std::array<float, 2>> points;
 
     static ColliderComponent box(float width, float height, float offsetX = 0.0F, float offsetY = 0.0F,

@@ -19,11 +19,11 @@ namespace Obstacles
         spawn.scaleX = scaleX;
         spawn.scaleY = scaleY;
         spawn.hitbox = hitbox;
-        spawn.collider = collider.shape == ColliderComponent::Shape::Box && collider.width == 0.0F &&
-                                 collider.height == 0.0F && collider.radius == 0.0F && collider.points.empty()
-                             ? ColliderComponent::box(hitbox.width, hitbox.height, hitbox.offsetX, hitbox.offsetY,
-                                                      hitbox.isActive)
-                             : collider;
+        spawn.collider =
+            collider.shape == ColliderComponent::Shape::Box && collider.width == 0.0F && collider.height == 0.0F &&
+                    collider.radius == 0.0F && collider.points.empty()
+                ? ColliderComponent::box(hitbox.width, hitbox.height, hitbox.offsetX, hitbox.offsetY, hitbox.isActive)
+                : collider;
         return spawn;
     }
 
