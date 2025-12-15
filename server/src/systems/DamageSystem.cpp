@@ -65,6 +65,9 @@ void DamageSystem::apply(Registry& registry, const std::vector<Collision>& colli
 void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, EntityId targetId,
                                       std::vector<EntityId>& missilesToDestroy)
 {
+    bool targetIsEnemy    = false;
+    bool targetIsObstacle = false;
+
     if (!registry.isAlive(missileId) || !registry.isAlive(targetId)) {
         return;
     }
@@ -80,7 +83,10 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
     if (registry.has<TagComponent>(targetId)) {
         auto& targetTag = registry.get<TagComponent>(targetId);
 
-        if (targetTag.hasTag(EntityTag::Obstacle)) {
+        targetIsEnemy    = targetTag.hasTag(EntityTag::Enemy);
+        targetIsObstacle = targetTag.hasTag(EntityTag::Obstacle);
+
+        if (targetIsObstacle) {
             missilesToDestroy.push_back(missileId);
             return;
         }
@@ -114,7 +120,10 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
 
     emitDamageEvent(attacker, targetId, std::min(before, dmg), h.current);
 
-    missilesToDestroy.push_back(missileId);
+    const bool canPierce = missile.fromPlayer && missile.chargeLevel >= 5 && !targetIsObstacle;
+    if (!(canPierce && targetIsEnemy)) {
+        missilesToDestroy.push_back(missileId);
+    }
 }
 
 void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entityA, EntityId entityB)
