@@ -92,6 +92,7 @@ class ServerApp
     bool countdownActive_{false};
     float countdownTimer_{3.0F};
     int lastCountdownValue_{4};
+    std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
     std::unordered_set<EntityId> knownEntities_;
 };

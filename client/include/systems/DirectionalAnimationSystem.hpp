@@ -15,4 +15,3 @@ class DirectionalAnimationSystem : public ISystem
     AnimationRegistry* animations_{nullptr};
     AnimationLabels* labels_{nullptr};
 };
-

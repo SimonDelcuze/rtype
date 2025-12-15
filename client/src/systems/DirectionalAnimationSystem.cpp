@@ -44,12 +44,12 @@ void DirectionalAnimationSystem::applyClipFrame(Registry& registry, EntityId id,
 
 void DirectionalAnimationSystem::update(Registry& registry, float deltaTime)
 {
-    for (EntityId id : registry.view<DirectionalAnimationComponent, AnimationComponent, SpriteComponent,
-                                     VelocityComponent>()) {
+    for (EntityId id :
+         registry.view<DirectionalAnimationComponent, AnimationComponent, SpriteComponent, VelocityComponent>()) {
         if (!registry.isAlive(id))
             continue;
 
-        auto& dirAnim = registry.get<DirectionalAnimationComponent>(id);
+        auto& dirAnim   = registry.get<DirectionalAnimationComponent>(id);
         const auto& vel = registry.get<VelocityComponent>(id);
 
         const std::string* idleId = labels_->labelFor(dirAnim.spriteId, dirAnim.idleLabel);
@@ -102,8 +102,7 @@ void DirectionalAnimationSystem::update(Registry& registry, float deltaTime)
                 }
                 dirAnim.phaseTime -= deltaTime;
                 if (dirAnim.phaseTime <= 0.0F) {
-                    applyClipFrame(registry, id, *upClip,
-                                   static_cast<std::uint32_t>(upClip->frames.size() - 1));
+                    applyClipFrame(registry, id, *upClip, static_cast<std::uint32_t>(upClip->frames.size() - 1));
                     dirAnim.phase = DirectionalAnimationComponent::Phase::UpHold;
                 }
                 break;
@@ -111,8 +110,7 @@ void DirectionalAnimationSystem::update(Registry& registry, float deltaTime)
                 if (downIntent) {
                     startDownIn();
                 } else if (!upIntent) {
-                    applyClipFrame(registry, id, *upClip,
-                                   static_cast<std::uint32_t>(upClip->frames.size() - 1));
+                    applyClipFrame(registry, id, *upClip, static_cast<std::uint32_t>(upClip->frames.size() - 1));
                     dirAnim.phase     = DirectionalAnimationComponent::Phase::UpOut;
                     dirAnim.phaseTime = upClip->frameTime;
                 }
@@ -130,8 +128,7 @@ void DirectionalAnimationSystem::update(Registry& registry, float deltaTime)
                 }
                 dirAnim.phaseTime -= deltaTime;
                 if (dirAnim.phaseTime <= 0.0F) {
-                    applyClipFrame(registry, id, *downClip,
-                                   static_cast<std::uint32_t>(downClip->frames.size() - 1));
+                    applyClipFrame(registry, id, *downClip, static_cast<std::uint32_t>(downClip->frames.size() - 1));
                     dirAnim.phase = DirectionalAnimationComponent::Phase::DownHold;
                 }
                 break;
@@ -139,8 +136,7 @@ void DirectionalAnimationSystem::update(Registry& registry, float deltaTime)
                 if (upIntent) {
                     startUpIn();
                 } else if (!downIntent) {
-                    applyClipFrame(registry, id, *downClip,
-                                   static_cast<std::uint32_t>(downClip->frames.size() - 1));
+                    applyClipFrame(registry, id, *downClip, static_cast<std::uint32_t>(downClip->frames.size() - 1));
                     dirAnim.phase     = DirectionalAnimationComponent::Phase::DownOut;
                     dirAnim.phaseTime = downClip->frameTime;
                 }
