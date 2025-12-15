@@ -31,6 +31,10 @@ class GameOverMenu : public IMenu
     void onRetryClicked();
     void onQuitClicked();
 
+    void renderRectangle(Registry& registry, EntityId entityId, Window& window);
+    void renderText(Registry& registry, EntityId entityId, Window& window);
+    void renderButton(Registry& registry, EntityId entityId, Window& window, float labelOffsetX, float labelOffsetY);
+
     FontManager& fonts_;
     int finalScore_;
     bool victory_;

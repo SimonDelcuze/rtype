@@ -126,32 +126,31 @@ void GameOverMenu::render(Registry& registry, Window& window)
         Logger::instance().info("[GameOverMenu] Rendering frame " + std::to_string(renderCount));
     }
 
-    if (registry.isAlive(backgroundRect_) && registry.has<BoxComponent>(backgroundRect_)) {
-        const auto& box       = registry.get<BoxComponent>(backgroundRect_);
-        const auto& transform = registry.get<TransformComponent>(backgroundRect_);
+    renderRectangle(registry, backgroundRect_, window);
+    renderText(registry, titleText_, window);
+    renderText(registry, scoreText_, window);
+    renderButton(registry, retryButton_, window, 70.0F, 15.0F);
+    renderButton(registry, quitButton_, window, 75.0F, 15.0F);
+}
+
+void GameOverMenu::renderRectangle(Registry& registry, EntityId entityId, Window& window)
+{
+    if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
+        const auto& box       = registry.get<BoxComponent>(entityId);
+        const auto& transform = registry.get<TransformComponent>(entityId);
 
         sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
         rect.setPosition(sf::Vector2f{transform.x, transform.y});
         rect.setFillColor(box.fillColor);
         window.draw(rect);
     }
+}
 
-    if (registry.isAlive(titleText_) && registry.has<TextComponent>(titleText_)) {
-        const auto& text      = registry.get<TextComponent>(titleText_);
-        const auto& transform = registry.get<TransformComponent>(titleText_);
-
-        const sf::Font* font = fonts_.get(text.fontId);
-        if (font != nullptr) {
-            sf::Text sfText(*font, text.content, text.characterSize);
-            sfText.setPosition(sf::Vector2f{transform.x, transform.y});
-            sfText.setFillColor(text.color);
-            window.draw(sfText);
-        }
-    }
-
-    if (registry.isAlive(scoreText_) && registry.has<TextComponent>(scoreText_)) {
-        const auto& text      = registry.get<TextComponent>(scoreText_);
-        const auto& transform = registry.get<TransformComponent>(scoreText_);
+void GameOverMenu::renderText(Registry& registry, EntityId entityId, Window& window)
+{
+    if (registry.isAlive(entityId) && registry.has<TextComponent>(entityId)) {
+        const auto& text      = registry.get<TextComponent>(entityId);
+        const auto& transform = registry.get<TransformComponent>(entityId);
 
         const sf::Font* font = fonts_.get(text.fontId);
         if (font != nullptr) {
@@ -161,11 +160,15 @@ void GameOverMenu::render(Registry& registry, Window& window)
             window.draw(sfText);
         }
     }
+}
 
-    if (registry.isAlive(retryButton_) && registry.has<BoxComponent>(retryButton_)) {
-        const auto& box       = registry.get<BoxComponent>(retryButton_);
-        const auto& transform = registry.get<TransformComponent>(retryButton_);
-        const auto& button    = registry.get<ButtonComponent>(retryButton_);
+void GameOverMenu::renderButton(Registry& registry, EntityId entityId, Window& window, float labelOffsetX,
+                                float labelOffsetY)
+{
+    if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
+        const auto& box       = registry.get<BoxComponent>(entityId);
+        const auto& transform = registry.get<TransformComponent>(entityId);
+        const auto& button    = registry.get<ButtonComponent>(entityId);
 
         sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
         rect.setPosition(sf::Vector2f{transform.x, transform.y});
@@ -177,28 +180,7 @@ void GameOverMenu::render(Registry& registry, Window& window)
         const sf::Font* font = fonts_.get("ui");
         if (font != nullptr) {
             sf::Text label(*font, button.label, 24);
-            label.setPosition(sf::Vector2f{transform.x + 70.0F, transform.y + 15.0F});
-            label.setFillColor(sf::Color::White);
-            window.draw(label);
-        }
-    }
-
-    if (registry.isAlive(quitButton_) && registry.has<BoxComponent>(quitButton_)) {
-        const auto& box       = registry.get<BoxComponent>(quitButton_);
-        const auto& transform = registry.get<TransformComponent>(quitButton_);
-        const auto& button    = registry.get<ButtonComponent>(quitButton_);
-
-        sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
-        rect.setPosition(sf::Vector2f{transform.x, transform.y});
-        rect.setFillColor(button.hovered ? box.focusColor : box.fillColor);
-        rect.setOutlineColor(box.outlineColor);
-        rect.setOutlineThickness(box.outlineThickness);
-        window.draw(rect);
-
-        const sf::Font* font = fonts_.get("ui");
-        if (font != nullptr) {
-            sf::Text label(*font, button.label, 24);
-            label.setPosition(sf::Vector2f{transform.x + 75.0F, transform.y + 15.0F});
+            label.setPosition(sf::Vector2f{transform.x + labelOffsetX, transform.y + labelOffsetY});
             label.setFillColor(sf::Color::White);
             window.draw(label);
         }
