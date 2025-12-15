@@ -34,5 +34,5 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
-    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager));
+    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures));
 }

@@ -1,6 +1,9 @@
 #include "server/ServerRunner.hpp"
 
 #include "Logger.hpp"
+#include "components/InvincibilityComponent.hpp"
+#include "components/LivesComponent.hpp"
+#include "components/RespawnTimerComponent.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
@@ -97,10 +100,47 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     }
     auto mapped = mapInputs(inputs);
     playerInputSys_.update(registry_, mapped);
+
     movementSys_.update(registry_, 1.0F / kTickRate);
     monsterMovementSys_.update(registry_, 1.0F / kTickRate);
     monsterSpawnSys_.update(registry_, 1.0F / kTickRate);
     enemyShootingSys_.update(registry_, 1.0F / kTickRate);
+
+    std::vector<EntityId> respawned;
+    for (EntityId id : registry_.view<RespawnTimerComponent>()) {
+        auto& timer = registry_.get<RespawnTimerComponent>(id);
+        timer.timeLeft -= (1.0F / kTickRate);
+        if (timer.timeLeft <= 0.0F) {
+            respawned.push_back(id);
+        }
+    }
+    for (EntityId id : respawned) {
+        registry_.remove<RespawnTimerComponent>(id);
+        if (registry_.has<HealthComponent>(id)) {
+            auto& h   = registry_.get<HealthComponent>(id);
+            h.current = h.max;
+        }
+        if (registry_.has<TransformComponent>(id)) {
+            auto& t = registry_.get<TransformComponent>(id);
+            t.x     = 200.0F;
+            t.y     = 300.0F;
+        }
+        registry_.emplace<InvincibilityComponent>(id, InvincibilityComponent::create(3.0F));
+        Logger::instance().info("Player (ID:" + std::to_string(id) + ") respawned. Y reset to 300.");
+    }
+
+    std::vector<EntityId> vulnerable;
+    for (EntityId id : registry_.view<InvincibilityComponent>()) {
+        auto& inv = registry_.get<InvincibilityComponent>(id);
+        inv.timeLeft -= (1.0F / kTickRate);
+        if (inv.timeLeft <= 0.0F) {
+            vulnerable.push_back(id);
+        }
+    }
+    for (EntityId id : vulnerable) {
+        registry_.remove<InvincibilityComponent>(id);
+        Logger::instance().info("Player (ID:" + std::to_string(id) + ") is no longer invincible.");
+    }
 
     cleanupExpiredMissiles(1.0F / kTickRate);
     cleanupOffscreenEntities();
@@ -111,7 +151,34 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
     std::vector<EntityId> toDestroy;
     for (EntityId id : registry_.view<HealthComponent>()) {
-        if (registry_.isAlive(id) && registry_.get<HealthComponent>(id).current <= 0) {
+        if (!registry_.isAlive(id))
+            continue;
+        auto& health = registry_.get<HealthComponent>(id);
+        if (health.current <= 0) {
+            if (registry_.has<LivesComponent>(id)) {
+                auto& lives = registry_.get<LivesComponent>(id);
+                if (lives.current > 0) {
+                    if (!registry_.has<RespawnTimerComponent>(id)) {
+                        Logger::instance().info("DEBUG: Starting death logic for ID:" + std::to_string(id));
+                        lives.loseLife();
+                        registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
+                        if (registry_.has<RespawnTimerComponent>(id)) {
+                            Logger::instance().info("DEBUG: RespawnTimer added successfully to ID:" +
+                                                    std::to_string(id));
+                        } else {
+                            Logger::instance().warn("DEBUG: FAILED to add RespawnTimer to ID:" + std::to_string(id));
+                        }
+                        if (registry_.has<TransformComponent>(id)) {
+                            registry_.get<TransformComponent>(id).y = -1000.0F;
+                            Logger::instance().info("DEBUG: Moved ID:" + std::to_string(id) + " to y=-1000");
+                        }
+                        Logger::instance().info("Player (ID:" + std::to_string(id) + ") died. Lives remaining: " +
+                                                std::to_string(lives.current) + ". Respawning in 2s.");
+                    } else {
+                    }
+                    continue;
+                }
+            }
             toDestroy.push_back(id);
         }
     }

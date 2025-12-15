@@ -3,7 +3,10 @@
 #include "Logger.hpp"
 #include "components/BackgroundScrollComponent.hpp"
 #include "components/LayerComponent.hpp"
+#include "components/LivesComponent.hpp"
+#include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
+#include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
 
@@ -36,9 +39,26 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
     state_->seed    = data.seed;
     state_->active  = true;
     applyBackground(registry, data);
+    createHUDEntities(registry);
     for (const auto& entry : data.archetypes) {
         resolveEntityType(entry);
     }
+}
+
+void LevelInitSystem::createHUDEntities(Registry& registry)
+{
+    EntityId score = registry.createEntity();
+    registry.emplace<TransformComponent>(score, TransformComponent::create(10.0F, 10.0F));
+    auto& scoreText = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, sf::Color::White));
+    scoreText.content = "Score: 0";
+    registry.emplace<ScoreComponent>(score, ScoreComponent::create(0));
+    registry.emplace<LayerComponent>(score, LayerComponent::create(100));
+
+    EntityId lives = registry.createEntity();
+    registry.emplace<TransformComponent>(lives, TransformComponent::create(10.0F, 680.0F));
+    registry.emplace<TextComponent>(lives, TextComponent::create("score_font", 20, sf::Color::White));
+    registry.emplace<LivesComponent>(lives, LivesComponent::create(3, 3));
+    registry.emplace<LayerComponent>(lives, LayerComponent::create(100));
 }
 
 void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)

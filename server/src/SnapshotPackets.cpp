@@ -1,3 +1,5 @@
+#include "components/InvincibilityComponent.hpp"
+#include "components/LivesComponent.hpp"
 #include "server/Packets.hpp"
 
 #include <algorithm>
@@ -64,6 +66,15 @@ namespace
         }
         if (registry.has<HealthComponent>(id))
             mask |= 1 << 5;
+        if (registry.has<LivesComponent>(id))
+            mask |= 1 << 9;
+
+        std::uint8_t status = 0;
+        if (registry.has<InvincibilityComponent>(id)) {
+            status |= (1 << 1);
+            mask |= 1 << 6;
+        }
+
         writeU16(block, mask);
         block.push_back(static_cast<std::uint8_t>(typeForEntity(registry, id)));
 
@@ -79,6 +90,13 @@ namespace
         if (mask & (1 << 5)) {
             const auto& h = registry.get<HealthComponent>(id);
             writeU16(block, static_cast<std::uint16_t>(h.current));
+        }
+        if (mask & (1 << 6)) {
+            block.push_back(status);
+        }
+        if (mask & (1 << 9)) {
+            const auto& lives = registry.get<LivesComponent>(id);
+            block.push_back(static_cast<std::uint8_t>(lives.current));
         }
         return block;
     }

@@ -18,6 +18,7 @@ struct SnapshotEntity
     std::optional<std::int16_t> health;
     std::optional<std::uint8_t> statusEffects;
     std::optional<float> orientation;
+    std::optional<std::int8_t> lives;
     std::optional<bool> dead;
 };
 
