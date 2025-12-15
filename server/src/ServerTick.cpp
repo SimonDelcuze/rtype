@@ -38,6 +38,7 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     auto mapped = mapInputs(inputs);
     playerInputSys_.update(registry_, mapped);
     movementSys_.update(registry_, deltaTime);
+    boundarySys_.update(registry_);
     monsterMovementSys_.update(registry_, deltaTime);
     monsterSpawnSys_.update(registry_, deltaTime);
     obstacleSpawnSys_.update(registry_, deltaTime);
