@@ -116,10 +116,10 @@ TEST(BoundarySystem, MultipleEntitiesIndependent)
 
     auto& t1 = registry.get<TransformComponent>(e1);
     auto& t2 = registry.get<TransformComponent>(e2);
-    t1.x = -10.0F;
-    t1.y = 50.0F;
-    t2.x = 200.0F;
-    t2.y = 40.0F;
+    t1.x     = -10.0F;
+    t1.y     = 50.0F;
+    t2.x     = 200.0F;
+    t2.y     = 40.0F;
 
     BoundarySystem sys;
     sys.update(registry);
@@ -129,4 +129,3 @@ TEST(BoundarySystem, MultipleEntitiesIndependent)
     EXPECT_FLOAT_EQ(t2.x, 150.0F);
     EXPECT_FLOAT_EQ(t2.y, 50.0F);
 }
-
