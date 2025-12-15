@@ -14,6 +14,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
+#include "systems/BoundarySystem.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
@@ -79,6 +80,7 @@ class ServerApp
     CollisionSystem collisionSys_;
     DamageSystem damageSys_;
     DestructionSystem destructionSys_;
+    BoundarySystem boundarySys_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent> timeoutQueue_;
