@@ -18,13 +18,22 @@ Enemy spawns are fully scripted on the server. The flow:
 - `server/src/SpawnConfig.cpp` + `server/src/levels/LevelFactory.cpp` : glue to pick the level script.
 
 ## Level1 specifics
-- Patterns: linear, sine, zigzag.
-- Waves:
-  - Wave1 (triangle) @ t=1.0s, HP=1, scale=2.0, shooters every 4th mob.
-  - Wave2 (serpent) @ t=3.0s, HP=1, scale=2.0, shooters every 4th mob.
-  - Wave3 (cross) @ t=6.0s, HP=1, scale=2.0, shooters every 4th mob.
-- Shooter ratio is configurable per wave via `waveXShooterModulo_` (1 out of N keeps `shootingEnabled=true`).
-- Offsets are configurable (`waveXOffset_`) to space waves.
+- Patterns: 6 slots mixing linear/sine/zigzag with different speeds and amplitudes to keep waves varied (slow drift,
+  wide sine, fast zigzag, heavy zigzag, etc.).
+- Waves (spawns span ~48s → roughly a 1 min level once travel time is included):
+  - 1.0s: stagger line x6, scale 1.6, shooters every 3rd.
+  - 5.5s: triangle x9, scale 1.9, shooters every 4th.
+  - 9.0s: serpent x8, scale 1.8, shooters every 3rd.
+  - 13.5s: cross x13, HP=2, scale 2.2, shooters every 2nd.
+  - 18.0s: top line x4, scale 1.7, shooters every 3rd.
+  - 18.8s: bottom line x4, scale 1.7, shooters every 3rd.
+  - 22.5s: zigzag triangle x9, HP=2, scale 2.2, shooters every 3rd.
+  - 29.0s: heavy serpent x8, HP=2, scale 2.0, shooters every 2nd.
+  - 35.5s: fast stagger x8, scale 1.8, shooters every 2nd.
+  - 42.0s: final cross x13, HP=3, scale 2.5, shooters every 2nd.
+  - 48.0s: cleanup line x6, scale 1.6, shooters every 3rd.
+- Obstacles: 10 blockers mixing anchors (3 top / 3 bottom / 4 absolute) from t=3.0s to t=40.0s, scaled between 1.4
+  and 2.3, to carve corridors and force pathing changes mid-level.
 
 ## Extending with a new level
 1) Create `LevelN.hpp/cpp` in `server/include/levels` and `server/src/levels`, inherit `ILevel`, implement `buildScript()`.

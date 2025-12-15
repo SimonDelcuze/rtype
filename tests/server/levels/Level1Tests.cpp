@@ -1,9 +1,20 @@
 #include "levels/Level1.hpp"
 
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <limits>
 
 namespace
 {
+    struct WaveExpectation
+    {
+        std::size_t count;
+        std::size_t shooterModulo;
+        std::int32_t health;
+        float scale;
+        float minTime;
+    };
+
     int expectedShooters(std::size_t count, std::size_t modulo)
     {
         if (modulo == 0)
@@ -26,18 +37,45 @@ namespace
         }
         return waves;
     }
+
+    float minTime(const std::vector<SpawnEvent>& w)
+    {
+        float m = std::numeric_limits<float>::max();
+        for (const auto& ev : w) {
+            m = std::min(m, ev.time);
+        }
+        return m;
+    }
+
+    float maxTime(const std::vector<SpawnEvent>& spawns)
+    {
+        float m = 0.0F;
+        for (const auto& ev : spawns) {
+            m = std::max(m, ev.time);
+        }
+        return m;
+    }
 } // namespace
 
-TEST(Level1, ShooterRatioAndHealth)
+TEST(Level1, WavesFollowTheScript)
 {
     Level1 level;
     auto script = level.buildScript();
 
-    auto waves = splitByCounts(script.spawns, {9, 8, 9});
-    ASSERT_EQ(waves.size(), 3u);
-    auto& wave1 = waves[0];
-    auto& wave2 = waves[1];
-    auto& wave3 = waves[2];
+    const std::vector<WaveExpectation> expected{
+        {6, 3, 1, 1.6F, 1.0F},  {9, 4, 1, 1.9F, 5.5F},  {8, 3, 1, 1.8F, 9.0F},
+        {13, 2, 2, 2.2F, 13.5F}, {4, 3, 1, 1.7F, 18.0F}, {4, 3, 1, 1.7F, 18.8F},
+        {9, 3, 2, 2.2F, 22.5F},  {8, 2, 2, 2.0F, 29.0F}, {8, 2, 1, 1.8F, 35.5F},
+        {13, 2, 3, 2.5F, 42.0F}, {6, 3, 1, 1.6F, 48.0F}};
+
+    std::vector<std::size_t> counts;
+    counts.reserve(expected.size());
+    for (const auto& e : expected) {
+        counts.push_back(e.count);
+    }
+
+    auto waves = splitByCounts(script.spawns, counts);
+    ASSERT_EQ(waves.size(), expected.size());
 
     auto shooterCount = [](const std::vector<SpawnEvent>& wave) {
         int shooters = 0;
@@ -49,37 +87,57 @@ TEST(Level1, ShooterRatioAndHealth)
         return shooters;
     };
 
-    EXPECT_EQ(shooterCount(wave1), expectedShooters(wave1.size(), 4));
-    EXPECT_EQ(shooterCount(wave2), expectedShooters(wave2.size(), 4));
-    EXPECT_EQ(shooterCount(wave3), expectedShooters(wave3.size(), 4));
+    std::size_t totalSpawns = 0;
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        const auto& exp  = expected[i];
+        const auto& wave = waves[i];
+        totalSpawns += wave.size();
 
-    for (const auto& ev : script.spawns) {
-        EXPECT_EQ(ev.health, 1);
+        ASSERT_EQ(wave.size(), exp.count);
+        EXPECT_EQ(shooterCount(wave), expectedShooters(wave.size(), exp.shooterModulo));
+        for (const auto& ev : wave) {
+            EXPECT_EQ(ev.health, exp.health);
+            EXPECT_FLOAT_EQ(ev.scaleX, exp.scale);
+            EXPECT_FLOAT_EQ(ev.scaleY, exp.scale);
+        }
+        EXPECT_NEAR(minTime(wave), exp.minTime, 1e-3F);
     }
+
+    EXPECT_EQ(script.spawns.size(), totalSpawns);
+    EXPECT_NEAR(maxTime(script.spawns), 48.0F, 1e-3F);
 }
 
-TEST(Level1, ScaleAndOffsets)
+TEST(Level1, ObstaclesCoverAnchorsAndTimeline)
 {
     Level1 level;
     auto script = level.buildScript();
 
-    auto waves = splitByCounts(script.spawns, {9, 8, 9});
-    ASSERT_EQ(waves.size(), 3u);
+    EXPECT_EQ(script.obstacles.size(), 10u);
 
-    for (const auto& ev : script.spawns) {
-        EXPECT_FLOAT_EQ(ev.scaleX, 2.0F);
-        EXPECT_FLOAT_EQ(ev.scaleY, 2.0F);
+    int top = 0;
+    int bottom = 0;
+    int absolute = 0;
+    float earliest = std::numeric_limits<float>::max();
+    float latest   = 0.0F;
+    for (const auto& obs : script.obstacles) {
+        earliest = std::min(earliest, obs.time);
+        latest   = std::max(latest, obs.time);
+        switch (obs.anchor) {
+            case ObstacleAnchor::Top:
+                top++;
+                break;
+            case ObstacleAnchor::Bottom:
+                bottom++;
+                break;
+            case ObstacleAnchor::Absolute:
+                absolute++;
+                break;
+        }
     }
 
-    auto minTime = [](const std::vector<SpawnEvent>& w) {
-        float m = std::numeric_limits<float>::max();
-        for (const auto& ev : w) {
-            m = std::min(m, ev.time);
-        }
-        return m;
-    };
-
-    EXPECT_NEAR(minTime(waves[0]), 1.0F, 1e-3F);
-    EXPECT_NEAR(minTime(waves[1]), 3.0F, 1e-3F);
-    EXPECT_NEAR(minTime(waves[2]), 6.0F, 1e-3F);
+    EXPECT_EQ(top, 3);
+    EXPECT_EQ(bottom, 3);
+    EXPECT_EQ(absolute, 4);
+    EXPECT_NEAR(earliest, 3.0F, 1e-3F);
+    EXPECT_NEAR(latest, 40.0F, 1e-3F);
 }
