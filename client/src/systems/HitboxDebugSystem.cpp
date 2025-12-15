@@ -51,12 +51,12 @@ void HitboxDebugSystem::update(Registry& registry)
                 for (const auto& p : col.points) {
                     float x = transform.x + (p[0] + col.offsetX) * transform.scaleX;
                     float y = transform.y + (p[1] + col.offsetY) * transform.scaleY;
-                    poly.append(sf::Vertex(sf::Vector2f{x, y}, color_));
+                    poly.append(sf::Vertex{{x, y}, color_});
                 }
                 if (!col.points.empty()) {
                     float x = transform.x + (col.points.front()[0] + col.offsetX) * transform.scaleX;
                     float y = transform.y + (col.points.front()[1] + col.offsetY) * transform.scaleY;
-                    poly.append(sf::Vertex(sf::Vector2f{x, y}, color_));
+                    poly.append(sf::Vertex{{x, y}, color_});
                 }
                 window_.draw(poly);
             }

@@ -83,12 +83,12 @@ void RenderSystem::update(Registry& registry, float /*deltaTime*/)
                 for (const auto& p : col.points) {
                     float x = t.x + (p[0] + col.offsetX) * t.scaleX;
                     float y = t.y + (p[1] + col.offsetY) * t.scaleY;
-                    poly.append(sf::Vertex(sf::Vector2f{x, y}, debugColor));
+                    poly.append(sf::Vertex{{x, y}, debugColor});
                 }
                 if (!col.points.empty()) {
                     float x = t.x + (col.points.front()[0] + col.offsetX) * t.scaleX;
                     float y = t.y + (col.points.front()[1] + col.offsetY) * t.scaleY;
-                    poly.append(sf::Vertex(sf::Vector2f{x, y}, debugColor));
+                    poly.append(sf::Vertex{{x, y}, debugColor});
                 }
                 window_.draw(poly);
             }
