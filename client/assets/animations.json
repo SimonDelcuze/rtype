@@ -149,6 +149,210 @@
       ]
     },
     {
+      "id": "player_row1_idle",
+      "frameTime": 0.12,
+      "loop": true,
+      "frames": [
+        {
+          "x": 66,
+          "y": 0,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row1_up",
+      "frameTime": 0.33,
+      "loop": true,
+      "frames": [
+        {
+          "x": 99,
+          "y": 0,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 132,
+          "y": 0,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row1_down",
+      "frameTime": 0.33,
+      "loop": true,
+      "frames": [
+        {
+          "x": 33,
+          "y": 0,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row2_idle",
+      "frameTime": 0.12,
+      "loop": true,
+      "frames": [
+        {
+          "x": 66,
+          "y": 18,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row2_up",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 99,
+          "y": 18,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 132,
+          "y": 18,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row2_down",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 33,
+          "y": 18,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 0,
+          "y": 18,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row3_idle",
+      "frameTime": 0.12,
+      "loop": true,
+      "frames": [
+        {
+          "x": 66,
+          "y": 36,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row3_up",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 99,
+          "y": 36,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 132,
+          "y": 36,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row3_down",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 33,
+          "y": 36,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 0,
+          "y": 36,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row4_idle",
+      "frameTime": 0.12,
+      "loop": true,
+      "frames": [
+        {
+          "x": 66,
+          "y": 54,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row4_up",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 99,
+          "y": 54,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 132,
+          "y": 54,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
+      "id": "player_row4_down",
+      "frameTime": 0.08,
+      "loop": true,
+      "frames": [
+        {
+          "x": 33,
+          "y": 54,
+          "width": 34,
+          "height": 18
+        },
+        {
+          "x": 0,
+          "y": 54,
+          "width": 34,
+          "height": 18
+        }
+      ]
+    },
+    {
       "id": "bullet_charge_warmup",
       "frameTime": 0.08,
       "loop": true,
@@ -388,14 +592,22 @@
   ],
   "labels": {
     "player_ship": {
-      "row1": "player_ship_row1",
-      "row2": "player_ship_row2",
-      "row3": "player_ship_row3",
-      "row4": "player_ship_row4",
-      "player1": "player_ship_row1",
-      "player2": "player_ship_row2",
-      "player3": "player_ship_row3",
-      "player4": "player_ship_row4"
+      "row1_idle": "player_row1_idle",
+      "row1_up": "player_row1_up",
+      "row1_down": "player_row1_down",
+      "row2_idle": "player_row2_idle",
+      "row2_up": "player_row2_up",
+      "row2_down": "player_row2_down",
+      "row3_idle": "player_row3_idle",
+      "row3_up": "player_row3_up",
+      "row3_down": "player_row3_down",
+      "row4_idle": "player_row4_idle",
+      "row4_up": "player_row4_up",
+      "row4_down": "player_row4_down",
+      "player1": "player_row1_idle",
+      "player2": "player_row2_idle",
+      "player3": "player_row3_idle",
+      "player4": "player_row4_idle"
     },
     "enemy_ship": {
       "enemy1": "enemy_ship_row1"
