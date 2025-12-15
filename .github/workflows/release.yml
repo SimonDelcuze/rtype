@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: rtype-linux
+            asset_name: rtype-linux.tar.gz
+          - os: macos-latest
+            artifact_name: rtype-macos
+            asset_name: rtype-macos.tar.gz
+          - os: windows-latest
+            artifact_name: rtype-windows
+            asset_name: rtype-windows.zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ \
+            libx11-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libudev-dev \
+            libgl1-mesa-dev libopenal-dev libsndfile1-dev libfreetype6-dev libjpeg-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja cmake
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ninja
+
+      - name: Configure CMake
+        shell: bash
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release
+
+      - name: Prepare Artifacts (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p distribute
+          cp rtype_client distribute/
+          cp rtype_server distribute/
+          tar -czvf ${{ matrix.asset_name }} -C distribute .
+
+      - name: Prepare Artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path distribute
+          Copy-Item rtype_client.exe -Destination distribute\
+          Copy-Item rtype_server.exe -Destination distribute\
+          Compress-Archive -Path distribute\* -DestinationPath ${{ matrix.asset_name }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.asset_name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startswith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            rtype-linux/rtype-linux.tar.gz
+            rtype-macos/rtype-macos.tar.gz
+            rtype-windows/rtype-windows.zip
