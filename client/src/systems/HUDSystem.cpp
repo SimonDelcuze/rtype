@@ -73,7 +73,7 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
     }
 }
 
-void HUDSystem::update(Registry& registry, float /*deltaTime*/)
+void HUDSystem::update(Registry& registry, float)
 {
     float chargeProgress = 0.0F;
     bool hasCharge       = false;

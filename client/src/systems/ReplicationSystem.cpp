@@ -310,7 +310,7 @@ void ReplicationSystem::applyStatusEffects(Registry& registry, EntityId id, cons
 
     if (isInvincible) {
         if (!registry.has<InvincibilityComponent>(id)) {
-            registry.emplace<InvincibilityComponent>(id, InvincibilityComponent::create(999.0F));
+            registry.emplace<InvincibilityComponent>(id, InvincibilityComponent::create(2.0F));
         }
     } else {
         if (registry.has<InvincibilityComponent>(id)) {

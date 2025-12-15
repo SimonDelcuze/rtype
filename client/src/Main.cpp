@@ -13,6 +13,7 @@ void signalHandler(int signum)
 
 int main(int argc, char* argv[])
 {
+    Logger::instance().info("===== RTYPE CLIENT v2.0 WITH GAME OVER SYSTEM =====");
     ClientOptions options = parseOptions(argc, argv);
     std::signal(SIGINT, signalHandler);
     return runClient(options);

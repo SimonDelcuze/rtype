@@ -27,10 +27,13 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
 
     auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager);
     stopNetwork(net, welcomeThread, handshakeDone);
-    Logger::instance().info("R-Type Client shutting down");
 
-    if (!gameResult.has_value()) {
-        return ClientLoopResult{false, 0};
+    if (gameResult.retry) {
+        Logger::instance().info("User requested retry - restarting client loop");
+        g_running = true;
+        return ClientLoopResult{true, std::nullopt};
     }
-    return ClientLoopResult{false, gameResult};
+
+    Logger::instance().info("R-Type Client shutting down");
+    return ClientLoopResult{false, gameResult.exitCode};
 }
