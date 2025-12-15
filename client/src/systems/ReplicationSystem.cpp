@@ -224,9 +224,6 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     } else {
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
     }
-    if (isPlayer && !registry.has<VelocityComponent>(id)) {
-        registry.emplace<VelocityComponent>(id, VelocityComponent::create(0.0F, 0.0F));
-    }
     if (clip != nullptr) {
         auto anim =
             AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime, clip->loop);
