@@ -13,7 +13,7 @@ GameOverSystem::GameOverSystem(EventBus& eventBus) : eventBus_(eventBus)
 
 void GameOverSystem::update(Registry& registry, float deltaTime)
 {
-    (void)deltaTime;
+    (void) deltaTime;
 
     if (gameOverTriggered_) {
         return;
@@ -35,8 +35,8 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
 
         if (lives.isDead()) {
             Logger::instance().info("[GameOverSystem] Player " + std::to_string(id) + " is dead (" +
-                                   std::to_string(lives.current) + "/" + std::to_string(lives.max) +
-                                   ") - Triggering Game Over!");
+                                    std::to_string(lives.current) + "/" + std::to_string(lives.max) +
+                                    ") - Triggering Game Over!");
             GameOverEvent event{};
             event.victory    = false;
             event.finalScore = 0;
@@ -53,7 +53,6 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
         for (auto id : playerIds) {
             ids += std::to_string(id) + " ";
         }
-        Logger::instance().warn("[GameOverSystem] Found " + std::to_string(playerCount) +
-                               " player entities: " + ids);
+        Logger::instance().warn("[GameOverSystem] Found " + std::to_string(playerCount) + " player entities: " + ids);
     }
 }

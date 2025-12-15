@@ -78,11 +78,11 @@ void GameOverMenu::create(Registry& registry)
     scoreText_ =
         createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, sf::Color::White, 101);
 
-    retryButton_ = createCenteredButton(
-        registry, 350.0F, "Retry", sf::Color(50, 150, 50), [this]() { onRetryClicked(); }, 101);
+    retryButton_ =
+        createCenteredButton(registry, 350.0F, "Retry", sf::Color(50, 150, 50), [this]() { onRetryClicked(); }, 101);
 
-    quitButton_ = createCenteredButton(
-        registry, 430.0F, "Quit", sf::Color(150, 50, 50), [this]() { onQuitClicked(); }, 101);
+    quitButton_ =
+        createCenteredButton(registry, 430.0F, "Quit", sf::Color(150, 50, 50), [this]() { onQuitClicked(); }, 101);
 
     Logger::instance().info("[GameOverMenu] Created game over screen");
 }
@@ -115,8 +115,8 @@ bool GameOverMenu::isDone() const
 
 void GameOverMenu::handleEvent(Registry& registry, const sf::Event& event)
 {
-    (void)registry;
-    (void)event;
+    (void) registry;
+    (void) event;
 }
 
 void GameOverMenu::render(Registry& registry, Window& window)
@@ -127,7 +127,7 @@ void GameOverMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.isAlive(backgroundRect_) && registry.has<BoxComponent>(backgroundRect_)) {
-        const auto& box = registry.get<BoxComponent>(backgroundRect_);
+        const auto& box       = registry.get<BoxComponent>(backgroundRect_);
         const auto& transform = registry.get<TransformComponent>(backgroundRect_);
 
         sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
@@ -137,7 +137,7 @@ void GameOverMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.isAlive(titleText_) && registry.has<TextComponent>(titleText_)) {
-        const auto& text = registry.get<TextComponent>(titleText_);
+        const auto& text      = registry.get<TextComponent>(titleText_);
         const auto& transform = registry.get<TransformComponent>(titleText_);
 
         const sf::Font* font = fonts_.get(text.fontId);
@@ -150,7 +150,7 @@ void GameOverMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.isAlive(scoreText_) && registry.has<TextComponent>(scoreText_)) {
-        const auto& text = registry.get<TextComponent>(scoreText_);
+        const auto& text      = registry.get<TextComponent>(scoreText_);
         const auto& transform = registry.get<TransformComponent>(scoreText_);
 
         const sf::Font* font = fonts_.get(text.fontId);
@@ -163,9 +163,9 @@ void GameOverMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.isAlive(retryButton_) && registry.has<BoxComponent>(retryButton_)) {
-        const auto& box = registry.get<BoxComponent>(retryButton_);
+        const auto& box       = registry.get<BoxComponent>(retryButton_);
         const auto& transform = registry.get<TransformComponent>(retryButton_);
-        const auto& button = registry.get<ButtonComponent>(retryButton_);
+        const auto& button    = registry.get<ButtonComponent>(retryButton_);
 
         sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
         rect.setPosition(sf::Vector2f{transform.x, transform.y});
@@ -184,9 +184,9 @@ void GameOverMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.isAlive(quitButton_) && registry.has<BoxComponent>(quitButton_)) {
-        const auto& box = registry.get<BoxComponent>(quitButton_);
+        const auto& box       = registry.get<BoxComponent>(quitButton_);
         const auto& transform = registry.get<TransformComponent>(quitButton_);
-        const auto& button = registry.get<ButtonComponent>(quitButton_);
+        const auto& button    = registry.get<ButtonComponent>(quitButton_);
 
         sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
         rect.setPosition(sf::Vector2f{transform.x, transform.y});

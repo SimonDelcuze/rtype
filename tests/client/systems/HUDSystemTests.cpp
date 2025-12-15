@@ -81,7 +81,6 @@ TEST_F(HUDSystemFixture, LivesStringAllowsCurrentAboveMax)
     EXPECT_EQ(text.content, "Lives:");
 }
 
-
 TEST_F(HUDSystemFixture, MixedScoreAndLivesEntities)
 {
     EntityId scoreE = registry.createEntity();
@@ -101,7 +100,6 @@ TEST_F(HUDSystemFixture, MixedScoreAndLivesEntities)
     EXPECT_EQ(tScore.content, "Score: 77");
     EXPECT_EQ(tLives.content, "Lives:");
 }
-
 
 TEST_F(HUDSystemFixture, UpdatesAfterLivesChange)
 {

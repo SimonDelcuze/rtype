@@ -1,13 +1,12 @@
 #include "systems/RenderSystem.hpp"
 
+#include "components/ColliderComponent.hpp"
+#include "components/HitboxComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
-#include "components/TransformComponent.hpp"
-#include "components/ColliderComponent.hpp"
-#include "components/HitboxComponent.hpp"
-#include "components/LayerComponent.hpp"
 #include "components/TagComponent.hpp"
+#include "components/TransformComponent.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <algorithm>

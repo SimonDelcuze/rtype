@@ -139,7 +139,7 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         header.messageType = static_cast<std::uint8_t>(MessageType::ClientDisconnect);
         header.sequenceId  = 0;
         header.payloadSize = 0;
-        auto packet = header.encode();
+        auto packet        = header.encode();
         net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
         Logger::instance().info("Sent CLIENT_DISCONNECT to server");
     }
@@ -157,9 +157,9 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         g_running = true;
         sf::Clock clock;
 
-        Logger::instance().info("[GameSession] Starting Game Over menu loop - window.isOpen()=" +
-                               std::to_string(window.isOpen()) + " g_running=" + std::to_string(g_running) +
-                               " isDone=" + std::to_string(gameOverMenu.isDone()));
+        Logger::instance().info(
+            "[GameSession] Starting Game Over menu loop - window.isOpen()=" + std::to_string(window.isOpen()) +
+            " g_running=" + std::to_string(g_running) + " isDone=" + std::to_string(gameOverMenu.isDone()));
 
         int frameCount = 0;
         while (window.isOpen() && g_running && !gameOverMenu.isDone()) {
@@ -184,10 +184,9 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
             window.display();
         }
 
-        Logger::instance().info("[GameSession] Exited menu loop - window.isOpen()=" +
-                               std::to_string(window.isOpen()) + " g_running=" + std::to_string(g_running) +
-                               " isDone=" + std::to_string(gameOverMenu.isDone()) + " frameCount=" +
-                               std::to_string(frameCount));
+        Logger::instance().info("[GameSession] Exited menu loop - window.isOpen()=" + std::to_string(window.isOpen()) +
+                                " g_running=" + std::to_string(g_running) + " isDone=" +
+                                std::to_string(gameOverMenu.isDone()) + " frameCount=" + std::to_string(frameCount));
 
         gameOverMenu.destroy(registry);
 
