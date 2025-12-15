@@ -4,6 +4,7 @@
 #include "systems/AnimationSystem.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
 #include "systems/GameOverSystem.hpp"
+#include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/InvincibilitySystem.hpp"
 #include "systems/LevelInitSystem.hpp"
@@ -35,6 +36,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
     gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));
+    gameLoop.addSystem(std::make_shared<DirectionalAnimationSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));

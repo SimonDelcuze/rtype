@@ -39,6 +39,7 @@
   * [MissileComponent](server/components/missile-component.md)
   * [MovementComponent](server/components/movement-component.md)
 * [Systems](server/systems.md)
+* [Levels & Waves](server/levels-and-waves.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)

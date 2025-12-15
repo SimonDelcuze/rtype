@@ -6,49 +6,17 @@
 #include "components/RespawnTimerComponent.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "server/EntityTypeResolver.hpp"
+#include "server/SpawnConfig.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
 
-namespace
-{
-    constexpr double kTickRate = 60.0;
-
-    std::uint8_t typeForEntity(const Registry& registry, EntityId id)
-    {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
-            int charge = 1;
-            if (registry.has<MissileComponent>(id)) {
-                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
-            }
-            switch (charge) {
-                case 1:
-                    return 3;
-                case 2:
-                    return 4;
-                case 3:
-                    return 5;
-                case 4:
-                    return 6;
-                case 5:
-                default:
-                    return 8;
-            }
-        }
-        return 2;
-    }
-} // namespace
-
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
-    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
-      monsterSpawnSys_(MonsterSpawnConfig{.spawnInterval = 2.0F, .spawnX = 1200.0F, .yMin = 300.0F, .yMax = 500.0F},
-                       {MovementComponent::linear(150.0F), MovementComponent::sine(150.0F, 100.0F, 0.5F),
-                        MovementComponent::zigzag(150.0F, 80.0F, 1.0F)},
-                       static_cast<std::uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())),
+    : levelScript_(buildSpawnSetupForLevel(1)), playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
+      monsterSpawnSys_(levelScript_.patterns, levelScript_.spawns), obstacleSpawnSys_(levelScript_.obstacles),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -198,7 +166,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
             if (!knownEntities_.contains(id)) {
                 EntitySpawnPacket pkt{};
                 pkt.entityId   = id;
-                pkt.entityType = typeForEntity(registry_, id);
+                pkt.entityType = resolveEntityType(registry_, id);
                 auto& t        = registry_.get<TransformComponent>(id);
                 pkt.posX       = t.x;
                 pkt.posY       = t.y;
@@ -335,4 +303,6 @@ void ServerApp::resetGame()
     while (timeoutQueue_.tryPop(timeout))
         ;
     Logger::instance().info("Game state reset complete");
+    monsterSpawnSys_.reset();
+    obstacleSpawnSys_.reset();
 }

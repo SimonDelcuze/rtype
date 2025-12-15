@@ -1,5 +1,7 @@
 #pragma once
 
+#include "components/BoundaryComponent.hpp"
+#include "components/ColliderComponent.hpp"
 #include "components/EnemyShootingComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/HitboxComponent.hpp"
@@ -8,6 +10,7 @@
 #include "components/MovementComponent.hpp"
 #include "components/OwnershipComponent.hpp"
 #include "components/PlayerInputComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"

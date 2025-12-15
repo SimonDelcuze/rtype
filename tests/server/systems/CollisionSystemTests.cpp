@@ -155,3 +155,37 @@ TEST(CollisionSystem, CountsAllPairs)
     EXPECT_TRUE(containsPair(col, a, c));
     EXPECT_TRUE(containsPair(col, b, c));
 }
+
+TEST(CollisionSystem, CircleAndBoxOverlap)
+{
+    Registry registry;
+    EntityId circle = registry.createEntity();
+    EntityId box    = registry.createEntity();
+    registry.emplace<TransformComponent>(circle, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<TransformComponent>(box, TransformComponent::create(1.5F, 0.0F));
+    registry.emplace<ColliderComponent>(circle, ColliderComponent::circle(2.0F));
+    registry.emplace<HitboxComponent>(box, HitboxComponent::create(2.0F, 2.0F));
+    CollisionSystem sys;
+    auto col = sys.detect(registry);
+    EXPECT_TRUE(containsPair(col, circle, box));
+}
+
+TEST(CollisionSystem, PolygonSeparatesCorrectly)
+{
+    Registry registry;
+    EntityId poly1 = registry.createEntity();
+    EntityId poly2 = registry.createEntity();
+    std::vector<std::array<float, 2>> pts{{{0.0F, 0.0F}, {2.0F, 0.0F}, {2.0F, 2.0F}, {0.0F, 2.0F}}};
+    registry.emplace<TransformComponent>(poly1, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<TransformComponent>(poly2, TransformComponent::create(5.0F, 0.0F));
+    registry.emplace<ColliderComponent>(poly1, ColliderComponent::polygon(pts));
+    registry.emplace<ColliderComponent>(poly2, ColliderComponent::polygon(pts));
+
+    CollisionSystem sys;
+    auto col = sys.detect(registry);
+    EXPECT_TRUE(col.empty());
+
+    registry.get<TransformComponent>(poly2).x = 1.0F;
+    col                                       = sys.detect(registry);
+    EXPECT_TRUE(containsPair(col, poly1, poly2));
+}

@@ -123,3 +123,58 @@ TEST(CollisionDestructionIntegration, MultipleCollisionsProcessed)
     EXPECT_FALSE(registry.isAlive(e1));
     EXPECT_FALSE(registry.isAlive(e2));
 }
+
+TEST(CollisionDestructionIntegration, ObstacleDamagesPlayerOnContact)
+{
+    EventBus bus;
+    Registry registry;
+    EntityId obstacle = registry.createEntity();
+    EntityId player   = registry.createEntity();
+
+    registry.emplace<TransformComponent>(obstacle, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<HitboxComponent>(obstacle, HitboxComponent::create(1.0F, 1.0F, 0.0F, 0.0F, true));
+    registry.emplace<HealthComponent>(obstacle, HealthComponent::create(10));
+    registry.emplace<TagComponent>(obstacle, TagComponent::create(EntityTag::Obstacle));
+
+    registry.emplace<TransformComponent>(player, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<HitboxComponent>(player, HitboxComponent::create(1.0F, 1.0F, 0.0F, 0.0F, true));
+    registry.emplace<HealthComponent>(player, HealthComponent::create(20));
+    registry.emplace<TagComponent>(player, TagComponent::create(EntityTag::Player));
+
+    CollisionSystem collision;
+    DamageSystem damage(bus);
+
+    auto collisions = collision.detect(registry);
+    damage.apply(registry, collisions);
+
+    EXPECT_EQ(registry.get<HealthComponent>(player).current, 0);
+    EXPECT_EQ(registry.get<HealthComponent>(obstacle).current, 10);
+}
+
+TEST(CollisionDestructionIntegration, MissileDoesNotDamageObstacle)
+{
+    EventBus bus;
+    Registry registry;
+    EntityId missile  = registry.createEntity();
+    EntityId obstacle = registry.createEntity();
+
+    registry.emplace<TransformComponent>(missile, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<HitboxComponent>(missile, HitboxComponent::create(1.0F, 1.0F, 0.0F, 0.0F, true));
+    registry.emplace<MissileComponent>(missile, MissileComponent{5, 1.0F, true});
+    registry.emplace<OwnershipComponent>(missile, OwnershipComponent::create(1, 0));
+
+    registry.emplace<TransformComponent>(obstacle, TransformComponent::create(0.0F, 0.0F));
+    registry.emplace<HitboxComponent>(obstacle, HitboxComponent::create(1.0F, 1.0F, 0.0F, 0.0F, true));
+    registry.emplace<HealthComponent>(obstacle, HealthComponent::create(50));
+    registry.emplace<TagComponent>(obstacle, TagComponent::create(EntityTag::Obstacle));
+
+    CollisionSystem collision;
+    DamageSystem damage(bus);
+
+    auto collisions = collision.detect(registry);
+    damage.apply(registry, collisions);
+
+    EXPECT_EQ(registry.get<HealthComponent>(obstacle).current, 50);
+    EXPECT_TRUE(registry.has<HealthComponent>(missile));
+    EXPECT_EQ(registry.get<HealthComponent>(missile).current, 0);
+}

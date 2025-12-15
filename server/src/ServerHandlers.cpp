@@ -27,8 +27,9 @@ void ServerApp::handleControlMessage(const ControlEvent& ctrl)
 
     auto& sess    = sessions_[key];
     sess.endpoint = ctrl.from;
-    if (sess.playerId == 0)
-        sess.playerId = static_cast<std::uint32_t>(sessions_.size());
+    if (sess.playerId == 0) {
+        sess.playerId = nextPlayerId_++;
+    }
 
     if (type == static_cast<std::uint8_t>(MessageType::ClientHello)) {
         sess.hello = true;
@@ -52,15 +53,22 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
         return;
     }
 
+    if (sess.playerId == 0) {
+        sess.playerId = nextPlayerId_++;
+    }
+
     sess.join = true;
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
     clients_.push_back(ctrl.from);
     sendThread_.setClients(clients_);
-    addPlayerEntity(sess.playerId);
+    if (!playerEntities_.contains(sess.playerId)) {
+        addPlayerEntity(sess.playerId);
+    }
 }
 
 void ServerApp::addPlayerEntity(std::uint32_t playerId)
 {
+    static const std::array<std::uint16_t, 4> kPlayerTypes{1, 12, 13, 14};
     EntityId entity = registry_.createEntity();
     registry_.emplace<TransformComponent>(entity, TransformComponent::create(100.0F, 400.0F));
     registry_.emplace<VelocityComponent>(entity, VelocityComponent::create(0.0F, 0.0F));
@@ -69,6 +77,9 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<TagComponent>(entity, TagComponent::create(EntityTag::Player));
     registry_.emplace<LivesComponent>(entity, LivesComponent::create(3, 3));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
+    registry_.emplace<BoundaryComponent>(entity, BoundaryComponent::create(0.0F, 0.0F, 1246.0F, 702.0F));
+    std::size_t slot = playerEntities_.size() % kPlayerTypes.size();
+    registry_.emplace<RenderTypeComponent>(entity, RenderTypeComponent::create(kPlayerTypes[slot]));
     playerEntities_[playerId] = entity;
 }
 
@@ -101,7 +112,10 @@ std::vector<ReceivedInput> ServerApp::mapInputs(const std::vector<ReceivedInput>
     std::vector<ReceivedInput> mapped;
     mapped.reserve(inputs.size());
     for (const auto& input : inputs) {
-        std::uint32_t playerId = input.input.playerId;
+        auto sessIt = sessions_.find(endpointKey(input.from));
+        if (sessIt == sessions_.end())
+            continue;
+        std::uint32_t playerId = sessIt->second.playerId;
         if (!playerEntities_.contains(playerId))
             continue;
         auto it = playerEntities_.find(playerId);
@@ -130,13 +144,19 @@ LevelDefinition ServerApp::buildLevel() const
     lvl.backgroundId = "space_background";
     lvl.musicId      = "theme_music";
     lvl.archetypes.push_back(LevelArchetype{1, "player_ship", "player1", 0});
-    lvl.archetypes.push_back(LevelArchetype{2, "enemy_ship", "enemy1", 0});
+    lvl.archetypes.push_back(LevelArchetype{12, "player_ship", "player2", 0});
+    lvl.archetypes.push_back(LevelArchetype{13, "player_ship", "player3", 0});
+    lvl.archetypes.push_back(LevelArchetype{14, "player_ship", "player4", 0});
+    lvl.archetypes.push_back(LevelArchetype{2, "mob1", "left", 0});
     lvl.archetypes.push_back(LevelArchetype{3, "bullet", "bullet_basic", 0});
     lvl.archetypes.push_back(LevelArchetype{4, "bullet", "bullet_charge_lvl1", 0});
     lvl.archetypes.push_back(LevelArchetype{5, "bullet", "bullet_charge_lvl2", 0});
     lvl.archetypes.push_back(LevelArchetype{6, "bullet", "bullet_charge_lvl3", 0});
     lvl.archetypes.push_back(LevelArchetype{7, "bullet", "bullet_charge_lvl4", 0});
     lvl.archetypes.push_back(LevelArchetype{8, "bullet", "bullet_charge_lvl5", 0});
+    lvl.archetypes.push_back(LevelArchetype{9, "obstacle_top", "", 0});
+    lvl.archetypes.push_back(LevelArchetype{10, "obstacle_middle", "", 0});
+    lvl.archetypes.push_back(LevelArchetype{11, "obstacle_bottom", "", 0});
     return lvl;
 }
 

@@ -3,6 +3,8 @@
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/ColliderComponent.hpp"
+#include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
@@ -44,6 +46,18 @@ ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snaps
     : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)
 {}
 
+namespace
+{
+    std::pair<float, float> defaultScaleForType(std::uint16_t typeId)
+    {
+        if (typeId == 9)
+            return {2.0F, 2.0F};
+        if (typeId == 11)
+            return {3.0F, 3.0F};
+        return {1.0F, 1.0F};
+    }
+} // namespace
+
 void ReplicationSystem::initialize() {}
 
 void ReplicationSystem::update(Registry& registry, float)
@@ -58,13 +72,28 @@ void ReplicationSystem::update(Registry& registry, float)
             Logger::instance().warn("[Replication] Unknown type in spawn: " + std::to_string(spawnPkt.entityType));
             continue;
         }
+        auto existing = remoteToLocal_.find(spawnPkt.entityId);
+        if (existing != remoteToLocal_.end()) {
+            if (registry.isAlive(existing->second)) {
+                registry.destroyEntity(existing->second);
+            }
+            Logger::instance().info("[Replication] Replacing existing entityId=" + std::to_string(spawnPkt.entityId) +
+                                    " type=" + std::to_string(spawnPkt.entityType));
+            remoteToLocal_.erase(existing);
+        }
         EntityId id                       = registry.createEntity();
         remoteToLocal_[spawnPkt.entityId] = id;
         applyArchetype(registry, id, spawnPkt.entityType);
         TransformComponent t{};
-        t.x = spawnPkt.posX;
-        t.y = spawnPkt.posY;
+        auto [sx, sy] = defaultScaleForType(spawnPkt.entityType);
+        t.scaleX      = sx;
+        t.scaleY      = sy;
+        t.x           = spawnPkt.posX;
+        t.y           = spawnPkt.posY;
         registry.emplace<TransformComponent>(id, t);
+        Logger::instance().info("[Replication] Spawn entityId=" + std::to_string(spawnPkt.entityId) +
+                                " type=" + std::to_string(spawnPkt.entityType) + " local=" + std::to_string(id) +
+                                " pos=(" + std::to_string(t.x) + "," + std::to_string(t.y) + ")");
     }
 
     EntityDestroyedPacket destroyPkt;
@@ -75,6 +104,7 @@ void ReplicationSystem::update(Registry& registry, float)
                 registry.destroyEntity(it->second);
             }
             remoteToLocal_.erase(it);
+            Logger::instance().info("[Replication] Destroy entityId=" + std::to_string(destroyPkt.entityId));
         }
     }
 
@@ -82,8 +112,6 @@ void ReplicationSystem::update(Registry& registry, float)
     while (snapshots_->tryPop(snapshot)) {
         lastSnapshotTick = snapshot.header.tickId;
         lastSnapshotTime = std::chrono::steady_clock::now();
-        Logger::instance().info("[Replication] snapshot tick=" + std::to_string(snapshot.header.tickId) +
-                                " entities=" + std::to_string(snapshot.entities.size()));
 
         std::unordered_set<std::uint32_t> seenThisTick;
         seenThisTick.reserve(snapshot.entities.size());
@@ -155,12 +183,13 @@ std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, cons
     }
 
     if (!entity.entityType.has_value()) {
-        std::cerr << "[ReplicationSystem] Missing entityType for remoteId " << remoteId << '\n';
+        Logger::instance().warn("[Replication] Missing entityType for remoteId " + std::to_string(remoteId));
         return std::nullopt;
     }
     if (!types_->has(*entity.entityType)) {
-        std::cerr << "[ReplicationSystem] Unknown entityType " << static_cast<int>(*entity.entityType)
-                  << " for remoteId " << remoteId << '\n';
+        Logger::instance().warn("[Replication] Unknown entityType " +
+                                std::to_string(static_cast<int>(*entity.entityType)) + " for remoteId " +
+                                std::to_string(remoteId));
         return std::nullopt;
     }
 
@@ -176,10 +205,12 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     if (data == nullptr) {
         return;
     }
+    const bool isPlayer = (typeId == 1 || typeId == 12 || typeId == 13 || typeId == 14);
+    const AnimationClip* clip =
+        data->animation != nullptr ? reinterpret_cast<const AnimationClip*>(data->animation) : nullptr;
     if (data->texture != nullptr) {
         SpriteComponent sprite(*data->texture);
-        if (data->animation != nullptr) {
-            const auto* clip = reinterpret_cast<const AnimationClip*>(data->animation);
+        if (clip != nullptr) {
             sprite.customFrames.clear();
             sprite.customFrames.reserve(clip->frames.size());
             for (const auto& f : clip->frames) {
@@ -196,15 +227,91 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     } else {
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
     }
+    if (clip != nullptr) {
+        auto anim =
+            AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime, clip->loop);
+        registry.emplace<AnimationComponent>(id, anim);
+    }
+    if (isPlayer && !registry.has<DirectionalAnimationComponent>(id)) {
+        DirectionalAnimationComponent dir{};
+        dir.spriteId = "player_ship";
+        if (typeId == 1) {
+            dir.idleLabel = "row1_idle";
+            dir.upLabel   = "row1_up";
+            dir.downLabel = "row1_down";
+        } else if (typeId == 12) {
+            dir.idleLabel = "row2_idle";
+            dir.upLabel   = "row2_up";
+            dir.downLabel = "row2_down";
+        } else if (typeId == 13) {
+            dir.idleLabel = "row3_idle";
+            dir.upLabel   = "row3_up";
+            dir.downLabel = "row3_down";
+        } else {
+            dir.idleLabel = "row4_idle";
+            dir.upLabel   = "row4_up";
+            dir.downLabel = "row4_down";
+        }
+        dir.threshold = 60.0F;
+        registry.emplace<DirectionalAnimationComponent>(id, dir);
+    }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
     if (!registry.has<TagComponent>(id)) {
         EntityTag tag = EntityTag::Enemy;
         if (typeId == 1) {
             tag = EntityTag::Player;
-        } else if (typeId >= 3) {
+        } else if (typeId == 9 || typeId == 10 || typeId == 11) {
+            tag = EntityTag::Obstacle;
+        } else if (typeId >= 3 && typeId <= 8) {
             tag = EntityTag::Projectile;
         }
         registry.emplace<TagComponent>(id, TagComponent::create(tag));
+    }
+    if ((typeId == 9 || typeId == 10 || typeId == 11) && !registry.has<ColliderComponent>(id)) {
+        static const std::vector<std::array<float, 2>> topHull{{{0.0F, 0.0F},
+                                                                {146.0F, 0.0F},
+                                                                {146.0F, 4.0F},
+                                                                {144.0F, 7.0F},
+                                                                {139.0F, 14.0F},
+                                                                {137.0F, 16.0F},
+                                                                {129.0F, 22.0F},
+                                                                {24.0F, 22.0F},
+                                                                {4.0F, 6.0F},
+                                                                {0.0F, 2.0F}}};
+        static const std::vector<std::array<float, 2>> midHull{{{0.0F, 24.0F},
+                                                                {2.0F, 20.0F},
+                                                                {8.0F, 10.0F},
+                                                                {10.0F, 8.0F},
+                                                                {19.0F, 2.0F},
+                                                                {21.0F, 1.0F},
+                                                                {72.0F, 1.0F},
+                                                                {90.0F, 6.0F},
+                                                                {93.0F, 7.0F},
+                                                                {101.0F, 11.0F},
+                                                                {104.0F, 14.0F},
+                                                                {104.0F, 46.0F},
+                                                                {21.0F, 46.0F},
+                                                                {19.0F, 45.0F},
+                                                                {11.0F, 39.0F},
+                                                                {1.0F, 29.0F},
+                                                                {0.0F, 27.0F}}};
+        static const std::vector<std::array<float, 2>> botHull{{{0.0F, 35.0F},
+                                                                {1.0F, 33.0F},
+                                                                {6.0F, 26.0F},
+                                                                {8.0F, 24.0F},
+                                                                {16.0F, 18.0F},
+                                                                {18.0F, 17.0F},
+                                                                {71.0F, 0.0F},
+                                                                {80.0F, 0.0F},
+                                                                {83.0F, 1.0F},
+                                                                {119.0F, 17.0F},
+                                                                {125.0F, 21.0F},
+                                                                {138.0F, 30.0F},
+                                                                {143.0F, 34.0F},
+                                                                {145.0F, 39.0F},
+                                                                {0.0F, 39.0F}}};
+        const auto& hull = typeId == 9 ? topHull : (typeId == 10 ? midHull : botHull);
+        registry.emplace<ColliderComponent>(id, ColliderComponent::polygon(hull));
     }
     if (data->frameCount > 1) {
         auto anim = AnimationComponent::create(data->frameCount, data->frameDuration);
@@ -239,6 +346,11 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
     auto* comp = registry.has<TransformComponent>(id) ? &registry.get<TransformComponent>(id) : nullptr;
     if (comp == nullptr) {
         TransformComponent t{};
+        if (entity.entityType.has_value()) {
+            auto [sx, sy] = defaultScaleForType(*entity.entityType);
+            t.scaleX      = sx;
+            t.scaleY      = sy;
+        }
         if (entity.posX.has_value())
             t.x = *entity.posX;
         if (entity.posY.has_value())

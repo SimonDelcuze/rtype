@@ -5,8 +5,10 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
+#include "server/LevelScript.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
+#include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
 #include "systems/DamageSystem.hpp"
 #include "systems/DestructionSystem.hpp"
@@ -14,6 +16,7 @@
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <atomic>
@@ -33,12 +36,20 @@ class ServerApp
     void stop();
 
   private:
+    static constexpr double kTickRate = 60.0;
+
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
     void onJoin(ClientSession& sess, const ControlEvent& ctrl);
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
     void tick(const std::vector<ReceivedInput>& inputs);
+    void updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs);
+    std::vector<EntityId> collectDeadEntities();
+    void broadcastDestructions(const std::vector<EntityId>& toDestroy);
+    std::unordered_set<EntityId> collectCurrentEntities();
+    void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
+    void sendSnapshots();
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
     void processTimeouts();
     LevelDefinition buildLevel() const;
@@ -59,14 +70,17 @@ class ServerApp
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
     EventBus eventBus_;
+    LevelScript levelScript_;
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
     MonsterSpawnSystem monsterSpawnSys_;
+    ObstacleSpawnSystem obstacleSpawnSys_;
     MonsterMovementSystem monsterMovementSys_;
     EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;
     DamageSystem damageSys_;
     DestructionSystem destructionSys_;
+    BoundarySystem boundarySys_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent> timeoutQueue_;
@@ -78,6 +92,7 @@ class ServerApp
     bool countdownActive_{false};
     float countdownTimer_{3.0F};
     int lastCountdownValue_{4};
+    std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
     std::unordered_set<EntityId> knownEntities_;
 };

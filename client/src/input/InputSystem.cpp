@@ -90,28 +90,6 @@ void InputSystem::update(Registry& registry, float deltaTime)
         }
         *posX_ += dx * kMoveSpeed * deltaTime;
         *posY_ += dy * kMoveSpeed * deltaTime;
-        auto view = registry.view<TransformComponent, TagComponent>();
-        for (auto id : view) {
-            const auto& tag = registry.get<TagComponent>(id);
-            if (!tag.hasTag(EntityTag::Player))
-                continue;
-            auto& t = registry.get<TransformComponent>(id);
-            t.x     = *posX_;
-            t.y     = *posY_;
-            break;
-        }
-    }
-    if (inactive && changedMovement) {
-        auto view = registry.view<TransformComponent, TagComponent, VelocityComponent>();
-        for (auto id : view) {
-            const auto& tag = registry.get<TagComponent>(id);
-            if (!tag.hasTag(EntityTag::Player))
-                continue;
-            auto& vel = registry.get<VelocityComponent>(id);
-            vel.vx    = 0.0F;
-            vel.vy    = 0.0F;
-            break;
-        }
     }
 
     if (inactive && !changedMovement) {

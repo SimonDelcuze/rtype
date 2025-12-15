@@ -1,5 +1,6 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
+#include "server/EntityTypeResolver.hpp"
 #include "server/Packets.hpp"
 
 #include <algorithm>
@@ -26,32 +27,6 @@ namespace
         writeU32(out, std::bit_cast<std::uint32_t>(f));
     }
 
-    std::uint16_t typeForEntity(const Registry& registry, EntityId id)
-    {
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player))
-            return 1;
-        if (registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Projectile)) {
-            int charge = 1;
-            if (registry.has<MissileComponent>(id)) {
-                charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
-            }
-            switch (charge) {
-                case 1:
-                    return 3;
-                case 2:
-                    return 4;
-                case 3:
-                    return 5;
-                case 4:
-                    return 6;
-                case 5:
-                default:
-                    return 8;
-            }
-        }
-        return 2;
-    }
-
     std::vector<std::uint8_t> buildEntityBlock(const Registry& registry, EntityId id)
     {
         std::vector<std::uint8_t> block;
@@ -76,7 +51,7 @@ namespace
         }
 
         writeU16(block, mask);
-        block.push_back(static_cast<std::uint8_t>(typeForEntity(registry, id)));
+        block.push_back(static_cast<std::uint8_t>(resolveEntityType(registry, id)));
 
         const auto& t = registry.get<TransformComponent>(id);
         writeFloat(block, t.x);
