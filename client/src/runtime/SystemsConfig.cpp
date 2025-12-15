@@ -6,6 +6,7 @@
 #include "systems/HUDSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
+#include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
 
@@ -31,6 +32,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
+    gameLoop.addSystem(std::make_shared<DirectionalAnimationSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));

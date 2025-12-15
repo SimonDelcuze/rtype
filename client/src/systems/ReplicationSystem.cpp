@@ -7,6 +7,7 @@
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/LayerComponent.hpp"
+#include "components/DirectionalAnimationComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -187,10 +188,12 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     if (data == nullptr) {
         return;
     }
+    const bool isPlayer = (typeId == 1);
+    const AnimationClip* clip = data->animation != nullptr ? reinterpret_cast<const AnimationClip*>(data->animation)
+                                                           : nullptr;
     if (data->texture != nullptr) {
         SpriteComponent sprite(*data->texture);
-        if (data->animation != nullptr) {
-            const auto* clip = reinterpret_cast<const AnimationClip*>(data->animation);
+        if (clip != nullptr) {
             sprite.customFrames.clear();
             sprite.customFrames.reserve(clip->frames.size());
             for (const auto& f : clip->frames) {
@@ -206,6 +209,23 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         registry.emplace<SpriteComponent>(id, sprite);
     } else {
         registry.emplace<SpriteComponent>(id, SpriteComponent{});
+    }
+    if (isPlayer && !registry.has<VelocityComponent>(id)) {
+        registry.emplace<VelocityComponent>(id, VelocityComponent::create(0.0F, 0.0F));
+    }
+    if (clip != nullptr) {
+        auto anim = AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime,
+                                               clip->loop);
+        registry.emplace<AnimationComponent>(id, anim);
+    }
+    if (isPlayer && !registry.has<DirectionalAnimationComponent>(id)) {
+        DirectionalAnimationComponent dir{};
+        dir.spriteId   = "player_ship";
+        dir.idleLabel  = "row1_idle";
+        dir.upLabel    = "row1_up";
+        dir.downLabel  = "row1_down";
+        dir.threshold  = 60.0F;
+        registry.emplace<DirectionalAnimationComponent>(id, dir);
     }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
     if (!registry.has<TagComponent>(id)) {
