@@ -3,10 +3,10 @@
 #include "input/InputSystem.hpp"
 #include "systems/AnimationSystem.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
+#include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
-#include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
 

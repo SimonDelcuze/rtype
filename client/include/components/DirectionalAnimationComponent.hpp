@@ -8,7 +8,7 @@ struct DirectionalAnimationComponent
     std::string idleLabel;
     std::string upLabel;
     std::string downLabel;
-    float threshold = 60.0F; // abs(vy) required to trigger up/down
+    float threshold = 60.0F;
 
     enum class Phase
     {
@@ -21,5 +21,5 @@ struct DirectionalAnimationComponent
         DownOut
     };
     Phase phase     = Phase::Idle;
-    float phaseTime = -1.0F; // negative means not yet initialized
+    float phaseTime = -1.0F;
 };

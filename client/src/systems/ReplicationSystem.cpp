@@ -4,10 +4,10 @@
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/ColliderComponent.hpp"
+#include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/LayerComponent.hpp"
-#include "components/DirectionalAnimationComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -70,6 +70,15 @@ void ReplicationSystem::update(Registry& registry, float)
             Logger::instance().warn("[Replication] Unknown type in spawn: " + std::to_string(spawnPkt.entityType));
             continue;
         }
+        auto existing = remoteToLocal_.find(spawnPkt.entityId);
+        if (existing != remoteToLocal_.end()) {
+            if (registry.isAlive(existing->second)) {
+                registry.destroyEntity(existing->second);
+            }
+            Logger::instance().info("[Replication] Replacing existing entityId=" + std::to_string(spawnPkt.entityId) +
+                                    " type=" + std::to_string(spawnPkt.entityType));
+            remoteToLocal_.erase(existing);
+        }
         EntityId id                       = registry.createEntity();
         remoteToLocal_[spawnPkt.entityId] = id;
         applyArchetype(registry, id, spawnPkt.entityType);
@@ -80,6 +89,9 @@ void ReplicationSystem::update(Registry& registry, float)
         t.x           = spawnPkt.posX;
         t.y           = spawnPkt.posY;
         registry.emplace<TransformComponent>(id, t);
+        Logger::instance().info("[Replication] Spawn entityId=" + std::to_string(spawnPkt.entityId) +
+                                " type=" + std::to_string(spawnPkt.entityType) + " local=" + std::to_string(id) +
+                                " pos=(" + std::to_string(t.x) + "," + std::to_string(t.y) + ")");
     }
 
     EntityDestroyedPacket destroyPkt;
@@ -90,6 +102,7 @@ void ReplicationSystem::update(Registry& registry, float)
                 registry.destroyEntity(it->second);
             }
             remoteToLocal_.erase(it);
+            Logger::instance().info("[Replication] Destroy entityId=" + std::to_string(destroyPkt.entityId));
         }
     }
 
@@ -167,12 +180,13 @@ std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, cons
     }
 
     if (!entity.entityType.has_value()) {
-        std::cerr << "[ReplicationSystem] Missing entityType for remoteId " << remoteId << '\n';
+        Logger::instance().warn("[Replication] Missing entityType for remoteId " + std::to_string(remoteId));
         return std::nullopt;
     }
     if (!types_->has(*entity.entityType)) {
-        std::cerr << "[ReplicationSystem] Unknown entityType " << static_cast<int>(*entity.entityType)
-                  << " for remoteId " << remoteId << '\n';
+        Logger::instance().warn("[Replication] Unknown entityType " +
+                                std::to_string(static_cast<int>(*entity.entityType)) + " for remoteId " +
+                                std::to_string(remoteId));
         return std::nullopt;
     }
 
@@ -188,9 +202,9 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     if (data == nullptr) {
         return;
     }
-    const bool isPlayer = (typeId == 1);
-    const AnimationClip* clip = data->animation != nullptr ? reinterpret_cast<const AnimationClip*>(data->animation)
-                                                           : nullptr;
+    const bool isPlayer = (typeId == 1 || typeId == 12 || typeId == 13 || typeId == 14);
+    const AnimationClip* clip =
+        data->animation != nullptr ? reinterpret_cast<const AnimationClip*>(data->animation) : nullptr;
     if (data->texture != nullptr) {
         SpriteComponent sprite(*data->texture);
         if (clip != nullptr) {
@@ -214,17 +228,31 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         registry.emplace<VelocityComponent>(id, VelocityComponent::create(0.0F, 0.0F));
     }
     if (clip != nullptr) {
-        auto anim = AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime,
-                                               clip->loop);
+        auto anim =
+            AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime, clip->loop);
         registry.emplace<AnimationComponent>(id, anim);
     }
     if (isPlayer && !registry.has<DirectionalAnimationComponent>(id)) {
         DirectionalAnimationComponent dir{};
-        dir.spriteId   = "player_ship";
-        dir.idleLabel  = "row1_idle";
-        dir.upLabel    = "row1_up";
-        dir.downLabel  = "row1_down";
-        dir.threshold  = 60.0F;
+        dir.spriteId = "player_ship";
+        if (typeId == 1) {
+            dir.idleLabel = "row1_idle";
+            dir.upLabel   = "row1_up";
+            dir.downLabel = "row1_down";
+        } else if (typeId == 12) {
+            dir.idleLabel = "row2_idle";
+            dir.upLabel   = "row2_up";
+            dir.downLabel = "row2_down";
+        } else if (typeId == 13) {
+            dir.idleLabel = "row3_idle";
+            dir.upLabel   = "row3_up";
+            dir.downLabel = "row3_down";
+        } else {
+            dir.idleLabel = "row4_idle";
+            dir.upLabel   = "row4_up";
+            dir.downLabel = "row4_down";
+        }
+        dir.threshold = 60.0F;
         registry.emplace<DirectionalAnimationComponent>(id, dir);
     }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
