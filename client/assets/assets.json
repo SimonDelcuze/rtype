@@ -21,6 +21,11 @@
       "type": "sprite"
     },
     {
+      "id": "enemy_bullet",
+      "path": "sprites/bullet1.png",
+      "type": "sprite"
+    },
+    {
       "id": "mob1",
       "path": "sprites/mob1.png",
       "type": "sprite"

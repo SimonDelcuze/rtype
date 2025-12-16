@@ -1,11 +1,21 @@
 #include "server/EntityTypeResolver.hpp"
 
 #include <algorithm>
+#include "components/OwnershipComponent.hpp"
 
 namespace
 {
     std::uint16_t typeForProjectile(const Registry& registry, EntityId id)
     {
+        if (registry.has<OwnershipComponent>(id)) {
+            EntityId owner = registry.get<OwnershipComponent>(id).ownerId;
+            if (registry.isAlive(owner) && registry.has<TagComponent>(owner)) {
+                if (registry.get<TagComponent>(owner).hasTag(EntityTag::Enemy)) {
+                    return 15;
+                }
+            }
+        }
+
         int charge = 1;
         if (registry.has<MissileComponent>(id)) {
             charge = std::clamp(registry.get<MissileComponent>(id).chargeLevel, 1, 5);
