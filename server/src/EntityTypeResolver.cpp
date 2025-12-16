@@ -1,7 +1,8 @@
 #include "server/EntityTypeResolver.hpp"
 
-#include <algorithm>
 #include "components/OwnershipComponent.hpp"
+
+#include <algorithm>
 
 namespace
 {
