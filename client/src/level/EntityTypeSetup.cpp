@@ -66,7 +66,7 @@ namespace
         if (enemyEntry) {
             if (!textures.has(enemyEntry->id))
                 textures.load(enemyEntry->id, "client/assets/" + enemyEntry->path);
-            
+
             auto* enemyTex = textures.get(enemyEntry->id);
             if (enemyTex) {
                 RenderTypeData enemyData{};
