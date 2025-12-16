@@ -1,277 +1,158 @@
-#RType UDP Protocol Documentation
+# RType UDP Protocol Specification (RFC-style)
 
-## Protocol Overview
+## Status of This Memo
+This document describes the RType binary UDP protocol used between clients and the game server. It is intended as a stable reference for implementers. The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119].
 
-The RType UDP Protocol is a lightweight, binary network protocol designed for fast, real-time communication between clients and the game server. It is optimized for arcade-style gameplay running at high update frequencies (e.g., 60Hz), where low latency, efficient data transfer, and resistance to packet loss are essential.
+## 1. Introduction
+The RType UDP protocol is a compact, binary protocol optimized for real-time gameplay. It carries authoritative state from the server to clients and player inputs from clients to the server. All traffic uses UDP; reliability is provided only where explicitly stated.
 
-All messages follow a compact binary header that includes a magic number, protocol version, packet type, message type, sequence ID, server tick ID, and payload length. This ensures that packets can be validated, ordered, and processed reliably even under unstable network conditions.
+## 2. Packet Format Overview
+- All fields are big-endian unless noted.
+- Every packet on the wire has the following layout:
+  ```
+  [Header][Payload][CRC32]
+  ```
+- The CRC32 footer is **mandatory** on every packet (Section 4).
 
-The protocol is strictly **binary** and avoids text-based encoding to minimize packet size and maximize bandwidth efficiency. Communication is performed exclusively over **UDP**, with optional acknowledgment messages for reliability when required by specific interactions.
+## 3. Conventions and Terminology
+- **Client**: the game client sending inputs and consuming state.
+- **Server**: the authoritative simulation producing snapshots.
+- **Payload Length**: byte length of the payload portion only.
+- **Sequence ID**: monotonic value used for ordering; wrapping is allowed.
+- **Tick ID**: server simulation tick (when applicable).
 
-A key feature of this protocol is the use of **delta-state snapshots**:  
-the server does not send full world states every tick.  
-Instead, for each entity, only the fields that have changed since the last acknowledged snapshot are transmitted. A 16-bit **Update Mask** indicates which fields are included in each update, allowing the server to send extremely compact packets and scale efficiently with a large number of entities.
-
-This design keeps network usage low while maintaining accurate and responsive synchronization between the server’s authoritative simulation and the client’s predicted rendering.
-
-## Header Structure
-
-- **Magic Number** (4 bytes): Fixed value `0xA3 0x5F 0xC8 0x1D` to identify the protocol.
-- **Version** (1 byte): Protocol version number.
-- **Packet Type** (1 byte): Identifies the type of packet.
-  - 0x01: Client to Server Packet
-  - 0x02: Server to Client Packet
-- **Message Type** (1 byte): Specific message identifier within the packet type. 
-  - 0x01: CLIENT_HELLO
-  - 0x02: CLIENT_JOIN_REQUEST
-  - 0x03: CLIENT_READY
-  - 0x04: CLIENT_PING
-  - 0x05: CLIENT_INPUT
-  - 0x06: CLIENT_ACKNOWLEDGE
-  - 0x07: CLIENT_DISCONNECT
-  - 0x10: SERVER_HELLO
-  - 0x11: SERVER_JOIN_ACCEPT
-  - 0x12: SERVER_JOIN_DENY
-  - 0x13: SERVER_PONG
-  - 0x14: SERVER_SNAPSHOT
-  - 0x15: SERVER_GAME_START
-  - 0x16: SERVER_GAME_END
-  - 0x17: SERVER_KICK
-  - 0x18: SERVER_BAN
-  - 0x19: SERVER_BROADCAST
-  - 0x1A: SERVER_DISCONNECT
-  - 0x1B: SERVER_ACKNOWLEDGE
-  - 0x1C: SERVER_PLAYER_DISCONNECTED
-  - 0x1D: SERVER_ENTITY_SPAWN
-  - 0x1E: SERVER_ENTITY_DESTROYED
-- **Sequence Number** (2 bytes): Incremental number for packet ordering.
-- **Tick ID** (4 bytes): Current server tick when the packet is sent.
-- **Payload Length** (2 bytes): Length of the payload in bytes.
-
-
-### CRC32 (Integrity Check)
-
-All packets include an additional 4-byte CRC32 checksum appended at the end of the message.
-
-- **CRC32** (4 bytes):  
-  A checksum computed over the entire packet *excluding* the CRC32 field itself  
-  (from Magic Number up to the end of the Payload).  
-  Used to detect corrupted, truncated, or malformed packets.
-
-**Final packet layout:**
-
+## 4. Packet Header
+The header is exactly 15 bytes and MUST precede every payload.
 ```
-[Header][Payload][CRC32]
+0-3   Magic        0xA3 0x5F 0xC8 0x1D
+4     Version      = 0x01
+5     Packet Type  0x01 ClientToServer | 0x02 ServerToClient
+6     Message Type (see Section 5)
+7-8   Sequence ID  u16
+9-12  Tick ID      u32
+13-14 Payload Len  u16
 ```
+Implementations MUST reject packets whose magic or version do not match the values above.
 
-### Verification
+## 5. Message Types
+Unless otherwise stated, payloads MAY be zero-length. Message types are scoped by Packet Type but enumerated here for convenience.
 
-- The sender computes CRC32(Header + Payload) and appends it.
-- The receiver recomputes CRC32 on the received data (excluding the last 4 bytes)  
-  and compares the result with the transmitted CRC32.
-- If they do not match, the packet is discarded.
+### 5.1 Client to Server
+- 0x01 CLIENT_HELLO — no payload
+- 0x02 CLIENT_JOIN_REQUEST — no payload
+- 0x03 CLIENT_READY — no payload
+- 0x04 CLIENT_PING — `u32 clientTime`
+- 0x05 CLIENT_INPUT — see Section 6.2
+- 0x06 CLIENT_ACKNOWLEDGE — `u16 sequenceId, u8 messageType`
+- 0x07 CLIENT_DISCONNECT — `u8 reasonCode`
 
-CRC32 improves robustness in UDP environments by preventing clients or servers  
-from processing corrupted snapshots or malformed data.
+### 5.2 Server to Client
+- 0x10 SERVER_HELLO — no payload
+- 0x11 SERVER_JOIN_ACCEPT — no payload
+- 0x12 SERVER_JOIN_DENY — no payload
+- 0x13 SERVER_PONG — `u32 clientTime` (echo)
+- 0x14 SERVER_SNAPSHOT — see Section 6.1
+- 0x15 SERVER_GAME_START — no payload
+- 0x16 SERVER_GAME_END — `u32 winningPlayerId`
+- 0x17 SERVER_KICK — `u8 reasonCode`
+- 0x18 SERVER_BAN — `u8 reasonCode`
+- 0x19 SERVER_BROADCAST — `u8 len, bytes[len]`
+- 0x1A SERVER_DISCONNECT — `u8 reasonCode`
+- 0x1B SERVER_ACKNOWLEDGE — `u16 sequenceId, u8 messageType`
+- 0x1C SERVER_PLAYER_DISCONNECTED — `u32 playerId`
+- 0x1D SERVER_ENTITY_SPAWN — `u32 entityId, u8 entityType, f32 posX, f32 posY`
+- 0x1E SERVER_ENTITY_DESTROYED — `u32 entityId`
+- 0x1F SERVER_ALL_READY — no payload
+- 0x20 SERVER_COUNTDOWN_TICK — `u8 value`
+- 0x21 SERVER_SNAPSHOT_CHUNK — see Section 6.3
+- 0x30 SERVER_LEVEL_INIT — see Section 7.1
+- 0x31 SERVER_LEVEL_TRANSITION — reserved for future use (not emitted yet)
 
+## 6. State Synchronization
 
-## Client to Server Packet Structure
+### 6.1 SERVER_SNAPSHOT (0x14)
+Sent at a regular cadence (e.g., 60 Hz). The snapshot mask reflects component presence (not deltas).
+- Entity Count: `u16`
+- For each entity:
+  - `u32 entityId`
+  - `u16 updateMask`
+  - Conditional fields gated by mask bits:
+    - bit0: `u8 entityType` (currently always set)
+    - bit1: `f32 posX`
+    - bit2: `f32 posY`
+    - bit3: `f32 velX` if VelocityComponent exists
+    - bit4: `f32 velY` if VelocityComponent exists
+    - bit5: `u16 health` if HealthComponent exists
+    - bit6: `u8 statusFlags` when InvincibilityComponent is present (uses bit1)
+    - bit7: reserved
+    - bit8: reserved
+    - bit9: `u8 lives` if LivesComponent exists
+Clients MUST validate `payloadSize` and CRC before parsing and SHOULD ignore unknown bits.
 
-### CLIENT_HELLO (0x01)
-- Sent by the client to initiate a connection.
-- Payload:
-  - Client Version (1 byte)
-  - Client Name Length (1 byte)
-  - Client Name (variable length, UTF-8 or ASCII)
+### 6.2 CLIENT_INPUT (0x05)
+Payload (fixed 18 bytes):
+```
+u32 playerId
+u16 inputFlags
+f32 posX
+f32 posY
+f32 angle
+```
+`inputFlags` are bitwise values representing movement and actions; non-finite floats MUST be rejected.
 
-### CLIENT_JOIN_REQUEST (0x02)
-- Sent by the client to request joining a game or lobby.
-- Payload:
-  - None
+### 6.3 SERVER_SNAPSHOT_CHUNK (0x21)
+Used when a snapshot is split into multiple packets.
+```
+u16 totalChunks
+u16 chunkIndex
+u16 entityCountInChunk
+[chunked entity blocks with the same layout as Section 6.1]
+```
+Chunks are indexed from 0. Receivers SHOULD ignore chunks whose `totalChunks` disagree across fragments.
 
-### CLIENT_READY (0x03)
-- Sent by the client to indicate it is ready to start the match.
-- Payload:
-  - None
+## 7. Level Flow
 
-### CLIENT_PING (0x04)
-- Sent by the client to measure round-trip latency.
-- Payload:
-  - Client Time (4 bytes)
+### 7.1 SERVER_LEVEL_INIT (0x30)
+Announces content ids and archetypes for the upcoming level.
+```
+u16 levelId
+u32 seed
+u8  backgroundIdLen, backgroundId[Len]
+u8  musicIdLen, musicId[Len]
+u8  archetypeCount
+repeat archetypeCount times:
+    u16 typeId
+    u8  spriteIdLen, spriteId[Len]
+    u8  animIdLen, animId[Len]   // 0 length = no animation
+    u8  layer
+```
+Unknown ids SHOULD be logged and substituted with placeholders.
 
-### CLIENT_INPUT (0x05)
-- Sent frequently (30–60Hz) to transmit player input for the current tick.
-- Payload:
-  - Player ID (4 bytes)
-  - Input Flags (2 bytes)
-  - X Position (4 bytes, float)
-  - Y Position (4 bytes, float)
-  - Angle (4 bytes, float)
+### 7.2 SERVER_LEVEL_TRANSITION (0x31)
+Reserved for future use; not emitted in the current build. Clients MAY ignore it if received.
 
-### CLIENT_ACKNOWLEDGE (0x06)
-- Sent to acknowledge the receipt of a server packet.
-- Payload:
-  - Acknowledged Sequence Number (2 bytes)
-  - Acknowledged Message Type (1 byte)
+## 8. Integrity Protection
+All packets MUST append a 4-byte CRC32 footer in big-endian order. The CRC is computed over `[Header + Payload]`. Receivers MUST discard packets whose CRC verification fails.
 
-### CLIENT_DISCONNECT (0x07)
-- Sent by the client to disconnect cleanly from the server.
-- Payload:
-  - Reason Code (1 byte)
+## 9. Reason Codes
+Reason codes are 1 byte. The following values are reserved:
+- 0x00 Unknown
+- 0x01 Requested by Client
+- 0x10 Inactivity
+- 0x11 Protocol Violation
+- 0x12 Overflow / Spam
+- 0x13 Unauthorized Action
+- 0x20 Cheating Detected
+- 0x21 Manual Ban
+- 0x30 Server Shutdown
+- 0x31 Server Restart
+Unknown codes SHOULD be treated as non-fatal and displayed generically.
 
-## Server to Client Packet Structure
+## 10. Security Considerations
+Implementations MUST validate magic, version, `payloadSize`, and CRC before acting on data. Clients SHOULD rate-limit or drop malformed packets to prevent abuse.
 
-### SERVER_HELLO (0x10)
-- Sent by the server after receiving CLIENT_HELLO, confirming the connection.
-- Payload:
-  - Server Version (1 byte)
-  - Assigned Player ID (4 bytes)
+## 11. IANA Considerations
+This protocol uses a private UDP port negotiated externally. No IANA action is required.
 
-### SERVER_JOIN_ACCEPT (0x11)
-- Sent by the server to confirm that the client is allowed to join the game or lobby.
-- Payload:
-  - Initial Game State ID (4 bytes)
-
-### SERVER_JOIN_DENY (0x12)
-- Sent by the server if the client is not allowed to join.
-- Payload:
-  - Reason Code (1 byte)
-
-### SERVER_PONG (0x13)
-- Sent by the server in response to CLIENT_PING.
-- Payload:
-  - Client Time (4 bytes)
-
-### SERVER_SNAPSHOT (0x14)
-- Sent at a regular interval (e.g., 60Hz) to deliver the current game state.
-- Supports delta updates: only modified fields are included.
-- Payload:
-  - Entity Count (2 bytes)
-  - For each entity:
-    - Entity ID (4 bytes)
-    - Update Mask (2 bytes)
-    - If bit 0 set: Entity Type (1 byte)
-    - If bit 1 set: X Position (4 bytes, float)
-    - If bit 2 set: Y Position (4 bytes, float)
-    - If bit 3 set: X Velocity (4 bytes, float)
-    - If bit 4 set: Y Velocity (4 bytes, float)
-    - If bit 5 set: Health (2 bytes)
-    - If bit 6 set: Status Effects (1 byte)
-    - If bit 7 set: Orientation (4 bytes, float)
-    - If bit 8 set: Dead/Alive State (1 byte, 0 = alive, 1 = dead)
-    - Additional fields can be added by extending the mask
-
-### SERVER_GAME_START (0x15)
-- Sent by the server to indicate that the match is starting.
-- Payload:
-  - None
-
-### SERVER_GAME_END (0x16)
-- Sent by the server to indicate that the match has ended.
-- Payload:
-  - Winning Player ID (4 bytes)
-
-### SERVER_KICK (0x17)
-- Sent by the server to kick the client from the session.
-- Payload:
-  - Reason Code (1 byte)
-
-### SERVER_BAN (0x18)
-- Sent by the server to permanently ban the client.
-- Payload:
-  - Reason Code (1 byte)
-
-### SERVER_BROADCAST (0x19)
-- Sent by the server to broadcast a text message to all clients.
-- Payload:
-  - Message Length (1 byte)
-  - Message Content (variable length)
-
-### SERVER_DISCONNECT (0x1A)
-- Sent by the server to force a clean disconnection.
-- Payload:
-  - Reason Code (1 byte)
-
-### SERVER_ACKNOWLEDGE (0x1B)
-- Sent by the server to acknowledge receipt of a client packet.
-- Payload:
-  - Acknowledged Sequence Number (2 bytes)
-  - Acknowledged Message Type (1 byte)
-
-### SERVER_LEVEL_INIT (0x30)
-- Sent before a level starts to announce content ids and archetypes.
-- Payload (binary, length-prefixed strings):
-  - Level ID (2 bytes)
-  - Seed (4 bytes)
-  - Background ID (len + bytes)
-  - Music ID (len + bytes)
-  - Archetype Count (1 byte)
-    - For each archetype:
-      - Type ID (2 bytes)
-      - Sprite ID (len + bytes)
-      - Animation ID (len + bytes, 0 = none)
-      - Layer (1 byte)
-- Client maps these ids to its manifest; unknown ids should log and use placeholders. Seed is stored for deterministic behavior.
-
-### SERVER_LEVEL_TRANSITION (0x31)
-- Sent when a level ends to announce the next one.
-- Payload:
-  - Next Level ID (2 bytes)
-  - Next Seed (4 bytes)
-  - Reason (1 byte: 0 completed, 1 failed, 2 skipped, 3 server-initiated)
-- Client tears down current level entities and can preload assets for the next level immediately.
-
-## Multi-level flow (client expectations)
-- **Delivery of level messages**: LevelInit and LevelTransition should be retried until the client reacts (e.g., sends a small ACK) so a dropped UDP packet does not stall the game.
-- **Entity typing**: The first snapshot that mentions a new entityId must include `entityType`; otherwise the client cannot instantiate it. After a level change, treat all entities as unknown until a snapshot with `entityType` arrives.
-- **Level isolation**: Snapshots for a previous level must be ignored once a transition is applied (track currentLevelId and drop mismatched snapshots).
-- **Cleanup on transition**: On LevelTransition, the client destroys all entities from the prior level and resets interpolation/prediction state before accepting entities for the next level.
-- **Asset readiness**: The client may show a loading/transition screen while preloading the assets announced in LevelInit; gameplay should start only after preload completes or placeholders are applied.
-
-## Reason Codes
-
-Several messages in the protocol (such as `CLIENT_DISCONNECT`, `SERVER_KICK`, `SERVER_BAN`, and `SERVER_DISCONNECT`) include a **Reason Code** field.  
-This field specifies why a disconnection or administrative action occurred.
-
-Reason Codes are 1 byte (0–255).  
-The following values are reserved:
-
-### Generic Reason Codes
-- **0x00 — Unknown Reason**  
-  Used when no specific cause is provided.
-
-- **0x01 — Requested by Client**  
-  The client intentionally closed the connection (user pressed "Quit", etc.).
-
-### Kick Reasons (Server → Client)
-- **0x10 — Inactivity**  
-  Client was removed due to prolonged inactivity.
-
-- **0x11 — Protocol Violation**  
-  Client sent invalid or malformed packets.
-
-- **0x12 — Overflow / Spam**  
-  Client exceeded message rate limits or produced excessive traffic.
-
-- **0x13 — Unauthorized Action**  
-  Client attempted an invalid or forbidden behavior.
-
-### Ban Reasons (Server → Client)
-- **0x20 — Cheating Detected**  
-  Client exhibited behavior flagged by anticheat.
-
-- **0x21 — Manual Ban**  
-  Administrator or server logic explicitly banned the client.
-
-### Server Shutdown Reasons
-- **0x30 — Server Shutdown**  
-  The server is closing gracefully.
-
-- **0x31 — Server Restart**  
-  The server is restarting and disconnecting clients safely.
-
----
-
-### Notes
-- Additional custom reason codes (0x80–0xFF) may be defined by game logic if needed.
-- Clients should treat unknown reason codes as non-fatal and display a generic message.
+## 12. References
+[RFC 2119] Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, March 1997.
