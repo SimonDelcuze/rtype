@@ -7,7 +7,9 @@
 #include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InterpolationComponent.hpp"
+#include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
+#include "components/LivesComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -122,6 +124,7 @@ void ReplicationSystem::update(Registry& registry, float)
             seenThisTick.insert(entity.entityId);
             lastSeenTick_[entity.entityId] = snapshot.header.tickId;
             applyEntity(registry, *localId, entity);
+            applyStatusEffects(registry, *localId, entity);
             if (!registry.isAlive(*localId)) {
                 continue;
             }
@@ -330,6 +333,7 @@ void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const Snaps
     applyTransform(registry, id, entity);
     applyVelocity(registry, id, entity);
     applyHealth(registry, id, entity);
+    applyLives(registry, id, entity);
     applyStatus(registry, id, entity);
     applyDead(registry, id, entity);
 }
@@ -397,6 +401,35 @@ void ReplicationSystem::applyHealth(Registry& registry, EntityId id, const Snaps
     }
 }
 
+void ReplicationSystem::applyLives(Registry& registry, EntityId id, const SnapshotEntity& entity)
+{
+    if (entity.lives.has_value()) {
+        if (!registry.has<LivesComponent>(id)) {
+            registry.emplace<LivesComponent>(id, LivesComponent::create(*entity.lives, 3));
+        }
+        auto& lives   = registry.get<LivesComponent>(id);
+        lives.current = *entity.lives;
+    }
+}
+
+void ReplicationSystem::applyStatusEffects(Registry& registry, EntityId id, const SnapshotEntity& entity)
+{
+    if (!entity.statusEffects.has_value()) {
+        return;
+    }
+    std::uint8_t status = *entity.statusEffects;
+    bool isInvincible   = (status & (1 << 1)) != 0;
+
+    if (isInvincible) {
+        if (!registry.has<InvincibilityComponent>(id)) {
+            registry.emplace<InvincibilityComponent>(id, InvincibilityComponent::create(2.0F));
+        }
+    } else {
+        if (registry.has<InvincibilityComponent>(id)) {
+            registry.remove<InvincibilityComponent>(id);
+        }
+    }
+}
 void ReplicationSystem::applyStatus(Registry&, EntityId, const SnapshotEntity&) {}
 
 void ReplicationSystem::applyDead(Registry& registry, EntityId id, const SnapshotEntity& entity)
@@ -432,12 +465,23 @@ void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, cons
         registry.emplace<InterpolationComponent>(id, ic);
         return;
     }
-    float prevX         = interp->targetX;
-    float prevY         = interp->targetY;
-    interp->previousX   = prevX;
-    interp->previousY   = prevY;
-    interp->targetX     = entity.posX.value_or(prevX);
-    interp->targetY     = entity.posY.value_or(prevY);
+    float prevX = interp->targetX;
+    float prevY = interp->targetY;
+    float newX  = entity.posX.value_or(prevX);
+    float newY  = entity.posY.value_or(prevY);
+
+    float dx = newX - prevX;
+    float dy = newY - prevY;
+    if (dx * dx + dy * dy > 10000.0F) {
+        interp->previousX = newX;
+        interp->previousY = newY;
+    } else {
+        interp->previousX = prevX;
+        interp->previousY = prevY;
+    }
+
+    interp->targetX     = newX;
+    interp->targetY     = newY;
     interp->elapsedTime = 0.0F;
     if (entity.velX.has_value())
         interp->velocityX = *entity.velX;

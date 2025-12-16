@@ -170,5 +170,11 @@ std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std:
         e.dead = data[offset] != 0;
         offset += 1;
     }
+    if (hasBit(mask, 9)) {
+        if (!ensureAvailable(offset, 1, PacketHeader::kSize + header.payloadSize))
+            return std::nullopt;
+        e.lives = static_cast<std::int8_t>(data[offset]);
+        offset += 1;
+    }
     return e;
 }

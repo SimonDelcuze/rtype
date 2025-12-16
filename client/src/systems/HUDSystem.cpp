@@ -1,13 +1,18 @@
 #include "systems/HUDSystem.hpp"
 
 #include "components/ChargeMeterComponent.hpp"
+#include "components/TagComponent.hpp"
 
+#include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <algorithm>
 #include <string>
 
-HUDSystem::HUDSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
+HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textures)
+    : window_(window), fonts_(fonts), textures_(textures)
+{}
 
 void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& textComp) const
 {
@@ -15,29 +20,60 @@ void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& te
         const auto& score = registry.get<ScoreComponent>(id);
         textComp.content  = "Score: " + std::to_string(score.value);
     } else if (registry.has<LivesComponent>(id)) {
-        const auto& lives = registry.get<LivesComponent>(id);
-        textComp.content  = "Lives: " + std::to_string(lives.current) + "/" + std::to_string(lives.max);
+        textComp.content = "Lives:";
     }
 }
 
 void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesComponent& lives) const
 {
-    const float pipSize    = 10.0F;
-    const float pipSpacing = 4.0F;
-    sf::RectangleShape pip(sf::Vector2f{pipSize, pipSize});
-    pip.setFillColor(sf::Color(220, 60, 60));
+    const sf::Texture* tex = nullptr;
+    try {
+        if (textures_.has("player_ship")) {
+            tex = textures_.get("player_ship");
+        }
+    } catch (...) {
+    }
+
+    if (tex == nullptr) {
+        const float pipSize    = 10.0F;
+        const float pipSpacing = 4.0F;
+        sf::RectangleShape pip(sf::Vector2f{pipSize, pipSize});
+        pip.setFillColor(sf::Color(220, 60, 60));
+
+        float startX = transform.x;
+        float y      = transform.y + 24.0F + 6.0F;
+
+        int count = std::max(0, lives.current);
+        for (int i = 0; i < count; ++i) {
+            pip.setPosition(sf::Vector2f{startX + ((pipSize + pipSpacing) * static_cast<float>(i)), y});
+            window_.draw(pip);
+        }
+        return;
+    }
+
+    sf::Sprite sprite(*tex);
+
+    int frameW = static_cast<int>(tex->getSize().x) / 5;
+    if (frameW <= 0)
+        frameW = 33;
+    int frameH = 14;
+
+    sprite.setTextureRect(sf::IntRect({0, 0}, {frameW, frameH}));
+    sprite.setColor(sf::Color(255, 255, 255, 200));
+    sprite.setScale(sf::Vector2f{0.5F, 0.5F});
 
     float startX = transform.x;
-    float y      = transform.y + 24.0F + 6.0F;
+    float y      = transform.y + 24.0F;
 
     int count = std::max(0, lives.current);
     for (int i = 0; i < count; ++i) {
-        pip.setPosition(sf::Vector2f{startX + ((pipSize + pipSpacing) * static_cast<float>(i)), y});
-        window_.draw(pip);
+        sprite.setPosition(
+            sf::Vector2f{startX + (((static_cast<float>(frameW) * 0.5F) + 5.0F) * static_cast<float>(i)), y});
+        window_.draw(sprite);
     }
 }
 
-void HUDSystem::update(Registry& registry, float /*deltaTime*/)
+void HUDSystem::update(Registry& registry, float)
 {
     float chargeProgress = 0.0F;
     bool hasCharge       = false;
@@ -70,6 +106,15 @@ void HUDSystem::update(Registry& registry, float /*deltaTime*/)
         window_.draw(fill);
     }
 
+    int playerLives = -1;
+    for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
+        const auto& tag = registry.get<TagComponent>(id);
+        if (tag.hasTag(EntityTag::Player)) {
+            playerLives = registry.get<LivesComponent>(id).current;
+            break;
+        }
+    }
+
     for (EntityId entity : registry.view<TransformComponent, TextComponent>()) {
         if (!registry.isAlive(entity)) {
             continue;
@@ -80,32 +125,31 @@ void HUDSystem::update(Registry& registry, float /*deltaTime*/)
 
         updateContent(registry, entity, textComp);
 
-        if (textComp.fontId.empty()) {
-            continue;
+        if (!textComp.fontId.empty()) {
+            const sf::Font* font = fonts_.get(textComp.fontId);
+            if (font != nullptr) {
+                if (!textComp.text.has_value()) {
+                    textComp.text.emplace(*font, textComp.content, textComp.characterSize);
+                } else {
+                    textComp.text->setFont(*font);
+                    textComp.text->setCharacterSize(textComp.characterSize);
+                    textComp.text->setString(textComp.content);
+                }
+
+                textComp.text->setFillColor(textComp.color);
+                textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
+                textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
+                textComp.text->setRotation(sf::degrees(transform.rotation));
+
+                window_.draw(*textComp.text);
+            }
         }
-
-        const sf::Font* font = fonts_.get(textComp.fontId);
-        if (font == nullptr) {
-            continue;
-        }
-
-        if (!textComp.text.has_value()) {
-            textComp.text.emplace(*font, textComp.content, textComp.characterSize);
-        } else {
-            textComp.text->setFont(*font);
-            textComp.text->setCharacterSize(textComp.characterSize);
-            textComp.text->setString(textComp.content);
-        }
-
-        textComp.text->setFillColor(textComp.color);
-        textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
-        textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
-        textComp.text->setRotation(sf::degrees(transform.rotation));
-
-        window_.draw(*textComp.text);
 
         if (registry.has<LivesComponent>(entity)) {
-            const auto& lives = registry.get<LivesComponent>(entity);
+            auto& lives = registry.get<LivesComponent>(entity);
+            if (playerLives != -1) {
+                lives.current = playerLives;
+            }
             drawLivesPips(transform, lives);
         }
     }

@@ -1,6 +1,7 @@
 #include "systems/DamageSystem.hpp"
 
 #include "Logger.hpp"
+#include "components/InvincibilityComponent.hpp"
 
 #include <string>
 
@@ -77,6 +78,9 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
     if (!registry.has<HealthComponent>(targetId)) {
         return;
     }
+    if (registry.has<InvincibilityComponent>(targetId)) {
+        return;
+    }
 
     auto& missile = registry.get<MissileComponent>(missileId);
 
@@ -135,6 +139,9 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
         return;
     }
     if (!registry.has<HealthComponent>(entityB)) {
+        return;
+    }
+    if (registry.has<InvincibilityComponent>(entityA) || registry.has<InvincibilityComponent>(entityB)) {
         return;
     }
 

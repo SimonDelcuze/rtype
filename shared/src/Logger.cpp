@@ -20,7 +20,7 @@ Logger::Logger() : _verbose(false)
 
     try {
         std::filesystem::create_directories(directory);
-    } catch (...) { // NOLINT(bugprone-empty-catch)
+    } catch (...) {
     }
 
     _file.open(filePath, std::ios::app);

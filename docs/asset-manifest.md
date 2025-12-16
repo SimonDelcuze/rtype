@@ -75,7 +75,6 @@ loader.loadFromManifestFile("client/assets/assets.json");
 const sf::Texture* playerTexture = textureManager.get("player_ship");
 const sf::SoundBuffer* laserSound = soundManager.get("laser");
 const sf::Font* uiFont = fontManager.get("ui_font");
-```
 
 ### Loading with Progress Callback
 
@@ -96,6 +95,7 @@ The callback reports progress across all asset types combined (textures, sounds,
 
 ```cpp
 #include "assets/AssetManifest.hpp"
+
 
 // Parse manifest
 AssetManifest manifest = AssetManifest::fromFile("assets.json");

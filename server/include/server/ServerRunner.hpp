@@ -65,6 +65,11 @@ class ServerApp
     void resetGame();
     void onDisconnect(const IpEndpoint& endpoint);
 
+    void updateRespawnTimers(float deltaTime);
+    void updateInvincibilityTimers(float deltaTime);
+    void handleDeathAndRespawn();
+    void syncEntityLifecycle();
+
     Registry registry_;
     std::map<std::uint32_t, EntityId> playerEntities_;
     std::vector<IpEndpoint> clients_;

@@ -5,6 +5,7 @@
 #include "animation/AnimationManifest.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "assets/AssetManifest.hpp"
+#include "events/EventBus.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
@@ -30,6 +31,12 @@ enum class JoinResult
     Timeout
 };
 
+struct GameSessionResult
+{
+    bool retry = false;
+    std::optional<int> exitCode;
+};
+
 struct ClientLoopResult
 {
     bool continueLoop = false;
@@ -43,7 +50,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager);
+                      FontManager& fontManager, EventBus& eventBus);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);
@@ -57,9 +64,9 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage);
-std::optional<int> runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                  FontManager& fontManager);
+GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
+                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
+                                 FontManager& fontManager);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage);
 int runClient(const ClientOptions& options);

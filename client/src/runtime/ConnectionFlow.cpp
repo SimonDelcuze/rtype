@@ -29,7 +29,7 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
     }
 
     ButtonSystem buttonSystem(window, fontManager);
-    HUDSystem hudSystem(window, fontManager);
+    HUDSystem hudSystem(window, fontManager, textureManager);
     InputFieldSystem inputFieldSystem(window, fontManager);
     sf::Clock clock;
 
@@ -145,7 +145,7 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
     menu.create(registry);
 
     ButtonSystem buttonSystem(window, fontManager);
-    HUDSystem hudSystem(window, fontManager);
+    HUDSystem hudSystem(window, fontManager, textureManager);
 
     sf::Clock clock;
 

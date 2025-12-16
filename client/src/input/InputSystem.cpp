@@ -203,7 +203,7 @@ void InputSystem::destroyChargeFx(Registry& registry)
     chargeFxId_.reset();
 }
 
-void InputSystem::updateChargeFx(Registry& registry, float /*x*/, float /*y*/)
+void InputSystem::updateChargeFx(Registry& registry, float, float)
 {
     if (!chargeFxId_.has_value() || !registry.isAlive(*chargeFxId_)) {
         chargeFxId_.reset();

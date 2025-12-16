@@ -28,7 +28,9 @@ class ReplicationSystem : public ISystem
     void applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyHealth(Registry& registry, EntityId id, const SnapshotEntity& entity);
-    void applyStatus(Registry&, EntityId, const SnapshotEntity&);
+    void applyLives(Registry& registry, EntityId id, const SnapshotEntity& entity);
+    void applyStatusEffects(Registry& registry, EntityId id, const SnapshotEntity& entity);
+    void applyStatus(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyDead(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t tickId);
 
