@@ -60,113 +60,65 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
     return std::nullopt;
 }
 
-GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager)
+namespace
 {
-    Registry registry;
-    EntityTypeRegistry typeRegistry;
-    AssetManifest manifest = loadManifest();
-
-    AnimationAtlas animationAtlas = AnimationManifest::loadFromFile("client/assets/animations.json");
-    AnimationRegistry& animations = animationAtlas.clips;
-    AnimationLabels animationLabels{animationAtlas.labels};
-    LevelState levelState{};
-
-    if (options.useDefault) {
-        Logger::instance().info("Default mode: auto-sending CLIENT_READY");
-        sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint)) {
-        return GameSessionResult{false, std::nullopt};
-    }
-
-    if (!window.isOpen()) {
-        return GameSessionResult{false, std::nullopt};
-    }
-
-    registerEntityTypes(typeRegistry, textureManager, manifest);
-
-    EventBus eventBus;
-    bool gameOverTriggered = false;
-    int finalScore         = 0;
-    bool victory           = false;
-
-    eventBus.subscribe<GameOverEvent>([&](const GameOverEvent& event) {
-        Logger::instance().info("[GameSession] Game Over event received - victory=" + std::to_string(event.victory));
-        gameOverTriggered = true;
-        finalScore        = event.finalScore;
-        victory           = event.victory;
-        g_running         = false;
-    });
-
-    GameLoop gameLoop;
-    std::uint32_t inputSequence = 0;
-    float playerPosX            = 0.0F;
-    float playerPosY            = 0.0F;
-    InputMapper mapper;
-
-    configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
-
-    ButtonSystem buttonSystem(window, fontManager);
-
-    auto onEvent = [&](const sf::Event& event) {
-        mapper.handleEvent(event);
-        buttonSystem.handleEvent(registry, event);
+    struct GameState
+    {
+        bool gameOverTriggered = false;
+        int finalScore         = 0;
+        bool victory           = false;
     };
 
-    sf::Clock gameClock;
-    while (window.isOpen() && g_running) {
-        window.pollEvents([&](const sf::Event& event) {
-            onEvent(event);
-            if (event.is<sf::Event::Closed>()) {
-                g_running = false;
-                window.close();
-            }
-        });
-
-        const float deltaTime = std::min(gameClock.restart().asSeconds(), 0.1F);
-
-        window.clear();
-        gameLoop.update(registry, deltaTime);
-        eventBus.process();
-        window.display();
+    void sendDisconnectPacket(const IpEndpoint& serverEndpoint, NetPipelines& net)
+    {
+        if (net.socket && g_running == false) {
+            PacketHeader header{};
+            header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+            header.messageType = static_cast<std::uint8_t>(MessageType::ClientDisconnect);
+            header.sequenceId  = 0;
+            header.payloadSize = 0;
+            auto packet        = header.encode();
+            net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
+        }
     }
 
-    if (net.socket && g_running == false) {
-        PacketHeader header{};
-        header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
-        header.messageType = static_cast<std::uint8_t>(MessageType::ClientDisconnect);
-        header.sequenceId  = 0;
-        header.payloadSize = 0;
-        auto packet        = header.encode();
-        net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
-        Logger::instance().info("Sent CLIENT_DISCONNECT to server");
+    void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
+                         InputMapper& mapper, ButtonSystem& buttonSystem)
+    {
+        auto onEvent = [&](const sf::Event& event) {
+            mapper.handleEvent(event);
+            buttonSystem.handleEvent(registry, event);
+        };
+
+        sf::Clock gameClock;
+        while (window.isOpen() && g_running) {
+            window.pollEvents([&](const sf::Event& event) {
+                onEvent(event);
+                if (event.is<sf::Event::Closed>()) {
+                    g_running = false;
+                    window.close();
+                }
+            });
+
+            const float deltaTime = std::min(gameClock.restart().asSeconds(), 0.1F);
+
+            window.clear();
+            gameLoop.update(registry, deltaTime);
+            eventBus.process();
+            window.display();
+        }
     }
 
-    gameLoop.stop();
-
-    Logger::instance().info("[GameSession] Game loop ended. gameOverTriggered=" + std::to_string(gameOverTriggered));
-
-    if (gameOverTriggered) {
-        Logger::instance().info("[GameSession] Showing Game Over menu");
-
+    GameOverMenu::Result runGameOverMenu(Window& window, Registry& registry, FontManager& fontManager,
+                                         ButtonSystem& buttonSystem, int finalScore, bool victory)
+    {
         GameOverMenu gameOverMenu(fontManager, finalScore, victory);
         gameOverMenu.create(registry);
 
         g_running = true;
         sf::Clock clock;
 
-        Logger::instance().info(
-            "[GameSession] Starting Game Over menu loop - window.isOpen()=" + std::to_string(window.isOpen()) +
-            " g_running=" + std::to_string(g_running) + " isDone=" + std::to_string(gameOverMenu.isDone()));
-
-        int frameCount = 0;
         while (window.isOpen() && g_running && !gameOverMenu.isDone()) {
-            if (frameCount++ % 60 == 0) {
-                Logger::instance().info("[GameSession] Menu loop frame " + std::to_string(frameCount));
-            }
-
             window.pollEvents([&](const sf::Event& event) {
                 if (event.is<sf::Event::Closed>()) {
                     g_running = false;
@@ -184,14 +136,67 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
             window.display();
         }
 
-        Logger::instance().info("[GameSession] Exited menu loop - window.isOpen()=" + std::to_string(window.isOpen()) +
-                                " g_running=" + std::to_string(g_running) + " isDone=" +
-                                std::to_string(gameOverMenu.isDone()) + " frameCount=" + std::to_string(frameCount));
-
+        GameOverMenu::Result result = gameOverMenu.getResult();
         gameOverMenu.destroy(registry);
+        return result;
+    }
 
-        if (gameOverMenu.getResult() == GameOverMenu::Result::Retry) {
-            Logger::instance().info("[GameSession] User chose to retry - requesting reconnection");
+} // namespace
+
+GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
+                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
+                                 FontManager& fontManager)
+{
+    Registry registry;
+    EntityTypeRegistry typeRegistry;
+    AssetManifest manifest        = loadManifest();
+    AnimationAtlas animationAtlas = AnimationManifest::loadFromFile("client/assets/animations.json");
+    AnimationRegistry& animations = animationAtlas.clips;
+    AnimationLabels animationLabels{animationAtlas.labels};
+    LevelState levelState{};
+
+    if (options.useDefault) {
+        sendClientReady(serverEndpoint, *net.socket);
+    } else if (!runWaitingRoom(window, net, serverEndpoint)) {
+        return GameSessionResult{false, std::nullopt};
+    }
+
+    if (!window.isOpen()) {
+        return GameSessionResult{false, std::nullopt};
+    }
+
+    registerEntityTypes(typeRegistry, textureManager, manifest);
+
+    EventBus eventBus;
+    GameState gameState;
+
+    eventBus.subscribe<GameOverEvent>([&](const GameOverEvent& event) {
+        gameState.gameOverTriggered = true;
+        gameState.finalScore        = event.finalScore;
+        gameState.victory           = event.victory;
+        g_running                   = false;
+    });
+
+    GameLoop gameLoop;
+    std::uint32_t inputSequence = 0;
+    float playerPosX            = 0.0F;
+    float playerPosY            = 0.0F;
+    InputMapper mapper;
+
+    configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
+
+    ButtonSystem buttonSystem(window, fontManager);
+
+    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem);
+
+    sendDisconnectPacket(serverEndpoint, net);
+    gameLoop.stop();
+
+    if (gameState.gameOverTriggered) {
+        auto result =
+            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.finalScore, gameState.victory);
+        if (result == GameOverMenu::Result::Retry) {
             return GameSessionResult{true, std::nullopt};
         }
     }

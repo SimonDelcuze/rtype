@@ -19,7 +19,6 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
         return;
     }
 
-    int playerCount = 0;
     std::vector<EntityId> playerIds;
 
     for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
@@ -29,14 +28,10 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
             continue;
         }
 
-        playerCount++;
         playerIds.push_back(id);
         const auto& lives = registry.get<LivesComponent>(id);
 
         if (lives.isDead()) {
-            Logger::instance().info("[GameOverSystem] Player " + std::to_string(id) + " is dead (" +
-                                    std::to_string(lives.current) + "/" + std::to_string(lives.max) +
-                                    ") - Triggering Game Over!");
             GameOverEvent event{};
             event.victory    = false;
             event.finalScore = 0;
@@ -45,14 +40,5 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
             gameOverTriggered_ = true;
             return;
         }
-    }
-
-    static int logThrottle = 0;
-    if (playerCount > 1 && logThrottle++ % 60 == 0) {
-        std::string ids;
-        for (auto id : playerIds) {
-            ids += std::to_string(id) + " ";
-        }
-        Logger::instance().warn("[GameOverSystem] Found " + std::to_string(playerCount) + " player entities: " + ids);
     }
 }

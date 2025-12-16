@@ -68,12 +68,13 @@ SoundManager soundManager;
 FontManager fontManager;
 AssetLoader loader(textureManager, soundManager, fontManager);
 
+// Load all assets from manifest
 loader.loadFromManifestFile("client/assets/assets.json");
 
+// Access loaded assets
 const sf::Texture* playerTexture = textureManager.get("player_ship");
 const sf::SoundBuffer* laserSound = soundManager.get("laser");
 const sf::Font* uiFont = fontManager.get("ui_font");
-```
 
 ### Loading with Progress Callback
 
@@ -95,13 +96,17 @@ The callback reports progress across all asset types combined (textures, sounds,
 ```cpp
 #include "assets/AssetManifest.hpp"
 
+
+// Parse manifest
 AssetManifest manifest = AssetManifest::fromFile("assets.json");
 
+// Filter by type
 auto sprites = manifest.getTexturesByType("sprite");
 auto backgrounds = manifest.getTexturesByType("background");
 auto sfx = manifest.getSoundsByType("sfx");
 auto uiFonts = manifest.getFontsByType("ui");
 
+// Load only specific types
 for (const auto& entry : sprites) {
     textureManager.load(entry.id, entry.path);
 }
@@ -125,16 +130,22 @@ Parses and provides access to the manifest data.
 class AssetManifest
 {
 public:
+    // Load manifest from file
     static AssetManifest fromFile(const std::string& filepath);
 
+    // Parse manifest from JSON string
     static AssetManifest fromString(const std::string& json);
 
+    // Get all texture entries
     const std::vector<TextureEntry>& getTextures() const;
 
+    // Get textures filtered by type
     std::vector<TextureEntry> getTexturesByType(const std::string& type) const;
 
+    // Get all sound entries
     const std::vector<SoundEntry>& getSounds() const;
 
+    // Get sounds filtered by type
     std::vector<SoundEntry> getSoundsByType(const std::string& type) const;
 };
 

@@ -113,7 +113,6 @@ void ServerApp::cleanupExpiredMissiles(float deltaTime)
     if (expired.empty()) {
         return;
     }
-    Logger::instance().info("Cleaning up " + std::to_string(expired.size()) + " expired missile(s)");
     for (EntityId id : expired) {
         EntityDestroyedPacket pkt{};
         pkt.entityId = id;
@@ -136,7 +135,6 @@ void ServerApp::cleanupOffscreenEntities()
         }
     }
     if (!offscreenEntities.empty()) {
-        Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
         for (EntityId id : offscreenEntities) {
             EntityDestroyedPacket pkt{};
             pkt.entityId = id;
@@ -268,22 +266,11 @@ void ServerApp::handleDeathAndRespawn()
                 auto& lives = registry_.get<LivesComponent>(id);
                 if (lives.current > 0) {
                     if (!registry_.has<RespawnTimerComponent>(id)) {
-                        Logger::instance().info("DEBUG: Starting death logic for ID:" + std::to_string(id));
                         lives.loseLife();
                         registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
-                        if (registry_.has<RespawnTimerComponent>(id)) {
-                            Logger::instance().info("DEBUG: RespawnTimer added successfully to ID:" +
-                                                    std::to_string(id));
-                        } else {
-                            Logger::instance().warn("DEBUG: FAILED to add RespawnTimer to ID:" + std::to_string(id));
-                        }
                         if (registry_.has<TransformComponent>(id)) {
                             registry_.get<TransformComponent>(id).y = -1000.0F;
-                            Logger::instance().info("DEBUG: Moved ID:" + std::to_string(id) + " to y=-1000");
                         }
-                        Logger::instance().info("Player (ID:" + std::to_string(id) + ") died. Lives remaining: " +
-                                                std::to_string(lives.current) + ". Respawning in 2s.");
-                    } else {
                     }
                     continue;
                 }
@@ -292,7 +279,6 @@ void ServerApp::handleDeathAndRespawn()
         }
     }
     if (!toDestroy.empty()) {
-        Logger::instance().info("Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
         for (EntityId id : toDestroy) {
             EntityDestroyedPacket pkt{};
             pkt.entityId = id;
