@@ -76,6 +76,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     monsterMovementSys_.update(registry_, deltaTime);
     monsterSpawnSys_.update(registry_, deltaTime);
     enemyShootingSys_.update(registry_, deltaTime);
+    boundarySys_.update(registry_);
 
     updateRespawnTimers(deltaTime);
     updateInvincibilityTimers(deltaTime);
