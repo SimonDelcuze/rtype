@@ -61,6 +61,21 @@ namespace
         data.layer    = 1;
         data.spriteId = "bullet";
         registry.registerType(3, data);
+
+        auto enemyEntry = manifest.findTextureById("enemy_bullet");
+        if (enemyEntry) {
+            if (!textures.has(enemyEntry->id))
+                textures.load(enemyEntry->id, "client/assets/" + enemyEntry->path);
+            
+            auto* enemyTex = textures.get(enemyEntry->id);
+            if (enemyTex) {
+                RenderTypeData enemyData{};
+                enemyData.texture  = enemyTex;
+                enemyData.layer    = 1;
+                enemyData.spriteId = "enemy_bullet";
+                registry.registerType(15, enemyData);
+            }
+        }
     }
 
     void registerObstacleType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
