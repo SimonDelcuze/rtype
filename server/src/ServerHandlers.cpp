@@ -72,7 +72,7 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
     EntityId entity = registry_.createEntity();
     registry_.emplace<TransformComponent>(entity, TransformComponent::create(100.0F, 400.0F));
     registry_.emplace<VelocityComponent>(entity, VelocityComponent::create(0.0F, 0.0F));
-    registry_.emplace<HealthComponent>(entity, HealthComponent::create(100));
+    registry_.emplace<HealthComponent>(entity, HealthComponent::create(1));
     registry_.emplace<PlayerInputComponent>(entity);
     registry_.emplace<TagComponent>(entity, TagComponent::create(EntityTag::Player));
     registry_.emplace<LivesComponent>(entity, LivesComponent::create(3, 3));
