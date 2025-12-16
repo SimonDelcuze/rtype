@@ -48,7 +48,7 @@ clean:
 	rm -rf build
 
 fclean: clean
-	rm -f rtype_client rtype_server rtype_client_tests rtype_server_tests rtype_shared_tests
+	rm -f r-type_client r-type_server rtype_client_tests rtype_server_tests rtype_shared_tests
 
 re: fclean all
 

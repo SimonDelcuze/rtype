@@ -48,3 +48,5 @@ target_include_directories(rtype_client
 )
 
 target_compile_options(rtype_client PRIVATE ${RTYPE_COMPILE_OPTIONS})
+
+set_target_properties(rtype_client PROPERTIES OUTPUT_NAME "r-type_client")

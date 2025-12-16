@@ -40,3 +40,5 @@ target_include_directories(rtype_server
 )
 
 target_compile_options(rtype_server PRIVATE ${RTYPE_COMPILE_OPTIONS})
+
+set_target_properties(rtype_server PROPERTIES OUTPUT_NAME "r-type_server")

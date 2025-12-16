@@ -69,3 +69,5 @@ rtype_client_tests
 rtype_server_tests
 rtype_shared_tests
 logs
+r-type_client
+r-type_server
