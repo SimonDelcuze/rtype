@@ -26,8 +26,8 @@ $BuildDir = Join-Path $ProjectRoot "build"
 function Show-Usage {
     Write-Host "Usage: .\build.ps1 [-Target <all|client|server|shared>]"
     Write-Host "  all (default): build all targets"
-    Write-Host "  client       : build only rtype_client"
-    Write-Host "  server       : build only rtype_server"
+    Write-Host "  client       : build only rtype_client target (generates r-type_client)"
+    Write-Host "  server       : build only rtype_server target (generates r-type_server)"
     Write-Host "  shared       : build only rtype_shared_tests"
     exit 1
 }

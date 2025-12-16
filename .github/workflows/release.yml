@@ -58,8 +58,8 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p distribute
-          cp rtype_client distribute/
-          cp rtype_server distribute/
+          cp r-type_client distribute/
+          cp r-type_server distribute/
           tar -czvf ${{ matrix.asset_name }} -C distribute .
 
       - name: Prepare Artifacts (Windows)
@@ -67,8 +67,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path distribute
-          Copy-Item rtype_client.exe -Destination distribute\
-          Copy-Item rtype_server.exe -Destination distribute\
+          Copy-Item r-type_client.exe -Destination distribute\
+          Copy-Item r-type_server.exe -Destination distribute\
           Compress-Archive -Path distribute\* -DestinationPath ${{ matrix.asset_name }}
 
       - name: Upload Artifact
