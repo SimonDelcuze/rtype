@@ -146,5 +146,6 @@ The current `Level1.cpp` flow is a static C++ script. The new system replaces it
 ## Related Docs
 
 - `docs/server/levels-and-waves.md`
+- `docs/server/level-loader-design.md`
 - `docs/protocol/level-messages.md`
 - `docs/client/level-init-system.md`

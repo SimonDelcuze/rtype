@@ -8,7 +8,9 @@ It is aligned with the R-Type level system spec and is validated against the sch
 ## File Location and Naming
 
 - Levels live under `server/assets/levels/`.
-- File names follow `level_<id>.json` (example: `level_01.json`).
+- The loader first uses the registry; without registry it tries:
+  - `level_<id>.json`
+  - `level_<id:02>.json` (zero-padded, example: `level_01.json`)
 
 ## Top-Level Structure
 

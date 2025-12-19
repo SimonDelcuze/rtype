@@ -345,9 +345,10 @@
     },
     "repeat": {
       "type": "object",
+      "required": ["interval"],
       "additionalProperties": false,
       "properties": {
-        "interval": { "type": "number", "minimum": 0.0 },
+        "interval": { "type": "number", "exclusiveMinimum": 0.0 },
         "count": { "type": "integer", "minimum": 1 },
         "until": { "$ref": "#/$defs/trigger" }
       },
