@@ -168,10 +168,10 @@ void ConnectionMenu::render(Registry&, Window&) {}
 ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
 {
     Result result;
-    result.useDefault   = useDefault_;
-    result.openSettings = openSettings_;
+    result.useDefault    = useDefault_;
+    result.openSettings  = openSettings_;
     result.exitRequested = exitRequested_;
-    result.connected    = done_ && !openSettings_;
+    result.connected     = done_ && !openSettings_;
 
     for (EntityId entity : registry.view<InputFieldComponent, FocusableComponent>()) {
         auto& focus = registry.get<FocusableComponent>(entity);
@@ -204,8 +204,8 @@ void ConnectionMenu::setError(Registry& registry, const std::string& message)
 
 void ConnectionMenu::reset()
 {
-    done_         = false;
-    useDefault_   = false;
-    openSettings_ = false;
+    done_          = false;
+    useDefault_    = false;
+    openSettings_  = false;
     exitRequested_ = false;
 }

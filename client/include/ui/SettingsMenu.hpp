@@ -1,8 +1,8 @@
 #pragma once
 
-#include "input/KeyBindings.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "input/KeyBindings.hpp"
 #include "ui/IMenu.hpp"
 
 #include <optional>
