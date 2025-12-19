@@ -96,7 +96,13 @@ class LevelDirector
     std::vector<EventRuntime> segmentEvents_;
     std::vector<DispatchedEvent> firedEvents_;
 
-    std::unordered_map<std::string, EntityId> spawnEntities_;
+    struct SpawnGroup
+    {
+        std::unordered_set<EntityId> entities;
+        bool spawned = false;
+    };
+
+    std::unordered_map<std::string, SpawnGroup> spawnEntities_;
     std::unordered_map<std::string, BossRuntime> bossStates_;
     std::unordered_set<std::string> checkpoints_;
     bool finished_ = false;
