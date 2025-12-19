@@ -42,20 +42,20 @@ std::vector<SpawnEvent> Level1::buildTimeline(const HitboxComponent& hitbox,
     };
 
     std::vector<WavePlan> waves;
-    waves.push_back({Waves::stagger(0.0F, spawnX, 140.0F, 55.0F, 6, 0, 1, hitbox, shooting, 0.55F), 1.0F, 1.6F, 3});
-    waves.push_back({Waves::triangle(0.0F, spawnX, 260.0F, 42.0F, 3, 38.0F, 1, 1, hitbox, shooting), 5.5F, 1.9F, 4});
+    waves.push_back({Waves::stagger(0.0F, spawnX, 140.0F, 55.0F, 6, 0, 1, hitbox, shooting, 0.55F), 1.0F, 1.6F, 1});
+    waves.push_back({Waves::triangle(0.0F, spawnX, 260.0F, 42.0F, 3, 38.0F, 1, 1, hitbox, shooting), 5.5F, 1.9F, 1});
     waves.push_back(
-        {Waves::serpent(0.0F, spawnX, 110.0F, 30.0F, 8, 110.0F, 0.4F, 2, 1, hitbox, shooting), 9.0F, 1.8F, 3});
-    waves.push_back({Waves::cross(0.0F, spawnX - 20.0F, 320.0F, 48.0F, 3, 3, 2, hitbox, shooting), 13.5F, 2.2F, 2});
-    waves.push_back({Waves::line(0.0F, spawnX, 80.0F, 90.0F, 4, 4, 1, hitbox, shooting), 18.0F, 1.7F, 3});
-    waves.push_back({Waves::line(0.0F, spawnX, 520.0F, -90.0F, 4, 4, 1, hitbox, shooting), 18.8F, 1.7F, 3});
+        {Waves::serpent(0.0F, spawnX, 110.0F, 30.0F, 8, 110.0F, 0.4F, 2, 1, hitbox, shooting), 9.0F, 1.8F, 1});
+    waves.push_back({Waves::cross(0.0F, spawnX - 20.0F, 320.0F, 48.0F, 3, 3, 2, hitbox, shooting), 13.5F, 2.2F, 1});
+    waves.push_back({Waves::line(0.0F, spawnX, 80.0F, 90.0F, 4, 4, 1, hitbox, shooting), 18.0F, 1.7F, 1});
+    waves.push_back({Waves::line(0.0F, spawnX, 520.0F, -90.0F, 4, 4, 1, hitbox, shooting), 18.8F, 1.7F, 1});
     waves.push_back(
-        {Waves::triangle(0.0F, spawnX - 30.0F, 200.0F, 36.0F, 3, 34.0F, 5, 2, hitbox, shooting), 22.5F, 2.2F, 3});
+        {Waves::triangle(0.0F, spawnX - 30.0F, 200.0F, 36.0F, 3, 34.0F, 5, 2, hitbox, shooting), 22.5F, 2.2F, 1});
     waves.push_back(
-        {Waves::serpent(0.0F, spawnX, 160.0F, 28.0F, 8, 140.0F, 0.35F, 3, 2, hitbox, shooting), 29.0F, 2.0F, 2});
-    waves.push_back({Waves::stagger(0.0F, spawnX, 340.0F, -35.0F, 8, 4, 1, hitbox, shooting, 0.32F), 35.5F, 1.8F, 2});
-    waves.push_back({Waves::cross(0.0F, spawnX - 40.0F, 300.0F, 44.0F, 3, 5, 3, hitbox, shooting), 42.0F, 2.5F, 2});
-    waves.push_back({Waves::line(0.0F, spawnX, 120.0F, 70.0F, 6, 0, 1, hitbox, shooting), 48.0F, 1.6F, 3});
+        {Waves::serpent(0.0F, spawnX, 160.0F, 28.0F, 8, 140.0F, 0.35F, 3, 2, hitbox, shooting), 29.0F, 2.0F, 1});
+    waves.push_back({Waves::stagger(0.0F, spawnX, 340.0F, -35.0F, 8, 4, 1, hitbox, shooting, 0.32F), 35.5F, 1.8F, 1});
+    waves.push_back({Waves::cross(0.0F, spawnX - 40.0F, 300.0F, 44.0F, 3, 5, 3, hitbox, shooting), 42.0F, 2.5F, 1});
+    waves.push_back({Waves::line(0.0F, spawnX, 120.0F, 70.0F, 6, 0, 1, hitbox, shooting), 48.0F, 1.6F, 1});
 
     std::vector<SpawnEvent> out;
     for (auto& wave : waves) {
