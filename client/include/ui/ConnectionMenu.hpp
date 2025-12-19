@@ -11,9 +11,9 @@ class ConnectionMenu : public IMenu
   public:
     struct Result
     {
-        bool connected    = false;
-        bool useDefault   = false;
-        bool openSettings = false;
+        bool connected     = false;
+        bool useDefault    = false;
+        bool openSettings  = false;
         bool exitRequested = false;
         std::string ip;
         std::string port;

@@ -80,7 +80,7 @@ SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBind
 
 void SettingsMenu::create(Registry& registry)
 {
-    done_          = false;
+    done_ = false;
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
 
@@ -90,8 +90,8 @@ void SettingsMenu::create(Registry& registry)
     createBackground(registry, textures_);
     createCenteredText(registry, 40.0F, "SETTINGS");
 
-    float startY  = 150.0F;
-    float spacing = 80.0F;
+    float startY                                                = 150.0F;
+    float spacing                                               = 80.0F;
     std::array<std::pair<BindingAction, std::string>, 5> labels = {{
         {BindingAction::Up, "Move Up"},
         {BindingAction::Down, "Move Down"},
@@ -127,8 +127,8 @@ void SettingsMenu::create(Registry& registry)
                 break;
         }
 
-        EntityId buttonId = createCenteredButton(registry, y, keyToString(key),
-                                                 [this, action, &registry]() { startRebinding(registry, action); });
+        EntityId buttonId      = createCenteredButton(registry, y, keyToString(key),
+                                                      [this, action, &registry]() { startRebinding(registry, action); });
         actionButtons_[action] = buttonId;
     }
 
