@@ -21,6 +21,7 @@ target_include_directories(rtype_server_lib
 target_link_libraries(rtype_server_lib
     PRIVATE
         rtype_shared
+        nlohmann_json::nlohmann_json
 )
 
 add_executable(rtype_server

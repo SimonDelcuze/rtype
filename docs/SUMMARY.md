@@ -45,6 +45,7 @@
 * [Level Templates](server/level-templates.md)
 * [Level Timeline & Triggers](server/level-timeline.md)
 * [Boss Specification](server/level-boss-spec.md)
+* [Level Loader Design](server/level-loader-design.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
