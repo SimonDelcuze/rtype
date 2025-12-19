@@ -80,7 +80,7 @@ SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBind
 
 void SettingsMenu::create(Registry& registry)
 {
-    done_ = false;
+    done_          = false;
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
 
