@@ -44,6 +44,7 @@
 * [Level JSON Format (v1)](server/level-json-format.md)
 * [Level Templates](server/level-templates.md)
 * [Level Timeline & Triggers](server/level-timeline.md)
+* [Boss Specification](server/level-boss-spec.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
