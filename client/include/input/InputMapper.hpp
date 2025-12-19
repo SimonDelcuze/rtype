@@ -3,6 +3,7 @@
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <cstdint>
+#include "input/KeyBindings.hpp"
 #include <network/InputPacket.hpp>
 
 class InputMapper
@@ -27,10 +28,13 @@ class InputMapper
     virtual ~InputMapper() = default;
     void handleEvent(const sf::Event& event);
     virtual std::uint16_t pollFlags() const;
+    void setBindings(const KeyBindings& bindings);
+    KeyBindings getBindings() const;
 
   private:
     void setKeyState(sf::Keyboard::Key key, bool pressed);
 
+    KeyBindings bindings_ = KeyBindings::defaults();
     bool upPressed_    = false;
     bool downPressed_  = false;
     bool leftPressed_  = false;

@@ -29,23 +29,24 @@ void InputMapper::handleEvent(const sf::Event& event)
 
 void InputMapper::setKeyState(sf::Keyboard::Key key, bool pressed)
 {
-    switch (key) {
-        case sf::Keyboard::Key::Up:
-            upPressed_ = pressed;
-            break;
-        case sf::Keyboard::Key::Down:
-            downPressed_ = pressed;
-            break;
-        case sf::Keyboard::Key::Left:
-            leftPressed_ = pressed;
-            break;
-        case sf::Keyboard::Key::Right:
-            rightPressed_ = pressed;
-            break;
-        case sf::Keyboard::Key::Space:
-            firePressed_ = pressed;
-            break;
-        default:
-            break;
-    }
+    if (key == bindings_.up)
+        upPressed_ = pressed;
+    if (key == bindings_.down)
+        downPressed_ = pressed;
+    if (key == bindings_.left)
+        leftPressed_ = pressed;
+    if (key == bindings_.right)
+        rightPressed_ = pressed;
+    if (key == bindings_.fire)
+        firePressed_ = pressed;
+}
+
+void InputMapper::setBindings(const KeyBindings& bindings)
+{
+    bindings_ = bindings;
+}
+
+KeyBindings InputMapper::getBindings() const
+{
+    return bindings_;
 }

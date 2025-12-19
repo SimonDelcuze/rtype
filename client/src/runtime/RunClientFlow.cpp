@@ -182,6 +182,7 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosX            = 0.0F;
     float playerPosY            = 0.0F;
     InputMapper mapper;
+    mapper.setBindings(g_keyBindings);
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
