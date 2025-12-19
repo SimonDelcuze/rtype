@@ -9,6 +9,8 @@
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include <utility>
+
 namespace
 {
 
@@ -99,10 +101,16 @@ namespace
 
 } // namespace
 
-ConnectionMenu::ConnectionMenu(FontManager& fonts, TextureManager& textures) : fonts_(fonts), textures_(textures) {}
+ConnectionMenu::ConnectionMenu(FontManager& fonts, TextureManager& textures, std::string initialError)
+    : fonts_(fonts), textures_(textures), initialError_(std::move(initialError))
+{}
 
 void ConnectionMenu::create(Registry& registry)
 {
+    done_         = false;
+    useDefault_   = false;
+    openSettings_ = false;
+
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
 
@@ -124,6 +132,17 @@ void ConnectionMenu::create(Registry& registry)
         done_       = true;
         useDefault_ = true;
     });
+
+    createButton(registry, 550.0F, 620.0F, "Settings", sf::Color(70, 70, 70), [this]() {
+        Logger::instance().info("Settings clicked");
+        done_         = true;
+        openSettings_ = true;
+    });
+
+    if (!initialError_.empty()) {
+        setError(registry, initialError_);
+        initialError_.clear();
+    }
 }
 
 void ConnectionMenu::destroy(Registry& registry)
@@ -143,8 +162,9 @@ void ConnectionMenu::render(Registry&, Window&) {}
 ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
 {
     Result result;
-    result.useDefault = useDefault_;
-    result.connected  = done_;
+    result.useDefault   = useDefault_;
+    result.openSettings = openSettings_;
+    result.connected    = done_ && !openSettings_;
 
     for (EntityId entity : registry.view<InputFieldComponent, FocusableComponent>()) {
         auto& focus = registry.get<FocusableComponent>(entity);
@@ -177,6 +197,7 @@ void ConnectionMenu::setError(Registry& registry, const std::string& message)
 
 void ConnectionMenu::reset()
 {
-    done_       = false;
-    useDefault_ = false;
+    done_         = false;
+    useDefault_   = false;
+    openSettings_ = false;
 }

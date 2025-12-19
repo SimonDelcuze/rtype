@@ -8,6 +8,7 @@
 #include "level/EntityTypeSetup.hpp"
 
 std::atomic<bool> g_running{true};
+KeyBindings g_keyBindings = KeyBindings::defaults();
 
 int runClient(const ClientOptions& options)
 {

@@ -8,9 +8,9 @@
 #include "network/EndpointParser.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
-#include "systems/InputFieldSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/MenuRunner.hpp"
+#include "ui/SettingsMenu.hpp"
 #include "ui/WaitingRoomMenu.hpp"
 
 #include <SFML/System/Clock.hpp>
@@ -19,63 +19,28 @@
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage)
 {
-    Registry menuRegistry;
-    ConnectionMenu menu(fontManager, textureManager);
-    menu.create(menuRegistry);
+    MenuRunner runner(window, fontManager, textureManager, g_running);
 
-    if (!errorMessage.empty()) {
-        menu.setError(menuRegistry, errorMessage);
+    while (window.isOpen()) {
+        auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
         errorMessage.clear();
-    }
 
-    ButtonSystem buttonSystem(window, fontManager);
-    HUDSystem hudSystem(window, fontManager, textureManager);
-    InputFieldSystem inputFieldSystem(window, fontManager);
-    sf::Clock clock;
+        if (!window.isOpen())
+            return std::nullopt;
 
-    while (window.isOpen() && !menu.isDone() && g_running) {
-        float dt = clock.restart().asSeconds();
-        window.pollEvents([&](const sf::Event& event) {
-            if (event.is<sf::Event::Closed>()) {
-                window.close();
-                return;
-            }
-            buttonSystem.handleEvent(menuRegistry, event);
-            inputFieldSystem.handleEvent(menuRegistry, event);
-        });
-
-        buttonSystem.update(menuRegistry, dt);
-        inputFieldSystem.update(menuRegistry, dt);
-
-        window.clear(sf::Color(30, 30, 40));
-        for (EntityId entity : menuRegistry.view<TransformComponent, SpriteComponent>()) {
-            auto& transform = menuRegistry.get<TransformComponent>(entity);
-            auto& sprite    = menuRegistry.get<SpriteComponent>(entity);
-            if (sprite.hasSprite()) {
-                auto* spr = const_cast<sf::Sprite*>(sprite.raw());
-                spr->setPosition(sf::Vector2f{transform.x, transform.y});
-                spr->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
-                window.draw(*spr);
-            }
+        if (result.openSettings) {
+            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
+            g_keyBindings       = settingsResult.bindings;
+            continue;
         }
-        buttonSystem.update(menuRegistry, dt);
-        inputFieldSystem.update(menuRegistry, dt);
-        hudSystem.update(menuRegistry, dt);
-        window.display();
+
+        if (result.useDefault) {
+            return IpEndpoint::v4(127, 0, 0, 1, 50010);
+        }
+        return parseEndpoint(result.ip, result.port);
     }
 
-    if (!window.isOpen()) {
-        menu.destroy(menuRegistry);
-        return std::nullopt;
-    }
-
-    auto result = menu.getResult(menuRegistry);
-    menu.destroy(menuRegistry);
-
-    if (result.useDefault) {
-        return IpEndpoint::v4(127, 0, 0, 1, 50010);
-    }
-    return parseEndpoint(result.ip, result.port);
+    return std::nullopt;
 }
 
 std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
@@ -89,15 +54,25 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
     TextureManager textureManager;
     MenuRunner runner(window, fontManager, textureManager, g_running);
 
-    auto result = runner.runAndGetResult<ConnectionMenu>();
+    while (window.isOpen()) {
+        auto result = runner.runAndGetResult<ConnectionMenu>();
 
-    if (!window.isOpen())
-        return std::nullopt;
+        if (!window.isOpen())
+            return std::nullopt;
 
-    if (result.useDefault)
-        return IpEndpoint::v4(127, 0, 0, 1, 50010);
+        if (result.openSettings) {
+            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
+            g_keyBindings       = settingsResult.bindings;
+            continue;
+        }
 
-    return parseEndpoint(result.ip, result.port);
+        if (result.useDefault)
+            return IpEndpoint::v4(127, 0, 0, 1, 50010);
+
+        return parseEndpoint(result.ip, result.port);
+    }
+
+    return std::nullopt;
 }
 
 JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutSeconds)

@@ -10,6 +10,7 @@
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
 #include "input/InputBuffer.hpp"
+#include "input/KeyBindings.hpp"
 #include "input/InputMapper.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
@@ -23,6 +24,7 @@
 #include <thread>
 
 extern std::atomic<bool> g_running;
+extern KeyBindings g_keyBindings;
 
 enum class JoinResult
 {
