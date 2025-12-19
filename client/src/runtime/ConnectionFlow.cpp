@@ -31,7 +31,14 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
         if (result.openSettings) {
             auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
             g_keyBindings       = settingsResult.bindings;
+            if (!window.isOpen())
+                return std::nullopt;
             continue;
+        }
+
+        if (result.exitRequested) {
+            window.close();
+            return std::nullopt;
         }
 
         if (result.useDefault) {
@@ -63,7 +70,14 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
         if (result.openSettings) {
             auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
             g_keyBindings       = settingsResult.bindings;
+            if (!window.isOpen())
+                return std::nullopt;
             continue;
+        }
+
+        if (result.exitRequested) {
+            window.close();
+            return std::nullopt;
         }
 
         if (result.useDefault)

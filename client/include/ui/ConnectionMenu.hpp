@@ -14,6 +14,7 @@ class ConnectionMenu : public IMenu
         bool connected    = false;
         bool useDefault   = false;
         bool openSettings = false;
+        bool exitRequested = false;
         std::string ip;
         std::string port;
     };
@@ -37,5 +38,6 @@ class ConnectionMenu : public IMenu
     bool done_          = false;
     bool useDefault_    = false;
     bool openSettings_  = false;
+    bool exitRequested_ = false;
     EntityId errorText_ = 0;
 };

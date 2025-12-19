@@ -139,6 +139,12 @@ void ConnectionMenu::create(Registry& registry)
         openSettings_ = true;
     });
 
+    createButton(registry, 1050.0F, 620.0F, "Quit", sf::Color(120, 50, 50), [this]() {
+        Logger::instance().info("Quit clicked");
+        done_          = true;
+        exitRequested_ = true;
+    });
+
     if (!initialError_.empty()) {
         setError(registry, initialError_);
         initialError_.clear();
@@ -164,6 +170,7 @@ ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
     Result result;
     result.useDefault   = useDefault_;
     result.openSettings = openSettings_;
+    result.exitRequested = exitRequested_;
     result.connected    = done_ && !openSettings_;
 
     for (EntityId entity : registry.view<InputFieldComponent, FocusableComponent>()) {
@@ -200,4 +207,5 @@ void ConnectionMenu::reset()
     done_         = false;
     useDefault_   = false;
     openSettings_ = false;
+    exitRequested_ = false;
 }
