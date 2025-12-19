@@ -91,6 +91,8 @@ Supported triggers in v1:
 - `hp_below` (boss hp threshold)
 - `all_of` / `any_of` composite triggers
 
+See `docs/server/level-timeline.md` for trigger semantics and evaluation order.
+
 ## Events
 
 Supported event types in v1:
