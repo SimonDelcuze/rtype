@@ -65,6 +65,8 @@ Templates provide reusable data blocks referenced by events:
 - `enemies`: typeId + hitbox/collider + defaults
 - `obstacles`: typeId + hitbox/collider + defaults
 
+See `docs/server/level-templates.md` for semantics and override rules.
+
 ## Segments
 
 Segments are evaluated in order. Each segment defines:
