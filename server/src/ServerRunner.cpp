@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-#include <utility>
 #include <thread>
+#include <utility>
 
 namespace
 {
@@ -286,13 +286,13 @@ void ServerApp::handleDeathAndRespawn()
         if (health.current <= 0) {
             const bool isPlayer =
                 registry_.has<TagComponent>(id) && registry_.get<TagComponent>(id).hasTag(EntityTag::Player);
-            float deathX       = 0.0F;
-            float deathY       = 0.0F;
-            bool hadTransform  = false;
+            float deathX      = 0.0F;
+            float deathY      = 0.0F;
+            bool hadTransform = false;
             if (registry_.has<TransformComponent>(id)) {
-                auto& t = registry_.get<TransformComponent>(id);
-                deathX  = t.x;
-                deathY  = t.y;
+                auto& t      = registry_.get<TransformComponent>(id);
+                deathX       = t.x;
+                deathY       = t.y;
                 hadTransform = true;
             }
             if (registry_.has<LivesComponent>(id)) {
