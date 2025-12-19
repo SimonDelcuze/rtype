@@ -1,0 +1,673 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rtype.local/schema/level-v1.json",
+  "title": "R-Type Level Schema v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "levelId",
+    "meta",
+    "archetypes",
+    "patterns",
+    "templates",
+    "segments"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "levelId": { "type": "integer", "minimum": 1 },
+    "meta": {
+      "type": "object",
+      "required": ["backgroundId", "musicId"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "backgroundId": { "$ref": "#/$defs/nonEmptyString" },
+        "musicId": { "$ref": "#/$defs/nonEmptyString" },
+        "author": { "$ref": "#/$defs/nonEmptyString" },
+        "difficulty": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "archetypes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/archetype" }
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/pattern" }
+    },
+    "templates": {
+      "type": "object",
+      "required": ["hitboxes", "colliders", "enemies", "obstacles"],
+      "additionalProperties": false,
+      "properties": {
+        "hitboxes": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/hitbox" }
+        },
+        "colliders": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/collider" }
+        },
+        "enemies": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/enemyTemplate" }
+        },
+        "obstacles": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/obstacleTemplate" }
+        }
+      }
+    },
+    "bosses": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/boss" }
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/segment" }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "vector2": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "archetype": {
+      "type": "object",
+      "required": ["typeId", "spriteId", "animId", "layer"],
+      "additionalProperties": false,
+      "properties": {
+        "typeId": { "type": "integer", "minimum": 1 },
+        "spriteId": { "$ref": "#/$defs/nonEmptyString" },
+        "animId": { "type": "string" },
+        "layer": { "type": "integer" }
+      }
+    },
+    "pattern": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["id", "type", "speed"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "type": { "const": "linear" },
+            "speed": { "type": "number" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["id", "type", "speed", "amplitude", "frequency"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "type": { "const": "zigzag" },
+            "speed": { "type": "number" },
+            "amplitude": { "type": "number" },
+            "frequency": { "type": "number" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["id", "type", "speed", "amplitude", "frequency"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "type": { "const": "sine" },
+            "speed": { "type": "number" },
+            "amplitude": { "type": "number" },
+            "frequency": { "type": "number" },
+            "phase": { "type": "number" },
+            "notes": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "hitbox": {
+      "type": "object",
+      "required": ["width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "number", "minimum": 0.0 },
+        "height": { "type": "number", "minimum": 0.0 },
+        "offsetX": { "type": "number" },
+        "offsetY": { "type": "number" },
+        "active": { "type": "boolean" }
+      }
+    },
+    "collider": {
+      "type": "object",
+      "required": ["shape"],
+      "additionalProperties": false,
+      "properties": {
+        "shape": { "enum": ["box", "circle", "polygon"] },
+        "offsetX": { "type": "number" },
+        "offsetY": { "type": "number" },
+        "active": { "type": "boolean" },
+        "width": { "type": "number", "minimum": 0.0 },
+        "height": { "type": "number", "minimum": 0.0 },
+        "radius": { "type": "number", "minimum": 0.0 },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/$defs/vector2" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "shape": { "const": "box" } } },
+          "then": { "required": ["width", "height"] }
+        },
+        {
+          "if": { "properties": { "shape": { "const": "circle" } } },
+          "then": { "required": ["radius"] }
+        },
+        {
+          "if": { "properties": { "shape": { "const": "polygon" } } },
+          "then": { "required": ["points"] }
+        }
+      ]
+    },
+    "shooting": {
+      "type": "object",
+      "required": ["interval", "speed", "damage", "lifetime"],
+      "additionalProperties": false,
+      "properties": {
+        "interval": { "type": "number", "minimum": 0.0 },
+        "speed": { "type": "number" },
+        "damage": { "type": "integer", "minimum": 0 },
+        "lifetime": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "enemyTemplate": {
+      "type": "object",
+      "required": ["typeId", "hitbox", "collider", "health", "scale"],
+      "additionalProperties": false,
+      "properties": {
+        "typeId": { "type": "integer", "minimum": 1 },
+        "hitbox": { "$ref": "#/$defs/nonEmptyString" },
+        "collider": { "$ref": "#/$defs/nonEmptyString" },
+        "health": { "type": "integer", "minimum": 1 },
+        "scale": { "$ref": "#/$defs/vector2" },
+        "shooting": { "$ref": "#/$defs/shooting" }
+      }
+    },
+    "obstacleTemplate": {
+      "type": "object",
+      "required": ["typeId", "hitbox", "collider", "health", "anchor", "speedX", "speedY", "scale"],
+      "additionalProperties": false,
+      "properties": {
+        "typeId": { "type": "integer", "minimum": 1 },
+        "hitbox": { "$ref": "#/$defs/nonEmptyString" },
+        "collider": { "$ref": "#/$defs/nonEmptyString" },
+        "health": { "type": "integer", "minimum": 1 },
+        "anchor": { "enum": ["top", "bottom", "absolute"] },
+        "margin": { "type": "number", "minimum": 0.0 },
+        "speedX": { "type": "number" },
+        "speedY": { "type": "number" },
+        "scale": { "$ref": "#/$defs/vector2" }
+      }
+    },
+    "scroll": {
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["constant", "stopped", "curve"] },
+        "speedX": { "type": "number" },
+        "curve": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["time", "speedX"],
+            "additionalProperties": false,
+            "properties": {
+              "time": { "type": "number", "minimum": 0.0 },
+              "speedX": { "type": "number" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "constant" } } },
+          "then": { "required": ["speedX"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "curve" } } },
+          "then": { "required": ["curve"] }
+        }
+      ]
+    },
+    "trigger": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "time"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "time" },
+            "time": { "type": "number", "minimum": 0.0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "distance"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "distance" },
+            "distance": { "type": "number", "minimum": 0.0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "spawnId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "spawn_dead" },
+            "spawnId": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "bossId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "boss_dead" },
+            "bossId": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "count"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "enemy_count_at_most" },
+            "count": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "checkpointId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "checkpoint_reached" },
+            "checkpointId": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "bossId", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "hp_below" },
+            "bossId": { "$ref": "#/$defs/nonEmptyString" },
+            "value": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "triggers"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "all_of" },
+            "triggers": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/trigger" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "triggers"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "any_of" },
+            "triggers": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/trigger" }
+            }
+          }
+        }
+      ]
+    },
+    "repeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "interval": { "type": "number", "minimum": 0.0 },
+        "count": { "type": "integer", "minimum": 1 },
+        "until": { "$ref": "#/$defs/trigger" }
+      },
+      "anyOf": [{ "required": ["count"] }, { "required": ["until"] }]
+    },
+    "wave": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "enemy", "patternId", "spawnX", "startY", "deltaY", "count"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "line" },
+            "enemy": { "$ref": "#/$defs/nonEmptyString" },
+            "patternId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnX": { "type": "number" },
+            "startY": { "type": "number" },
+            "deltaY": { "type": "number" },
+            "count": { "type": "integer", "minimum": 1 },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "shootingEnabled": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "enemy", "patternId", "spawnX", "startY", "deltaY", "count", "spacing"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "stagger" },
+            "enemy": { "$ref": "#/$defs/nonEmptyString" },
+            "patternId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnX": { "type": "number" },
+            "startY": { "type": "number" },
+            "deltaY": { "type": "number" },
+            "count": { "type": "integer", "minimum": 1 },
+            "spacing": { "type": "number", "minimum": 0.0 },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "shootingEnabled": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "enemy", "patternId", "spawnX", "apexY", "rowHeight", "layers", "horizontalStep"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "triangle" },
+            "enemy": { "$ref": "#/$defs/nonEmptyString" },
+            "patternId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnX": { "type": "number" },
+            "apexY": { "type": "number" },
+            "rowHeight": { "type": "number" },
+            "layers": { "type": "integer", "minimum": 1 },
+            "horizontalStep": { "type": "number" },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "shootingEnabled": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "enemy", "patternId", "spawnX", "startY", "stepY", "count", "amplitudeX", "stepTime"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "serpent" },
+            "enemy": { "$ref": "#/$defs/nonEmptyString" },
+            "patternId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnX": { "type": "number" },
+            "startY": { "type": "number" },
+            "stepY": { "type": "number" },
+            "count": { "type": "integer", "minimum": 1 },
+            "amplitudeX": { "type": "number" },
+            "stepTime": { "type": "number", "minimum": 0.0 },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "shootingEnabled": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "enemy", "patternId", "centerX", "centerY", "step", "armLength"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "cross" },
+            "enemy": { "$ref": "#/$defs/nonEmptyString" },
+            "patternId": { "$ref": "#/$defs/nonEmptyString" },
+            "centerX": { "type": "number" },
+            "centerY": { "type": "number" },
+            "step": { "type": "number" },
+            "armLength": { "type": "integer", "minimum": 1 },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "shootingEnabled": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "event": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "trigger", "wave"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "spawn_wave" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "repeat": { "$ref": "#/$defs/repeat" },
+            "wave": { "$ref": "#/$defs/wave" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "obstacle", "x"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "spawn_obstacle" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "repeat": { "$ref": "#/$defs/repeat" },
+            "obstacle": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnId": { "$ref": "#/$defs/nonEmptyString" },
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "anchor": { "enum": ["top", "bottom", "absolute"] },
+            "margin": { "type": "number", "minimum": 0.0 },
+            "health": { "type": "integer", "minimum": 1 },
+            "scale": { "$ref": "#/$defs/vector2" },
+            "speedX": { "type": "number" },
+            "speedY": { "type": "number" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "bossId", "spawn"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "spawn_boss" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "bossId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawnId": { "$ref": "#/$defs/nonEmptyString" },
+            "spawn": {
+              "type": "object",
+              "required": ["x", "y"],
+              "additionalProperties": false,
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" }
+              }
+            },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "scroll"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_scroll" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "scroll": { "$ref": "#/$defs/scroll" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "backgroundId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_background" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "backgroundId": { "$ref": "#/$defs/nonEmptyString" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "musicId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_music" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "musicId": { "$ref": "#/$defs/nonEmptyString" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "bounds"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_camera_bounds" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "bounds": {
+              "type": "object",
+              "required": ["minX", "maxX", "minY", "maxY"],
+              "additionalProperties": false,
+              "properties": {
+                "minX": { "type": "number" },
+                "maxX": { "type": "number" },
+                "minY": { "type": "number" },
+                "maxY": { "type": "number" }
+              }
+            },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "gateId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "gate_open" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "gateId": { "$ref": "#/$defs/nonEmptyString" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "gateId"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "gate_close" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "gateId": { "$ref": "#/$defs/nonEmptyString" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "checkpointId", "respawn"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "checkpoint" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "checkpointId": { "$ref": "#/$defs/nonEmptyString" },
+            "respawn": {
+              "type": "object",
+              "required": ["x", "y"],
+              "additionalProperties": false,
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" }
+              }
+            },
+            "notes": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "segment": {
+      "type": "object",
+      "required": ["id", "scroll", "exit"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "scroll": { "$ref": "#/$defs/scroll" },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/event" }
+        },
+        "exit": { "$ref": "#/$defs/trigger" },
+        "bossRoom": { "type": "boolean" },
+        "cameraBounds": {
+          "type": "object",
+          "required": ["minX", "maxX", "minY", "maxY"],
+          "additionalProperties": false,
+          "properties": {
+            "minX": { "type": "number" },
+            "maxX": { "type": "number" },
+            "minY": { "type": "number" },
+            "maxY": { "type": "number" }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "boss": {
+      "type": "object",
+      "required": ["typeId", "hitbox", "collider", "health", "scale"],
+      "additionalProperties": false,
+      "properties": {
+        "typeId": { "type": "integer", "minimum": 1 },
+        "hitbox": { "$ref": "#/$defs/nonEmptyString" },
+        "collider": { "$ref": "#/$defs/nonEmptyString" },
+        "health": { "type": "integer", "minimum": 1 },
+        "scale": { "$ref": "#/$defs/vector2" },
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "trigger", "events"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/nonEmptyString" },
+              "trigger": { "$ref": "#/$defs/trigger" },
+              "events": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/event" }
+              }
+            }
+          }
+        },
+        "onDeath": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/event" }
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}
