@@ -42,6 +42,7 @@
 * [Levels & Waves](server/levels-and-waves.md)
 * [Level System Specification](server/level-system-spec.md)
 * [Level JSON Format (v1)](server/level-json-format.md)
+* [Level Templates](server/level-templates.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
