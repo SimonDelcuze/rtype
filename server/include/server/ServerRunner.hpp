@@ -69,6 +69,7 @@ class ServerApp
     void updateInvincibilityTimers(float deltaTime);
     void handleDeathAndRespawn();
     void syncEntityLifecycle();
+    void spawnPlayerDeathFx(float x, float y);
 
     Registry registry_;
     std::map<std::uint32_t, EntityId> playerEntities_;

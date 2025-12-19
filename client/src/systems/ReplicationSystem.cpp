@@ -264,6 +264,8 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
             tag = EntityTag::Obstacle;
         } else if (typeId >= 3 && typeId <= 8) {
             tag = EntityTag::Projectile;
+        } else if (typeId == 16) {
+            tag = EntityTag::Background;
         }
         registry.emplace<TagComponent>(id, TagComponent::create(tag));
     }

@@ -12,7 +12,15 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <utility>
 #include <thread>
+
+namespace
+{
+    constexpr std::uint16_t kPlayerDeathFxType   = 16;
+    constexpr float kPlayerDeathFxLifetime       = 0.9F;
+    constexpr float kOffscreenRespawnPlaceholder = -10000.0F;
+} // namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
     : levelScript_(buildSpawnSetupForLevel(1)), playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
@@ -255,29 +263,62 @@ void ServerApp::updateInvincibilityTimers(float deltaTime)
     }
 }
 
+void ServerApp::spawnPlayerDeathFx(float x, float y)
+{
+    EntityId fx = registry_.createEntity();
+    registry_.emplace<TransformComponent>(fx, TransformComponent::create(x, y));
+    registry_.emplace<RenderTypeComponent>(fx, RenderTypeComponent::create(kPlayerDeathFxType));
+
+    MissileComponent lifetime{};
+    lifetime.damage   = 0;
+    lifetime.lifetime = kPlayerDeathFxLifetime;
+    registry_.emplace<MissileComponent>(fx, lifetime);
+}
+
 void ServerApp::handleDeathAndRespawn()
 {
     std::vector<EntityId> toDestroy;
+    std::vector<std::pair<float, float>> deathFxToSpawn;
     for (EntityId id : registry_.view<HealthComponent>()) {
         if (!registry_.isAlive(id))
             continue;
         auto& health = registry_.get<HealthComponent>(id);
         if (health.current <= 0) {
+            const bool isPlayer =
+                registry_.has<TagComponent>(id) && registry_.get<TagComponent>(id).hasTag(EntityTag::Player);
+            float deathX       = 0.0F;
+            float deathY       = 0.0F;
+            bool hadTransform  = false;
+            if (registry_.has<TransformComponent>(id)) {
+                auto& t = registry_.get<TransformComponent>(id);
+                deathX  = t.x;
+                deathY  = t.y;
+                hadTransform = true;
+            }
             if (registry_.has<LivesComponent>(id)) {
                 auto& lives = registry_.get<LivesComponent>(id);
                 if (lives.current > 0) {
                     if (!registry_.has<RespawnTimerComponent>(id)) {
                         lives.loseLife();
+                        if (isPlayer && hadTransform) {
+                            deathFxToSpawn.emplace_back(deathX, deathY);
+                        }
                         registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
                         if (registry_.has<TransformComponent>(id)) {
-                            registry_.get<TransformComponent>(id).y = -10000.0F;
+                            registry_.get<TransformComponent>(id).y = kOffscreenRespawnPlaceholder;
                         }
                     }
                     continue;
                 }
             }
+            if (isPlayer && hadTransform) {
+                deathFxToSpawn.emplace_back(deathX, deathY);
+            }
             toDestroy.push_back(id);
         }
+    }
+    for (const auto& pos : deathFxToSpawn) {
+        spawnPlayerDeathFx(pos.first, pos.second);
     }
     if (!toDestroy.empty()) {
         for (EntityId id : toDestroy) {
