@@ -155,6 +155,7 @@ LevelDefinition ServerApp::buildLevel() const
     lvl.archetypes.push_back(LevelArchetype{7, "bullet", "bullet_charge_lvl4", 0});
     lvl.archetypes.push_back(LevelArchetype{8, "bullet", "bullet_charge_lvl5", 0});
     lvl.archetypes.push_back(LevelArchetype{15, "enemy_bullet", "enemy_bullet_basic", 0});
+    lvl.archetypes.push_back(LevelArchetype{16, "bullet", "player_death", 50});
     lvl.archetypes.push_back(LevelArchetype{9, "obstacle_top", "", 0});
     lvl.archetypes.push_back(LevelArchetype{10, "obstacle_middle", "", 0});
     lvl.archetypes.push_back(LevelArchetype{11, "obstacle_bottom", "", 0});
