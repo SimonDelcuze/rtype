@@ -108,6 +108,8 @@ Supported event types in v1:
 - `gate_close`
 - `checkpoint`
 
+Boss behaviors are documented in `docs/server/level-boss-spec.md`.
+
 Events always include a `trigger`.
 
 `spawnId` is optional on spawn events and can be used to reference the entity
