@@ -40,6 +40,7 @@
   * [MovementComponent](server/components/movement-component.md)
 * [Systems](server/systems.md)
 * [Levels & Waves](server/levels-and-waves.md)
+* [Level System Specification](server/level-system-spec.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
