@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "levelId": 1,
+  "meta": {
+    "name": "Stage 1 - Test",
+    "backgroundId": "space_background",
+    "musicId": "theme_music",
+    "author": "team",
+    "difficulty": "normal"
+  },
+  "archetypes": [
+    { "typeId": 1, "spriteId": "player_ship", "animId": "player1", "layer": 0 },
+    { "typeId": 2, "spriteId": "mob1", "animId": "left", "layer": 0 },
+    { "typeId": 9, "spriteId": "obstacle_top", "animId": "", "layer": 0 },
+    { "typeId": 10, "spriteId": "obstacle_middle", "animId": "", "layer": 0 },
+    { "typeId": 11, "spriteId": "obstacle_bottom", "animId": "", "layer": 0 },
+    { "typeId": 50, "spriteId": "boss_01", "animId": "", "layer": 0 }
+  ],
+  "patterns": [
+    { "id": "p_linear_fast", "type": "linear", "speed": 160 },
+    { "id": "p_sine_mid", "type": "sine", "speed": 130, "amplitude": 160, "frequency": 0.6, "phase": 0.5 }
+  ],
+  "templates": {
+    "hitboxes": {
+      "enemy_small": { "width": 50, "height": 50, "offsetX": 0, "offsetY": 0, "active": true },
+      "ob_top": { "width": 147, "height": 23, "offsetX": 0, "offsetY": 0, "active": true },
+      "ob_mid": { "width": 105, "height": 47, "offsetX": 0, "offsetY": 0, "active": true },
+      "ob_bot": { "width": 146, "height": 40, "offsetX": 0, "offsetY": 0, "active": true },
+      "boss_hitbox": { "width": 200, "height": 120, "offsetX": 0, "offsetY": 0, "active": true }
+    },
+    "colliders": {
+      "enemy_small": { "shape": "box", "width": 50, "height": 50, "offsetX": 0, "offsetY": 0, "active": true },
+      "ob_top": {
+        "shape": "polygon",
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true,
+        "points": [
+          [0, 0],
+          [146, 0],
+          [146, 4],
+          [144, 7],
+          [139, 14],
+          [137, 16],
+          [129, 22],
+          [24, 22],
+          [4, 6],
+          [0, 2]
+        ]
+      },
+      "ob_mid": {
+        "shape": "polygon",
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true,
+        "points": [
+          [0, 24],
+          [2, 20],
+          [8, 10],
+          [10, 8],
+          [19, 2],
+          [21, 1],
+          [72, 1],
+          [90, 6],
+          [93, 7],
+          [101, 11],
+          [104, 14],
+          [104, 46],
+          [21, 46],
+          [19, 45],
+          [11, 39],
+          [1, 29],
+          [0, 27]
+        ]
+      },
+      "ob_bot": {
+        "shape": "polygon",
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true,
+        "points": [
+          [0, 35],
+          [1, 33],
+          [6, 26],
+          [8, 24],
+          [16, 18],
+          [18, 17],
+          [71, 0],
+          [80, 0],
+          [83, 1],
+          [119, 17],
+          [125, 21],
+          [138, 30],
+          [143, 34],
+          [145, 39],
+          [0, 39]
+        ]
+      },
+      "boss_collider": { "shape": "box", "width": 200, "height": 120, "offsetX": 0, "offsetY": 0, "active": true }
+    },
+    "enemies": {
+      "grunt": {
+        "typeId": 2,
+        "hitbox": "enemy_small",
+        "collider": "enemy_small",
+        "health": 2,
+        "scale": [1.6, 1.6],
+        "shooting": { "interval": 1.4, "speed": 320, "damage": 6, "lifetime": 3.2 }
+      }
+    },
+    "obstacles": {
+      "wall_top": {
+        "typeId": 9,
+        "hitbox": "ob_top",
+        "collider": "ob_top",
+        "health": 28,
+        "anchor": "top",
+        "margin": 0,
+        "speedX": -55,
+        "speedY": 0,
+        "scale": [1.6, 1.6]
+      },
+      "wall_mid": {
+        "typeId": 10,
+        "hitbox": "ob_mid",
+        "collider": "ob_mid",
+        "health": 30,
+        "anchor": "absolute",
+        "margin": 0,
+        "speedX": -60,
+        "speedY": 0,
+        "scale": [1.4, 1.4]
+      },
+      "wall_bot": {
+        "typeId": 11,
+        "hitbox": "ob_bot",
+        "collider": "ob_bot",
+        "health": 32,
+        "anchor": "bottom",
+        "margin": 0,
+        "speedX": -55,
+        "speedY": 0,
+        "scale": [1.9, 1.9]
+      }
+    }
+  },
+  "bosses": {
+    "boss1": {
+      "typeId": 50,
+      "hitbox": "boss_hitbox",
+      "collider": "boss_collider",
+      "health": 300,
+      "scale": [2.4, 2.4],
+      "phases": [
+        {
+          "id": "phase_intro",
+          "trigger": { "type": "time", "time": 0.0 },
+          "events": [
+            {
+              "type": "spawn_wave",
+              "trigger": { "type": "time", "time": 2.0 },
+              "wave": {
+                "type": "line",
+                "enemy": "grunt",
+                "patternId": "p_linear_fast",
+                "spawnX": 1200,
+                "startY": 120,
+                "deltaY": 60,
+                "count": 3,
+                "health": 2,
+                "scale": [1.4, 1.4],
+                "shootingEnabled": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "phase_low_hp",
+          "trigger": { "type": "hp_below", "bossId": "boss1", "value": 150 },
+          "events": [
+            {
+              "type": "spawn_wave",
+              "trigger": { "type": "time", "time": 1.0 },
+              "wave": {
+                "type": "serpent",
+                "enemy": "grunt",
+                "patternId": "p_sine_mid",
+                "spawnX": 1200,
+                "startY": 120,
+                "stepY": 40,
+                "count": 6,
+                "amplitudeX": 140,
+                "stepTime": 0.35,
+                "health": 2,
+                "scale": [1.4, 1.4],
+                "shootingEnabled": true
+              }
+            }
+          ]
+        }
+      ],
+      "onDeath": [
+        { "type": "gate_open", "trigger": { "type": "time", "time": 0.0 }, "gateId": "gate_boss_exit" }
+      ]
+    }
+  },
+  "segments": [
+    {
+      "id": "intro",
+      "scroll": { "mode": "constant", "speedX": -50 },
+      "events": [
+        {
+          "type": "spawn_wave",
+          "trigger": { "type": "time", "time": 1.0 },
+          "wave": {
+            "type": "stagger",
+            "enemy": "grunt",
+            "patternId": "p_linear_fast",
+            "spawnX": 1220,
+            "startY": 140,
+            "deltaY": 55,
+            "count": 6,
+            "spacing": 0.6,
+            "health": 2,
+            "scale": [1.6, 1.6],
+            "shootingEnabled": true
+          }
+        },
+        {
+          "type": "spawn_obstacle",
+          "trigger": { "type": "time", "time": 3.0 },
+          "obstacle": "wall_top",
+          "x": 1480,
+          "spawnId": "gate_boss_entry"
+        },
+        {
+          "type": "spawn_obstacle",
+          "trigger": { "type": "time", "time": 6.5 },
+          "obstacle": "wall_bot",
+          "x": 1480
+        },
+        {
+          "type": "spawn_obstacle",
+          "trigger": { "type": "time", "time": 9.5 },
+          "obstacle": "wall_mid",
+          "x": 1480,
+          "y": 260
+        },
+        {
+          "type": "checkpoint",
+          "trigger": { "type": "distance", "distance": 2200 },
+          "checkpointId": "cp_intro",
+          "respawn": { "x": 200, "y": 300 }
+        }
+      ],
+      "exit": { "type": "distance", "distance": 3000 }
+    },
+    {
+      "id": "boss_room",
+      "bossRoom": true,
+      "scroll": {
+        "mode": "curve",
+        "curve": [
+          { "time": 0.0, "speedX": -30 },
+          { "time": 6.0, "speedX": -10 }
+        ]
+      },
+      "events": [
+        { "type": "gate_close", "trigger": { "type": "time", "time": 0.0 }, "gateId": "gate_boss_entry" },
+        {
+          "type": "spawn_boss",
+          "trigger": { "type": "time", "time": 2.0 },
+          "bossId": "boss1",
+          "spawnId": "boss_01",
+          "spawn": { "x": 950, "y": 300 }
+        }
+      ],
+      "exit": { "type": "boss_dead", "bossId": "boss1" }
+    },
+    {
+      "id": "post_boss",
+      "scroll": { "mode": "constant", "speedX": -60 },
+      "events": [
+        {
+          "type": "set_background",
+          "trigger": { "type": "time", "time": 0.0 },
+          "backgroundId": "space_background"
+        }
+      ],
+      "exit": { "type": "time", "time": 12.0 }
+    }
+  ]
+}
