@@ -62,10 +62,10 @@ TEST(Level1, WavesFollowTheScript)
     Level1 level;
     auto script = level.buildScript();
 
-    const std::vector<WaveExpectation> expected{{6, 3, 1, 1.6F, 1.0F},   {9, 4, 1, 1.9F, 5.5F},  {8, 3, 1, 1.8F, 9.0F},
-                                                {13, 2, 2, 2.2F, 13.5F}, {4, 3, 1, 1.7F, 18.0F}, {4, 3, 1, 1.7F, 18.8F},
-                                                {9, 3, 2, 2.2F, 22.5F},  {8, 2, 2, 2.0F, 29.0F}, {8, 2, 1, 1.8F, 35.5F},
-                                                {13, 2, 3, 2.5F, 42.0F}, {6, 3, 1, 1.6F, 48.0F}};
+    const std::vector<WaveExpectation> expected{{6, 1, 1, 1.6F, 1.0F},   {9, 1, 1, 1.9F, 5.5F},  {8, 1, 1, 1.8F, 9.0F},
+                                                {13, 1, 2, 2.2F, 13.5F}, {4, 1, 1, 1.7F, 18.0F}, {4, 1, 1, 1.7F, 18.8F},
+                                                {9, 1, 2, 2.2F, 22.5F},  {8, 1, 2, 2.0F, 29.0F}, {8, 1, 1, 1.8F, 35.5F},
+                                                {13, 1, 3, 2.5F, 42.0F}, {6, 1, 1, 1.6F, 48.0F}};
 
     std::vector<std::size_t> counts;
     counts.reserve(expected.size());
