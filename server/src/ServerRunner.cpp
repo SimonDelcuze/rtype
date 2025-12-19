@@ -270,7 +270,7 @@ void ServerApp::handleDeathAndRespawn()
                         lives.loseLife();
                         registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
                         if (registry_.has<TransformComponent>(id)) {
-                            registry_.get<TransformComponent>(id).y = -1000.0F;
+                            registry_.get<TransformComponent>(id).y = -10000.0F;
                         }
                     }
                     continue;

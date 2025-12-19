@@ -1,11 +1,16 @@
 #include "systems/BoundarySystem.hpp"
 
+#include "components/RespawnTimerComponent.hpp"
+
 #include <algorithm>
 
 void BoundarySystem::update(Registry& registry) const
 {
     for (EntityId id : registry.view<TransformComponent, BoundaryComponent>()) {
         if (!registry.isAlive(id))
+            continue;
+        // Skip clamping while an entity is in respawn limbo to avoid pulling it back on screen.
+        if (registry.has<RespawnTimerComponent>(id))
             continue;
         auto& transform    = registry.get<TransformComponent>(id);
         const auto& bounds = registry.get<BoundaryComponent>(id);

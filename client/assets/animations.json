@@ -149,6 +149,49 @@
       ]
     },
     {
+      "id": "player_death",
+      "frameTime": 0.12,
+      "loop": false,
+      "frames": [
+        {
+          "x": 266,
+          "y": 302,
+          "width": 18,
+          "height": 20
+        },
+        {
+          "x": 287,
+          "y": 298,
+          "width": 27,
+          "height": 23
+        },
+        {
+          "x": 318,
+          "y": 295,
+          "width": 32,
+          "height": 28
+        },
+        {
+          "x": 354,
+          "y": 294,
+          "width": 32,
+          "height": 33
+        },
+        {
+          "x": 391,
+          "y": 295,
+          "width": 32,
+          "height": 33
+        },
+        {
+          "x": 428,
+          "y": 295,
+          "width": 32,
+          "height": 35
+        }
+      ]
+    },
+    {
       "id": "player_row1_idle",
       "frameTime": 0.12,
       "loop": true,
