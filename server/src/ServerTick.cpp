@@ -40,8 +40,11 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     movementSys_.update(registry_, deltaTime);
     boundarySys_.update(registry_);
     monsterMovementSys_.update(registry_, deltaTime);
-    monsterSpawnSys_.update(registry_, deltaTime);
-    obstacleSpawnSys_.update(registry_, deltaTime);
+    if (levelLoaded_) {
+        levelDirector_->update(registry_, deltaTime);
+        auto events = levelDirector_->consumeEvents();
+        levelSpawnSys_->update(registry_, deltaTime, events);
+    }
     enemyShootingSys_.update(registry_, deltaTime);
 
     cleanupExpiredMissiles(deltaTime);

@@ -5,7 +5,10 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
-#include "server/LevelScript.hpp"
+#include "server/LevelData.hpp"
+#include "server/LevelDirector.hpp"
+#include "server/LevelLoader.hpp"
+#include "server/LevelSpawnSystem.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
 #include "systems/BoundarySystem.hpp"
@@ -14,15 +17,14 @@
 #include "systems/DestructionSystem.hpp"
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
-#include "systems/MonsterSpawnSystem.hpp"
 #include "systems/MovementSystem.hpp"
-#include "systems/ObstacleSpawnSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <atomic>
 #include <cstdint>
 #include <events/EventBus.hpp>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -76,11 +78,12 @@ class ServerApp
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
     EventBus eventBus_;
-    LevelScript levelScript_;
+    LevelData levelData_;
+    std::unique_ptr<LevelDirector> levelDirector_;
+    std::unique_ptr<LevelSpawnSystem> levelSpawnSys_;
+    bool levelLoaded_{false};
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
-    MonsterSpawnSystem monsterSpawnSys_;
-    ObstacleSpawnSystem obstacleSpawnSys_;
     MonsterMovementSystem monsterMovementSys_;
     EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;

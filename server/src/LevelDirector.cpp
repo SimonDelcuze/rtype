@@ -37,7 +37,11 @@ void LevelDirector::enterSegment(std::size_t index)
 void LevelDirector::registerSpawn(const std::string& spawnId, EntityId entityId)
 {
     if (!spawnId.empty())
-        spawnEntities_[spawnId] = entityId;
+    {
+        auto& group = spawnEntities_[spawnId];
+        group.spawned = true;
+        group.entities.insert(entityId);
+    }
 }
 
 void LevelDirector::unregisterSpawn(const std::string& spawnId)
@@ -156,7 +160,14 @@ bool LevelDirector::isSpawnDead(const std::string& spawnId, const Registry& regi
     auto it = spawnEntities_.find(spawnId);
     if (it == spawnEntities_.end())
         return false;
-    return !registry.isAlive(it->second);
+    if (!it->second.spawned)
+        return false;
+    const auto& group = it->second;
+    for (const auto& entity : group.entities) {
+        if (registry.isAlive(entity))
+            return false;
+    }
+    return true;
 }
 
 bool LevelDirector::isBossDead(const std::string& bossId, const Registry& registry) const
