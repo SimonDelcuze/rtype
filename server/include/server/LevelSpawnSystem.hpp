@@ -21,6 +21,7 @@ class LevelSpawnSystem
         HitboxComponent hitbox;
         ColliderComponent collider;
         std::int32_t health = 1;
+        std::int32_t score  = 0;
         Vec2f scale{1.0F, 1.0F};
         std::optional<EnemyShootingComponent> shooting;
         std::uint16_t typeId = 0;

@@ -71,7 +71,7 @@
     },
     {
       "id": "score_font",
-      "path": "fonts/score.ttf",
+      "path": "fonts/ui.ttf",
       "type": "game"
     }
   ]

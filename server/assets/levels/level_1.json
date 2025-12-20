@@ -116,6 +116,7 @@
         "hitbox": "enemy_small",
         "collider": "enemy_small",
         "health": 2,
+        "score": 200,
         "scale": [1.4, 1.4],
         "shooting": { "interval": 1.6, "speed": 260, "damage": 6, "lifetime": 3.0 }
       }
@@ -162,6 +163,7 @@
       "hitbox": "boss_hit",
       "collider": "boss_box",
       "health": 80,
+      "score": 1000,
       "scale": [2.5, 2.5],
       "phases": [
         {

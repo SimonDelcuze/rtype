@@ -197,6 +197,7 @@
         "hitbox": { "$ref": "#/$defs/nonEmptyString" },
         "collider": { "$ref": "#/$defs/nonEmptyString" },
         "health": { "type": "integer", "minimum": 1 },
+        "score": { "type": "integer", "minimum": 0 },
         "scale": { "$ref": "#/$defs/vector2" },
         "shooting": { "$ref": "#/$defs/shooting" }
       }
@@ -646,6 +647,7 @@
         "hitbox": { "$ref": "#/$defs/nonEmptyString" },
         "collider": { "$ref": "#/$defs/nonEmptyString" },
         "health": { "type": "integer", "minimum": 1 },
+        "score": { "type": "integer", "minimum": 0 },
         "scale": { "$ref": "#/$defs/vector2" },
         "phases": {
           "type": "array",

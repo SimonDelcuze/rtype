@@ -95,7 +95,7 @@ namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
     : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
-      damageSys_(eventBus_), destructionSys_(eventBus_),
+      damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),

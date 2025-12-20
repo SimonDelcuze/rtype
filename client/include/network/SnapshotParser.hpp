@@ -19,6 +19,7 @@ struct SnapshotEntity
     std::optional<std::uint8_t> statusEffects;
     std::optional<float> orientation;
     std::optional<std::int8_t> lives;
+    std::optional<std::int32_t> score;
     std::optional<bool> dead;
 };
 
@@ -41,6 +42,7 @@ class SnapshotParser
     static bool validateSizes(const std::vector<std::uint8_t>& data, const PacketHeader& header);
     static std::uint16_t readU16(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::uint32_t readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset);
+    static std::int32_t readI32(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static float readFloat(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::optional<SnapshotEntity> parseEntity(const std::vector<std::uint8_t>& data, std::size_t& offset,
                                                      const PacketHeader& header);

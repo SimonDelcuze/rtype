@@ -29,7 +29,7 @@ TEST_F(HUDSystemFixture, UpdatesScoreContent)
 
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(text.content, "Score: 123");
+    EXPECT_EQ(text.content, "SCORE 0000123");
 }
 
 TEST_F(HUDSystemFixture, UpdatesLivesContent)
@@ -54,7 +54,7 @@ TEST_F(HUDSystemFixture, PrefersScoreOverLivesWhenBothPresent)
 
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(text.content, "Score: 10");
+    EXPECT_EQ(text.content, "SCORE 0000010");
 }
 
 TEST_F(HUDSystemFixture, LivesStringHandlesZeroMax)
@@ -97,7 +97,7 @@ TEST_F(HUDSystemFixture, MixedScoreAndLivesEntities)
 
     auto& tScore = registry.get<TextComponent>(scoreE);
     auto& tLives = registry.get<TextComponent>(livesE);
-    EXPECT_EQ(tScore.content, "Score: 77");
+    EXPECT_EQ(tScore.content, "SCORE 0000077");
     EXPECT_EQ(tLives.content, "Lives:");
 }
 
@@ -124,9 +124,9 @@ TEST_F(HUDSystemFixture, UpdatesAfterScoreChange)
     auto& score = registry.emplace<ScoreComponent>(e, ScoreComponent::create(0));
 
     system.update(registry, 0.0F);
-    EXPECT_EQ(text.content, "Score: 0");
+    EXPECT_EQ(text.content, "SCORE 0000000");
 
     score.add(42);
     system.update(registry, 0.0F);
-    EXPECT_EQ(text.content, "Score: 42");
+    EXPECT_EQ(text.content, "SCORE 0000042");
 }
