@@ -6,9 +6,11 @@ The Level Init System handles `SERVER_LEVEL_INIT (0x30)` messages from the serve
 
 When the server sends a `LevelInit` message, the client:
 1. Parses the binary payload to extract level metadata
-2. Resolves asset IDs (sprites, backgrounds, music) via the local manifest
+2. Resolves asset IDs (sprites and background) via the local manifest
 3. Builds an `EntityTypeRegistry` mapping `typeId` to render data (textures + animation)
 4. Updates the current `LevelState`
+
+Runtime changes (scroll, background swaps, music, camera bounds, gates) are handled by `LevelEventSystem`, not here.
 
 ## Components
 
@@ -32,6 +34,8 @@ struct LevelInitData
     std::vector<ArchetypeEntry> archetypes;
 };
 ```
+
+`musicId` is provided for completeness, but music playback is triggered by `LevelEvent set_music`.
 
 ### LevelInitParser
 
@@ -120,6 +124,8 @@ LevelState levelState{};
 
 gameLoop.addSystem(std::make_shared<LevelInitSystem>(
     net.levelInit, typeRegistry, manifest, textureManager, levelState));
+gameLoop.addSystem(std::make_shared<LevelEventSystem>(
+    net.levelEvents, manifest, textureManager));
 ```
 
 ## Data Flow
@@ -138,8 +144,11 @@ NetworkReceiver → NetworkMessageHandler → LevelInitParser
                                    + animation clip
 ```
 
+Runtime updates (scroll/background/music/camera/gates) are handled by `LevelEventSystem`.
+
 ## Related
 
 - [Network Protocol - LevelInit](../protocol/level-messages.md)
+- [Level Event System](level-event-system.md)
 - [Snapshot Parser](snapshot-parser.md)
 - [Asset Manifest](../asset-manifest.md)

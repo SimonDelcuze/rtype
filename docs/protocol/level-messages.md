@@ -4,7 +4,9 @@
 This document specifies the level-setup and snapshot-related messages for the RType UDP protocol. Normative language follows [RFC 2119].
 
 ## 1. Scope
-This memo complements the core specification in `docs/global-overview/network_protocol.md` and details level initialization, snapshot semantics, and snapshot chunking. All messages inherit the common header and CRC rules from the core spec.
+This memo complements the core specification in `docs/global-overview/network_protocol.md` and details level initialization, runtime events, snapshot semantics, and snapshot chunking. All messages inherit the common header and CRC rules from the core spec.
+
+`LevelInit` is derived from the JSON level meta and archetypes. `LevelEvent` is emitted by the server runtime (`LevelDirector`) as the timeline advances.
 
 ## 2. Message Types (Server → Client)
 - `0x30 LevelInit` — Level metadata and archetypes (Section 3).
@@ -14,7 +16,8 @@ This memo complements the core specification in `docs/global-overview/network_pr
 - `0x21 SnapshotChunk` — Chunked snapshot delivery (Section 7).
 
 ## 3. LevelInit (0x30)
-Announces the upcoming level and asset identifiers.
+Announces the upcoming level and asset identifiers. The `backgroundId` and `musicId` originate from the level meta.
+Background is applied immediately by the client; music playback is typically triggered by a `LevelEvent set_music`.
 ```
 u16 levelId
 u32 seed
@@ -27,10 +30,11 @@ repeat archetypeCount times:
     u8  animIdLen, animId[Len]   // 0 length = no animation
     u8  layer
 ```
-Clients SHOULD map ids to a local manifest and MAY use placeholders when unknown. The `seed` SHOULD be stored for deterministic spawns/pathing.
+Clients SHOULD map ids to a local manifest and MAY use placeholders when unknown. The `seed` SHOULD be stored for deterministic spawns/pathing. Empty string ids SHOULD be treated as "no asset".
 
 ## 4. LevelEvent (0x32)
 Runtime events for scroll, background, music, camera bounds, and gates.
+`tickId` in the packet header may be used to order events, but clients MUST still handle out-of-order delivery safely.
 ```
 u8 eventType
 switch eventType:
@@ -55,6 +59,8 @@ switch eventType:
   6 gate_close:
      u8  gateIdLen, gateId[Len]
 ```
+For `curve`, keyframes are applied as step changes at `time` (relative to event receipt). Keyframes SHOULD be sorted by time. If `keyframeCount` is zero, clients SHOULD treat the curve as stopped.
+
 Clients MUST ignore unknown eventType values.
 
 ## 5. LevelTransition (0x31)
@@ -102,6 +108,7 @@ All messages described here MUST append a CRC32 footer (big-endian) computed ove
 
 ## 9. Reliability Considerations
 - `LevelInit` SHOULD be retried until acknowledged by the client to avoid stalls due to UDP loss.
+- `LevelEvent` is best-effort; clients SHOULD tolerate missed events (later events override earlier state).
 - `Snapshot` and `SnapshotChunk` are sent best-effort; dropped packets may be recovered by later snapshots.
 
 ## 10. References
