@@ -42,6 +42,7 @@
 * [Levels & Waves](server/levels-and-waves.md)
 * [Level System Specification](server/level-system-spec.md)
 * [Level JSON Format (v1)](server/level-json-format.md)
+* [Level Assets Conventions](server/level-assets-conventions.md)
 * [Level Templates](server/level-templates.md)
 * [Level Timeline & Triggers](server/level-timeline.md)
 * [Boss Specification](server/level-boss-spec.md)

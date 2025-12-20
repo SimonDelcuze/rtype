@@ -12,6 +12,8 @@ It is aligned with the R-Type level system spec and is validated against the sch
   - `level_<id>.json`
   - `level_<id:02>.json` (zero-padded, example: `level_01.json`)
 
+See `docs/server/level-assets-conventions.md` for naming and registry conventions.
+
 ## Top-Level Structure
 
 Required fields:
