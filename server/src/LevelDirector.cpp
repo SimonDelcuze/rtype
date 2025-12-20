@@ -250,7 +250,7 @@ std::vector<DispatchedEvent> LevelDirector::consumeEvents()
     return out;
 }
 
-bool LevelDirector::isSpawnDead(const std::string& spawnId, const Registry& registry) const
+bool LevelDirector::isSpawnDead(const std::string& spawnId, Registry& registry) const
 {
     auto it = spawnEntities_.find(spawnId);
     if (it == spawnEntities_.end())
@@ -265,7 +265,7 @@ bool LevelDirector::isSpawnDead(const std::string& spawnId, const Registry& regi
     return true;
 }
 
-bool LevelDirector::isBossDead(const std::string& bossId, const Registry& registry) const
+bool LevelDirector::isBossDead(const std::string& bossId, Registry& registry) const
 {
     auto it = bossStates_.find(bossId);
     if (it == bossStates_.end())
@@ -275,7 +275,7 @@ bool LevelDirector::isBossDead(const std::string& bossId, const Registry& regist
     return !registry.isAlive(it->second.entityId);
 }
 
-bool LevelDirector::isBossHpBelow(const std::string& bossId, std::int32_t value, const Registry& registry) const
+bool LevelDirector::isBossHpBelow(const std::string& bossId, std::int32_t value, Registry& registry) const
 {
     auto it = bossStates_.find(bossId);
     if (it == bossStates_.end())
@@ -290,7 +290,7 @@ bool LevelDirector::isBossHpBelow(const std::string& bossId, std::int32_t value,
     return h.current <= value;
 }
 
-std::int32_t LevelDirector::countEnemies(const Registry& registry) const
+std::int32_t LevelDirector::countEnemies(Registry& registry) const
 {
     std::int32_t count = 0;
     for (EntityId id : registry.view<TagComponent>()) {
@@ -493,7 +493,7 @@ void LevelDirector::updateBossEvents(Registry& registry)
     }
 }
 
-bool LevelDirector::evaluateExit(const Registry& registry) const
+bool LevelDirector::evaluateExit(Registry& registry) const
 {
     if (segmentIndex_ >= data_.segments.size())
         return false;
