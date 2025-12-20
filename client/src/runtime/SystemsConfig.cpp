@@ -7,6 +7,7 @@
 #include "systems/GameOverSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/InvincibilitySystem.hpp"
+#include "systems/LevelEventSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/RenderSystem.hpp"
@@ -33,6 +34,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));
+    gameLoop.addSystem(std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
     gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));

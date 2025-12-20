@@ -4,6 +4,7 @@
 #include "input/InputBuffer.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/LevelEventData.hpp"
 #include "network/LevelInitData.hpp"
 #include "network/NetworkMessageHandler.hpp"
 #include "network/NetworkReceiver.hpp"
@@ -19,6 +20,7 @@ struct NetPipelines
     ThreadSafeQueue<std::vector<std::uint8_t>> raw;
     ThreadSafeQueue<SnapshotParseResult> parsed;
     ThreadSafeQueue<LevelInitData> levelInit;
+    ThreadSafeQueue<LevelEventData> levelEvents;
     ThreadSafeQueue<EntitySpawnPacket> spawns;
     ThreadSafeQueue<EntityDestroyedPacket> destroys;
     std::shared_ptr<UdpSocket> socket;

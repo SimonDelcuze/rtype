@@ -131,6 +131,33 @@ Unknown ids SHOULD be logged and substituted with placeholders.
 ### 7.2 SERVER_LEVEL_TRANSITION (0x31)
 Reserved for future use; not emitted in the current build. Clients MAY ignore it if received.
 
+### 7.3 SERVER_LEVEL_EVENT (0x32)
+Runtime level events for scroll, background, music, camera bounds, and gates.
+```
+u8 eventType
+switch eventType:
+  1 set_scroll:
+     u8  mode
+     f32 speedX
+     u8  keyframeCount
+     repeat keyframeCount times:
+         f32 time
+         f32 speedX
+  2 set_background:
+     u8  backgroundIdLen, backgroundId[Len]
+  3 set_music:
+     u8  musicIdLen, musicId[Len]
+  4 set_camera_bounds:
+     f32 minX
+     f32 maxX
+     f32 minY
+     f32 maxY
+  5 gate_open:
+     u8  gateIdLen, gateId[Len]
+  6 gate_close:
+     u8  gateIdLen, gateId[Len]
+```
+
 ## 8. Integrity Protection
 All packets MUST append a 4-byte CRC32 footer in big-endian order. The CRC is computed over `[Header + Payload]`. Receivers MUST discard packets whose CRC verification fails.
 

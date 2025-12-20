@@ -6,6 +6,7 @@
 #include "components/RespawnTimerComponent.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/LevelEventData.hpp"
 #include "server/EntityTypeResolver.hpp"
 
 #include <algorithm>
@@ -20,6 +21,76 @@ namespace
     constexpr float kOffscreenRespawnPlaceholder = -10000.0F;
     constexpr float kRespawnInvincibility        = 3.0F;
     const Vec2f kDefaultRespawn{100.0F, 400.0F};
+
+    LevelScrollSettings toNetworkScroll(const ScrollSettings& scroll)
+    {
+        LevelScrollSettings out;
+        out.mode  = static_cast<LevelScrollMode>(scroll.mode);
+        out.speedX = scroll.speedX;
+        out.curve.reserve(scroll.curve.size());
+        for (const auto& key : scroll.curve) {
+            out.curve.push_back(LevelScrollKeyframe{key.time, key.speedX});
+        }
+        return out;
+    }
+
+    LevelCameraBounds toNetworkCamera(const CameraBounds& bounds)
+    {
+        LevelCameraBounds out;
+        out.minX = bounds.minX;
+        out.maxX = bounds.maxX;
+        out.minY = bounds.minY;
+        out.maxY = bounds.maxY;
+        return out;
+    }
+
+    std::optional<LevelEventData> toLevelEventData(const LevelEvent& event)
+    {
+        LevelEventData data;
+        if (event.type == EventType::SetScroll) {
+            if (!event.scroll.has_value())
+                return std::nullopt;
+            data.type   = LevelEventType::SetScroll;
+            data.scroll = toNetworkScroll(*event.scroll);
+            return data;
+        }
+        if (event.type == EventType::SetBackground) {
+            if (!event.backgroundId.has_value())
+                return std::nullopt;
+            data.type         = LevelEventType::SetBackground;
+            data.backgroundId = *event.backgroundId;
+            return data;
+        }
+        if (event.type == EventType::SetMusic) {
+            if (!event.musicId.has_value())
+                return std::nullopt;
+            data.type    = LevelEventType::SetMusic;
+            data.musicId = *event.musicId;
+            return data;
+        }
+        if (event.type == EventType::SetCameraBounds) {
+            if (!event.cameraBounds.has_value())
+                return std::nullopt;
+            data.type         = LevelEventType::SetCameraBounds;
+            data.cameraBounds = toNetworkCamera(*event.cameraBounds);
+            return data;
+        }
+        if (event.type == EventType::GateOpen) {
+            if (!event.gateId.has_value())
+                return std::nullopt;
+            data.type   = LevelEventType::GateOpen;
+            data.gateId = *event.gateId;
+            return data;
+        }
+        if (event.type == EventType::GateClose) {
+            if (!event.gateId.has_value())
+                return std::nullopt;
+            data.type   = LevelEventType::GateClose;
+            data.gateId = *event.gateId;
+            return data;
+        }
+        return std::nullopt;
+    }
 } // namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
@@ -100,6 +171,8 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
         levelDirector_->update(registry_, deltaTime);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, deltaTime, events);
+        sendSegmentState();
+        sendLevelEvents(events);
         captureCheckpoint(events);
     }
     enemyShootingSys_.update(registry_, deltaTime);
@@ -241,6 +314,7 @@ void ServerApp::resetGame()
         levelSpawnSys_->reset();
     }
     checkpointState_.reset();
+    lastSegmentIndex_ = -1;
 }
 
 void ServerApp::updateRespawnTimers(float deltaTime)
@@ -288,6 +362,54 @@ void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
         state.spawns   = levelSpawnSys_->captureCheckpointState();
         state.respawn  = event.checkpoint->respawn;
         checkpointState_ = std::move(state);
+    }
+}
+
+void ServerApp::sendLevelEvents(const std::vector<DispatchedEvent>& events)
+{
+    if (!levelLoaded_) {
+        return;
+    }
+    for (const auto& dispatched : events) {
+        auto data = toLevelEventData(dispatched.event);
+        if (!data.has_value())
+            continue;
+        auto pkt = buildLevelEventPacket(*data, currentTick_);
+        if (!pkt.empty()) {
+            sendThread_.broadcast(pkt);
+        }
+    }
+}
+
+void ServerApp::sendSegmentState()
+{
+    if (!levelLoaded_) {
+        return;
+    }
+    std::int32_t current = levelDirector_->currentSegmentIndex();
+    if (current < 0 || current == lastSegmentIndex_) {
+        return;
+    }
+    lastSegmentIndex_ = current;
+    const auto* seg = levelDirector_->currentSegment();
+    if (seg == nullptr) {
+        return;
+    }
+    LevelEventData scrollEvent;
+    scrollEvent.type   = LevelEventType::SetScroll;
+    scrollEvent.scroll = toNetworkScroll(seg->scroll);
+    auto scrollPkt = buildLevelEventPacket(scrollEvent, currentTick_);
+    if (!scrollPkt.empty()) {
+        sendThread_.broadcast(scrollPkt);
+    }
+    if (seg->cameraBounds.has_value()) {
+        LevelEventData camEvent;
+        camEvent.type         = LevelEventType::SetCameraBounds;
+        camEvent.cameraBounds = toNetworkCamera(*seg->cameraBounds);
+        auto camPkt = buildLevelEventPacket(camEvent, currentTick_);
+        if (!camPkt.empty()) {
+            sendThread_.broadcast(camPkt);
+        }
     }
 }
 
@@ -350,6 +472,7 @@ void ServerApp::resetToCheckpoint()
             levelSpawnSys_->reset();
         }
     }
+    lastSegmentIndex_ = -1;
 
     purgeNonPlayerEntities();
 

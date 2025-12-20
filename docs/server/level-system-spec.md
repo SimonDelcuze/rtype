@@ -26,7 +26,7 @@
   - Event order is stable and reproducible.
 - The level system must be compatible with current networking:
   - `LevelInit` still carries archetypes and asset ids.
-  - New runtime events use a dedicated LevelEvent message (future issue).
+- Runtime events use the LevelEvent network message for scroll/background/music/camera/gates.
 
 ## Segment Model
 
