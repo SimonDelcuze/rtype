@@ -49,6 +49,7 @@
 * [LevelDirector Runtime](server/level-director.md)
 * [Checkpoint Runtime Rules](server/level-checkpoints.md)
 * [Level Spawn Integration](server/level-spawn-integration.md)
+* [Level1 Migration Plan](server/level1-migration-plan.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
