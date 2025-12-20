@@ -375,8 +375,10 @@ void ServerApp::sendLevelEvents(const std::vector<DispatchedEvent>& events)
         if (!data.has_value())
             continue;
         auto pkt = buildLevelEventPacket(*data, currentTick_);
-        if (!pkt.empty()) {
-            sendThread_.broadcast(pkt);
+        if (pkt.empty())
+            continue;
+        for (const auto& c : clients_) {
+            sendThread_.sendTo(pkt, c);
         }
     }
 }
@@ -400,7 +402,9 @@ void ServerApp::sendSegmentState()
     scrollEvent.scroll = toNetworkScroll(seg->scroll);
     auto scrollPkt = buildLevelEventPacket(scrollEvent, currentTick_);
     if (!scrollPkt.empty()) {
-        sendThread_.broadcast(scrollPkt);
+        for (const auto& c : clients_) {
+            sendThread_.sendTo(scrollPkt, c);
+        }
     }
     if (seg->cameraBounds.has_value()) {
         LevelEventData camEvent;
@@ -408,7 +412,9 @@ void ServerApp::sendSegmentState()
         camEvent.cameraBounds = toNetworkCamera(*seg->cameraBounds);
         auto camPkt = buildLevelEventPacket(camEvent, currentTick_);
         if (!camPkt.empty()) {
-            sendThread_.broadcast(camPkt);
+            for (const auto& c : clients_) {
+                sendThread_.sendTo(camPkt, c);
+            }
         }
     }
 }

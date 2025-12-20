@@ -165,7 +165,11 @@ void LevelEventSystem::applyMusic(const std::string& musicId)
         Logger::instance().warn("[LevelEvent] Failed to open music path=" + path);
         return;
     }
+#if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
+    music_.setLooping(true);
+#else
     music_.setLoop(true);
+#endif
     music_.play();
     currentMusicId_ = musicId;
 }

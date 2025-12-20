@@ -107,19 +107,19 @@ class LevelDirector
         float time      = 0.0F;
         float distance  = 0.0F;
         std::int32_t enemyCount = 0;
-        const Registry* registry = nullptr;
+        Registry* registry = nullptr;
     };
 
     void enterSegment(std::size_t index);
     void updateSegmentEvents(Registry& registry);
     void updateBossEvents(Registry& registry);
-    bool evaluateExit(const Registry& registry) const;
+    bool evaluateExit(Registry& registry) const;
 
     bool isTriggerActive(const Trigger& trigger, const TriggerContext& ctx) const;
-    bool isSpawnDead(const std::string& spawnId, const Registry& registry) const;
-    bool isBossDead(const std::string& bossId, const Registry& registry) const;
-    bool isBossHpBelow(const std::string& bossId, std::int32_t value, const Registry& registry) const;
-    std::int32_t countEnemies(const Registry& registry) const;
+    bool isSpawnDead(const std::string& spawnId, Registry& registry) const;
+    bool isBossDead(const std::string& bossId, Registry& registry) const;
+    bool isBossHpBelow(const std::string& bossId, std::int32_t value, Registry& registry) const;
+    std::int32_t countEnemies(Registry& registry) const;
 
     void fireEvent(const LevelEvent& event, const std::string& segmentId, const std::string& bossId, bool fromBoss);
     void applyEventEffects(const LevelEvent& event);

@@ -214,10 +214,6 @@ void LevelSpawnSystem::spawnObstacle(Registry& registry, const SpawnObstacleSett
     if (settings.anchor.has_value())
         anchor = *settings.anchor;
 
-    float margin = tpl.margin;
-    if (settings.margin.has_value())
-        margin = *settings.margin;
-
     float speedX = tpl.speedX;
     float speedY = tpl.speedY;
     if (settings.speedX.has_value())
