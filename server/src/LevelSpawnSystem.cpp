@@ -20,6 +20,7 @@ void LevelSpawnSystem::reset()
 {
     time_ = 0.0F;
     pendingEnemies_.clear();
+    bossSpawns_.clear();
 }
 
 void LevelSpawnSystem::update(Registry& registry, float deltaTime, const std::vector<DispatchedEvent>& events)
@@ -28,6 +29,35 @@ void LevelSpawnSystem::update(Registry& registry, float deltaTime, const std::ve
     spawnPending(registry);
     dispatchEvents(registry, events);
     spawnPending(registry);
+}
+
+LevelSpawnSystem::CheckpointState LevelSpawnSystem::captureCheckpointState() const
+{
+    CheckpointState state;
+    state.time = time_;
+    state.pendingEnemies = pendingEnemies_;
+    state.bossSpawns = bossSpawns_;
+    return state;
+}
+
+void LevelSpawnSystem::restoreCheckpointState(const CheckpointState& state)
+{
+    time_ = state.time;
+    pendingEnemies_ = state.pendingEnemies;
+    bossSpawns_ = state.bossSpawns;
+}
+
+std::optional<SpawnBossSettings> LevelSpawnSystem::getBossSpawnSettings(const std::string& bossId) const
+{
+    auto it = bossSpawns_.find(bossId);
+    if (it == bossSpawns_.end())
+        return std::nullopt;
+    return it->second;
+}
+
+void LevelSpawnSystem::spawnBossImmediate(Registry& registry, const SpawnBossSettings& settings)
+{
+    spawnBoss(registry, settings);
 }
 
 void LevelSpawnSystem::dispatchEvents(Registry& registry, const std::vector<DispatchedEvent>& events)
@@ -231,6 +261,8 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
     if (it == data_->bosses.end())
         return;
     const BossDefinition& boss = it->second;
+
+    bossSpawns_[settings.bossId] = settings;
 
     EntityId e = registry.createEntity();
     auto& t = registry.emplace<TransformComponent>(e);

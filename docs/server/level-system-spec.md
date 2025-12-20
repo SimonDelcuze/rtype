@@ -79,11 +79,13 @@ Checkpoints are explicit and placed at precise positions.
 
 When a checkpoint is reached, the server stores a `CheckpointState`:
 
-- current segment id and event index.
-- scroll position (global and segment).
-- level RNG seed and event counters.
+- current segment index, time, and distance.
+- current scroll settings.
+- segment event runtime state (fired flags and repeat counters).
+- spawn group state (ids already spawned).
+- boss status (alive or dead at the checkpoint).
+- spawn system state (pending enemy spawns, boss spawn settings).
 - player respawn position.
-- boss room state (if in or after a boss segment).
 
 On player death:
 
@@ -93,6 +95,8 @@ On player death:
 - any active boss is reset to its initial state.
 
 This matches classic R-Type behavior.
+
+See `docs/server/level-checkpoints.md` for runtime details.
 
 ## Boss System (Future-Proof)
 

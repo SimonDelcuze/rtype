@@ -18,6 +18,8 @@ namespace
     constexpr std::uint16_t kPlayerDeathFxType   = 16;
     constexpr float kPlayerDeathFxLifetime       = 0.9F;
     constexpr float kOffscreenRespawnPlaceholder = -10000.0F;
+    constexpr float kRespawnInvincibility        = 3.0F;
+    const Vec2f kDefaultRespawn{100.0F, 400.0F};
 } // namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
@@ -98,6 +100,7 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
         levelDirector_->update(registry_, deltaTime);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, deltaTime, events);
+        captureCheckpoint(events);
     }
     enemyShootingSys_.update(registry_, deltaTime);
     boundarySys_.update(registry_);
@@ -237,31 +240,21 @@ void ServerApp::resetGame()
         levelDirector_->reset();
         levelSpawnSys_->reset();
     }
+    checkpointState_.reset();
 }
 
 void ServerApp::updateRespawnTimers(float deltaTime)
 {
-    std::vector<EntityId> respawned;
+    bool shouldReset = false;
     for (EntityId id : registry_.view<RespawnTimerComponent>()) {
         auto& timer = registry_.get<RespawnTimerComponent>(id);
         timer.timeLeft -= deltaTime;
         if (timer.timeLeft <= 0.0F) {
-            respawned.push_back(id);
+            shouldReset = true;
         }
     }
-    for (EntityId id : respawned) {
-        registry_.remove<RespawnTimerComponent>(id);
-        if (registry_.has<HealthComponent>(id)) {
-            auto& h   = registry_.get<HealthComponent>(id);
-            h.current = h.max;
-        }
-        if (registry_.has<TransformComponent>(id)) {
-            auto& t = registry_.get<TransformComponent>(id);
-            t.x     = 200.0F;
-            t.y     = 300.0F;
-        }
-        registry_.emplace<InvincibilityComponent>(id, InvincibilityComponent::create(3.0F));
-        Logger::instance().info("Player (ID:" + std::to_string(id) + ") respawned. Y reset to 300.");
+    if (shouldReset) {
+        resetToCheckpoint();
     }
 }
 
@@ -279,6 +272,99 @@ void ServerApp::updateInvincibilityTimers(float deltaTime)
         registry_.remove<InvincibilityComponent>(id);
         Logger::instance().info("Player (ID:" + std::to_string(id) + ") is no longer invincible.");
     }
+}
+
+void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
+{
+    if (!levelLoaded_) {
+        return;
+    }
+    for (const auto& dispatched : events) {
+        const auto& event = dispatched.event;
+        if (event.type != EventType::Checkpoint || !event.checkpoint.has_value())
+            continue;
+        CheckpointState state;
+        state.director = levelDirector_->captureCheckpointState();
+        state.spawns   = levelSpawnSys_->captureCheckpointState();
+        state.respawn  = event.checkpoint->respawn;
+        checkpointState_ = std::move(state);
+    }
+}
+
+void ServerApp::purgeNonPlayerEntities()
+{
+    std::unordered_set<EntityId> players;
+    for (const auto& [_, entityId] : playerEntities_) {
+        players.insert(entityId);
+    }
+    std::vector<EntityId> toDestroy;
+    for (EntityId id : registry_.view<TransformComponent>()) {
+        if (!registry_.isAlive(id))
+            continue;
+        if (players.contains(id))
+            continue;
+        toDestroy.push_back(id);
+    }
+    for (EntityId id : toDestroy) {
+        registry_.destroyEntity(id);
+    }
+}
+
+void ServerApp::respawnPlayers(const Vec2f& respawn)
+{
+    for (const auto& [_, entityId] : playerEntities_) {
+        if (!registry_.isAlive(entityId))
+            continue;
+        registry_.remove<RespawnTimerComponent>(entityId);
+        if (registry_.has<HealthComponent>(entityId)) {
+            auto& h   = registry_.get<HealthComponent>(entityId);
+            h.current = h.max;
+        }
+        if (registry_.has<TransformComponent>(entityId)) {
+            auto& t = registry_.get<TransformComponent>(entityId);
+            t.x     = respawn.x;
+            t.y     = respawn.y;
+        }
+        if (registry_.has<VelocityComponent>(entityId)) {
+            auto& v = registry_.get<VelocityComponent>(entityId);
+            v.vx    = 0.0F;
+            v.vy    = 0.0F;
+        }
+        registry_.emplace<InvincibilityComponent>(entityId, InvincibilityComponent::create(kRespawnInvincibility));
+    }
+}
+
+void ServerApp::resetToCheckpoint()
+{
+    Vec2f respawn = kDefaultRespawn;
+    std::vector<LevelDirector::BossCheckpointState> bossStates;
+
+    if (levelLoaded_) {
+        if (checkpointState_.has_value()) {
+            levelDirector_->restoreCheckpointState(checkpointState_->director);
+            levelSpawnSys_->restoreCheckpointState(checkpointState_->spawns);
+            respawn   = checkpointState_->respawn;
+            bossStates = checkpointState_->director.bosses;
+        } else {
+            levelDirector_->reset();
+            levelSpawnSys_->reset();
+        }
+    }
+
+    purgeNonPlayerEntities();
+
+    if (levelLoaded_ && checkpointState_.has_value()) {
+        for (const auto& bossState : bossStates) {
+            if (bossState.status != LevelDirector::BossCheckpointStatus::Alive)
+                continue;
+            auto settings = levelSpawnSys_->getBossSpawnSettings(bossState.bossId);
+            if (!settings.has_value())
+                continue;
+            levelSpawnSys_->spawnBossImmediate(registry_, *settings);
+        }
+    }
+
+    respawnPlayers(respawn);
 }
 
 void ServerApp::spawnPlayerDeathFx(float x, float y)

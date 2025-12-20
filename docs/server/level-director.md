@@ -62,6 +62,7 @@ Triggers are evaluated against a context:
 
 - `set_scroll` events update `activeScroll` immediately.
 - `checkpoint` events mark checkpoints as reached.
+- The server snapshots LevelDirector runtime when a checkpoint event fires.
 
 These effects are applied inside the LevelDirector to keep triggers deterministic.
 
