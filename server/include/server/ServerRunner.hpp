@@ -19,6 +19,7 @@
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
+#include "systems/ScoreSystem.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -103,6 +104,7 @@ class ServerApp
     EnemyShootingSystem enemyShootingSys_;
     CollisionSystem collisionSys_;
     DamageSystem damageSys_;
+    ScoreSystem scoreSys_;
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;

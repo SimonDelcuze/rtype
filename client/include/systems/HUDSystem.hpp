@@ -9,6 +9,8 @@
 #include "graphics/Window.hpp"
 #include "systems/ISystem.hpp"
 
+#include <string>
+
 class HUDSystem : public ISystem
 {
   public:
@@ -19,6 +21,7 @@ class HUDSystem : public ISystem
   private:
     void updateContent(Registry& registry, EntityId id, TextComponent& textComp) const;
     void drawLivesPips(const TransformComponent& transform, const LivesComponent& lives) const;
+    std::string formatScore(int value) const;
 
     Window& window_;
     FontManager& fonts_;

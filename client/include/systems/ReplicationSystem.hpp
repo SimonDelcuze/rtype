@@ -29,6 +29,7 @@ class ReplicationSystem : public ISystem
     void applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyHealth(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyLives(Registry& registry, EntityId id, const SnapshotEntity& entity);
+    void applyScore(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyStatusEffects(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyStatus(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyDead(Registry& registry, EntityId id, const SnapshotEntity& entity);

@@ -104,6 +104,11 @@ std::uint32_t SnapshotParser::readU32(const std::vector<std::uint8_t>& buf, std:
     return v;
 }
 
+std::int32_t SnapshotParser::readI32(const std::vector<std::uint8_t>& buf, std::size_t& offset)
+{
+    return static_cast<std::int32_t>(readU32(buf, offset));
+}
+
 float SnapshotParser::readFloat(const std::vector<std::uint8_t>& buf, std::size_t& offset)
 {
     auto v = readU32(buf, offset);
@@ -175,6 +180,11 @@ std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std:
             return std::nullopt;
         e.lives = static_cast<std::int8_t>(data[offset]);
         offset += 1;
+    }
+    if (hasBit(mask, 10)) {
+        if (!ensureAvailable(offset, 4, PacketHeader::kSize + header.payloadSize))
+            return std::nullopt;
+        e.score = readI32(data, offset);
     }
     return e;
 }

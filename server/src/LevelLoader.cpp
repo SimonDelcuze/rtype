@@ -954,6 +954,7 @@ namespace
             std::string hitboxId;
             std::string colliderId;
             std::int32_t health = 0;
+            std::int32_t score  = 0;
             if (!readInt(e, "typeId", typeId, epath, error, true))
                 return false;
             if (!readString(e, "hitbox", hitboxId, epath, error, true))
@@ -962,6 +963,7 @@ namespace
                 return false;
             if (!readInt(e, "health", health, epath, error, true))
                 return false;
+            readInt(e, "score", score, epath, error, false);
             if (!e.contains("scale")) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Missing scale", "", joinPath(epath, "scale"));
                 return false;
@@ -984,6 +986,7 @@ namespace
             tpl.hitbox   = hbIt->second;
             tpl.collider = colIt->second;
             tpl.health   = health;
+            tpl.score    = std::max(0, score);
             tpl.scale    = scale;
             if (e.contains("shooting")) {
                 EnemyShootingComponent shooting;
@@ -1088,6 +1091,7 @@ namespace
             std::string hitboxId;
             std::string colliderId;
             std::int32_t health = 0;
+            std::int32_t score  = 0;
             if (!readInt(b, "typeId", typeId, bpath, error, true))
                 return false;
             if (!readString(b, "hitbox", hitboxId, bpath, error, true))
@@ -1096,6 +1100,7 @@ namespace
                 return false;
             if (!readInt(b, "health", health, bpath, error, true))
                 return false;
+            readInt(b, "score", score, bpath, error, false);
             if (!b.contains("scale")) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Missing scale", "", joinPath(bpath, "scale"));
                 return false;
@@ -1107,6 +1112,7 @@ namespace
             BossDefinition boss{};
             boss.typeId = static_cast<std::uint16_t>(typeId);
             boss.health = health;
+            boss.score  = std::max(0, score);
             boss.scale  = scale;
             auto hbIt   = templates.hitboxes.find(hitboxId);
             if (hbIt == templates.hitboxes.end()) {

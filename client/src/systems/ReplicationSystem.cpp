@@ -10,6 +10,7 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -336,6 +337,7 @@ void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const Snaps
     applyVelocity(registry, id, entity);
     applyHealth(registry, id, entity);
     applyLives(registry, id, entity);
+    applyScore(registry, id, entity);
     applyStatus(registry, id, entity);
     applyDead(registry, id, entity);
 }
@@ -412,6 +414,19 @@ void ReplicationSystem::applyLives(Registry& registry, EntityId id, const Snapsh
         auto& lives   = registry.get<LivesComponent>(id);
         lives.current = *entity.lives;
     }
+}
+
+void ReplicationSystem::applyScore(Registry& registry, EntityId id, const SnapshotEntity& entity)
+{
+    if (!entity.score.has_value()) {
+        return;
+    }
+    if (!registry.has<ScoreComponent>(id)) {
+        registry.emplace<ScoreComponent>(id, ScoreComponent::create(*entity.score));
+        return;
+    }
+    auto& score = registry.get<ScoreComponent>(id);
+    score.set(*entity.score);
 }
 
 void ReplicationSystem::applyStatusEffects(Registry& registry, EntityId id, const SnapshotEntity& entity)

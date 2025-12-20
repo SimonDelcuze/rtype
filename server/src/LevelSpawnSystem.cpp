@@ -1,6 +1,7 @@
 #include "server/LevelSpawnSystem.hpp"
 
 #include "components/RenderTypeComponent.hpp"
+#include "components/ScoreValueComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/VelocityComponent.hpp"
 
@@ -162,6 +163,7 @@ void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& 
     spawn.hitbox   = enemy.hitbox;
     spawn.collider = enemy.collider;
     spawn.health   = wave.health.has_value() ? *wave.health : enemy.health;
+    spawn.score    = enemy.score;
     spawn.scale    = wave.scale.has_value() ? *wave.scale : enemy.scale;
     if (wave.shootingEnabled.has_value()) {
         if (*wave.shootingEnabled && enemy.shooting.has_value())
@@ -192,6 +194,9 @@ void LevelSpawnSystem::spawnEnemy(Registry& registry, const PendingEnemySpawn& s
     registry.emplace<HitboxComponent>(e, spawn.hitbox);
     registry.emplace<ColliderComponent>(e, spawn.collider);
     registry.emplace<RenderTypeComponent>(e, RenderTypeComponent::create(spawn.typeId));
+    if (spawn.score > 0) {
+        registry.emplace<ScoreValueComponent>(e, ScoreValueComponent::create(spawn.score));
+    }
     if (spawn.shooting.has_value()) {
         registry.emplace<EnemyShootingComponent>(e, *spawn.shooting);
     }
@@ -272,6 +277,9 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
     registry.emplace<HitboxComponent>(e, boss.hitbox);
     registry.emplace<ColliderComponent>(e, boss.collider);
     registry.emplace<RenderTypeComponent>(e, RenderTypeComponent::create(boss.typeId));
+    if (boss.score > 0) {
+        registry.emplace<ScoreValueComponent>(e, ScoreValueComponent::create(boss.score));
+    }
 
     if (director_ != nullptr) {
         director_->registerBoss(settings.bossId, e);

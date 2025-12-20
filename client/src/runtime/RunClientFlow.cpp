@@ -155,6 +155,10 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     AnimationLabels animationLabels{animationAtlas.labels};
     LevelState levelState{};
 
+    if (!fontManager.has("score_font")) {
+        fontManager.load("score_font", "client/assets/fonts/ui.ttf");
+    }
+
     if (options.useDefault) {
         sendClientReady(serverEndpoint, *net.socket);
     } else if (!runWaitingRoom(window, net, serverEndpoint)) {

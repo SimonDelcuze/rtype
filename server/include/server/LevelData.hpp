@@ -37,6 +37,7 @@ struct EnemyTemplate
     HitboxComponent hitbox;
     ColliderComponent collider;
     std::int32_t health = 1;
+    std::int32_t score  = 0;
     Vec2f scale{1.0F, 1.0F};
     std::optional<EnemyShootingComponent> shooting;
 };
@@ -239,6 +240,7 @@ struct BossDefinition
     HitboxComponent hitbox;
     ColliderComponent collider;
     std::int32_t health = 1;
+    std::int32_t score  = 0;
     Vec2f scale{1.0F, 1.0F};
     std::vector<BossPhase> phases;
     std::vector<LevelEvent> onDeath;

@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "events/GameEvents.hpp"
@@ -35,6 +36,9 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
             GameOverEvent event{};
             event.victory    = false;
             event.finalScore = 0;
+            if (registry.has<ScoreComponent>(id)) {
+                event.finalScore = registry.get<ScoreComponent>(id).value;
+            }
             event.level      = 1;
             eventBus_.emit(std::move(event));
             gameOverTriggered_ = true;

@@ -1,5 +1,6 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/ScoreComponent.hpp"
 #include "server/EntityTypeResolver.hpp"
 #include "server/Packets.hpp"
 
@@ -20,6 +21,11 @@ namespace
         out.push_back(static_cast<std::uint8_t>((v >> 16) & 0xFF));
         out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
         out.push_back(static_cast<std::uint8_t>(v & 0xFF));
+    }
+
+    void writeI32(std::vector<std::uint8_t>& out, std::int32_t v)
+    {
+        writeU32(out, static_cast<std::uint32_t>(v));
     }
 
     void writeFloat(std::vector<std::uint8_t>& out, float f)
@@ -43,6 +49,8 @@ namespace
             mask |= 1 << 5;
         if (registry.has<LivesComponent>(id))
             mask |= 1 << 9;
+        if (registry.has<ScoreComponent>(id))
+            mask |= 1 << 10;
 
         std::uint8_t status = 0;
         if (registry.has<InvincibilityComponent>(id)) {
@@ -72,6 +80,10 @@ namespace
         if (mask & (1 << 9)) {
             const auto& lives = registry.get<LivesComponent>(id);
             block.push_back(static_cast<std::uint8_t>(lives.current));
+        }
+        if (mask & (1 << 10)) {
+            const auto& score = registry.get<ScoreComponent>(id);
+            writeI32(block, score.value);
         }
         return block;
     }

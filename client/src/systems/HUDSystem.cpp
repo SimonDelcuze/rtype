@@ -10,6 +10,13 @@
 #include <algorithm>
 #include <string>
 
+namespace
+{
+    constexpr int kScoreDigits         = 7;
+    constexpr float kScoreRightMargin  = 16.0F;
+    constexpr float kScoreBottomMargin = 12.0F;
+} // namespace
+
 HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textures)
     : window_(window), fonts_(fonts), textures_(textures)
 {}
@@ -18,10 +25,20 @@ void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& te
 {
     if (registry.has<ScoreComponent>(id)) {
         const auto& score = registry.get<ScoreComponent>(id);
-        textComp.content  = "Score: " + std::to_string(score.value);
+        textComp.content  = formatScore(score.value);
     } else if (registry.has<LivesComponent>(id)) {
         textComp.content = "Lives:";
     }
+}
+
+std::string HUDSystem::formatScore(int value) const
+{
+    int safeValue = std::max(0, value);
+    std::string digits = std::to_string(safeValue);
+    if (static_cast<int>(digits.size()) < kScoreDigits) {
+        digits.insert(0, static_cast<std::size_t>(kScoreDigits - static_cast<int>(digits.size())), '0');
+    }
+    return "SCORE " + digits;
 }
 
 void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesComponent& lives) const
@@ -115,6 +132,15 @@ void HUDSystem::update(Registry& registry, float)
         }
     }
 
+    int playerScore = -1;
+    for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
+        const auto& tag = registry.get<TagComponent>(id);
+        if (tag.hasTag(EntityTag::Player)) {
+            playerScore = registry.get<ScoreComponent>(id).value;
+            break;
+        }
+    }
+
     for (EntityId entity : registry.view<TransformComponent, TextComponent>()) {
         if (!registry.isAlive(entity)) {
             continue;
@@ -122,6 +148,10 @@ void HUDSystem::update(Registry& registry, float)
 
         auto& transform = registry.get<TransformComponent>(entity);
         auto& textComp  = registry.get<TextComponent>(entity);
+
+        if (registry.has<ScoreComponent>(entity) && playerScore >= 0) {
+            registry.get<ScoreComponent>(entity).set(playerScore);
+        }
 
         updateContent(registry, entity, textComp);
 
@@ -132,16 +162,24 @@ void HUDSystem::update(Registry& registry, float)
                     textComp.text.emplace(*font, textComp.content, textComp.characterSize);
                 } else {
                     textComp.text->setFont(*font);
-                    textComp.text->setCharacterSize(textComp.characterSize);
-                    textComp.text->setString(textComp.content);
-                }
+                textComp.text->setCharacterSize(textComp.characterSize);
+                textComp.text->setString(textComp.content);
+            }
 
-                textComp.text->setFillColor(textComp.color);
-                textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
-                textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
-                textComp.text->setRotation(sf::degrees(transform.rotation));
+            textComp.text->setFillColor(textComp.color);
+            if (registry.has<ScoreComponent>(entity)) {
+                const auto size   = window_.raw().getSize();
+                const auto bounds = textComp.text->getLocalBounds();
+                transform.x =
+                    static_cast<float>(size.x) - kScoreRightMargin - (bounds.position.x + bounds.size.x);
+                transform.y =
+                    static_cast<float>(size.y) - kScoreBottomMargin - (bounds.position.y + bounds.size.y);
+            }
+            textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
+            textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
+            textComp.text->setRotation(sf::degrees(transform.rotation));
 
-                window_.draw(*textComp.text);
+            window_.draw(*textComp.text);
             }
         }
 

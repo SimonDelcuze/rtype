@@ -48,9 +48,9 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
 void LevelInitSystem::createHUDEntities(Registry& registry)
 {
     EntityId score = registry.createEntity();
-    registry.emplace<TransformComponent>(score, TransformComponent::create(10.0F, 10.0F));
+    registry.emplace<TransformComponent>(score, TransformComponent::create(0.0F, 0.0F));
     auto& scoreText = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, sf::Color::White));
-    scoreText.content = "Score: 0";
+    scoreText.content = "SCORE 0000000";
     registry.emplace<ScoreComponent>(score, ScoreComponent::create(0));
     registry.emplace<LayerComponent>(score, LayerComponent::create(100));
 
