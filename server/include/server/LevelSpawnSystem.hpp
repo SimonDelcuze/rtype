@@ -6,6 +6,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <optional>
 #include <vector>
 
 class LevelSpawnSystem
@@ -13,10 +14,6 @@ class LevelSpawnSystem
   public:
     LevelSpawnSystem(const LevelData& data, LevelDirector* director, float playfieldHeight = 720.0F);
 
-    void reset();
-    void update(Registry& registry, float deltaTime, const std::vector<DispatchedEvent>& events);
-
-  private:
     struct PendingEnemySpawn
     {
         float time = 0.0F;
@@ -32,6 +29,21 @@ class LevelSpawnSystem
         std::string spawnGroupId;
     };
 
+    struct CheckpointState
+    {
+        float time = 0.0F;
+        std::vector<PendingEnemySpawn> pendingEnemies;
+        std::unordered_map<std::string, SpawnBossSettings> bossSpawns;
+    };
+
+    void reset();
+    void update(Registry& registry, float deltaTime, const std::vector<DispatchedEvent>& events);
+    CheckpointState captureCheckpointState() const;
+    void restoreCheckpointState(const CheckpointState& state);
+    std::optional<SpawnBossSettings> getBossSpawnSettings(const std::string& bossId) const;
+    void spawnBossImmediate(Registry& registry, const SpawnBossSettings& settings);
+
+  private:
     void dispatchEvents(Registry& registry, const std::vector<DispatchedEvent>& events);
     void spawnPending(Registry& registry);
 
@@ -52,4 +64,5 @@ class LevelSpawnSystem
 
     std::unordered_map<std::string, MovementComponent> patternMap_;
     std::vector<PendingEnemySpawn> pendingEnemies_;
+    std::unordered_map<std::string, SpawnBossSettings> bossSpawns_;
 };

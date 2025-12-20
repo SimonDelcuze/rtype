@@ -20,10 +20,51 @@ struct DispatchedEvent
 class LevelDirector
 {
   public:
+    struct EventRuntimeState
+    {
+        bool fired           = false;
+        bool repeating       = false;
+        float nextRepeatTime = 0.0F;
+        std::optional<std::int32_t> remainingCount;
+    };
+
+    enum class BossCheckpointStatus : std::uint8_t
+    {
+        Alive,
+        Dead
+    };
+
+    struct BossCheckpointState
+    {
+        std::string bossId;
+        BossCheckpointStatus status = BossCheckpointStatus::Alive;
+    };
+
+    struct SpawnGroupState
+    {
+        std::string spawnId;
+        bool spawned = false;
+    };
+
+    struct CheckpointState
+    {
+        std::size_t segmentIndex = 0;
+        float segmentTime        = 0.0F;
+        float segmentDistance    = 0.0F;
+        ScrollSettings activeScroll;
+        std::vector<EventRuntimeState> segmentEvents;
+        std::unordered_set<std::string> checkpoints;
+        std::vector<SpawnGroupState> spawnGroups;
+        std::vector<BossCheckpointState> bosses;
+        bool finished = false;
+    };
+
     explicit LevelDirector(LevelData data);
 
     void reset();
     void update(Registry& registry, float deltaTime);
+    CheckpointState captureCheckpointState() const;
+    void restoreCheckpointState(const CheckpointState& state);
 
     std::vector<DispatchedEvent> consumeEvents();
 

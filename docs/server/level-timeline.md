@@ -82,9 +82,9 @@ Repeat evaluation uses `realTime` and is independent from `scrollTime`.
 
 On checkpoint reset:
 
-- The segment is rewound to the checkpoint `realTime` and `scrollTime`.
-- Events before the checkpoint are considered already fired.
-- Entity state is rebuilt by replaying events from the checkpoint.
+- The segment clocks and scroll settings are restored to the checkpoint snapshot.
+- Events before the checkpoint remain fired; events after the checkpoint can fire again.
+- Pending spawns are restored from the spawn system snapshot.
 
 This requires event order and trigger semantics to be stable.
 

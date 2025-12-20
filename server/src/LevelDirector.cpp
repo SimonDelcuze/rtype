@@ -3,7 +3,9 @@
 #include "components/HealthComponent.hpp"
 #include "components/TagComponent.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 LevelDirector::LevelDirector(LevelData data) : data_(std::move(data))
 {
@@ -23,6 +25,99 @@ void LevelDirector::reset()
     if (!finished_) {
         enterSegment(0);
     }
+}
+
+LevelDirector::CheckpointState LevelDirector::captureCheckpointState() const
+{
+    CheckpointState state;
+    state.segmentIndex    = segmentIndex_;
+    state.segmentTime     = segmentTime_;
+    state.segmentDistance = segmentDistance_;
+    state.activeScroll    = activeScroll_;
+    state.finished        = finished_;
+    state.checkpoints     = checkpoints_;
+
+    state.segmentEvents.reserve(segmentEvents_.size());
+    for (const auto& runtime : segmentEvents_) {
+        EventRuntimeState evState;
+        evState.fired           = runtime.fired;
+        evState.repeating       = runtime.repeating;
+        evState.nextRepeatTime  = runtime.nextRepeatTime;
+        evState.remainingCount  = runtime.remainingCount;
+        state.segmentEvents.push_back(std::move(evState));
+    }
+
+    state.spawnGroups.reserve(spawnEntities_.size());
+    for (const auto& [spawnId, group] : spawnEntities_) {
+        SpawnGroupState spawnState;
+        spawnState.spawnId = spawnId;
+        spawnState.spawned = group.spawned;
+        state.spawnGroups.push_back(std::move(spawnState));
+    }
+
+    state.bosses.reserve(bossStates_.size());
+    for (const auto& [bossId, runtime] : bossStates_) {
+        if (!runtime.registered)
+            continue;
+        BossCheckpointState bossState;
+        bossState.bossId = bossId;
+        bossState.status = runtime.dead ? BossCheckpointStatus::Dead : BossCheckpointStatus::Alive;
+        state.bosses.push_back(std::move(bossState));
+    }
+
+    return state;
+}
+
+void LevelDirector::restoreCheckpointState(const CheckpointState& state)
+{
+    firedEvents_.clear();
+    spawnEntities_.clear();
+    bossStates_.clear();
+
+    if (data_.segments.empty()) {
+        finished_ = true;
+        return;
+    }
+    if (state.segmentIndex >= data_.segments.size()) {
+        reset();
+        return;
+    }
+
+    segmentIndex_    = state.segmentIndex;
+    segmentTime_     = state.segmentTime;
+    segmentDistance_ = state.segmentDistance;
+    activeScroll_    = state.activeScroll;
+    segmentEvents_   = makeEventRuntime(data_.segments[segmentIndex_].events);
+
+    const std::size_t count = std::min(segmentEvents_.size(), state.segmentEvents.size());
+    for (std::size_t i = 0; i < count; ++i) {
+        auto& runtime        = segmentEvents_[i];
+        const auto& snapshot = state.segmentEvents[i];
+        runtime.fired           = snapshot.fired;
+        runtime.repeating       = snapshot.repeating;
+        runtime.nextRepeatTime  = snapshot.nextRepeatTime;
+        runtime.remainingCount  = snapshot.remainingCount;
+    }
+
+    for (const auto& spawnState : state.spawnGroups) {
+        SpawnGroup group;
+        group.spawned = spawnState.spawned;
+        spawnEntities_.emplace(spawnState.spawnId, std::move(group));
+    }
+
+    for (const auto& bossState : state.bosses) {
+        if (bossState.status != BossCheckpointStatus::Dead)
+            continue;
+        BossRuntime runtime;
+        runtime.entityId    = std::numeric_limits<EntityId>::max();
+        runtime.registered  = true;
+        runtime.dead        = true;
+        runtime.onDeathFired = true;
+        bossStates_.emplace(bossState.bossId, std::move(runtime));
+    }
+
+    checkpoints_ = state.checkpoints;
+    finished_    = state.finished;
 }
 
 void LevelDirector::enterSegment(std::size_t index)

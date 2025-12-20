@@ -47,6 +47,7 @@
 * [Boss Specification](server/level-boss-spec.md)
 * [Level Loader Design](server/level-loader-design.md)
 * [LevelDirector Runtime](server/level-director.md)
+* [Checkpoint Runtime Rules](server/level-checkpoints.md)
 * [Level Spawn Integration](server/level-spawn-integration.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
