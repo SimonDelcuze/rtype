@@ -51,6 +51,7 @@
 * [Checkpoint Runtime Rules](server/level-checkpoints.md)
 * [Level Spawn Integration](server/level-spawn-integration.md)
 * [Level1 Migration Plan](server/level1-migration-plan.md)
+* [Level Test Plan](server/level-test-plan.md)
 * [Networking](server/networking/README.md)
   * [Packet Header](server/networking/packet-header.md)
   * [Delta State Snapshots](server/networking/delta-state.md)
