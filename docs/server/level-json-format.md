@@ -71,6 +71,17 @@ Templates provide reusable data blocks referenced by events:
 
 See `docs/server/level-templates.md` for semantics and override rules.
 
+## Required Archetypes (Runtime)
+
+The current runtime uses fixed type ids for players and projectiles. Your `archetypes` list must include:
+
+- `1`, `12`, `13`, `14`: player variants
+- `3`..`8`: player bullets (charge levels 1-5)
+- `15`: enemy bullet
+- `16`: player death fx
+
+Enemy/obstacle/boss template `typeId` values must also appear in `archetypes`.
+
 ## Segments
 
 Segments are evaluated in order. Each segment defines:

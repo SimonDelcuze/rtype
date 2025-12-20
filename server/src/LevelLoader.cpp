@@ -1505,11 +1505,80 @@ namespace
         return true;
     }
 
+    struct RequiredArchetype
+    {
+        std::uint16_t typeId;
+        const char* label;
+    };
+
+    const RequiredArchetype kRequiredArchetypes[] = {
+        {1, "player1"},
+        {12, "player2"},
+        {13, "player3"},
+        {14, "player4"},
+        {3, "bullet_basic"},
+        {4, "bullet_charge_lvl1"},
+        {5, "bullet_charge_lvl2"},
+        {6, "bullet_charge_lvl3"},
+        {7, "bullet_charge_lvl4"},
+        {8, "bullet_charge_lvl5"},
+        {15, "enemy_bullet_basic"},
+        {16, "player_death"},
+    };
+
+    bool validateArchetypes(const LevelData& data, LevelLoadError& error)
+    {
+        std::unordered_set<std::uint16_t> typeIds;
+        typeIds.reserve(data.archetypes.size());
+        for (const auto& archetype : data.archetypes) {
+            if (!typeIds.insert(archetype.typeId).second) {
+                setError(error, LevelLoadErrorCode::SemanticError,
+                         "Duplicate archetype typeId: " + std::to_string(archetype.typeId), "", "");
+                return false;
+            }
+        }
+
+        for (const auto& req : kRequiredArchetypes) {
+            if (typeIds.find(req.typeId) == typeIds.end()) {
+                setError(error, LevelLoadErrorCode::SemanticError,
+                         "Missing required archetype typeId: " + std::to_string(req.typeId) + " (" + req.label + ")",
+                         "", "");
+                return false;
+            }
+        }
+
+        auto ensureType = [&](std::uint16_t typeId, const std::string& label) -> bool {
+            if (typeIds.find(typeId) == typeIds.end()) {
+                setError(error, LevelLoadErrorCode::SemanticError,
+                         "Missing archetype for " + label + " typeId: " + std::to_string(typeId), "", "");
+                return false;
+            }
+            return true;
+        };
+
+        for (const auto& [id, enemy] : data.templates.enemies) {
+            if (!ensureType(enemy.typeId, "enemy template " + id))
+                return false;
+        }
+        for (const auto& [id, obstacle] : data.templates.obstacles) {
+            if (!ensureType(obstacle.typeId, "obstacle template " + id))
+                return false;
+        }
+        for (const auto& [id, boss] : data.bosses) {
+            if (!ensureType(boss.typeId, "boss " + id))
+                return false;
+        }
+
+        return true;
+    }
+
     bool validateLevel(const LevelData& data, LevelLoadError& error)
     {
         if (!validateUnique(data.patterns, error))
             return false;
         if (!validateSegments(data.segments, error))
+            return false;
+        if (!validateArchetypes(data, error))
             return false;
 
         std::unordered_set<std::string> checkpointIds;

@@ -139,26 +139,11 @@ void ServerApp::processTimeouts()
 LevelDefinition ServerApp::buildLevel() const
 {
     LevelDefinition lvl{};
-    lvl.levelId      = 1;
+    lvl.levelId      = static_cast<std::uint16_t>(levelData_.levelId);
     lvl.seed         = nextSeed();
-    lvl.backgroundId = "space_background";
-    lvl.musicId      = "theme_music";
-    lvl.archetypes.push_back(LevelArchetype{1, "player_ship", "player1", 0});
-    lvl.archetypes.push_back(LevelArchetype{12, "player_ship", "player2", 0});
-    lvl.archetypes.push_back(LevelArchetype{13, "player_ship", "player3", 0});
-    lvl.archetypes.push_back(LevelArchetype{14, "player_ship", "player4", 0});
-    lvl.archetypes.push_back(LevelArchetype{2, "mob1", "left", 0});
-    lvl.archetypes.push_back(LevelArchetype{3, "bullet", "bullet_basic", 0});
-    lvl.archetypes.push_back(LevelArchetype{4, "bullet", "bullet_charge_lvl1", 0});
-    lvl.archetypes.push_back(LevelArchetype{5, "bullet", "bullet_charge_lvl2", 0});
-    lvl.archetypes.push_back(LevelArchetype{6, "bullet", "bullet_charge_lvl3", 0});
-    lvl.archetypes.push_back(LevelArchetype{7, "bullet", "bullet_charge_lvl4", 0});
-    lvl.archetypes.push_back(LevelArchetype{8, "bullet", "bullet_charge_lvl5", 0});
-    lvl.archetypes.push_back(LevelArchetype{15, "enemy_bullet", "enemy_bullet_basic", 0});
-    lvl.archetypes.push_back(LevelArchetype{16, "bullet", "player_death", 50});
-    lvl.archetypes.push_back(LevelArchetype{9, "obstacle_top", "", 0});
-    lvl.archetypes.push_back(LevelArchetype{10, "obstacle_middle", "", 0});
-    lvl.archetypes.push_back(LevelArchetype{11, "obstacle_bottom", "", 0});
+    lvl.backgroundId = levelData_.meta.backgroundId;
+    lvl.musicId      = levelData_.meta.musicId;
+    lvl.archetypes   = levelData_.archetypes;
     return lvl;
 }
 
