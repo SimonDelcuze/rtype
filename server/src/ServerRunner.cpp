@@ -25,7 +25,7 @@ namespace
     LevelScrollSettings toNetworkScroll(const ScrollSettings& scroll)
     {
         LevelScrollSettings out;
-        out.mode  = static_cast<LevelScrollMode>(scroll.mode);
+        out.mode   = static_cast<LevelScrollMode>(scroll.mode);
         out.speedX = scroll.speedX;
         out.curve.reserve(scroll.curve.size());
         for (const auto& key : scroll.curve) {
@@ -358,9 +358,9 @@ void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
         if (event.type != EventType::Checkpoint || !event.checkpoint.has_value())
             continue;
         CheckpointState state;
-        state.director = levelDirector_->captureCheckpointState();
-        state.spawns   = levelSpawnSys_->captureCheckpointState();
-        state.respawn  = event.checkpoint->respawn;
+        state.director   = levelDirector_->captureCheckpointState();
+        state.spawns     = levelSpawnSys_->captureCheckpointState();
+        state.respawn    = event.checkpoint->respawn;
         checkpointState_ = std::move(state);
     }
 }
@@ -393,14 +393,14 @@ void ServerApp::sendSegmentState()
         return;
     }
     lastSegmentIndex_ = current;
-    const auto* seg = levelDirector_->currentSegment();
+    const auto* seg   = levelDirector_->currentSegment();
     if (seg == nullptr) {
         return;
     }
     LevelEventData scrollEvent;
     scrollEvent.type   = LevelEventType::SetScroll;
     scrollEvent.scroll = toNetworkScroll(seg->scroll);
-    auto scrollPkt = buildLevelEventPacket(scrollEvent, currentTick_);
+    auto scrollPkt     = buildLevelEventPacket(scrollEvent, currentTick_);
     if (!scrollPkt.empty()) {
         for (const auto& c : clients_) {
             sendThread_.sendTo(scrollPkt, c);
@@ -410,7 +410,7 @@ void ServerApp::sendSegmentState()
         LevelEventData camEvent;
         camEvent.type         = LevelEventType::SetCameraBounds;
         camEvent.cameraBounds = toNetworkCamera(*seg->cameraBounds);
-        auto camPkt = buildLevelEventPacket(camEvent, currentTick_);
+        auto camPkt           = buildLevelEventPacket(camEvent, currentTick_);
         if (!camPkt.empty()) {
             for (const auto& c : clients_) {
                 sendThread_.sendTo(camPkt, c);
@@ -471,7 +471,7 @@ void ServerApp::resetToCheckpoint()
         if (checkpointState_.has_value()) {
             levelDirector_->restoreCheckpointState(checkpointState_->director);
             levelSpawnSys_->restoreCheckpointState(checkpointState_->spawns);
-            respawn   = checkpointState_->respawn;
+            respawn    = checkpointState_->respawn;
             bossStates = checkpointState_->director.bosses;
         } else {
             levelDirector_->reset();

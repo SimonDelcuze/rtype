@@ -4,20 +4,16 @@
 #include "network/LevelEventParser.hpp"
 #include "network/LevelInitParser.hpp"
 
-NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
-                                             ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-                                             ThreadSafeQueue<LevelInitData>& levelInitQueue,
-                                             ThreadSafeQueue<LevelEventData>& levelEventQueue,
-                                             ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
-                                             ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
-                                             std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag,
-                                             std::atomic<int>* countdownValueFlag, std::atomic<bool>* gameStartFlag,
-                                             std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
+NetworkMessageHandler::NetworkMessageHandler(
+    ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
+    ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
+    ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+    std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag, std::atomic<int>* countdownValueFlag,
+    std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
     : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
       levelEventQueue_(levelEventQueue), spawnQueue_(spawnQueue), destroyQueue_(destroyQueue),
-      handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag),
-      countdownValueFlag_(countdownValueFlag), gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag),
-      joinAcceptedFlag_(joinAcceptedFlag)
+      handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag), countdownValueFlag_(countdownValueFlag),
+      gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag), joinAcceptedFlag_(joinAcceptedFlag)
 {}
 
 namespace

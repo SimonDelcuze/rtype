@@ -14,9 +14,9 @@ LevelDirector::LevelDirector(LevelData data) : data_(std::move(data))
 
 void LevelDirector::reset()
 {
-    segmentIndex_     = 0;
-    segmentTime_      = 0.0F;
-    segmentDistance_  = 0.0F;
+    segmentIndex_    = 0;
+    segmentTime_     = 0.0F;
+    segmentDistance_ = 0.0F;
     firedEvents_.clear();
     spawnEntities_.clear();
     bossStates_.clear();
@@ -40,10 +40,10 @@ LevelDirector::CheckpointState LevelDirector::captureCheckpointState() const
     state.segmentEvents.reserve(segmentEvents_.size());
     for (const auto& runtime : segmentEvents_) {
         EventRuntimeState evState;
-        evState.fired           = runtime.fired;
-        evState.repeating       = runtime.repeating;
-        evState.nextRepeatTime  = runtime.nextRepeatTime;
-        evState.remainingCount  = runtime.remainingCount;
+        evState.fired          = runtime.fired;
+        evState.repeating      = runtime.repeating;
+        evState.nextRepeatTime = runtime.nextRepeatTime;
+        evState.remainingCount = runtime.remainingCount;
         state.segmentEvents.push_back(std::move(evState));
     }
 
@@ -91,12 +91,12 @@ void LevelDirector::restoreCheckpointState(const CheckpointState& state)
 
     const std::size_t count = std::min(segmentEvents_.size(), state.segmentEvents.size());
     for (std::size_t i = 0; i < count; ++i) {
-        auto& runtime        = segmentEvents_[i];
-        const auto& snapshot = state.segmentEvents[i];
-        runtime.fired           = snapshot.fired;
-        runtime.repeating       = snapshot.repeating;
-        runtime.nextRepeatTime  = snapshot.nextRepeatTime;
-        runtime.remainingCount  = snapshot.remainingCount;
+        auto& runtime          = segmentEvents_[i];
+        const auto& snapshot   = state.segmentEvents[i];
+        runtime.fired          = snapshot.fired;
+        runtime.repeating      = snapshot.repeating;
+        runtime.nextRepeatTime = snapshot.nextRepeatTime;
+        runtime.remainingCount = snapshot.remainingCount;
     }
 
     for (const auto& spawnState : state.spawnGroups) {
@@ -109,9 +109,9 @@ void LevelDirector::restoreCheckpointState(const CheckpointState& state)
         if (bossState.status != BossCheckpointStatus::Dead)
             continue;
         BossRuntime runtime;
-        runtime.entityId    = std::numeric_limits<EntityId>::max();
-        runtime.registered  = true;
-        runtime.dead        = true;
+        runtime.entityId     = std::numeric_limits<EntityId>::max();
+        runtime.registered   = true;
+        runtime.dead         = true;
         runtime.onDeathFired = true;
         bossStates_.emplace(bossState.bossId, std::move(runtime));
     }
@@ -131,9 +131,8 @@ void LevelDirector::enterSegment(std::size_t index)
 
 void LevelDirector::registerSpawn(const std::string& spawnId, EntityId entityId)
 {
-    if (!spawnId.empty())
-    {
-        auto& group = spawnEntities_[spawnId];
+    if (!spawnId.empty()) {
+        auto& group   = spawnEntities_[spawnId];
         group.spawned = true;
         group.entities.insert(entityId);
     }
@@ -148,14 +147,14 @@ void LevelDirector::registerBoss(const std::string& bossId, EntityId entityId)
 {
     if (bossId.empty())
         return;
-    auto& state    = bossStates_[bossId];
-    state.entityId = entityId;
-    state.registered = true;
-    state.dead = false;
+    auto& state        = bossStates_[bossId];
+    state.entityId     = entityId;
+    state.registered   = true;
+    state.dead         = false;
     state.onDeathFired = false;
-    state.phaseIndex = 0;
+    state.phaseIndex   = 0;
     state.phaseEvents.clear();
-    state.phaseStartTime = segmentTime_;
+    state.phaseStartTime     = segmentTime_;
     state.phaseStartDistance = segmentDistance_;
 }
 
@@ -355,7 +354,7 @@ void LevelDirector::applyEventEffects(const LevelEvent& event)
 
 void LevelDirector::setupRepeat(EventRuntime& runtime, float now)
 {
-    runtime.repeating = true;
+    runtime.repeating      = true;
     runtime.nextRepeatTime = now + runtime.event->repeat->interval;
     if (runtime.event->repeat->count.has_value()) {
         runtime.remainingCount = *runtime.event->repeat->count - 1;
@@ -398,9 +397,9 @@ void LevelDirector::updateSegmentEvents(Registry& registry)
         return;
     const auto& segment = data_.segments[segmentIndex_];
     TriggerContext ctx;
-    ctx.time = segmentTime_;
-    ctx.distance = segmentDistance_;
-    ctx.registry = &registry;
+    ctx.time       = segmentTime_;
+    ctx.distance   = segmentDistance_;
+    ctx.registry   = &registry;
     ctx.enemyCount = countEnemies(registry);
 
     for (auto& runtime : segmentEvents_) {
@@ -431,9 +430,9 @@ void LevelDirector::updateBossEvents(Registry& registry)
             continue;
         bool alive = registry.isAlive(state.entityId);
         if (!alive && !state.onDeathFired) {
-            state.dead = true;
+            state.dead         = true;
             state.onDeathFired = true;
-            auto it = data_.bosses.find(bossId);
+            auto it            = data_.bosses.find(bossId);
             if (it != data_.bosses.end()) {
                 for (const auto& ev : it->second.onDeath) {
                     fireEvent(ev, data_.segments[segmentIndex_].id, bossId, true);
@@ -451,23 +450,23 @@ void LevelDirector::updateBossEvents(Registry& registry)
         if (state.phaseIndex < def.phases.size()) {
             const auto& phase = def.phases[state.phaseIndex];
             TriggerContext phaseCtx;
-            phaseCtx.time = segmentTime_;
-            phaseCtx.distance = segmentDistance_;
-            phaseCtx.registry = &registry;
+            phaseCtx.time       = segmentTime_;
+            phaseCtx.distance   = segmentDistance_;
+            phaseCtx.registry   = &registry;
             phaseCtx.enemyCount = countEnemies(registry);
             if (isTriggerActive(phase.trigger, phaseCtx)) {
-                state.phaseStartTime = segmentTime_;
+                state.phaseStartTime     = segmentTime_;
                 state.phaseStartDistance = segmentDistance_;
-                state.phaseEvents = makeEventRuntime(phase.events);
+                state.phaseEvents        = makeEventRuntime(phase.events);
                 state.phaseIndex++;
             }
         }
 
         if (!state.phaseEvents.empty()) {
             TriggerContext phaseCtx;
-            phaseCtx.time = segmentTime_ - state.phaseStartTime;
-            phaseCtx.distance = segmentDistance_ - state.phaseStartDistance;
-            phaseCtx.registry = &registry;
+            phaseCtx.time       = segmentTime_ - state.phaseStartTime;
+            phaseCtx.distance   = segmentDistance_ - state.phaseStartDistance;
+            phaseCtx.registry   = &registry;
             phaseCtx.enemyCount = countEnemies(registry);
 
             for (auto& runtime : state.phaseEvents) {
@@ -498,9 +497,9 @@ bool LevelDirector::evaluateExit(Registry& registry) const
     if (segmentIndex_ >= data_.segments.size())
         return false;
     TriggerContext ctx;
-    ctx.time = segmentTime_;
-    ctx.distance = segmentDistance_;
-    ctx.registry = &registry;
+    ctx.time       = segmentTime_;
+    ctx.distance   = segmentDistance_;
+    ctx.registry   = &registry;
     ctx.enemyCount = countEnemies(registry);
     return isTriggerActive(data_.segments[segmentIndex_].exit, ctx);
 }

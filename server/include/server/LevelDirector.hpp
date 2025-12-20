@@ -92,22 +92,22 @@ class LevelDirector
 
     struct BossRuntime
     {
-        EntityId entityId = 0;
-        bool registered   = false;
-        bool dead         = false;
-        bool onDeathFired = false;
-        std::size_t phaseIndex = 0;
-        float phaseStartTime   = 0.0F;
+        EntityId entityId        = 0;
+        bool registered          = false;
+        bool dead                = false;
+        bool onDeathFired        = false;
+        std::size_t phaseIndex   = 0;
+        float phaseStartTime     = 0.0F;
         float phaseStartDistance = 0.0F;
         std::vector<EventRuntime> phaseEvents;
     };
 
     struct TriggerContext
     {
-        float time      = 0.0F;
-        float distance  = 0.0F;
+        float time              = 0.0F;
+        float distance          = 0.0F;
         std::int32_t enemyCount = 0;
-        Registry* registry = nullptr;
+        Registry* registry      = nullptr;
     };
 
     void enterSegment(std::size_t index);

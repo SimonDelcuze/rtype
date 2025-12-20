@@ -19,8 +19,7 @@
 class LevelEventSystem : public ISystem
 {
   public:
-    LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest,
-                     TextureManager& textures);
+    LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest, TextureManager& textures);
 
     void update(Registry& registry, float deltaTime) override;
 
@@ -33,12 +32,12 @@ class LevelEventSystem : public ISystem
     void applyMusic(const std::string& musicId);
 
     ThreadSafeQueue<LevelEventData>* queue_ = nullptr;
-    const AssetManifest* manifest_ = nullptr;
-    TextureManager* textures_ = nullptr;
+    const AssetManifest* manifest_          = nullptr;
+    TextureManager* textures_               = nullptr;
 
     LevelScrollSettings activeScroll_;
-    float scrollTime_ = 0.0F;
-    bool scrollActive_ = false;
+    float scrollTime_    = 0.0F;
+    bool scrollActive_   = false;
     float fallbackSpeed_ = -50.0F;
 
     sf::Music music_;

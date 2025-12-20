@@ -19,10 +19,9 @@ namespace
 
     std::uint32_t readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset)
     {
-        std::uint32_t val = (static_cast<std::uint32_t>(buf[offset]) << 24) |
-                            (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
-                            (static_cast<std::uint32_t>(buf[offset + 2]) << 8) |
-                            static_cast<std::uint32_t>(buf[offset + 3]);
+        std::uint32_t val =
+            (static_cast<std::uint32_t>(buf[offset]) << 24) | (static_cast<std::uint32_t>(buf[offset + 1]) << 16) |
+            (static_cast<std::uint32_t>(buf[offset + 2]) << 8) | static_cast<std::uint32_t>(buf[offset + 3]);
         offset += 4;
         return val;
     }
@@ -40,7 +39,7 @@ namespace
         offset += len;
         return str;
     }
-}
+} // namespace
 
 std::optional<LevelEventData> LevelEventParser::parse(const std::vector<std::uint8_t>& data)
 {
@@ -63,10 +62,9 @@ std::optional<LevelEventData> LevelEventParser::parse(const std::vector<std::uin
     if (data.size() < crcOffset + PacketHeader::kCrcSize) {
         return std::nullopt;
     }
-    std::uint32_t transmitted = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
-                                (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
-                                (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) |
-                                static_cast<std::uint32_t>(data[crcOffset + 3]);
+    std::uint32_t transmitted =
+        (static_cast<std::uint32_t>(data[crcOffset]) << 24) | (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
+        (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) | static_cast<std::uint32_t>(data[crcOffset + 3]);
     std::uint32_t computed = PacketHeader::crc32(data.data(), crcOffset);
     if (transmitted != computed) {
         return std::nullopt;

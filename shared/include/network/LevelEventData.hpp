@@ -7,12 +7,12 @@
 
 enum class LevelEventType : std::uint8_t
 {
-    SetScroll      = 1,
-    SetBackground  = 2,
-    SetMusic       = 3,
+    SetScroll       = 1,
+    SetBackground   = 2,
+    SetMusic        = 3,
     SetCameraBounds = 4,
-    GateOpen       = 5,
-    GateClose      = 6
+    GateOpen        = 5,
+    GateClose       = 6
 };
 
 enum class LevelScrollMode : std::uint8_t
