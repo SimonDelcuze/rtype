@@ -3,6 +3,7 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/LevelEventData.hpp"
 #include "network/LevelInitData.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/SnapshotParser.hpp"
@@ -20,6 +21,7 @@ class NetworkMessageHandler
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                           ThreadSafeQueue<LevelInitData>& levelInitQueue,
+                          ThreadSafeQueue<LevelEventData>& levelEventQueue,
                           ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
                           ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
                           std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
@@ -38,6 +40,7 @@ class NetworkMessageHandler
     void handleEntitySpawn(const std::vector<std::uint8_t>& data);
     void handleEntityDestroyed(const std::vector<std::uint8_t>& data);
     void handleLevelInit(const std::vector<std::uint8_t>& data);
+    void handleLevelEvent(const std::vector<std::uint8_t>& data);
     void handleCountdownTick(const std::vector<std::uint8_t>& data);
     void dispatch(const std::vector<std::uint8_t>& data);
 
@@ -54,6 +57,7 @@ class NetworkMessageHandler
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue_;
     ThreadSafeQueue<SnapshotParseResult>& snapshotQueue_;
     ThreadSafeQueue<LevelInitData>& levelInitQueue_;
+    ThreadSafeQueue<LevelEventData>& levelEventQueue_;
     ThreadSafeQueue<EntitySpawnPacket>& spawnQueue_;
     ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue_;
     std::atomic<bool>* handshakeFlag_;

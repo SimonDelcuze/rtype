@@ -1,5 +1,7 @@
 #include "server/Packets.hpp"
 
+#include <bit>
+
 namespace
 {
     void writeU16(std::vector<std::uint8_t>& out, std::uint16_t v)
@@ -8,12 +10,22 @@ namespace
         out.push_back(static_cast<std::uint8_t>(v & 0xFF));
     }
 
+    void writeU8(std::vector<std::uint8_t>& out, std::uint8_t v)
+    {
+        out.push_back(v);
+    }
+
     void writeU32(std::vector<std::uint8_t>& out, std::uint32_t v)
     {
         out.push_back(static_cast<std::uint8_t>((v >> 24) & 0xFF));
         out.push_back(static_cast<std::uint8_t>((v >> 16) & 0xFF));
         out.push_back(static_cast<std::uint8_t>((v >> 8) & 0xFF));
         out.push_back(static_cast<std::uint8_t>(v & 0xFF));
+    }
+
+    void writeF32(std::vector<std::uint8_t>& out, float v)
+    {
+        writeU32(out, std::bit_cast<std::uint32_t>(v));
     }
 
     void writeString(std::vector<std::uint8_t>& out, const std::string& s)
@@ -41,6 +53,58 @@ std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl)
     PacketHeader hdr{};
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::LevelInit);
+    hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
+    auto hdrBytes   = hdr.encode();
+    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+    out.insert(out.end(), payload.begin(), payload.end());
+    auto crc = PacketHeader::crc32(out.data(), out.size());
+    writeU32(out, crc);
+    return out;
+}
+
+std::vector<std::uint8_t> buildLevelEventPacket(const LevelEventData& event, std::uint32_t tick)
+{
+    std::vector<std::uint8_t> payload;
+    writeU8(payload, static_cast<std::uint8_t>(event.type));
+
+    if (event.type == LevelEventType::SetScroll) {
+        if (!event.scroll.has_value())
+            return {};
+        writeU8(payload, static_cast<std::uint8_t>(event.scroll->mode));
+        writeF32(payload, event.scroll->speedX);
+        std::uint8_t count = static_cast<std::uint8_t>(event.scroll->curve.size());
+        writeU8(payload, count);
+        for (const auto& key : event.scroll->curve) {
+            writeF32(payload, key.time);
+            writeF32(payload, key.speedX);
+        }
+    } else if (event.type == LevelEventType::SetBackground) {
+        if (!event.backgroundId.has_value())
+            return {};
+        writeString(payload, *event.backgroundId);
+    } else if (event.type == LevelEventType::SetMusic) {
+        if (!event.musicId.has_value())
+            return {};
+        writeString(payload, *event.musicId);
+    } else if (event.type == LevelEventType::SetCameraBounds) {
+        if (!event.cameraBounds.has_value())
+            return {};
+        writeF32(payload, event.cameraBounds->minX);
+        writeF32(payload, event.cameraBounds->maxX);
+        writeF32(payload, event.cameraBounds->minY);
+        writeF32(payload, event.cameraBounds->maxY);
+    } else if (event.type == LevelEventType::GateOpen || event.type == LevelEventType::GateClose) {
+        if (!event.gateId.has_value())
+            return {};
+        writeString(payload, *event.gateId);
+    } else {
+        return {};
+    }
+
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::LevelEvent);
+    hdr.tickId      = tick;
     hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
     auto hdrBytes   = hdr.encode();
     std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());

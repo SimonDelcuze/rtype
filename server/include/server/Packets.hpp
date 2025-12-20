@@ -2,6 +2,7 @@
 
 #include "components/Components.hpp"
 #include "ecs/Registry.hpp"
+#include "network/LevelEventData.hpp"
 #include "network/PacketHeader.hpp"
 
 #include <cstdint>
@@ -37,6 +38,7 @@ struct LevelDefinition
 };
 
 std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl);
+std::vector<std::uint8_t> buildLevelEventPacket(const LevelEventData& event, std::uint32_t tick);
 std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick);
 std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, uint32_t tick,
                                                            std::size_t maxPayloadBytes = 1000);

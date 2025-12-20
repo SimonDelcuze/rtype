@@ -73,6 +73,8 @@ class ServerApp
     void handleDeathAndRespawn();
     void syncEntityLifecycle();
     void spawnPlayerDeathFx(float x, float y);
+    void sendLevelEvents(const std::vector<DispatchedEvent>& events);
+    void sendSegmentState();
     void captureCheckpoint(const std::vector<DispatchedEvent>& events);
     void resetToCheckpoint();
     void respawnPlayers(const Vec2f& respawn);
@@ -114,6 +116,7 @@ class ServerApp
     bool countdownActive_{false};
     float countdownTimer_{3.0F};
     int lastCountdownValue_{4};
+    std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
     std::unordered_set<EntityId> knownEntities_;

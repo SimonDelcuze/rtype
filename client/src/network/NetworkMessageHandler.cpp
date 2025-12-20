@@ -1,18 +1,21 @@
 #include "network/NetworkMessageHandler.hpp"
 
 #include "Logger.hpp"
+#include "network/LevelEventParser.hpp"
 #include "network/LevelInitParser.hpp"
 
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                                              ThreadSafeQueue<LevelInitData>& levelInitQueue,
+                                             ThreadSafeQueue<LevelEventData>& levelEventQueue,
                                              ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
                                              ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
                                              std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag,
                                              std::atomic<int>* countdownValueFlag, std::atomic<bool>* gameStartFlag,
                                              std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
-    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue), spawnQueue_(spawnQueue),
-      destroyQueue_(destroyQueue), handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag),
+    : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
+      levelEventQueue_(levelEventQueue), spawnQueue_(spawnQueue), destroyQueue_(destroyQueue),
+      handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag),
       countdownValueFlag_(countdownValueFlag), gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag),
       joinAcceptedFlag_(joinAcceptedFlag)
 {}
@@ -29,12 +32,18 @@ namespace
         static ThreadSafeQueue<EntityDestroyedPacket> q;
         return q;
     }
+    ThreadSafeQueue<LevelEventData>& dummyLevelEventQueue()
+    {
+        static ThreadSafeQueue<LevelEventData> q;
+        return q;
+    }
 } // namespace
 
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                                              ThreadSafeQueue<LevelInitData>& levelInitQueue)
-    : NetworkMessageHandler(rawQueue, snapshotQueue, levelInitQueue, dummySpawnQueue(), dummyDestroyQueue())
+    : NetworkMessageHandler(rawQueue, snapshotQueue, levelInitQueue, dummyLevelEventQueue(), dummySpawnQueue(),
+                            dummyDestroyQueue())
 {}
 
 void NetworkMessageHandler::poll()
@@ -96,6 +105,15 @@ void NetworkMessageHandler::handleLevelInit(const std::vector<std::uint8_t>& dat
     if (handshakeFlag_ != nullptr) {
         handshakeFlag_->store(true);
     }
+}
+
+void NetworkMessageHandler::handleLevelEvent(const std::vector<std::uint8_t>& data)
+{
+    auto parsed = LevelEventParser::parse(data);
+    if (!parsed.has_value()) {
+        return;
+    }
+    levelEventQueue_.push(std::move(*parsed));
 }
 
 void NetworkMessageHandler::handleCountdownTick(const std::vector<std::uint8_t>& data)
@@ -256,6 +274,10 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::LevelInit)) {
         handleLevelInit(data);
+        return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::LevelEvent)) {
+        handleLevelEvent(data);
         return;
     }
 }

@@ -35,6 +35,7 @@ enum class MessageType : std::uint8_t
     CountdownTick      = 0x20,
     LevelInit          = 0x30,
     LevelTransition    = 0x31,
+    LevelEvent         = 0x32,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
 };

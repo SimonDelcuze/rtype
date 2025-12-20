@@ -98,6 +98,7 @@ bool NetworkReceiver::handlePacket(const std::uint8_t* data, std::size_t len)
         hdr->messageType != static_cast<std::uint8_t>(MessageType::ServerJoinDeny) &&
         hdr->messageType != static_cast<std::uint8_t>(MessageType::EntitySpawn) &&
         hdr->messageType != static_cast<std::uint8_t>(MessageType::EntityDestroyed) &&
+        hdr->messageType != static_cast<std::uint8_t>(MessageType::LevelEvent) &&
         hdr->messageType != static_cast<std::uint8_t>(MessageType::GameStart) &&
         hdr->messageType != static_cast<std::uint8_t>(MessageType::ServerPong)) {
         return false;
