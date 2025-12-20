@@ -39,7 +39,7 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
             if (registry.has<ScoreComponent>(id)) {
                 event.finalScore = registry.get<ScoreComponent>(id).value;
             }
-            event.level      = 1;
+            event.level = 1;
             eventBus_.emit(std::move(event));
             gameOverTriggered_ = true;
             return;
