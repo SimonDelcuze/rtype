@@ -116,9 +116,14 @@ Boss behaviors are documented in `docs/server/level-boss-spec.md`.
 
 Events always include a `trigger`.
 
-`spawnId` is optional on spawn events and can be used to reference the entity
-in triggers (ex: `spawn_dead`) or gate events.
+For `spawn_wave`, the event `id` is the spawn group id used by `spawn_dead`.
+`spawn_obstacle` and `spawn_boss` may include `spawnId` to override the event `id`.
 
 ## Example (Complete)
 
 See `docs/server/level-example-v1.json` for a full example.
+
+## Related
+
+- `docs/server/level-events.md`
+- `docs/server/level-runtime.md`
