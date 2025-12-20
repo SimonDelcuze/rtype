@@ -34,17 +34,17 @@ void LevelSpawnSystem::update(Registry& registry, float deltaTime, const std::ve
 LevelSpawnSystem::CheckpointState LevelSpawnSystem::captureCheckpointState() const
 {
     CheckpointState state;
-    state.time = time_;
+    state.time           = time_;
     state.pendingEnemies = pendingEnemies_;
-    state.bossSpawns = bossSpawns_;
+    state.bossSpawns     = bossSpawns_;
     return state;
 }
 
 void LevelSpawnSystem::restoreCheckpointState(const CheckpointState& state)
 {
-    time_ = state.time;
+    time_           = state.time;
     pendingEnemies_ = state.pendingEnemies;
-    bossSpawns_ = state.bossSpawns;
+    bossSpawns_     = state.bossSpawns;
 }
 
 std::optional<SpawnBossSettings> LevelSpawnSystem::getBossSpawnSettings(const std::string& bossId) const
@@ -99,9 +99,9 @@ void LevelSpawnSystem::scheduleWave(const LevelEvent& event, const WaveDefinitio
     if (enemyIt == data_->templates.enemies.end())
         return;
 
-    const EnemyTemplate& enemy = enemyIt->second;
+    const EnemyTemplate& enemy        = enemyIt->second;
     const MovementComponent& movement = patternIt->second;
-    const std::string spawnGroupId = event.id;
+    const std::string spawnGroupId    = event.id;
 
     if (wave.type == WaveType::Line) {
         for (std::int32_t i = 0; i < wave.count; ++i) {
@@ -120,9 +120,9 @@ void LevelSpawnSystem::scheduleWave(const LevelEvent& event, const WaveDefinitio
     }
     if (wave.type == WaveType::Triangle) {
         for (std::int32_t layer = 0; layer < wave.layers; ++layer) {
-            float y = wave.apexY + wave.rowHeight * static_cast<float>(layer);
+            float y            = wave.apexY + wave.rowHeight * static_cast<float>(layer);
             std::int32_t count = 1 + 2 * layer;
-            float startLeft = -wave.horizontalStep * static_cast<float>(layer);
+            float startLeft    = -wave.horizontalStep * static_cast<float>(layer);
             for (std::int32_t i = 0; i < count; ++i) {
                 float x = wave.spawnX + startLeft + wave.horizontalStep * static_cast<float>(i);
                 enqueueEnemySpawn(0.0F, enemy, movement, x, y, wave, spawnGroupId);
@@ -152,16 +152,17 @@ void LevelSpawnSystem::scheduleWave(const LevelEvent& event, const WaveDefinitio
     }
 }
 
-void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& enemy, const MovementComponent& movement,
-                                        float x, float y, const WaveDefinition& wave, const std::string& spawnGroupId)
+void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& enemy,
+                                         const MovementComponent& movement, float x, float y,
+                                         const WaveDefinition& wave, const std::string& spawnGroupId)
 {
     PendingEnemySpawn spawn;
-    spawn.time = time_ + std::max(0.0F, timeOffset);
+    spawn.time     = time_ + std::max(0.0F, timeOffset);
     spawn.movement = movement;
-    spawn.hitbox = enemy.hitbox;
+    spawn.hitbox   = enemy.hitbox;
     spawn.collider = enemy.collider;
-    spawn.health = wave.health.has_value() ? *wave.health : enemy.health;
-    spawn.scale = wave.scale.has_value() ? *wave.scale : enemy.scale;
+    spawn.health   = wave.health.has_value() ? *wave.health : enemy.health;
+    spawn.scale    = wave.scale.has_value() ? *wave.scale : enemy.scale;
     if (wave.shootingEnabled.has_value()) {
         if (*wave.shootingEnabled && enemy.shooting.has_value())
             spawn.shooting = enemy.shooting;
@@ -169,9 +170,9 @@ void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& 
         if (enemy.shooting.has_value())
             spawn.shooting = enemy.shooting;
     }
-    spawn.typeId = enemy.typeId;
-    spawn.x = x;
-    spawn.y = y;
+    spawn.typeId       = enemy.typeId;
+    spawn.x            = x;
+    spawn.y            = y;
     spawn.spawnGroupId = spawnGroupId;
     pendingEnemies_.push_back(spawn);
 }
@@ -179,11 +180,11 @@ void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& 
 void LevelSpawnSystem::spawnEnemy(Registry& registry, const PendingEnemySpawn& spawn)
 {
     EntityId e = registry.createEntity();
-    auto& t = registry.emplace<TransformComponent>(e);
-    t.x = spawn.x;
-    t.y = spawn.y;
-    t.scaleX = spawn.scale.x;
-    t.scaleY = spawn.scale.y;
+    auto& t    = registry.emplace<TransformComponent>(e);
+    t.x        = spawn.x;
+    t.y        = spawn.y;
+    t.scaleX   = spawn.scale.x;
+    t.scaleY   = spawn.scale.y;
     registry.emplace<MovementComponent>(e, spawn.movement);
     registry.emplace<VelocityComponent>(e);
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Enemy));
@@ -233,11 +234,11 @@ void LevelSpawnSystem::spawnObstacle(Registry& registry, const SpawnObstacleSett
     }
 
     EntityId e = registry.createEntity();
-    auto& t = registry.emplace<TransformComponent>(e);
-    t.x = settings.x;
-    t.y = y;
-    t.scaleX = scale.x;
-    t.scaleY = scale.y;
+    auto& t    = registry.emplace<TransformComponent>(e);
+    t.x        = settings.x;
+    t.y        = y;
+    t.scaleX   = scale.x;
+    t.scaleY   = scale.y;
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Obstacle));
     registry.emplace<HealthComponent>(e, HealthComponent::create(health));
     registry.emplace<VelocityComponent>(e, VelocityComponent::create(speedX, speedY));
@@ -261,11 +262,11 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
     bossSpawns_[settings.bossId] = settings;
 
     EntityId e = registry.createEntity();
-    auto& t = registry.emplace<TransformComponent>(e);
-    t.x = settings.spawn.x;
-    t.y = settings.spawn.y;
-    t.scaleX = boss.scale.x;
-    t.scaleY = boss.scale.y;
+    auto& t    = registry.emplace<TransformComponent>(e);
+    t.x        = settings.spawn.x;
+    t.y        = settings.spawn.y;
+    t.scaleX   = boss.scale.x;
+    t.scaleY   = boss.scale.y;
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Enemy));
     registry.emplace<HealthComponent>(e, HealthComponent::create(boss.health));
     registry.emplace<HitboxComponent>(e, boss.hitbox);
@@ -281,10 +282,10 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
 }
 
 float LevelSpawnSystem::resolveObstacleY(const ObstacleTemplate& tpl, const SpawnObstacleSettings& settings,
-                                        float scaleY) const
+                                         float scaleY) const
 {
     ObstacleAnchor anchor = tpl.anchor;
-    float margin = tpl.margin;
+    float margin          = tpl.margin;
     if (settings.anchor.has_value())
         anchor = *settings.anchor;
     if (settings.margin.has_value())

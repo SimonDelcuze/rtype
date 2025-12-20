@@ -100,10 +100,9 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
         std::cerr << "Failed to start NetworkReceiver on port " << port << '\n';
         return false;
     }
-    net.handler =
-        std::make_unique<NetworkMessageHandler>(net.raw, net.parsed, net.levelInit, net.levelEvents, net.spawns,
-                                                net.destroys, &handshakeFlag, &net.allReady, &net.countdownValue,
-                                                &net.gameStartReceived, &net.joinDenied, &net.joinAccepted);
+    net.handler = std::make_unique<NetworkMessageHandler>(
+        net.raw, net.parsed, net.levelInit, net.levelEvents, net.spawns, net.destroys, &handshakeFlag, &net.allReady,
+        &net.countdownValue, &net.gameStartReceived, &net.joinDenied, &net.joinAccepted);
     Logger::instance().info("Receiver started on port " + std::to_string(port));
     return true;
 }

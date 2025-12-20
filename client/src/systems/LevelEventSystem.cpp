@@ -6,9 +6,9 @@ LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const
                                    TextureManager& textures)
     : queue_(&queue), manifest_(&manifest), textures_(&textures)
 {
-    activeScroll_.mode  = LevelScrollMode::Constant;
+    activeScroll_.mode   = LevelScrollMode::Constant;
     activeScroll_.speedX = fallbackSpeed_;
-    scrollActive_ = true;
+    scrollActive_        = true;
 }
 
 void LevelEventSystem::update(Registry& registry, float deltaTime)
@@ -91,18 +91,18 @@ void LevelEventSystem::applyBackground(Registry& registry, const std::string& ba
         }
         auto& sprite = registry.get<SpriteComponent>(id);
         sprite.setTexture(*tex);
-        auto& scroll = registry.get<BackgroundScrollComponent>(id);
+        auto& scroll        = registry.get<BackgroundScrollComponent>(id);
         scroll.resetOffsetX = 0.0F;
         scroll.resetOffsetY = 0.0F;
-        updated = true;
+        updated             = true;
     }
 
     if (!updated) {
         EntityId e = registry.createEntity();
         registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
         registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-        registry.emplace<BackgroundScrollComponent>(e,
-                                                    BackgroundScrollComponent::create(currentScrollSpeed(), 0.0F, 0.0F));
+        registry.emplace<BackgroundScrollComponent>(
+            e, BackgroundScrollComponent::create(currentScrollSpeed(), 0.0F, 0.0F));
         registry.emplace<LayerComponent>(e, LayerComponent::create(RenderLayer::Background));
     }
 }
@@ -120,7 +120,7 @@ void LevelEventSystem::applyScrollSpeed(Registry& registry, float speedX)
         if (!registry.isAlive(id)) {
             continue;
         }
-        auto& scroll = registry.get<BackgroundScrollComponent>(id);
+        auto& scroll  = registry.get<BackgroundScrollComponent>(id);
         scroll.speedX = speedX;
     }
 }

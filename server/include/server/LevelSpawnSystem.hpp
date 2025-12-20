@@ -4,9 +4,9 @@
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"
 
+#include <optional>
 #include <string>
 #include <unordered_map>
-#include <optional>
 #include <vector>
 
 class LevelSpawnSystem
@@ -24,8 +24,8 @@ class LevelSpawnSystem
         Vec2f scale{1.0F, 1.0F};
         std::optional<EnemyShootingComponent> shooting;
         std::uint16_t typeId = 0;
-        float x = 0.0F;
-        float y = 0.0F;
+        float x              = 0.0F;
+        float y              = 0.0F;
         std::string spawnGroupId;
     };
 
@@ -57,10 +57,10 @@ class LevelSpawnSystem
 
     float resolveObstacleY(const ObstacleTemplate& tpl, const SpawnObstacleSettings& settings, float scaleY) const;
 
-    const LevelData* data_ = nullptr;
+    const LevelData* data_   = nullptr;
     LevelDirector* director_ = nullptr;
-    float playfieldHeight_ = 720.0F;
-    float time_ = 0.0F;
+    float playfieldHeight_   = 720.0F;
+    float time_              = 0.0F;
 
     std::unordered_map<std::string, MovementComponent> patternMap_;
     std::vector<PendingEnemySpawn> pendingEnemies_;

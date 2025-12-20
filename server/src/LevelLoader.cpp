@@ -23,8 +23,8 @@ namespace
     void setError(LevelLoadError& error, LevelLoadErrorCode code, const std::string& message, const std::string& path,
                   const std::string& jsonPointer)
     {
-        error.code        = code;
-        error.message     = message;
+        error.code    = code;
+        error.message = message;
         if (!path.empty())
             error.path = path;
         error.jsonPointer = jsonPointer;
@@ -188,11 +188,11 @@ namespace
             setError(error, LevelLoadErrorCode::SchemaError, "Expected hitbox object", "", path);
             return false;
         }
-        double width = 0.0;
-        double height = 0.0;
+        double width   = 0.0;
+        double height  = 0.0;
         double offsetX = 0.0;
         double offsetY = 0.0;
-        bool active = true;
+        bool active    = true;
         if (!readNumber(j, "width", width, path, error, true))
             return false;
         if (!readNumber(j, "height", height, path, error, true))
@@ -216,12 +216,12 @@ namespace
             return false;
         double offsetX = 0.0;
         double offsetY = 0.0;
-        bool active = true;
+        bool active    = true;
         readNumber(j, "offsetX", offsetX, path, error, false);
         readNumber(j, "offsetY", offsetY, path, error, false);
         readBool(j, "active", active, path, error, false);
         if (shape == "box") {
-            double width = 0.0;
+            double width  = 0.0;
             double height = 0.0;
             if (!readNumber(j, "width", width, path, error, true))
                 return false;
@@ -241,7 +241,8 @@ namespace
         }
         if (shape == "polygon") {
             if (!j.contains("points") || !j.at("points").is_array()) {
-                setError(error, LevelLoadErrorCode::SchemaError, "Missing polygon points", "", joinPath(path, "points"));
+                setError(error, LevelLoadErrorCode::SchemaError, "Missing polygon points", "",
+                         joinPath(path, "points"));
                 return false;
             }
             const json& pts = j.at("points");
@@ -271,10 +272,10 @@ namespace
             setError(error, LevelLoadErrorCode::SchemaError, "Expected shooting object", "", path);
             return false;
         }
-        double interval = 0.0;
-        double speed = 0.0;
+        double interval     = 0.0;
+        double speed        = 0.0;
         std::int32_t damage = 0;
-        double lifetime = 0.0;
+        double lifetime     = 0.0;
         if (!readNumber(j, "interval", interval, path, error, true))
             return false;
         if (!readNumber(j, "speed", speed, path, error, true))
@@ -326,8 +327,8 @@ namespace
                              joinPath(joinPath(path, "curve"), std::to_string(i)));
                     return false;
                 }
-                double time = 0.0;
-                double speedX = 0.0;
+                double time    = 0.0;
+                double speedX  = 0.0;
                 std::string kp = joinPath(joinPath(path, "curve"), std::to_string(i));
                 if (!readNumber(k, "time", time, kp, error, true))
                     return false;
@@ -439,10 +440,11 @@ namespace
         }
         if (type == "all_of" || type == "any_of") {
             if (!j.contains("triggers") || !j.at("triggers").is_array()) {
-                setError(error, LevelLoadErrorCode::SchemaError, "Missing triggers array", "", joinPath(path, "triggers"));
+                setError(error, LevelLoadErrorCode::SchemaError, "Missing triggers array", "",
+                         joinPath(path, "triggers"));
                 return false;
             }
-            out.type = type == "all_of" ? TriggerType::AllOf : TriggerType::AnyOf;
+            out.type        = type == "all_of" ? TriggerType::AllOf : TriggerType::AnyOf;
             const json& arr = j.at("triggers");
             out.triggers.clear();
             out.triggers.reserve(arr.size());
@@ -492,10 +494,10 @@ namespace
         }
 
         if (type == "line") {
-            out.type = WaveType::Line;
-            double spawnX = 0.0;
-            double startY = 0.0;
-            double deltaY = 0.0;
+            out.type           = WaveType::Line;
+            double spawnX      = 0.0;
+            double startY      = 0.0;
+            double deltaY      = 0.0;
             std::int32_t count = 0;
             if (!readNumber(j, "spawnX", spawnX, path, error, true))
                 return false;
@@ -512,11 +514,11 @@ namespace
             return true;
         }
         if (type == "stagger") {
-            out.type = WaveType::Stagger;
-            double spawnX = 0.0;
-            double startY = 0.0;
-            double deltaY = 0.0;
-            double spacing = 0.0;
+            out.type           = WaveType::Stagger;
+            double spawnX      = 0.0;
+            double startY      = 0.0;
+            double deltaY      = 0.0;
+            double spacing     = 0.0;
             std::int32_t count = 0;
             if (!readNumber(j, "spawnX", spawnX, path, error, true))
                 return false;
@@ -536,12 +538,12 @@ namespace
             return true;
         }
         if (type == "triangle") {
-            out.type = WaveType::Triangle;
-            double spawnX = 0.0;
-            double apexY = 0.0;
-            double rowHeight = 0.0;
+            out.type              = WaveType::Triangle;
+            double spawnX         = 0.0;
+            double apexY          = 0.0;
+            double rowHeight      = 0.0;
             double horizontalStep = 0.0;
-            std::int32_t layers = 0;
+            std::int32_t layers   = 0;
             if (!readNumber(j, "spawnX", spawnX, path, error, true))
                 return false;
             if (!readNumber(j, "apexY", apexY, path, error, true))
@@ -552,20 +554,20 @@ namespace
                 return false;
             if (!readInt(j, "layers", layers, path, error, true))
                 return false;
-            out.spawnX        = static_cast<float>(spawnX);
-            out.apexY         = static_cast<float>(apexY);
-            out.rowHeight     = static_cast<float>(rowHeight);
+            out.spawnX         = static_cast<float>(spawnX);
+            out.apexY          = static_cast<float>(apexY);
+            out.rowHeight      = static_cast<float>(rowHeight);
             out.horizontalStep = static_cast<float>(horizontalStep);
-            out.layers        = layers;
+            out.layers         = layers;
             return true;
         }
         if (type == "serpent") {
-            out.type = WaveType::Serpent;
-            double spawnX = 0.0;
-            double startY = 0.0;
-            double stepY = 0.0;
-            double amplitudeX = 0.0;
-            double stepTime = 0.0;
+            out.type           = WaveType::Serpent;
+            double spawnX      = 0.0;
+            double startY      = 0.0;
+            double stepY       = 0.0;
+            double amplitudeX  = 0.0;
+            double stepTime    = 0.0;
             std::int32_t count = 0;
             if (!readNumber(j, "spawnX", spawnX, path, error, true))
                 return false;
@@ -588,10 +590,10 @@ namespace
             return true;
         }
         if (type == "cross") {
-            out.type = WaveType::Cross;
-            double centerX = 0.0;
-            double centerY = 0.0;
-            double step = 0.0;
+            out.type               = WaveType::Cross;
+            double centerX         = 0.0;
+            double centerY         = 0.0;
+            double step            = 0.0;
             std::int32_t armLength = 0;
             if (!readNumber(j, "centerX", centerX, path, error, true))
                 return false;
@@ -601,9 +603,9 @@ namespace
                 return false;
             if (!readInt(j, "armLength", armLength, path, error, true))
                 return false;
-            out.centerX  = static_cast<float>(centerX);
-            out.centerY  = static_cast<float>(centerY);
-            out.step     = static_cast<float>(step);
+            out.centerX   = static_cast<float>(centerX);
+            out.centerY   = static_cast<float>(centerY);
+            out.step      = static_cast<float>(step);
             out.armLength = armLength;
             return true;
         }
@@ -697,7 +699,8 @@ namespace
                 else if (anchor == "absolute")
                     settings.anchor = ObstacleAnchor::Absolute;
                 else {
-                    setError(error, LevelLoadErrorCode::SchemaError, "Unknown anchor: " + anchor, "", joinPath(path, "anchor"));
+                    setError(error, LevelLoadErrorCode::SchemaError, "Unknown anchor: " + anchor, "",
+                             joinPath(path, "anchor"));
                     return false;
                 }
             }
@@ -745,14 +748,14 @@ namespace
                 return false;
             }
             const json& spawn = j.at("spawn");
-            double x = 0.0;
-            double y = 0.0;
+            double x          = 0.0;
+            double y          = 0.0;
             if (!readNumber(spawn, "x", x, joinPath(path, "spawn"), error, true))
                 return false;
             if (!readNumber(spawn, "y", y, joinPath(path, "spawn"), error, true))
                 return false;
             settings.spawn = Vec2f{static_cast<float>(x), static_cast<float>(y)};
-            out.boss = settings;
+            out.boss       = settings;
             return true;
         }
         if (type == "set_scroll") {
@@ -821,14 +824,14 @@ namespace
                 return false;
             }
             const json& respawn = j.at("respawn");
-            double x = 0.0;
-            double y = 0.0;
+            double x            = 0.0;
+            double y            = 0.0;
             if (!readNumber(respawn, "x", x, joinPath(path, "respawn"), error, true))
                 return false;
             if (!readNumber(respawn, "y", y, joinPath(path, "respawn"), error, true))
                 return false;
             checkpoint.respawn = Vec2f{static_cast<float>(x), static_cast<float>(y)};
-            out.checkpoint = checkpoint;
+            out.checkpoint     = checkpoint;
             return true;
         }
         setError(error, LevelLoadErrorCode::SchemaError, "Unknown event type: " + type, "", path);
@@ -845,7 +848,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            const json& p = j[i];
+            const json& p     = j[i];
             std::string ppath = joinPath(path, std::to_string(i));
             if (!p.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid pattern object", "", ppath);
@@ -865,7 +868,7 @@ namespace
                 continue;
             }
             if (type == "zigzag") {
-                double speed = 0.0;
+                double speed     = 0.0;
                 double amplitude = 0.0;
                 double frequency = 0.0;
                 if (!readNumber(p, "speed", speed, ppath, error, true))
@@ -874,17 +877,16 @@ namespace
                     return false;
                 if (!readNumber(p, "frequency", frequency, ppath, error, true))
                     return false;
-                out.push_back(PatternDefinition{id,
-                                                MovementComponent::zigzag(static_cast<float>(speed),
-                                                                          static_cast<float>(amplitude),
-                                                                          static_cast<float>(frequency))});
+                out.push_back(PatternDefinition{id, MovementComponent::zigzag(static_cast<float>(speed),
+                                                                              static_cast<float>(amplitude),
+                                                                              static_cast<float>(frequency))});
                 continue;
             }
             if (type == "sine") {
-                double speed = 0.0;
+                double speed     = 0.0;
                 double amplitude = 0.0;
                 double frequency = 0.0;
-                double phase = 0.0;
+                double phase     = 0.0;
                 if (!readNumber(p, "speed", speed, ppath, error, true))
                     return false;
                 if (!readNumber(p, "amplitude", amplitude, ppath, error, true))
@@ -892,11 +894,9 @@ namespace
                 if (!readNumber(p, "frequency", frequency, ppath, error, true))
                     return false;
                 readNumber(p, "phase", phase, ppath, error, false);
-                out.push_back(PatternDefinition{id,
-                                                MovementComponent::sine(static_cast<float>(speed),
-                                                                        static_cast<float>(amplitude),
-                                                                        static_cast<float>(frequency),
-                                                                        static_cast<float>(phase))});
+                out.push_back(PatternDefinition{
+                    id, MovementComponent::sine(static_cast<float>(speed), static_cast<float>(amplitude),
+                                                static_cast<float>(frequency), static_cast<float>(phase))});
                 continue;
             }
             setError(error, LevelLoadErrorCode::SchemaError, "Unknown pattern type: " + type, "", ppath);
@@ -911,9 +911,9 @@ namespace
             setError(error, LevelLoadErrorCode::SchemaError, "Expected templates object", "", path);
             return false;
         }
-        const json* hitboxes = nullptr;
+        const json* hitboxes  = nullptr;
         const json* colliders = nullptr;
-        const json* enemies = nullptr;
+        const json* enemies   = nullptr;
         const json* obstacles = nullptr;
         if (!requireObject(j, "hitboxes", hitboxes, path, error))
             return false;
@@ -944,7 +944,7 @@ namespace
 
         out.enemies.clear();
         for (auto it = enemies->begin(); it != enemies->end(); ++it) {
-            const json& e = it.value();
+            const json& e     = it.value();
             std::string epath = joinPath(joinPath(path, "enemies"), it.key());
             if (!e.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid enemy template", "", epath);
@@ -971,7 +971,7 @@ namespace
                 return false;
             EnemyTemplate tpl{};
             tpl.typeId = static_cast<std::uint16_t>(typeId);
-            auto hbIt = out.hitboxes.find(hitboxId);
+            auto hbIt  = out.hitboxes.find(hitboxId);
             if (hbIt == out.hitboxes.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown hitbox: " + hitboxId, "", epath);
                 return false;
@@ -981,10 +981,10 @@ namespace
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown collider: " + colliderId, "", epath);
                 return false;
             }
-            tpl.hitbox  = hbIt->second;
+            tpl.hitbox   = hbIt->second;
             tpl.collider = colIt->second;
-            tpl.health  = health;
-            tpl.scale   = scale;
+            tpl.health   = health;
+            tpl.scale    = scale;
             if (e.contains("shooting")) {
                 EnemyShootingComponent shooting;
                 if (!parseShooting(e.at("shooting"), shooting, joinPath(epath, "shooting"), error))
@@ -996,7 +996,7 @@ namespace
 
         out.obstacles.clear();
         for (auto it = obstacles->begin(); it != obstacles->end(); ++it) {
-            const json& o = it.value();
+            const json& o     = it.value();
             std::string opath = joinPath(joinPath(path, "obstacles"), it.key());
             if (!o.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid obstacle template", "", opath);
@@ -1036,7 +1036,7 @@ namespace
 
             ObstacleTemplate tpl{};
             tpl.typeId = static_cast<std::uint16_t>(typeId);
-            auto hbIt = out.hitboxes.find(hitboxId);
+            auto hbIt  = out.hitboxes.find(hitboxId);
             if (hbIt == out.hitboxes.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown hitbox: " + hitboxId, "", opath);
                 return false;
@@ -1059,17 +1059,18 @@ namespace
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown anchor: " + anchor, "", opath);
                 return false;
             }
-            tpl.margin = static_cast<float>(margin);
-            tpl.speedX = static_cast<float>(speedX);
-            tpl.speedY = static_cast<float>(speedY);
-            tpl.scale  = scale;
+            tpl.margin              = static_cast<float>(margin);
+            tpl.speedX              = static_cast<float>(speedX);
+            tpl.speedY              = static_cast<float>(speedY);
+            tpl.scale               = scale;
             out.obstacles[it.key()] = tpl;
         }
         return true;
     }
 
-    bool parseBosses(const json& j, const LevelTemplates& templates, std::unordered_map<std::string, BossDefinition>& out,
-                     const std::string& path, LevelLoadError& error)
+    bool parseBosses(const json& j, const LevelTemplates& templates,
+                     std::unordered_map<std::string, BossDefinition>& out, const std::string& path,
+                     LevelLoadError& error)
     {
         if (!j.is_object()) {
             setError(error, LevelLoadErrorCode::SchemaError, "Expected bosses object", "", path);
@@ -1077,7 +1078,7 @@ namespace
         }
         out.clear();
         for (auto it = j.begin(); it != j.end(); ++it) {
-            const json& b = it.value();
+            const json& b     = it.value();
             std::string bpath = joinPath(path, it.key());
             if (!b.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid boss object", "", bpath);
@@ -1107,7 +1108,7 @@ namespace
             boss.typeId = static_cast<std::uint16_t>(typeId);
             boss.health = health;
             boss.scale  = scale;
-            auto hbIt = templates.hitboxes.find(hitboxId);
+            auto hbIt   = templates.hitboxes.find(hitboxId);
             if (hbIt == templates.hitboxes.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown hitbox: " + hitboxId, "", bpath);
                 return false;
@@ -1128,7 +1129,7 @@ namespace
                 const json& phases = b.at("phases");
                 boss.phases.reserve(phases.size());
                 for (std::size_t i = 0; i < phases.size(); ++i) {
-                    const json& p = phases[i];
+                    const json& p     = phases[i];
                     std::string ppath = joinPath(joinPath(bpath, "phases"), std::to_string(i));
                     if (!p.is_object()) {
                         setError(error, LevelLoadErrorCode::SchemaError, "Invalid phase", "", ppath);
@@ -1138,13 +1139,15 @@ namespace
                     if (!readString(p, "id", phase.id, ppath, error, true))
                         return false;
                     if (!p.contains("trigger")) {
-                        setError(error, LevelLoadErrorCode::SchemaError, "Missing trigger", "", joinPath(ppath, "trigger"));
+                        setError(error, LevelLoadErrorCode::SchemaError, "Missing trigger", "",
+                                 joinPath(ppath, "trigger"));
                         return false;
                     }
                     if (!parseTrigger(p.at("trigger"), phase.trigger, joinPath(ppath, "trigger"), error))
                         return false;
                     if (!p.contains("events") || !p.at("events").is_array()) {
-                        setError(error, LevelLoadErrorCode::SchemaError, "Missing events", "", joinPath(ppath, "events"));
+                        setError(error, LevelLoadErrorCode::SchemaError, "Missing events", "",
+                                 joinPath(ppath, "events"));
                         return false;
                     }
                     const json& evs = p.at("events");
@@ -1186,7 +1189,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            const json& s = j[i];
+            const json& s     = j[i];
             std::string spath = joinPath(path, std::to_string(i));
             if (!s.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid segment object", "", spath);
@@ -1243,7 +1246,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            const json& a = j[i];
+            const json& a     = j[i];
             std::string apath = joinPath(path, std::to_string(i));
             if (!a.is_object()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid archetype object", "", apath);
@@ -1373,7 +1376,7 @@ namespace
         }
 
         if (ev.type == EventType::SpawnWave && ev.wave) {
-            const auto& wave = *ev.wave;
+            const auto& wave  = *ev.wave;
             bool patternFound = false;
             for (const auto& p : data.patterns) {
                 if (p.id == wave.patternId) {
@@ -1393,7 +1396,7 @@ namespace
 
         if (ev.type == EventType::SpawnObstacle && ev.obstacle) {
             const auto& ob = *ev.obstacle;
-            auto it = data.templates.obstacles.find(ob.obstacle);
+            auto it        = data.templates.obstacles.find(ob.obstacle);
             if (it == data.templates.obstacles.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown obstacle template: " + ob.obstacle, "", "");
                 return false;
@@ -1417,9 +1420,8 @@ namespace
 
         if (ev.type == EventType::Checkpoint && ev.checkpoint) {
             if (checkpointIds.find(ev.checkpoint->checkpointId) == checkpointIds.end()) {
-                setError(error, LevelLoadErrorCode::SemanticError, "Checkpoint id not registered: " +
-                                                         ev.checkpoint->checkpointId,
-                         "", "");
+                setError(error, LevelLoadErrorCode::SemanticError,
+                         "Checkpoint id not registered: " + ev.checkpoint->checkpointId, "", "");
                 return false;
             }
         }
@@ -1659,11 +1661,11 @@ namespace
         if (!readInt(root, "levelId", levelId, "", error, true))
             return false;
 
-        const json* meta = nullptr;
+        const json* meta       = nullptr;
         const json* archetypes = nullptr;
-        const json* patterns = nullptr;
-        const json* templates = nullptr;
-        const json* segments = nullptr;
+        const json* patterns   = nullptr;
+        const json* templates  = nullptr;
+        const json* segments   = nullptr;
 
         if (!requireObject(root, "meta", meta, "", error))
             return false;
@@ -1724,7 +1726,8 @@ namespace
         if (!readInt(root, "schemaVersion", schemaVersion, "", error, true))
             return false;
         if (schemaVersion != 1) {
-            setError(error, LevelLoadErrorCode::RegistryError, "Unsupported registry schemaVersion", "", "/schemaVersion");
+            setError(error, LevelLoadErrorCode::RegistryError, "Unsupported registry schemaVersion", "",
+                     "/schemaVersion");
             return false;
         }
         const json* levels = nullptr;
@@ -1766,7 +1769,7 @@ std::string LevelLoader::levelsRoot()
 
 bool LevelLoader::loadRegistry(LevelRegistry& out, LevelLoadError& error)
 {
-    std::filesystem::path root = levelsRoot();
+    std::filesystem::path root         = levelsRoot();
     std::filesystem::path registryPath = root / "registry.json";
     if (!std::filesystem::exists(registryPath)) {
         setError(error, LevelLoadErrorCode::RegistryError, "Registry file not found", registryPath.string(), "");
@@ -1798,7 +1801,7 @@ bool LevelLoader::loadFromPath(const std::string& path, LevelData& out, LevelLoa
 
 bool LevelLoader::load(std::int32_t levelId, LevelData& out, LevelLoadError& error)
 {
-    std::filesystem::path root = levelsRoot();
+    std::filesystem::path root         = levelsRoot();
     std::filesystem::path registryPath = root / "registry.json";
     if (std::filesystem::exists(registryPath)) {
         LevelRegistry registry;
@@ -1810,8 +1813,7 @@ bool LevelLoader::load(std::int32_t levelId, LevelData& out, LevelLoadError& err
                 return loadFromPath(fullPath.string(), out, error);
             }
         }
-        setError(error, LevelLoadErrorCode::RegistryError, "Level id not found in registry",
-                 registryPath.string(), "");
+        setError(error, LevelLoadErrorCode::RegistryError, "Level id not found in registry", registryPath.string(), "");
         return false;
     }
 
