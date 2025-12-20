@@ -33,7 +33,7 @@ void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& te
 
 std::string HUDSystem::formatScore(int value) const
 {
-    int safeValue = std::max(0, value);
+    int safeValue      = std::max(0, value);
     std::string digits = std::to_string(safeValue);
     if (static_cast<int>(digits.size()) < kScoreDigits) {
         digits.insert(0, static_cast<std::size_t>(kScoreDigits - static_cast<int>(digits.size())), '0');
@@ -162,24 +162,22 @@ void HUDSystem::update(Registry& registry, float)
                     textComp.text.emplace(*font, textComp.content, textComp.characterSize);
                 } else {
                     textComp.text->setFont(*font);
-                textComp.text->setCharacterSize(textComp.characterSize);
-                textComp.text->setString(textComp.content);
-            }
+                    textComp.text->setCharacterSize(textComp.characterSize);
+                    textComp.text->setString(textComp.content);
+                }
 
-            textComp.text->setFillColor(textComp.color);
-            if (registry.has<ScoreComponent>(entity)) {
-                const auto size   = window_.raw().getSize();
-                const auto bounds = textComp.text->getLocalBounds();
-                transform.x =
-                    static_cast<float>(size.x) - kScoreRightMargin - (bounds.position.x + bounds.size.x);
-                transform.y =
-                    static_cast<float>(size.y) - kScoreBottomMargin - (bounds.position.y + bounds.size.y);
-            }
-            textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
-            textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
-            textComp.text->setRotation(sf::degrees(transform.rotation));
+                textComp.text->setFillColor(textComp.color);
+                if (registry.has<ScoreComponent>(entity)) {
+                    const auto size   = window_.raw().getSize();
+                    const auto bounds = textComp.text->getLocalBounds();
+                    transform.x = static_cast<float>(size.x) - kScoreRightMargin - (bounds.position.x + bounds.size.x);
+                    transform.y = static_cast<float>(size.y) - kScoreBottomMargin - (bounds.position.y + bounds.size.y);
+                }
+                textComp.text->setPosition(sf::Vector2f{transform.x, transform.y});
+                textComp.text->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
+                textComp.text->setRotation(sf::degrees(transform.rotation));
 
-            window_.draw(*textComp.text);
+                window_.draw(*textComp.text);
             }
         }
 
