@@ -4,7 +4,6 @@
 #include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
 #include "events/GameEvents.hpp"
-#include <SFML/Audio/Listener.hpp>
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "input/InputMapper.hpp"
@@ -18,6 +17,7 @@
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
 
+#include <SFML/Audio/Listener.hpp>
 #include <SFML/System/Clock.hpp>
 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,

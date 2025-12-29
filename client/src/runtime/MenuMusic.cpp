@@ -15,7 +15,8 @@ namespace
             return;
         g_loaded = g_music.openFromFile("client/assets/music/theme.ogg");
         if (!g_loaded) {
-            Logger::instance().warn("Failed to load launcher music at client/assets/music/theme.ogg (manifest id: menu_music)");
+            Logger::instance().warn(
+                "Failed to load launcher music at client/assets/music/theme.ogg (manifest id: menu_music)");
         } else {
 #if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
             g_music.setLooping(true);

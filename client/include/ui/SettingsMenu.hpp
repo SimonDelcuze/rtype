@@ -53,7 +53,7 @@ class SettingsMenu : public IMenu
     bool done_ = false;
     std::optional<BindingAction> awaitingAction_;
     std::unordered_map<BindingAction, EntityId> actionButtons_;
-    float musicVolume_ = 100.0F;
+    float musicVolume_         = 100.0F;
     EntityId volumeValueLabel_ = 0;
     bool draggingVolume_       = false;
     float sliderX_             = 520.0F;
