@@ -61,6 +61,11 @@
       "id": "theme_music",
       "path": "music/theme.wav",
       "type": "music"
+    },
+    {
+      "id": "menu_music",
+      "path": "music/theme.ogg",
+      "type": "music"
     }
   ],
   "fonts": [

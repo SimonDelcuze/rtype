@@ -6,6 +6,7 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "network/EndpointParser.hpp"
+#include "runtime/MenuMusic.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
@@ -19,6 +20,7 @@
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage)
 {
+    startLauncherMusic(g_musicVolume);
     MenuRunner runner(window, fontManager, textureManager, g_running);
 
     while (window.isOpen()) {
@@ -29,8 +31,10 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
             return std::nullopt;
 
         if (result.openSettings) {
-            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
+            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume);
             g_keyBindings       = settingsResult.bindings;
+            g_musicVolume       = settingsResult.musicVolume;
+            setLauncherMusicVolume(g_musicVolume);
             if (!window.isOpen())
                 return std::nullopt;
             continue;
@@ -62,14 +66,17 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
     MenuRunner runner(window, fontManager, textureManager, g_running);
 
     while (window.isOpen()) {
+        startLauncherMusic(g_musicVolume);
         auto result = runner.runAndGetResult<ConnectionMenu>();
 
         if (!window.isOpen())
             return std::nullopt;
 
         if (result.openSettings) {
-            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings);
+            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume);
             g_keyBindings       = settingsResult.bindings;
+            g_musicVolume       = settingsResult.musicVolume;
+            setLauncherMusicVolume(g_musicVolume);
             if (!window.isOpen())
                 return std::nullopt;
             continue;

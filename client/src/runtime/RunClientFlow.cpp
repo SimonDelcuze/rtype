@@ -4,6 +4,7 @@
 #include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
 #include "events/GameEvents.hpp"
+#include <SFML/Audio/Listener.hpp>
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "input/InputMapper.hpp"
@@ -187,9 +188,11 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosY            = 0.0F;
     InputMapper mapper;
     mapper.setBindings(g_keyBindings);
+    sf::Listener::setGlobalVolume(g_musicVolume);
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
+                     g_musicVolume);
 
     ButtonSystem buttonSystem(window, fontManager);
 

@@ -9,6 +9,7 @@
 
 std::atomic<bool> g_running{true};
 KeyBindings g_keyBindings = KeyBindings::defaults();
+float g_musicVolume       = 80.0F;
 
 int runClient(const ClientOptions& options)
 {
