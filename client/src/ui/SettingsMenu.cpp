@@ -7,14 +7,14 @@
 #include "components/TransformComponent.hpp"
 #include "runtime/MenuMusic.hpp"
 
-#include <array>
-#include <cmath>
-#include <string>
-#include <algorithm>
-#include <unordered_map>
 #include <SFML/Audio/Listener.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <string>
+#include <unordered_map>
 
 namespace
 {
@@ -81,12 +81,13 @@ namespace
 } // namespace
 
 SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings, float musicVolume)
-    : fonts_(fonts), textures_(textures), currentBindings_(bindings), musicVolume_(std::clamp(musicVolume, 0.0F, 100.0F))
+    : fonts_(fonts), textures_(textures), currentBindings_(bindings),
+      musicVolume_(std::clamp(musicVolume, 0.0F, 100.0F))
 {}
 
 void SettingsMenu::create(Registry& registry)
 {
-    done_ = false;
+    done_           = false;
     draggingVolume_ = false;
     startLauncherMusic(musicVolume_);
     if (!fonts_.has("ui"))
@@ -197,8 +198,8 @@ void SettingsMenu::render(Registry&, Window& window)
 {
     setLauncherMusicVolume(musicVolume_);
 
-    float ratio        = musicVolume_ / 100.0F;
-    float filledWidth  = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
+    float ratio       = musicVolume_ / 100.0F;
+    float filledWidth = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
     sf::RectangleShape track(sf::Vector2f{sliderWidth_, sliderHeight_});
     track.setPosition(sf::Vector2f{sliderX_, sliderY_});
     track.setFillColor(sf::Color(50, 50, 60, 200));
@@ -321,9 +322,8 @@ void SettingsMenu::refreshVolumeLabel(Registry& registry)
         return;
     }
 
-    auto& text = registry.get<TextComponent>(volumeValueLabel_);
-    text.content =
-        std::to_string(static_cast<int>(std::lround(std::clamp(musicVolume_, 0.0F, 100.0F)))) + "%";
+    auto& text   = registry.get<TextComponent>(volumeValueLabel_);
+    text.content = std::to_string(static_cast<int>(std::lround(std::clamp(musicVolume_, 0.0F, 100.0F)))) + "%";
 }
 
 bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const sf::Vector2i& mousePos, bool isClick)
@@ -333,9 +333,8 @@ bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const sf::Vector2i
     float minY = sliderY_ - 12.0F;
     float maxY = sliderY_ + sliderHeight_ + 20.0F;
 
-    bool inside =
-        static_cast<float>(mousePos.x) >= minX && static_cast<float>(mousePos.x) <= maxX &&
-        static_cast<float>(mousePos.y) >= minY && static_cast<float>(mousePos.y) <= maxY;
+    bool inside = static_cast<float>(mousePos.x) >= minX && static_cast<float>(mousePos.x) <= maxX &&
+                  static_cast<float>(mousePos.y) >= minY && static_cast<float>(mousePos.y) <= maxY;
 
     if (isClick) {
         if (!inside)

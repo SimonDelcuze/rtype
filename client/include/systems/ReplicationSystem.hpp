@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ClientRuntime.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "network/EntityDestroyedPacket.hpp"
@@ -7,10 +8,8 @@
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
-#include "ClientRuntime.hpp"
 #include <SFML/Audio/Sound.hpp>
 #include <SFML/Audio/SoundBuffer.hpp>
-#include <vector>
 #include <unordered_map>
 #include <vector>
 
@@ -51,10 +50,10 @@ class ReplicationSystem : public ISystem
 
     sf::SoundBuffer laserBuffer_;
     sf::SoundBuffer explosionBuffer_;
-    bool laserLoaded_         = false;
-    bool explosionLoaded_     = false;
-    bool laserLoadAttempted_  = false;
-    bool explosionLoadTried_  = false;
+    bool laserLoaded_        = false;
+    bool explosionLoaded_    = false;
+    bool laserLoadAttempted_ = false;
+    bool explosionLoadTried_ = false;
     std::vector<sf::Sound> laserSounds_;
     std::vector<sf::Sound> explosionSounds_;
 };
