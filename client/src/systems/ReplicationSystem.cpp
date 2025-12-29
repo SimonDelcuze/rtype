@@ -19,6 +19,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <unordered_set>
@@ -31,6 +32,24 @@ ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snaps
 
 namespace
 {
+    bool loadBufferWithFallback(sf::SoundBuffer& buffer, bool& attempted, bool& loaded, const std::string& primary,
+                                const std::string& fallback)
+    {
+        if (loaded) {
+            return loaded;
+        }
+        attempted = true;
+        if (buffer.loadFromFile(primary)) {
+            loaded = true;
+            return true;
+        }
+        if (!fallback.empty() && buffer.loadFromFile(fallback)) {
+            loaded = true;
+            return true;
+        }
+        return false;
+    }
+
     ThreadSafeQueue<EntitySpawnPacket>& dummySpawnQueue()
     {
         static ThreadSafeQueue<EntitySpawnPacket> q;
@@ -40,6 +59,17 @@ namespace
     {
         static ThreadSafeQueue<EntityDestroyedPacket> q;
         return q;
+    }
+
+    void ensurePool(std::vector<sf::Sound>& pool, const sf::SoundBuffer& buffer, std::size_t minSize)
+    {
+        if (pool.size() < minSize) {
+            pool.reserve(minSize);
+            for (std::size_t i = pool.size(); i < minSize; ++i) {
+                sf::Sound s(buffer);
+                pool.push_back(std::move(s));
+            }
+        }
     }
 } // namespace
 
@@ -61,11 +91,20 @@ namespace
 
 void ReplicationSystem::initialize() {}
 
-void ReplicationSystem::update(Registry& registry, float)
+void ReplicationSystem::update(Registry& registry, float deltaTime)
 {
     static std::uint32_t lastSnapshotTick = 0;
     static auto lastSnapshotTime          = std::chrono::steady_clock::now();
     static auto nextStaleLog              = std::chrono::steady_clock::now();
+
+    for (auto it = respawnCooldown_.begin(); it != respawnCooldown_.end();) {
+        it->second -= deltaTime;
+        if (it->second <= 0.0F) {
+            it = respawnCooldown_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 
     EntitySpawnPacket spawnPkt;
     while (spawnQueue_->tryPop(spawnPkt)) {
@@ -84,6 +123,7 @@ void ReplicationSystem::update(Registry& registry, float)
         }
         EntityId id                       = registry.createEntity();
         remoteToLocal_[spawnPkt.entityId] = id;
+        remoteToType_[spawnPkt.entityId]  = spawnPkt.entityType;
         applyArchetype(registry, id, spawnPkt.entityType);
         TransformComponent t{};
         auto [sx, sy] = defaultScaleForType(spawnPkt.entityType);
@@ -95,16 +135,109 @@ void ReplicationSystem::update(Registry& registry, float)
         Logger::instance().info("[Replication] Spawn entityId=" + std::to_string(spawnPkt.entityId) +
                                 " type=" + std::to_string(spawnPkt.entityType) + " local=" + std::to_string(id) +
                                 " pos=(" + std::to_string(t.x) + "," + std::to_string(t.y) + ")");
+
+        bool playerReadyToFire = false;
+        for (const auto& kv : remoteToType_) {
+            if (kv.second != 1)
+                continue;
+            auto itLocal = remoteToLocal_.find(kv.first);
+            if (itLocal == remoteToLocal_.end() || !registry.isAlive(itLocal->second))
+                continue;
+            if (registry.has<InvincibilityComponent>(itLocal->second))
+                continue;
+            auto coolIt = respawnCooldown_.find(kv.first);
+            if (coolIt != respawnCooldown_.end() && coolIt->second > 0.0F)
+                continue;
+            if (!registry.has<LivesComponent>(itLocal->second) ||
+                registry.get<LivesComponent>(itLocal->second).current > 0) {
+                playerReadyToFire = true;
+                break;
+            }
+        }
+
+        if (spawnPkt.entityType == 3) {
+            loadBufferWithFallback(laserBuffer_, laserLoadAttempted_, laserLoaded_, "client/assets/sounds/laser.wav",
+                                   "sounds/laser.wav");
+            if (!laserLoaded_ && laserLoadAttempted_) {
+                Logger::instance().warn(
+                    "[Audio] Failed to load laser sound (tried client/assets/sounds/laser.wav and sounds/laser.wav)");
+            }
+            if (laserLoaded_ && playerReadyToFire) {
+                ensurePool(laserSounds_, laserBuffer_, 6);
+                bool played = false;
+                for (auto& sound : laserSounds_) {
+                    if (sound.getStatus() != sf::Sound::Status::Playing) {
+                        sound.setBuffer(laserBuffer_);
+                        sound.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        sound.play();
+                        played = true;
+                        break;
+                    }
+                }
+                if (!played) {
+                    if (laserSounds_.size() < 32) {
+                        sf::Sound s(laserBuffer_);
+                        s.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        s.play();
+                        laserSounds_.push_back(std::move(s));
+                    } else {
+                        laserSounds_[0].stop();
+                        laserSounds_[0].setBuffer(laserBuffer_);
+                        laserSounds_[0].setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        laserSounds_[0].play();
+                    }
+                }
+            }
+        }
     }
 
     EntityDestroyedPacket destroyPkt;
     while (destroyQueue_->tryPop(destroyPkt)) {
         auto it = remoteToLocal_.find(destroyPkt.entityId);
         if (it != remoteToLocal_.end()) {
+            auto typeIt = remoteToType_.find(destroyPkt.entityId);
+            if (typeIt != remoteToType_.end() && typeIt->second == 2) {
+                loadBufferWithFallback(explosionBuffer_, explosionLoadTried_, explosionLoaded_,
+                                       "client/assets/sounds/explosion.wav", "sounds/explosion.wav");
+                if (!explosionLoaded_ && explosionLoadTried_) {
+                    Logger::instance().warn("[Audio] Failed to load explosion sound (tried "
+                                            "client/assets/sounds/explosion.wav and sounds/explosion.wav)");
+                }
+                if (explosionLoaded_) {
+                    explosionSounds_.erase(
+                        std::remove_if(explosionSounds_.begin(), explosionSounds_.end(),
+                                       [](const sf::Sound& s) { return s.getStatus() == sf::Sound::Status::Stopped; }),
+                        explosionSounds_.end());
+                    bool played = false;
+                    for (auto& sound : explosionSounds_) {
+                        if (sound.getStatus() != sf::Sound::Status::Playing) {
+                            sound.setBuffer(explosionBuffer_);
+                            sound.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            sound.play();
+                            played = true;
+                            break;
+                        }
+                    }
+                    if (!played) {
+                        if (explosionSounds_.size() < 32) {
+                            sf::Sound s(explosionBuffer_);
+                            s.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            s.play();
+                            explosionSounds_.push_back(std::move(s));
+                        } else {
+                            explosionSounds_[0].stop();
+                            explosionSounds_[0].setBuffer(explosionBuffer_);
+                            explosionSounds_[0].setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            explosionSounds_[0].play();
+                        }
+                    }
+                }
+            }
             if (registry.isAlive(it->second)) {
                 registry.destroyEntity(it->second);
             }
             remoteToLocal_.erase(it);
+            remoteToType_.erase(destroyPkt.entityId);
             Logger::instance().info("[Replication] Destroy entityId=" + std::to_string(destroyPkt.entityId));
         }
     }
@@ -123,6 +256,8 @@ void ReplicationSystem::update(Registry& registry, float)
                 continue;
             }
             seenThisTick.insert(entity.entityId);
+            if (entity.entityType.has_value())
+                remoteToType_[entity.entityId] = *entity.entityType;
             lastSeenTick_[entity.entityId] = snapshot.header.tickId;
             applyEntity(registry, *localId, entity);
             applyStatusEffects(registry, *localId, entity);
@@ -141,6 +276,7 @@ void ReplicationSystem::update(Registry& registry, float)
                 registry.destroyEntity(it->second);
             }
             lastSeenTick_.erase(it->first);
+            remoteToType_.erase(it->first);
             it = remoteToLocal_.erase(it);
         }
     }
@@ -153,6 +289,7 @@ void ReplicationSystem::update(Registry& registry, float)
                 registry.destroyEntity(it->second);
             }
             lastSeenTick_.erase(seenIt);
+            remoteToType_.erase(it->first);
             it = remoteToLocal_.erase(it);
             continue;
         }
@@ -196,6 +333,7 @@ std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, cons
 
     EntityId id              = registry.createEntity();
     remoteToLocal_[remoteId] = id;
+    remoteToType_[remoteId]  = *entity.entityType;
     applyArchetype(registry, id, *entity.entityType);
     return std::optional<EntityId>(id);
 }
@@ -412,7 +550,17 @@ void ReplicationSystem::applyLives(Registry& registry, EntityId id, const Snapsh
             registry.emplace<LivesComponent>(id, LivesComponent::create(*entity.lives, 3));
         }
         auto& lives   = registry.get<LivesComponent>(id);
+        int previous  = lives.current;
         lives.current = *entity.lives;
+
+        auto itPrev = lastKnownLives_.find(entity.entityId);
+        if (itPrev != lastKnownLives_.end()) {
+            previous = itPrev->second;
+        }
+        if (*entity.lives < previous) {
+            respawnCooldown_[entity.entityId] = 2.0F;
+        }
+        lastKnownLives_[entity.entityId] = *entity.lives;
     }
 }
 
@@ -445,6 +593,7 @@ void ReplicationSystem::applyStatusEffects(Registry& registry, EntityId id, cons
         if (registry.has<InvincibilityComponent>(id)) {
             registry.remove<InvincibilityComponent>(id);
         }
+        respawnCooldown_.erase(entity.entityId);
     }
 }
 void ReplicationSystem::applyStatus(Registry&, EntityId, const SnapshotEntity&) {}

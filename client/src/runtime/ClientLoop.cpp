@@ -1,5 +1,6 @@
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
+#include "runtime/MenuMusic.hpp"
 
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage)
@@ -25,6 +26,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
         return ClientLoopResult{exitCode.has_value() ? false : true, exitCode};
     }
 
+    stopLauncherMusic();
     auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager);
     stopNetwork(net, welcomeThread, handshakeDone);
 
