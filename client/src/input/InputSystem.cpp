@@ -3,7 +3,9 @@
 #include "Logger.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
+#include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
+#include "components/LivesComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -42,7 +44,19 @@ void InputSystem::update(Registry& registry, float deltaTime)
     std::uint16_t moves  = static_cast<std::uint16_t>(flags & ~InputMapper::FireFlag);
     bool changedMovement = moves != lastSentMoveFlags_;
 
-    const bool firePressed = (flags & InputMapper::FireFlag) != 0;
+    bool canFire = true;
+    if (playerId_.has_value() && registry.isAlive(*playerId_)) {
+        if (registry.has<InvincibilityComponent>(*playerId_))
+            canFire = false;
+        if (registry.has<LivesComponent>(*playerId_) && registry.get<LivesComponent>(*playerId_).current <= 0)
+            canFire = false;
+    } else {
+        canFire = false;
+    }
+
+    const bool firePressedRaw = (flags & InputMapper::FireFlag) != 0;
+    const bool firePressed    = firePressedRaw && canFire;
+
     if (firePressed) {
         fireHoldTime_ += deltaTime;
         if (fireHoldTime_ >= chargeFxDelay_) {
@@ -59,6 +73,10 @@ void InputSystem::update(Registry& registry, float deltaTime)
         updateChargeMeter(registry, 0.0F);
     }
     if (!firePressed && !fireHeldLastFrame_) {
+        updateChargeMeter(registry, 0.0F);
+    }
+    if (!canFire) {
+        destroyChargeFx(registry);
         updateChargeMeter(registry, 0.0F);
     }
     fireHeldLastFrame_ = firePressed;

@@ -17,6 +17,7 @@
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
 
+#include <SFML/Audio/Listener.hpp>
 #include <SFML/System/Clock.hpp>
 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
@@ -187,9 +188,11 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosY            = 0.0F;
     InputMapper mapper;
     mapper.setBindings(g_keyBindings);
+    sf::Listener::setGlobalVolume(g_musicVolume);
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
+                     g_musicVolume);
 
     ButtonSystem buttonSystem(window, fontManager);
 

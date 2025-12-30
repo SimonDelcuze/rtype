@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ClientRuntime.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "network/EntityDestroyedPacket.hpp"
@@ -7,8 +8,10 @@
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
-#include <optional>
+#include <SFML/Audio/Sound.hpp>
+#include <SFML/Audio/SoundBuffer.hpp>
 #include <unordered_map>
+#include <vector>
 
 class ReplicationSystem : public ISystem
 {
@@ -40,5 +43,17 @@ class ReplicationSystem : public ISystem
     ThreadSafeQueue<EntityDestroyedPacket>* destroyQueue_;
     const EntityTypeRegistry* types_;
     std::unordered_map<std::uint32_t, EntityId> remoteToLocal_;
+    std::unordered_map<std::uint32_t, std::uint16_t> remoteToType_;
     std::unordered_map<std::uint32_t, std::uint32_t> lastSeenTick_;
+    std::unordered_map<std::uint32_t, int> lastKnownLives_;
+    std::unordered_map<std::uint32_t, float> respawnCooldown_;
+
+    sf::SoundBuffer laserBuffer_;
+    sf::SoundBuffer explosionBuffer_;
+    bool laserLoaded_        = false;
+    bool explosionLoaded_    = false;
+    bool laserLoadAttempted_ = false;
+    bool explosionLoadTried_ = false;
+    std::vector<sf::Sound> laserSounds_;
+    std::vector<sf::Sound> explosionSounds_;
 };

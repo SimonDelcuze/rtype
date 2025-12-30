@@ -25,6 +25,7 @@
 
 extern std::atomic<bool> g_running;
 extern KeyBindings g_keyBindings;
+extern float g_musicVolume;
 
 enum class JoinResult
 {
@@ -52,7 +53,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager, EventBus& eventBus);
+                      FontManager& fontManager, EventBus& eventBus, float& musicVolume);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);

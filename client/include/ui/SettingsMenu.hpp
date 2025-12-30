@@ -5,6 +5,7 @@
 #include "input/KeyBindings.hpp"
 #include "ui/IMenu.hpp"
 
+#include <SFML/System/Vector2.hpp>
 #include <optional>
 #include <unordered_map>
 
@@ -23,9 +24,11 @@ class SettingsMenu : public IMenu
     struct Result
     {
         KeyBindings bindings;
+        float musicVolume = 100.0F;
     };
 
-    SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings = KeyBindings::defaults());
+    SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings = KeyBindings::defaults(),
+                 float musicVolume = 100.0F);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -39,6 +42,9 @@ class SettingsMenu : public IMenu
     void applyBinding(Registry& registry, BindingAction action, sf::Keyboard::Key key);
     void setAwaitingState(Registry& registry, BindingAction action, bool awaiting);
     void refreshButtonLabel(Registry& registry, BindingAction action);
+    void setMusicVolume(Registry& registry, float volume);
+    void refreshVolumeLabel(Registry& registry);
+    bool handleVolumeMouseEvent(Registry& registry, const sf::Vector2i& mousePos, bool isClick);
     static std::string keyToString(sf::Keyboard::Key key);
 
     FontManager& fonts_;
@@ -47,4 +53,11 @@ class SettingsMenu : public IMenu
     bool done_ = false;
     std::optional<BindingAction> awaitingAction_;
     std::unordered_map<BindingAction, EntityId> actionButtons_;
+    float musicVolume_         = 100.0F;
+    EntityId volumeValueLabel_ = 0;
+    bool draggingVolume_       = false;
+    float sliderX_             = 520.0F;
+    float sliderY_             = 0.0F;
+    float sliderWidth_         = 320.0F;
+    float sliderHeight_        = 10.0F;
 };

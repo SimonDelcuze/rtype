@@ -5,8 +5,14 @@
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "runtime/MenuMusic.hpp"
 
+#include <SFML/Audio/Listener.hpp>
+#include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 
@@ -74,13 +80,16 @@ namespace
     }
 } // namespace
 
-SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings)
-    : fonts_(fonts), textures_(textures), currentBindings_(bindings)
+SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings, float musicVolume)
+    : fonts_(fonts), textures_(textures), currentBindings_(bindings),
+      musicVolume_(std::clamp(musicVolume, 0.0F, 100.0F))
 {}
 
 void SettingsMenu::create(Registry& registry)
 {
-    done_ = false;
+    done_           = false;
+    draggingVolume_ = false;
+    startLauncherMusic(musicVolume_);
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
 
@@ -132,6 +141,16 @@ void SettingsMenu::create(Registry& registry)
         actionButtons_[action] = buttonId;
     }
 
+    float sliderRowY = startY + spacing * static_cast<float>(labels.size());
+    sliderY_         = sliderRowY + 16.0F;
+    sliderWidth_     = 160.0F;
+    sliderHeight_    = 6.0F;
+    sliderX_         = 640.0F - sliderWidth_ / 2.0F;
+
+    createLabel(registry, 360.0F, sliderRowY, "Volume");
+    volumeValueLabel_ = createLabel(registry, sliderX_ + sliderWidth_ + 24.0F, sliderRowY, "");
+    refreshVolumeLabel(registry);
+
     createCenteredButton(registry, 560.0F + spacing, "Back", [this]() { done_ = true; });
 }
 
@@ -147,6 +166,21 @@ bool SettingsMenu::isDone() const
 
 void SettingsMenu::handleEvent(Registry& registry, const sf::Event& event)
 {
+    if (const auto* mousePress = event.getIf<sf::Event::MouseButtonPressed>()) {
+        if (mousePress->button == sf::Mouse::Button::Left)
+            handleVolumeMouseEvent(registry, mousePress->position, true);
+    }
+
+    if (const auto* mouseRelease = event.getIf<sf::Event::MouseButtonReleased>()) {
+        if (mouseRelease->button == sf::Mouse::Button::Left)
+            draggingVolume_ = false;
+    }
+
+    if (const auto* mouseMove = event.getIf<sf::Event::MouseMoved>()) {
+        if (draggingVolume_)
+            handleVolumeMouseEvent(registry, mouseMove->position, false);
+    }
+
     if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
         if (awaitingAction_.has_value()) {
             applyBinding(registry, *awaitingAction_, key->code);
@@ -160,11 +194,36 @@ void SettingsMenu::handleEvent(Registry& registry, const sf::Event& event)
     }
 }
 
-void SettingsMenu::render(Registry&, Window&) {}
+void SettingsMenu::render(Registry&, Window& window)
+{
+    setLauncherMusicVolume(musicVolume_);
+
+    float ratio       = musicVolume_ / 100.0F;
+    float filledWidth = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
+    sf::RectangleShape track(sf::Vector2f{sliderWidth_, sliderHeight_});
+    track.setPosition(sf::Vector2f{sliderX_, sliderY_});
+    track.setFillColor(sf::Color(50, 50, 60, 200));
+    track.setOutlineThickness(2.0F);
+    track.setOutlineColor(sf::Color(80, 120, 160, 200));
+    window.draw(track);
+
+    sf::RectangleShape fill(sf::Vector2f{filledWidth, sliderHeight_});
+    fill.setPosition(sf::Vector2f{sliderX_, sliderY_});
+    fill.setFillColor(sf::Color(90, 190, 255, 230));
+    window.draw(fill);
+
+    sf::CircleShape knob(7.0F);
+    knob.setOrigin(sf::Vector2f{7.0F, 7.0F});
+    knob.setPosition(sf::Vector2f{sliderX_ + filledWidth, sliderY_ + sliderHeight_ / 2.0F});
+    knob.setFillColor(sf::Color(200, 230, 255));
+    knob.setOutlineColor(sf::Color(40, 120, 200));
+    knob.setOutlineThickness(2.0F);
+    window.draw(knob);
+}
 
 SettingsMenu::Result SettingsMenu::getResult(Registry&) const
 {
-    return Result{currentBindings_};
+    return Result{currentBindings_, musicVolume_};
 }
 
 void SettingsMenu::startRebinding(Registry& registry, BindingAction action)
@@ -245,6 +304,51 @@ void SettingsMenu::refreshButtonLabel(Registry& registry, BindingAction action)
 
     auto& button = registry.get<ButtonComponent>(it->second);
     button.label = keyToString(key);
+}
+
+void SettingsMenu::setMusicVolume(Registry& registry, float volume)
+{
+    musicVolume_ = std::clamp(volume, 0.0F, 100.0F);
+    startLauncherMusic(musicVolume_);
+    setLauncherMusicVolume(musicVolume_);
+    sf::Listener::setGlobalVolume(musicVolume_);
+    refreshVolumeLabel(registry);
+}
+
+void SettingsMenu::refreshVolumeLabel(Registry& registry)
+{
+    if (volumeValueLabel_ == 0 || !registry.isAlive(volumeValueLabel_) ||
+        !registry.has<TextComponent>(volumeValueLabel_)) {
+        return;
+    }
+
+    auto& text   = registry.get<TextComponent>(volumeValueLabel_);
+    text.content = std::to_string(static_cast<int>(std::lround(std::clamp(musicVolume_, 0.0F, 100.0F)))) + "%";
+}
+
+bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const sf::Vector2i& mousePos, bool isClick)
+{
+    float minX = sliderX_;
+    float maxX = sliderX_ + sliderWidth_;
+    float minY = sliderY_ - 12.0F;
+    float maxY = sliderY_ + sliderHeight_ + 20.0F;
+
+    bool inside = static_cast<float>(mousePos.x) >= minX && static_cast<float>(mousePos.x) <= maxX &&
+                  static_cast<float>(mousePos.y) >= minY && static_cast<float>(mousePos.y) <= maxY;
+
+    if (isClick) {
+        if (!inside)
+            return false;
+        draggingVolume_ = true;
+    }
+
+    if (!draggingVolume_)
+        return false;
+
+    float ratio = static_cast<float>(mousePos.x - sliderX_) / sliderWidth_;
+    ratio       = std::clamp(ratio, 0.0F, 1.0F);
+    setMusicVolume(registry, ratio * 100.0F);
+    return true;
 }
 
 std::string SettingsMenu::keyToString(sf::Keyboard::Key key)
