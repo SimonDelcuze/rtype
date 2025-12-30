@@ -1119,7 +1119,7 @@ namespace
             if (!patternId.empty()) {
                 boss.patternId = patternId;
             }
-            auto hbIt   = templates.hitboxes.find(hitboxId);
+            auto hbIt = templates.hitboxes.find(hitboxId);
             if (hbIt == templates.hitboxes.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown hitbox: " + hitboxId, "", bpath);
                 return false;
