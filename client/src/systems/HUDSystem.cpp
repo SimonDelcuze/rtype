@@ -71,6 +71,40 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
 
 void HUDSystem::update(Registry& registry, float)
 {
+<<<<<<< HEAD
+=======
+    float chargeProgress = 0.0F;
+    bool hasCharge       = false;
+    for (EntityId e : registry.view<ChargeMeterComponent>()) {
+        if (!registry.isAlive(e))
+            continue;
+        chargeProgress = std::clamp(registry.get<ChargeMeterComponent>(e).progress, 0.0F, 1.0F);
+        hasCharge      = true;
+        break;
+    }
+
+    if (hasCharge) {
+        const auto size       = window_.raw().getSize();
+        const float barWidth  = 220.0F;
+        const float barHeight = 12.0F;
+        const float x         = (static_cast<float>(size.x) - barWidth) / 2.0F;
+        const float y         = static_cast<float>(size.y) - 30.0F;
+
+        sf::RectangleShape background(sf::Vector2f{barWidth, barHeight});
+        background.setPosition(sf::Vector2f{x, y});
+        background.setFillColor(sf::Color(20, 20, 40, 160));
+        background.setOutlineThickness(2.0F);
+        background.setOutlineColor(sf::Color(80, 120, 220, 200));
+
+        sf::RectangleShape fill(sf::Vector2f{barWidth * chargeProgress, barHeight});
+        fill.setPosition(sf::Vector2f{x, y});
+        fill.setFillColor(sf::Color(70, 160, 255, 230));
+
+        window_.draw(background);
+        window_.draw(fill);
+    }
+
+>>>>>>> 1969ffb (fix: format code)
     const BossComponent* boss         = nullptr;
     const HealthComponent* bossHealth = nullptr;
     for (EntityId id : registry.view<BossComponent, HealthComponent>()) {
