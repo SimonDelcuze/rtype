@@ -280,6 +280,16 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
     if (boss.score > 0) {
         registry.emplace<ScoreValueComponent>(e, ScoreValueComponent::create(boss.score));
     }
+    if (boss.patternId.has_value()) {
+        auto patternIt = patternMap_.find(*boss.patternId);
+        if (patternIt != patternMap_.end()) {
+            registry.emplace<MovementComponent>(e, patternIt->second);
+            registry.emplace<VelocityComponent>(e);
+        }
+    }
+    if (boss.shooting.has_value()) {
+        registry.emplace<EnemyShootingComponent>(e, *boss.shooting);
+    }
 
     if (director_ != nullptr) {
         director_->registerBoss(settings.bossId, e);

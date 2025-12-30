@@ -1,6 +1,8 @@
 #include "systems/HUDSystem.hpp"
 
+#include "components/BossComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
+#include "components/HealthComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "graphics/GraphicsFactory.hpp"
@@ -69,6 +71,64 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
 
 void HUDSystem::update(Registry& registry, float)
 {
+    const BossComponent* boss         = nullptr;
+    const HealthComponent* bossHealth = nullptr;
+    for (EntityId id : registry.view<BossComponent, HealthComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        const auto& health = registry.get<HealthComponent>(id);
+        if (health.max <= 0 || health.current <= 0)
+            continue;
+        boss       = &registry.get<BossComponent>(id);
+        bossHealth = &health;
+        break;
+    }
+    if (boss != nullptr && bossHealth != nullptr) {
+        const auto size       = window_.getSize();
+        const float barWidth  = std::min(640.0F, static_cast<float>(size.x) * 0.7F);
+        const float barHeight = 16.0F;
+        const float x         = (static_cast<float>(size.x) - barWidth) / 2.0F;
+        const float y         = 20.0F;
+
+        float maxHealth = static_cast<float>(std::max(1, bossHealth->max));
+        float ratio     = static_cast<float>(bossHealth->current) / maxHealth;
+        ratio           = std::clamp(ratio, 0.0F, 1.0F);
+
+        Vector2f bg[4] = {{x, y}, {x, y + barHeight}, {x + barWidth, y}, {x + barWidth, y + barHeight}};
+        window_.draw(bg, 4, Color{30, 20, 20, 200}, 4);
+
+        Vector2f fg[4] = {{x, y},
+                          {x, y + barHeight},
+                          {x + (barWidth * ratio), y},
+                          {x + (barWidth * ratio), y + barHeight}};
+        window_.draw(fg, 4, Color{220, 60, 60, 230}, 4);
+
+        Vector2f outline[5] = {{x, y},
+                               {x + barWidth, y},
+                               {x + barWidth, y + barHeight},
+                               {x, y + barHeight},
+                               {x, y}};
+        window_.draw(outline, 5, Color{140, 60, 60, 220}, 2);
+
+        auto font = fonts_.get("score_font");
+        if (font != nullptr) {
+            static std::shared_ptr<IText> bossText = nullptr;
+            if (!bossText) {
+                GraphicsFactory factory;
+                bossText = factory.createText();
+            }
+            if (bossText) {
+                bossText->setFont(*font);
+                bossText->setCharacterSize(14);
+                bossText->setString(boss->name.empty() ? "BOSS" : boss->name);
+                bossText->setFillColor(Color{240, 220, 220});
+                bossText->setPosition(Vector2f{x, y - 18.0F});
+                bossText->setScale(Vector2f{1.0F, 1.0F});
+                bossText->setRotation(0.0F);
+                window_.draw(*bossText);
+            }
+        }
+    }
     int playerLives = -1;
     for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
         const auto& tag = registry.get<TagComponent>(id);

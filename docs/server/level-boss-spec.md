@@ -56,6 +56,15 @@ Boss invulnerability is modeled as events:
 These events can be emitted in phases or as time-based triggers.
 If not implemented, the default is vulnerable at all times.
 
+## Movement and Shooting
+
+Boss templates can optionally define:
+
+- `patternId` (movement pattern from the level `patterns` list)
+- `shooting` (same schema as enemy shooting)
+
+This keeps boss behavior aligned with regular enemies while still supporting boss phases.
+
 ## Minion Spawns
 
 Boss phases can spawn minions using standard `spawn_wave` events.

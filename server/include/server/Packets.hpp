@@ -28,6 +28,14 @@ struct LevelArchetype
     std::uint8_t layer;
 };
 
+struct LevelBossDefinition
+{
+    std::uint16_t typeId;
+    std::string name;
+    float scaleX = 1.0F;
+    float scaleY = 1.0F;
+};
+
 struct LevelDefinition
 {
     std::uint16_t levelId = 1;
@@ -35,6 +43,7 @@ struct LevelDefinition
     std::string backgroundId;
     std::string musicId;
     std::vector<LevelArchetype> archetypes;
+    std::vector<LevelBossDefinition> bosses;
 };
 
 std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl);

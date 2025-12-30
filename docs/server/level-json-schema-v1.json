@@ -649,6 +649,8 @@
         "health": { "type": "integer", "minimum": 1 },
         "score": { "type": "integer", "minimum": 0 },
         "scale": { "$ref": "#/$defs/vector2" },
+        "patternId": { "$ref": "#/$defs/nonEmptyString" },
+        "shooting": { "$ref": "#/$defs/shooting" },
         "phases": {
           "type": "array",
           "items": {

@@ -145,6 +145,15 @@ LevelDefinition ServerApp::buildLevel() const
     lvl.backgroundId = levelData_.meta.backgroundId;
     lvl.musicId      = levelData_.meta.musicId;
     lvl.archetypes   = levelData_.archetypes;
+    lvl.bosses.reserve(levelData_.bosses.size());
+    for (const auto& [bossId, boss] : levelData_.bosses) {
+        LevelBossDefinition entry{};
+        entry.typeId = boss.typeId;
+        entry.name   = bossId;
+        entry.scaleX = boss.scale.x;
+        entry.scaleY = boss.scale.y;
+        lvl.bosses.push_back(std::move(entry));
+    }
     return lvl;
 }
 

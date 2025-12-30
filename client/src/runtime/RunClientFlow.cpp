@@ -204,7 +204,7 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     g_musicVolume, graphicsFactory, soundManager);
+                     graphicsFactory, soundManager);
 
     ButtonSystem buttonSystem(window, fontManager);
 

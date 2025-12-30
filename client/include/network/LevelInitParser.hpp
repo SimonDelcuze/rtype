@@ -18,7 +18,10 @@ class LevelInitParser
     static std::uint8_t readU8(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::uint16_t readU16(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::uint32_t readU32(const std::vector<std::uint8_t>& buf, std::size_t& offset);
+    static float readF32(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::string readString(const std::vector<std::uint8_t>& buf, std::size_t& offset);
     static std::optional<ArchetypeEntry> parseArchetype(const std::vector<std::uint8_t>& buf, std::size_t& offset,
                                                         std::size_t total);
+    static std::optional<BossEntry> parseBoss(const std::vector<std::uint8_t>& buf, std::size_t& offset,
+                                              std::size_t total);
 };
