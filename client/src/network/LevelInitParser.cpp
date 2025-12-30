@@ -1,5 +1,7 @@
 #include "network/LevelInitParser.hpp"
 
+#include <bit>
+
 bool LevelInitParser::validateHeader(const std::vector<std::uint8_t>& data)
 {
     if (data.size() < PacketHeader::kSize) {
@@ -44,6 +46,12 @@ std::uint32_t LevelInitParser::readU32(const std::vector<std::uint8_t>& buf, std
     return val;
 }
 
+float LevelInitParser::readF32(const std::vector<std::uint8_t>& buf, std::size_t& offset)
+{
+    std::uint32_t raw = readU32(buf, offset);
+    return std::bit_cast<float>(raw);
+}
+
 std::string LevelInitParser::readString(const std::vector<std::uint8_t>& buf, std::size_t& offset)
 {
     std::uint8_t len = buf[offset++];
@@ -83,6 +91,33 @@ std::optional<ArchetypeEntry> LevelInitParser::parseArchetype(const std::vector<
         return std::nullopt;
     }
     entry.layer = readU8(buf, offset);
+
+    return entry;
+}
+
+std::optional<BossEntry> LevelInitParser::parseBoss(const std::vector<std::uint8_t>& buf, std::size_t& offset,
+                                                    std::size_t total)
+{
+    if (!ensureAvailable(offset, 2, total)) {
+        return std::nullopt;
+    }
+    BossEntry entry{};
+    entry.typeId = readU16(buf, offset);
+
+    if (!ensureAvailable(offset, 1, total)) {
+        return std::nullopt;
+    }
+    std::uint8_t nameLen = buf[offset];
+    if (!ensureAvailable(offset, 1 + nameLen, total)) {
+        return std::nullopt;
+    }
+    entry.name = readString(buf, offset);
+
+    if (!ensureAvailable(offset, 8, total)) {
+        return std::nullopt;
+    }
+    entry.scaleX = readF32(buf, offset);
+    entry.scaleY = readF32(buf, offset);
 
     return entry;
 }
@@ -134,6 +169,21 @@ std::optional<LevelInitData> LevelInitParser::parse(const std::vector<std::uint8
             return std::nullopt;
         }
         result.archetypes.push_back(std::move(*arch));
+    }
+
+    if (offset < total) {
+        if (!ensureAvailable(offset, 1, total)) {
+            return std::nullopt;
+        }
+        std::uint8_t bossCount = readU8(data, offset);
+        result.bosses.reserve(bossCount);
+        for (std::uint8_t i = 0; i < bossCount; ++i) {
+            auto boss = parseBoss(data, offset, total);
+            if (!boss) {
+                return std::nullopt;
+            }
+            result.bosses.push_back(std::move(*boss));
+        }
     }
 
     return result;

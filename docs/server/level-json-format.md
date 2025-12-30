@@ -68,6 +68,7 @@ Templates provide reusable data blocks referenced by events:
 - `colliders`: box/circle/polygon
 - `enemies`: typeId + hitbox/collider + defaults
 - `obstacles`: typeId + hitbox/collider + defaults
+- `bosses`: typeId + hitbox/collider + defaults, with optional `patternId`/`shooting`
 
 See `docs/server/level-templates.md` for semantics and override rules.
 

@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/BossComponent.hpp"
 #include "components/ColliderComponent.hpp"
 #include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
@@ -46,8 +47,12 @@ namespace
         return q;
     }
 
-    std::pair<float, float> defaultScaleForType(std::uint16_t typeId)
+    std::pair<float, float> defaultScaleForType(const EntityTypeRegistry& types, std::uint16_t typeId)
     {
+        const auto* data = types.get(typeId);
+        if (data != nullptr && (data->defaultScaleX != 1.0F || data->defaultScaleY != 1.0F)) {
+            return {data->defaultScaleX, data->defaultScaleY};
+        }
         if (typeId == 9)
             return {2.0F, 2.0F};
         if (typeId == 11)
@@ -97,7 +102,7 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         remoteToType_[spawnPkt.entityId]  = spawnPkt.entityType;
         applyArchetype(registry, id, spawnPkt.entityType);
         TransformComponent t{};
-        auto [sx, sy] = defaultScaleForType(spawnPkt.entityType);
+        auto [sx, sy] = defaultScaleForType(*types_, spawnPkt.entityType);
         t.scaleX      = sx;
         t.scaleY      = sy;
         t.x           = spawnPkt.posX;
@@ -407,6 +412,10 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         }
         registry.emplace<TagComponent>(id, TagComponent::create(tag));
     }
+    if (data->isBoss && !registry.has<BossComponent>(id)) {
+        const std::string name = data->bossName.empty() ? "Boss" : data->bossName;
+        registry.emplace<BossComponent>(id, BossComponent::create(name));
+    }
     if ((typeId == 9 || typeId == 10 || typeId == 11) && !registry.has<ColliderComponent>(id)) {
         static const std::vector<std::array<float, 2>> topHull{{{0.0F, 0.0F},
                                                                 {146.0F, 0.0F},
@@ -488,7 +497,7 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
     if (comp == nullptr) {
         TransformComponent t{};
         if (entity.entityType.has_value()) {
-            auto [sx, sy] = defaultScaleForType(*entity.entityType);
+            auto [sx, sy] = defaultScaleForType(*types_, *entity.entityType);
             t.scaleX      = sx;
             t.scaleY      = sy;
         }
