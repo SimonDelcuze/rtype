@@ -191,8 +191,7 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     sf::Listener::setGlobalVolume(g_musicVolume);
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     g_musicVolume);
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
 
     ButtonSystem buttonSystem(window, fontManager);
 

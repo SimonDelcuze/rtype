@@ -3,8 +3,8 @@
 #include "Logger.hpp"
 
 LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest,
-                                   TextureManager& textures, float& musicVolume)
-    : queue_(&queue), manifest_(&manifest), textures_(&textures), musicVolume_(&musicVolume)
+                                   TextureManager& textures)
+    : queue_(&queue), manifest_(&manifest), textures_(&textures)
 {
     activeScroll_.mode   = LevelScrollMode::Constant;
     activeScroll_.speedX = fallbackSpeed_;
@@ -13,10 +13,6 @@ LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const
 
 void LevelEventSystem::update(Registry& registry, float deltaTime)
 {
-    if (musicVolume_ != nullptr) {
-        music_.setVolume(*musicVolume_);
-    }
-
     LevelEventData event;
     while (queue_->tryPop(event)) {
         applyEvent(registry, event);
@@ -146,31 +142,4 @@ float LevelEventSystem::currentScrollSpeed() const
         }
     }
     return speed;
-}
-
-void LevelEventSystem::applyMusic(const std::string& musicId)
-{
-    if (currentMusicId_ == musicId) {
-        return;
-    }
-    auto entry = manifest_->findSoundById(musicId);
-    if (!entry) {
-        Logger::instance().warn("[LevelEvent] Unknown music id=" + musicId);
-        return;
-    }
-    std::string path = "client/assets/" + entry->path;
-    if (!music_.openFromFile(path)) {
-        Logger::instance().warn("[LevelEvent] Failed to open music path=" + path);
-        return;
-    }
-#if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
-    music_.setLooping(true);
-#else
-    music_.setLoop(true);
-#endif
-    if (musicVolume_ != nullptr) {
-        music_.setVolume(*musicVolume_);
-    }
-    music_.play();
-    currentMusicId_ = musicId;
 }
