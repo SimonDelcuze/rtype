@@ -203,8 +203,12 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosY            = 0.0F;
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
+<<<<<<< HEAD
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
                      graphicsFactory, soundManager);
+=======
+                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus);
+>>>>>>> 066cffc (fix: error on music test)
 
     ButtonSystem buttonSystem(window, fontManager);
 
