@@ -30,7 +30,8 @@
   "patterns": [
     { "id": "p_linear", "type": "linear", "speed": 140 },
     { "id": "p_sine", "type": "sine", "speed": 120, "amplitude": 140, "frequency": 0.6, "phase": 0.0 },
-    { "id": "p_zigzag", "type": "zigzag", "speed": 150, "amplitude": 120, "frequency": 0.9 }
+    { "id": "p_zigzag", "type": "zigzag", "speed": 150, "amplitude": 120, "frequency": 0.9 },
+    { "id": "p_boss_hover", "type": "sine", "speed": 0, "amplitude": 90, "frequency": 0.35, "phase": 0.0 }
   ],
   "templates": {
     "hitboxes": {
@@ -165,6 +166,8 @@
       "health": 80,
       "score": 1000,
       "scale": [2.5, 2.5],
+      "patternId": "p_boss_hover",
+      "shooting": { "interval": 1.3, "speed": 320, "damage": 8, "lifetime": 4.0 },
       "phases": [
         {
           "id": "phase_1",
@@ -212,12 +215,6 @@
                 "layers": 3,
                 "shootingEnabled": true
               }
-            },
-            {
-              "id": "boss_phase2_scroll",
-              "type": "set_scroll",
-              "trigger": { "type": "time", "time": 1 },
-              "scroll": { "mode": "constant", "speedX": -20 }
             }
           ]
         },
@@ -239,12 +236,6 @@
                 "armLength": 3,
                 "shootingEnabled": true
               }
-            },
-            {
-              "id": "boss_phase3_stop",
-              "type": "set_scroll",
-              "trigger": { "type": "time", "time": 1 },
-              "scroll": { "mode": "stopped" }
             }
           ]
         }
@@ -261,12 +252,6 @@
           "type": "set_scroll",
           "trigger": { "type": "time", "time": 0 },
           "scroll": { "mode": "constant", "speedX": -60 }
-        },
-        {
-          "id": "boss_music_reset",
-          "type": "set_music",
-          "trigger": { "type": "time", "time": 0 },
-          "musicId": "theme_music"
         }
       ]
     }
@@ -281,12 +266,6 @@
           "type": "set_background",
           "trigger": { "type": "time", "time": 0 },
           "backgroundId": "space_background"
-        },
-        {
-          "id": "intro_music",
-          "type": "set_music",
-          "trigger": { "type": "time", "time": 0 },
-          "musicId": "theme_music"
         },
         {
           "id": "intro_line",
@@ -464,12 +443,6 @@
           "gateId": "gate_wave"
         },
         {
-          "id": "mid_music",
-          "type": "set_music",
-          "trigger": { "type": "checkpoint_reached", "checkpointId": "cp_mid" },
-          "musicId": "theme_music"
-        },
-        {
           "id": "intro_reached_bg",
           "type": "set_background",
           "trigger": { "type": "checkpoint_reached", "checkpointId": "cp_intro" },
@@ -515,12 +488,6 @@
           "type": "gate_close",
           "trigger": { "type": "time", "time": 0.1 },
           "gateId": "boss_gate"
-        },
-        {
-          "id": "boss_music",
-          "type": "set_music",
-          "trigger": { "type": "time", "time": 0.2 },
-          "musicId": "theme_music"
         },
         {
           "id": "boss_support",

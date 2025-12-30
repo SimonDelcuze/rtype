@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/PacketHeader.hpp"
 #include "server/EntityTypeResolver.hpp"
 #include "server/ServerRunner.hpp"
 
@@ -114,6 +115,20 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 void ServerApp::sendSnapshots()
 {
     auto snapshotPkt = buildSnapshotPacket(registry_, currentTick_);
+    constexpr std::size_t kSnapshotPayloadWarn = 1400;
+    std::size_t payloadSize = 0;
+    if (snapshotPkt.size() >= PacketHeader::kSize + PacketHeader::kCrcSize) {
+        payloadSize = snapshotPkt.size() - PacketHeader::kSize - PacketHeader::kCrcSize;
+    }
+    if (payloadSize > kSnapshotPayloadWarn) {
+        auto chunks = buildSnapshotChunks(registry_, currentTick_);
+        for (const auto& c : clients_) {
+            for (const auto& chunk : chunks) {
+                sendThread_.sendTo(chunk, c);
+            }
+        }
+        return;
+    }
     for (const auto& c : clients_) {
         sendThread_.sendTo(snapshotPkt, c);
     }

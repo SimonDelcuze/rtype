@@ -35,6 +35,14 @@ void LevelInitSystem::cleanup() {}
 void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& data)
 {
     typeRegistry_->clear();
+    bossMeta_.clear();
+    for (const auto& boss : data.bosses) {
+        BossMeta meta{};
+        meta.name   = boss.name;
+        meta.scaleX = boss.scaleX;
+        meta.scaleY = boss.scaleY;
+        bossMeta_.emplace(boss.typeId, std::move(meta));
+    }
     state_->levelId = data.levelId;
     state_->seed    = data.seed;
     state_->active  = true;
@@ -64,6 +72,13 @@ void LevelInitSystem::createHUDEntities(Registry& registry)
 void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)
 {
     RenderTypeData renderData = buildRenderData(entry);
+    auto bossIt               = bossMeta_.find(entry.typeId);
+    if (bossIt != bossMeta_.end()) {
+        renderData.isBoss        = true;
+        renderData.bossName      = bossIt->second.name;
+        renderData.defaultScaleX = bossIt->second.scaleX;
+        renderData.defaultScaleY = bossIt->second.scaleY;
+    }
     if (renderData.texture == nullptr ||
         (entry.animId.size() && renderData.animation == nullptr && animations_ != nullptr && labels_ != nullptr)) {
         return;

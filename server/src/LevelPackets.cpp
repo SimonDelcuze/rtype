@@ -49,6 +49,13 @@ std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl)
         writeString(payload, a.animId);
         payload.push_back(a.layer);
     }
+    payload.push_back(static_cast<std::uint8_t>(lvl.bosses.size()));
+    for (const auto& b : lvl.bosses) {
+        writeU16(payload, b.typeId);
+        writeString(payload, b.name);
+        writeF32(payload, b.scaleX);
+        writeF32(payload, b.scaleY);
+    }
 
     PacketHeader hdr{};
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);

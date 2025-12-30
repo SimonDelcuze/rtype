@@ -10,6 +10,8 @@
 #include "network/LevelInitData.hpp"
 #include "systems/ISystem.hpp"
 
+#include <unordered_map>
+
 class LevelInitSystem : public ISystem
 {
   public:
@@ -41,4 +43,11 @@ class LevelInitSystem : public ISystem
     AnimationRegistry* animations_;
     AnimationLabels* labels_;
     LevelState* state_;
+    struct BossMeta
+    {
+        std::string name;
+        float scaleX = 1.0F;
+        float scaleY = 1.0F;
+    };
+    std::unordered_map<std::uint16_t, BossMeta> bossMeta_;
 };

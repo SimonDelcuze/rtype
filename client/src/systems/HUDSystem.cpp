@@ -1,6 +1,8 @@
 #include "systems/HUDSystem.hpp"
 
+#include "components/BossComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
+#include "components/HealthComponent.hpp"
 #include "components/TagComponent.hpp"
 
 #include <SFML/Graphics/Rect.hpp>
@@ -121,6 +123,52 @@ void HUDSystem::update(Registry& registry, float)
 
         window_.draw(background);
         window_.draw(fill);
+    }
+
+    const BossComponent* boss = nullptr;
+    const HealthComponent* bossHealth = nullptr;
+    for (EntityId id : registry.view<BossComponent, HealthComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        const auto& health = registry.get<HealthComponent>(id);
+        if (health.max <= 0 || health.current <= 0)
+            continue;
+        boss       = &registry.get<BossComponent>(id);
+        bossHealth = &health;
+        break;
+    }
+    if (boss != nullptr && bossHealth != nullptr) {
+        const auto size       = window_.raw().getSize();
+        const float barWidth  = std::min(640.0F, static_cast<float>(size.x) * 0.7F);
+        const float barHeight = 16.0F;
+        const float x         = (static_cast<float>(size.x) - barWidth) / 2.0F;
+        const float y         = 20.0F;
+
+        float maxHealth = static_cast<float>(std::max(1, bossHealth->max));
+        float ratio     = static_cast<float>(bossHealth->current) / maxHealth;
+        ratio           = std::clamp(ratio, 0.0F, 1.0F);
+
+        sf::RectangleShape background(sf::Vector2f{barWidth, barHeight});
+        background.setPosition(sf::Vector2f{x, y});
+        background.setFillColor(sf::Color(30, 20, 20, 200));
+        background.setOutlineThickness(2.0F);
+        background.setOutlineColor(sf::Color(140, 60, 60, 220));
+
+        sf::RectangleShape fill(sf::Vector2f{barWidth * ratio, barHeight});
+        fill.setPosition(sf::Vector2f{x, y});
+        fill.setFillColor(sf::Color(220, 60, 60, 230));
+
+        window_.draw(background);
+        window_.draw(fill);
+
+        const sf::Font* font = fonts_.get("score_font");
+        if (font != nullptr) {
+            std::string label = boss->name.empty() ? "BOSS" : boss->name;
+            sf::Text text(*font, label, 14);
+            text.setFillColor(sf::Color(240, 220, 220));
+            text.setPosition(sf::Vector2f{x, y - 18.0F});
+            window_.draw(text);
+        }
     }
 
     int playerLives = -1;

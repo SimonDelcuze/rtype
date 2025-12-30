@@ -38,12 +38,6 @@ void LevelEventSystem::applyEvent(Registry& registry, const LevelEventData& even
         }
         return;
     }
-    if (event.type == LevelEventType::SetMusic) {
-        if (event.musicId.has_value()) {
-            applyMusic(*event.musicId);
-        }
-        return;
-    }
     if (event.type == LevelEventType::SetCameraBounds) {
         if (event.cameraBounds.has_value()) {
             cameraBounds_ = *event.cameraBounds;
@@ -148,28 +142,4 @@ float LevelEventSystem::currentScrollSpeed() const
         }
     }
     return speed;
-}
-
-void LevelEventSystem::applyMusic(const std::string& musicId)
-{
-    if (currentMusicId_ == musicId) {
-        return;
-    }
-    auto entry = manifest_->findSoundById(musicId);
-    if (!entry) {
-        Logger::instance().warn("[LevelEvent] Unknown music id=" + musicId);
-        return;
-    }
-    std::string path = "client/assets/" + entry->path;
-    if (!music_.openFromFile(path)) {
-        Logger::instance().warn("[LevelEvent] Failed to open music path=" + path);
-        return;
-    }
-#if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
-    music_.setLooping(true);
-#else
-    music_.setLoop(true);
-#endif
-    music_.play();
-    currentMusicId_ = musicId;
 }

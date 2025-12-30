@@ -99,6 +99,8 @@ Fields:
 - `collider` (id)
 - `health` (default HP)
 - `scale` ([x, y])
+- `patternId` (optional movement pattern id)
+- `shooting` (optional, same schema as enemy shooting)
 - `phases` (optional array)
 - `onDeath` (optional events)
 

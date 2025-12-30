@@ -15,6 +15,10 @@ struct RenderTypeData
     std::uint32_t columns      = 1;
     std::uint8_t layer         = 0;
     const void* animation      = nullptr;
+    float defaultScaleX        = 1.0F;
+    float defaultScaleY        = 1.0F;
+    bool isBoss                = false;
+    std::string bossName;
     std::string spriteId;
 };
 

@@ -11,7 +11,6 @@
 #include "network/LevelEventData.hpp"
 #include "systems/ISystem.hpp"
 
-#include <SFML/Audio/Music.hpp>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -29,7 +28,6 @@ class LevelEventSystem : public ISystem
     void applyScrollSettings(const LevelScrollSettings& settings);
     void applyScrollSpeed(Registry& registry, float speedX);
     float currentScrollSpeed() const;
-    void applyMusic(const std::string& musicId);
 
     ThreadSafeQueue<LevelEventData>* queue_ = nullptr;
     const AssetManifest* manifest_          = nullptr;
@@ -40,8 +38,6 @@ class LevelEventSystem : public ISystem
     bool scrollActive_   = false;
     float fallbackSpeed_ = -50.0F;
 
-    sf::Music music_;
-    std::string currentMusicId_;
     std::optional<LevelCameraBounds> cameraBounds_;
     std::unordered_map<std::string, bool> gateStates_;
 };

@@ -242,6 +242,8 @@ struct BossDefinition
     std::int32_t health = 1;
     std::int32_t score  = 0;
     Vec2f scale{1.0F, 1.0F};
+    std::optional<std::string> patternId;
+    std::optional<EnemyShootingComponent> shooting;
     std::vector<BossPhase> phases;
     std::vector<LevelEvent> onDeath;
 };

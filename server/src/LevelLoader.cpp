@@ -1108,12 +1108,17 @@ namespace
             Vec2f scale{};
             if (!parseVec2(b.at("scale"), scale, joinPath(bpath, "scale"), error))
                 return false;
+            std::string patternId;
+            readString(b, "patternId", patternId, bpath, error, false);
 
             BossDefinition boss{};
             boss.typeId = static_cast<std::uint16_t>(typeId);
             boss.health = health;
             boss.score  = std::max(0, score);
             boss.scale  = scale;
+            if (!patternId.empty()) {
+                boss.patternId = patternId;
+            }
             auto hbIt   = templates.hitboxes.find(hitboxId);
             if (hbIt == templates.hitboxes.end()) {
                 setError(error, LevelLoadErrorCode::SemanticError, "Unknown hitbox: " + hitboxId, "", bpath);
@@ -1126,6 +1131,12 @@ namespace
             }
             boss.hitbox   = hbIt->second;
             boss.collider = colIt->second;
+            if (b.contains("shooting")) {
+                EnemyShootingComponent shooting{};
+                if (!parseShooting(b.at("shooting"), shooting, joinPath(bpath, "shooting"), error))
+                    return false;
+                boss.shooting = shooting;
+            }
 
             if (b.contains("phases")) {
                 if (!b.at("phases").is_array()) {
@@ -1588,6 +1599,24 @@ namespace
             return false;
         if (!validateArchetypes(data, error))
             return false;
+
+        for (const auto& [id, boss] : data.bosses) {
+            if (!boss.patternId.has_value()) {
+                continue;
+            }
+            bool patternFound = false;
+            for (const auto& pattern : data.patterns) {
+                if (pattern.id == *boss.patternId) {
+                    patternFound = true;
+                    break;
+                }
+            }
+            if (!patternFound) {
+                setError(error, LevelLoadErrorCode::SemanticError,
+                         "Unknown patternId for boss " + id + ": " + *boss.patternId, "", "");
+                return false;
+            }
+        }
 
         std::unordered_set<std::string> checkpointIds;
         std::unordered_set<std::string> spawnIds;
