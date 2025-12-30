@@ -125,7 +125,7 @@ void HUDSystem::update(Registry& registry, float)
         window_.draw(fill);
     }
 
-    const BossComponent* boss = nullptr;
+    const BossComponent* boss         = nullptr;
     const HealthComponent* bossHealth = nullptr;
     for (EntityId id : registry.view<BossComponent, HealthComponent>()) {
         if (!registry.isAlive(id))

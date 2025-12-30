@@ -114,9 +114,9 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 
 void ServerApp::sendSnapshots()
 {
-    auto snapshotPkt = buildSnapshotPacket(registry_, currentTick_);
+    auto snapshotPkt                           = buildSnapshotPacket(registry_, currentTick_);
     constexpr std::size_t kSnapshotPayloadWarn = 1400;
-    std::size_t payloadSize = 0;
+    std::size_t payloadSize                    = 0;
     if (snapshotPkt.size() >= PacketHeader::kSize + PacketHeader::kCrcSize) {
         payloadSize = snapshotPkt.size() - PacketHeader::kSize - PacketHeader::kCrcSize;
     }
