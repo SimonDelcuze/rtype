@@ -1,12 +1,14 @@
 #pragma once
 #include "../../abstraction/ISoundBuffer.hpp"
+
 #include <SFML/Audio/SoundBuffer.hpp>
 
-class SFMLSoundBuffer : public ISoundBuffer {
-public:
+class SFMLSoundBuffer : public ISoundBuffer
+{
+  public:
     bool loadFromFile(const std::string& filename) override;
     const sf::SoundBuffer& getSFMLSoundBuffer() const;
 
-private:
+  private:
     sf::SoundBuffer buffer_;
 };

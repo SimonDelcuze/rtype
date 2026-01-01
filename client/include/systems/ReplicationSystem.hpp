@@ -2,17 +2,17 @@
 
 #include "ClientRuntime.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
+#include "graphics/abstraction/ISound.hpp"
+#include "graphics/abstraction/ISoundBuffer.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
-#include "graphics/abstraction/ISound.hpp"
-#include "graphics/abstraction/ISoundBuffer.hpp"
 
 class ReplicationSystem : public ISystem
 {

@@ -49,7 +49,7 @@ void LevelInitSystem::createHUDEntities(Registry& registry)
 {
     EntityId score = registry.createEntity();
     registry.emplace<TransformComponent>(score, TransformComponent::create(0.0F, 0.0F));
-    auto& scoreText = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, Color::White));
+    auto& scoreText   = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, Color::White));
     scoreText.content = "SCORE 0000000";
     registry.emplace<ScoreComponent>(score, ScoreComponent::create(0));
     registry.emplace<LayerComponent>(score, LayerComponent::create(100));

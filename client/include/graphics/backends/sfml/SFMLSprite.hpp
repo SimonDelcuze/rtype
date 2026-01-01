@@ -1,10 +1,12 @@
 #pragma once
 
 #include "../../abstraction/ISprite.hpp"
+
 #include <SFML/Graphics/Sprite.hpp>
 
-class SFMLSprite : public ISprite {
-public:
+class SFMLSprite : public ISprite
+{
+  public:
     SFMLSprite();
     void setTexture(const ITexture& texture, bool resetRect = false) override;
     void setTextureRect(const IntRect& rect) override;
@@ -15,7 +17,7 @@ public:
     void setColor(const Color& color) override;
     Color getColor() const override;
     IntRect getTextureRect() const override;
-    
+
     Vector2f getPosition() const override;
     float getRotation() const override;
     Vector2f getScale() const override;
@@ -27,6 +29,6 @@ public:
 
     const sf::Sprite& getSFMLSprite() const;
 
-private:
+  private:
     sf::Sprite sprite_;
 };

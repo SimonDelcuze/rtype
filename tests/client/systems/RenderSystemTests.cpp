@@ -3,8 +3,8 @@
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/Window.hpp"
-#include "systems/RenderSystem.hpp"
 #include "graphics/backends/sfml/SFMLTexture.hpp"
+#include "systems/RenderSystem.hpp"
 
 #include <gtest/gtest.h>
 
@@ -117,8 +117,8 @@ TEST(RenderSystem, ThrowsOnMissingTexture)
     Registry registry;
 
     auto texture = std::make_shared<SFMLTexture>();
-    EntityId e = registry.createEntity();
-    
+    EntityId e   = registry.createEntity();
+
     SpriteComponent s(texture);
     registry.emplace<SpriteComponent>(e, s);
     registry.emplace<TransformComponent>(e, TransformComponent::create(0, 0));
@@ -131,7 +131,7 @@ TEST(RenderSystem, UpdatesSpritePosition)
     Window window{{64u, 64u}, "Test"};
     RenderSystem system(window);
     Registry registry;
-    
+
     auto texture = std::make_shared<SFMLTexture>();
     texture->create(32, 32);
 
@@ -143,7 +143,7 @@ TEST(RenderSystem, UpdatesSpritePosition)
     system.update(registry, 0.0F);
 
     auto& sRef = registry.get<SpriteComponent>(e);
-    auto raw = sRef.getSprite();
+    auto raw   = sRef.getSprite();
     ASSERT_NE(raw, nullptr);
     EXPECT_FLOAT_EQ(raw->getPosition().x, 3.0F);
     EXPECT_FLOAT_EQ(raw->getPosition().y, 4.0F);

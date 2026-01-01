@@ -190,9 +190,9 @@ void InputSystem::ensureChargeFx(Registry& registry, float x, float y)
         } catch (...) {
         }
     }
-    auto texPtr  = textures_->get("bullet");
+    auto texPtr                         = textures_->get("bullet");
     std::shared_ptr<ITexture> actualTex = texPtr;
-    const auto* clip = animations_->get("bullet_charge_warmup");
+    const auto* clip                    = animations_->get("bullet_charge_warmup");
 
     if (!actualTex) {
         actualTex = textures_->getPlaceholder();

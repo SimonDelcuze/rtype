@@ -1,4 +1,5 @@
 #include "systems/BackgroundScrollSystem.hpp"
+
 #include "graphics/GraphicsFactory.hpp"
 
 #include <algorithm>
@@ -23,9 +24,10 @@ void BackgroundScrollSystem::collectEntries(Registry& registry, std::vector<Entr
         if (!sprite.sprite) {
             continue;
         }
-        
+
         auto tex = sprite.texture;
-        if (!tex) continue;
+        if (!tex)
+            continue;
 
         int layer = 0;
         if (registry.has<LayerComponent>(entity)) {
@@ -74,17 +76,17 @@ void BackgroundScrollSystem::ensureCoverage(Registry& registry, std::vector<Entr
     if (entries.empty()) {
         return;
     }
-    float minX                 = std::numeric_limits<float>::infinity();
-    float maxX                 = -std::numeric_limits<float>::infinity();
-    float baseWidth            = entries.front().width;
-    float baseHeight           = entries.front().height;
+    float minX                        = std::numeric_limits<float>::infinity();
+    float maxX                        = -std::numeric_limits<float>::infinity();
+    float baseWidth                   = entries.front().width;
+    float baseHeight                  = entries.front().height;
     std::shared_ptr<ITexture> baseTex = entries.front().texture;
-    int baseLayer              = entries.front().layer;
-    const float baseSpeedX     = entries.front().scroll->speedX;
-    const float baseSpeedY     = entries.front().scroll->speedY;
-    const float baseScaleX     = entries.front().transform->scaleX;
-    const float baseScaleY     = entries.front().transform->scaleY;
-    const float baseY          = entries.front().transform->y;
+    int baseLayer                     = entries.front().layer;
+    const float baseSpeedX            = entries.front().scroll->speedX;
+    const float baseSpeedY            = entries.front().scroll->speedY;
+    const float baseScaleX            = entries.front().transform->scaleX;
+    const float baseScaleY            = entries.front().transform->scaleY;
+    const float baseY                 = entries.front().transform->y;
     for (const auto& entry : entries) {
         minX       = std::min(minX, entry.transform->x);
         maxX       = std::max(maxX, entry.transform->x);
@@ -115,7 +117,8 @@ void BackgroundScrollSystem::ensureCoverage(Registry& registry, std::vector<Entr
     }
 }
 
-void BackgroundScrollSystem::applyTextureChange(Entry& entry, const std::shared_ptr<ITexture>& texture, float windowHeight) const
+void BackgroundScrollSystem::applyTextureChange(Entry& entry, const std::shared_ptr<ITexture>& texture,
+                                                float windowHeight) const
 {
     if (entry.sprite && entry.sprite->sprite && texture) {
         entry.sprite->sprite->setTexture(*texture);

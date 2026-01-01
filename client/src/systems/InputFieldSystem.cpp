@@ -14,7 +14,7 @@
 InputFieldSystem::InputFieldSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
 
 void InputFieldSystem::update(Registry& registry, float)
-{    
+{
     for (EntityId entity : registry.view<TransformComponent, BoxComponent, InputFieldComponent>()) {
         if (!registry.isAlive(entity))
             continue;
@@ -39,7 +39,7 @@ void InputFieldSystem::update(Registry& registry, float)
         text->setCharacterSize(20);
         text->setPosition(Vector2f{transform.x + 10.0F, transform.y + 13.0F});
         text->setFillColor(Color::White);
-        
+
         window_.draw(*text);
     }
 }

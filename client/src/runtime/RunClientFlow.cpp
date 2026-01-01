@@ -1,24 +1,24 @@
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
 #include "animation/AnimationManifest.hpp"
+#include "audio/SoundManager.hpp"
 #include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
 #include "events/GameEvents.hpp"
 #include "graphics/FontManager.hpp"
+#include "graphics/GraphicsFactory.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/abstraction/Event.hpp"
 #include "input/InputMapper.hpp"
 #include "level/EntityTypeSetup.hpp"
 #include "level/LevelState.hpp"
 #include "network/PacketHeader.hpp"
-#include "graphics/GraphicsFactory.hpp"
 #include "scheduler/ClientScheduler.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
-#include "audio/SoundManager.hpp"
 
 #include <chrono>
 
@@ -103,10 +103,10 @@ namespace
                 }
             });
 
-            auto currentTime = std::chrono::steady_clock::now();
+            auto currentTime                     = std::chrono::steady_clock::now();
             std::chrono::duration<float> elapsed = currentTime - lastTime;
-            lastTime = currentTime;
-            const float deltaTime = std::min(elapsed.count(), 0.1F);
+            lastTime                             = currentTime;
+            const float deltaTime                = std::min(elapsed.count(), 0.1F);
 
             window.clear();
             gameLoop.update(registry, deltaTime);
@@ -121,7 +121,7 @@ namespace
         GameOverMenu gameOverMenu(fontManager, finalScore, victory);
         gameOverMenu.create(registry);
 
-        g_running = true;
+        g_running     = true;
         auto lastTime = std::chrono::steady_clock::now();
 
         while (window.isOpen() && g_running && !gameOverMenu.isDone()) {
@@ -134,11 +134,11 @@ namespace
                 buttonSystem.handleEvent(registry, event);
             });
 
-            auto currentTime = std::chrono::steady_clock::now();
+            auto currentTime                     = std::chrono::steady_clock::now();
             std::chrono::duration<float> elapsed = currentTime - lastTime;
-            lastTime = currentTime;
-            const float deltaTime = std::min(elapsed.count(), 0.1F);
-            
+            lastTime                             = currentTime;
+            const float deltaTime                = std::min(elapsed.count(), 0.1F);
+
             buttonSystem.update(registry, deltaTime);
 
             window.clear();

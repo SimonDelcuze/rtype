@@ -15,7 +15,7 @@ TEST(TextComponent, DefaultValues)
 
 TEST(TextComponent, CreateHelper)
 {
-    Color c = Color::Blue;
+    Color c         = Color::Blue;
     TextComponent b = TextComponent::create("arial.ttf", 32, c);
 
     EXPECT_EQ(b.fontId, "arial.ttf");
@@ -77,7 +77,7 @@ TEST(TextComponent, OptionalTextClearedWithReset)
 {
     TextComponent t{};
     resetValue<TextComponent>(t);
-    
+
     resetValue<TextComponent>(t);
 
     EXPECT_EQ(t.text, nullptr);

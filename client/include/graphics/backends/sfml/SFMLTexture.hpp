@@ -1,10 +1,12 @@
 #pragma once
 
 #include "../../abstraction/ITexture.hpp"
+
 #include <SFML/Graphics/Texture.hpp>
 
-class SFMLTexture : public ITexture {
-public:
+class SFMLTexture : public ITexture
+{
+  public:
     bool loadFromFile(const std::string& filename) override;
     bool create(unsigned int width, unsigned int height) override;
     Vector2u getSize() const override;
@@ -15,6 +17,6 @@ public:
 
     const sf::Texture& getSFMLTexture() const;
 
-private:
+  private:
     sf::Texture texture_;
 };

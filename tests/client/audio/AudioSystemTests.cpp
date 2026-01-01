@@ -1,8 +1,8 @@
 #include "audio/SoundManager.hpp"
 #include "components/AudioComponent.hpp"
 #include "ecs/Registry.hpp"
-#include "systems/AudioSystem.hpp"
 #include "graphics/GraphicsFactory.hpp"
+#include "systems/AudioSystem.hpp"
 
 #include <gtest/gtest.h>
 

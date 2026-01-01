@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/abstraction/Inputs.hpp"
+
 #include <map>
 
 struct KeyBindings

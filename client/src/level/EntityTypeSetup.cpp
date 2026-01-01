@@ -15,7 +15,7 @@ namespace
             return;
 
         RenderTypeData data{};
-        data.texture       = tex;
+        data.texture = tex;
 
         data.layer         = 0;
         data.spriteId      = "player_ship";

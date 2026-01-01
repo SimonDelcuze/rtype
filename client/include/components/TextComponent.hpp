@@ -1,8 +1,8 @@
 #pragma once
 
-#include "graphics/abstraction/IText.hpp"
-#include "graphics/abstraction/Common.hpp"
 #include "ecs/ResetValue.hpp"
+#include "graphics/abstraction/Common.hpp"
+#include "graphics/abstraction/IText.hpp"
 
 #include <memory>
 #include <optional>

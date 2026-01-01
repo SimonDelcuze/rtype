@@ -25,8 +25,8 @@ namespace
         return entity;
     }
 
-    EntityId createCenteredText(Registry& registry, float y, const std::string& content, unsigned int size,
-                                Color color, int layer = 101)
+    EntityId createCenteredText(Registry& registry, float y, const std::string& content, unsigned int size, Color color,
+                                int layer = 101)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
@@ -48,7 +48,9 @@ namespace
         transform.x     = 540.0F;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(200.0F, 60.0F, fill, Color{static_cast<uint8_t>(fill.r + 40), static_cast<uint8_t>(fill.g + 40), static_cast<uint8_t>(fill.b + 40)});
+        auto box       = BoxComponent::create(200.0F, 60.0F, fill,
+                                              Color{static_cast<uint8_t>(fill.r + 40), static_cast<uint8_t>(fill.g + 40),
+                                              static_cast<uint8_t>(fill.b + 40)});
         box.focusColor = Color{100, 200, 255};
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
@@ -71,11 +73,10 @@ void GameOverMenu::create(Registry& registry)
     backgroundRect_ = createSemiTransparentBackground(registry);
 
     std::string titleStr = victory_ ? "VICTORY!" : "GAME OVER";
-    Color titleColor = victory_ ? Color::Green : Color::Red;
+    Color titleColor     = victory_ ? Color::Green : Color::Red;
     titleText_           = createCenteredText(registry, 150.0F, titleStr, 72, titleColor, 101);
 
-    scoreText_ =
-        createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, Color::White, 101);
+    scoreText_ = createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, Color::White, 101);
 
     retryButton_ =
         createCenteredButton(registry, 350.0F, "Retry", Color{50, 150, 50}, [this]() { onRetryClicked(); }, 101);
@@ -112,9 +113,7 @@ bool GameOverMenu::isDone() const
     return done_;
 }
 
-void GameOverMenu::handleEvent(Registry&, const Event&)
-{
-}
+void GameOverMenu::handleEvent(Registry&, const Event&) {}
 
 void GameOverMenu::render(Registry& registry, Window& window)
 {
@@ -163,7 +162,7 @@ void GameOverMenu::renderButton(Registry& registry, EntityId entityId, Window& w
     if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
         const auto& transform = registry.get<TransformComponent>(entityId);
         const auto& button    = registry.get<ButtonComponent>(entityId);
-        
+
         auto font = fonts_.get("ui");
         if (font != nullptr) {
             GraphicsFactory factory;

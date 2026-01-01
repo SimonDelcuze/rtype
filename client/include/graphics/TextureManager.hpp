@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/abstraction/ITexture.hpp"
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -22,8 +23,7 @@ class TextureManager
 
   private:
     void createPlaceholder();
-    
+
     std::unordered_map<std::string, std::shared_ptr<ITexture>> textures_;
     std::shared_ptr<ITexture> placeholder_;
-
 };

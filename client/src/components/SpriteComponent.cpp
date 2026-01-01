@@ -1,17 +1,16 @@
 
 #include "components/SpriteComponent.hpp"
+
 #include "graphics/GraphicsFactory.hpp"
 
-SpriteComponent::SpriteComponent(const std::shared_ptr<ITexture>& texture)
-    : texture(texture)
+SpriteComponent::SpriteComponent(const std::shared_ptr<ITexture>& texture) : texture(texture)
 {
     GraphicsFactory factory;
     sprite = factory.createSprite();
     if (texture) {
         sprite->setTexture(*texture);
         Vector2u size = texture->getSize();
-        sprite->setTextureRect(
-            IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
+        sprite->setTextureRect(IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
     }
 }
 
@@ -25,7 +24,7 @@ void SpriteComponent::setTexture(const std::shared_ptr<ITexture>& texture)
     if (texture) {
         sprite->setTexture(*texture);
     }
-    
+
     if (!customFrames.empty()) {
         setFrame(currentFrame);
         return;
@@ -33,8 +32,7 @@ void SpriteComponent::setTexture(const std::shared_ptr<ITexture>& texture)
     if (frameWidth == 0 || frameHeight == 0) {
         if (texture) {
             Vector2u size = texture->getSize();
-            sprite->setTextureRect(
-                IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
+            sprite->setTextureRect(IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
         }
     } else {
         setFrame(currentFrame);
@@ -81,8 +79,8 @@ void SpriteComponent::setFrame(std::uint32_t frameIndex)
     std::uint32_t row = frameIndex / columns;
     std::uint32_t x   = col * frameWidth;
     std::uint32_t y   = row * frameHeight;
-    sprite->setTextureRect(IntRect{static_cast<int>(x), static_cast<int>(y),
-                                   static_cast<int>(frameWidth), static_cast<int>(frameHeight)});
+    sprite->setTextureRect(
+        IntRect{static_cast<int>(x), static_cast<int>(y), static_cast<int>(frameWidth), static_cast<int>(frameHeight)});
 }
 
 std::uint32_t SpriteComponent::getFrame() const

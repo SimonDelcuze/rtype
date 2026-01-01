@@ -10,7 +10,7 @@
 ButtonSystem::ButtonSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
 
 void ButtonSystem::update(Registry& registry, float)
-{    
+{
     for (EntityId entity : registry.view<TransformComponent, BoxComponent, ButtonComponent>()) {
         if (!registry.isAlive(entity))
             continue;
@@ -26,11 +26,11 @@ void ButtonSystem::update(Registry& registry, float)
             text->setFont(*font);
             text->setString(button.label);
             text->setCharacterSize(22);
-            
+
             FloatRect bounds = text->getLocalBounds();
-            float centerX = transform.x + (box.width - bounds.width) / 2.0F;
-            float centerY = transform.y + (box.height - bounds.height) / 2.0F - 5.0F;
-            
+            float centerX    = transform.x + (box.width - bounds.width) / 2.0F;
+            float centerY    = transform.y + (box.height - bounds.height) / 2.0F - 5.0F;
+
             text->setPosition(Vector2f{centerX, centerY});
             text->setFillColor(Color::White);
             window_.draw(*text);

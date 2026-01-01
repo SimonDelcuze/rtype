@@ -2,7 +2,8 @@
 
 #include "Inputs.hpp"
 
-enum class EventType {
+enum class EventType
+{
     Closed,
     Resized,
     LostFocus,
@@ -19,12 +20,14 @@ enum class EventType {
     Count
 };
 
-struct SizeEvent {
+struct SizeEvent
+{
     unsigned int width;
     unsigned int height;
 };
 
-struct KeyEvent {
+struct KeyEvent
+{
     KeyCode code;
     bool alt;
     bool control;
@@ -32,30 +35,35 @@ struct KeyEvent {
     bool system;
 };
 
-struct TextEvent {
+struct TextEvent
+{
     unsigned int unicode;
 };
 
-struct MouseMoveEvent {
+struct MouseMoveEvent
+{
     int x;
     int y;
 };
 
-struct MouseButtonEvent {
+struct MouseButtonEvent
+{
     MouseButton button;
     int x;
     int y;
 };
 
-struct MouseWheelScrollEvent {
+struct MouseWheelScrollEvent
+{
     float delta;
     int x;
     int y;
 };
 
-struct Event {
+struct Event
+{
     EventType type;
-    
+
     union {
         SizeEvent size;
         KeyEvent key;

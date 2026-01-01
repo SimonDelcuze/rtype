@@ -92,7 +92,10 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(180.0F, 50.0F, fill, Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40), static_cast<std::uint8_t>(fill.b + 40)));
+        auto box =
+            BoxComponent::create(180.0F, 50.0F, fill,
+                                 Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40),
+                                       static_cast<std::uint8_t>(fill.b + 40)));
         box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));

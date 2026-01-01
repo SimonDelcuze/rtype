@@ -1,7 +1,4 @@
 #include "systems/ReplicationSystem.hpp"
-#include "graphics/GraphicsFactory.hpp"
-#include "graphics/abstraction/ISound.hpp"
-#include "graphics/abstraction/ISoundBuffer.hpp"
 
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
@@ -19,6 +16,9 @@
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/ISound.hpp"
+#include "graphics/abstraction/ISoundBuffer.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
@@ -128,29 +128,27 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
 
 #include "graphics/GraphicsFactory.hpp"
 
-
         if (spawnPkt.entityType == 3) {
-            
-            
             if (!laserBuffer_) {
-                 GraphicsFactory factory;
-                 laserBuffer_ = factory.createSoundBuffer();
-                 if (laserBuffer_->loadFromFile("client/assets/sounds/laser.wav") || laserBuffer_->loadFromFile("sounds/laser.wav")) {
-                     laserLoaded_ = true;
-                 } else {
-                     laserLoadAttempted_ = true;
-                     Logger::instance().warn("[Audio] Failed to load laser sound");
-                 }
+                GraphicsFactory factory;
+                laserBuffer_ = factory.createSoundBuffer();
+                if (laserBuffer_->loadFromFile("client/assets/sounds/laser.wav") ||
+                    laserBuffer_->loadFromFile("sounds/laser.wav")) {
+                    laserLoaded_ = true;
+                } else {
+                    laserLoadAttempted_ = true;
+                    Logger::instance().warn("[Audio] Failed to load laser sound");
+                }
             }
 
             if (laserLoaded_ && playerReadyToFire) {
                 if (laserSounds_.size() < 6) {
                     GraphicsFactory factory;
-                    while(laserSounds_.size() < 6) {
+                    while (laserSounds_.size() < 6) {
                         laserSounds_.push_back(factory.createSound());
                     }
                 }
-                
+
                 bool played = false;
                 for (auto& sound : laserSounds_) {
                     if (sound->getStatus() != ISound::Status::Playing) {
@@ -186,26 +184,27 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         if (it != remoteToLocal_.end()) {
             auto typeIt = remoteToType_.find(destroyPkt.entityId);
             if (typeIt != remoteToType_.end() && typeIt->second == 2) {
-                 if (!explosionBuffer_) {
-                     GraphicsFactory factory;
-                     explosionBuffer_ = factory.createSoundBuffer();
-                     if (explosionBuffer_->loadFromFile("client/assets/sounds/explosion.wav") || explosionBuffer_->loadFromFile("sounds/explosion.wav")) {
-                         explosionLoaded_ = true;
-                     } else {
-                         explosionLoadTried_ = true;
-                         Logger::instance().warn("[Audio] Failed to load explosion sound");
-                     }
-                 }
+                if (!explosionBuffer_) {
+                    GraphicsFactory factory;
+                    explosionBuffer_ = factory.createSoundBuffer();
+                    if (explosionBuffer_->loadFromFile("client/assets/sounds/explosion.wav") ||
+                        explosionBuffer_->loadFromFile("sounds/explosion.wav")) {
+                        explosionLoaded_ = true;
+                    } else {
+                        explosionLoadTried_ = true;
+                        Logger::instance().warn("[Audio] Failed to load explosion sound");
+                    }
+                }
 
                 if (explosionLoaded_) {
-                    for (auto it = explosionSounds_.begin(); it != explosionSounds_.end(); ) {
-                         if ((*it)->getStatus() == ISound::Status::Stopped) {
-                             it = explosionSounds_.erase(it);
-                         } else {
-                             ++it;
-                         }
+                    for (auto it = explosionSounds_.begin(); it != explosionSounds_.end();) {
+                        if ((*it)->getStatus() == ISound::Status::Stopped) {
+                            it = explosionSounds_.erase(it);
+                        } else {
+                            ++it;
+                        }
                     }
-                        
+
                     bool played = false;
                     for (auto& sound : explosionSounds_) {
                         if (sound->getStatus() != ISound::Status::Playing) {

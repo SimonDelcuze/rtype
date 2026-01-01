@@ -26,9 +26,9 @@ class BackgroundScrollSystem : public ISystem
         TransformComponent* transform;
         BackgroundScrollComponent* scroll;
         SpriteComponent* sprite;
-        float width                = 0.0F;
-        float height               = 0.0F;
-        int layer                  = 0;
+        float width                       = 0.0F;
+        float height                      = 0.0F;
+        int layer                         = 0;
         std::shared_ptr<ITexture> texture = nullptr;
     };
 

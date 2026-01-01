@@ -1,6 +1,8 @@
 #include "graphics/FontManager.hpp"
-#include "graphics/GraphicsFactory.hpp"
+
 #include "errors/AssetLoadError.hpp"
+#include "graphics/GraphicsFactory.hpp"
+
 #include <utility>
 
 const IFont& FontManager::load(const std::string& id, const std::string& path)

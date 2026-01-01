@@ -1,14 +1,16 @@
 #pragma once
 
-#include <optional>
-#include <memory>
-#include <vector>
+#include "ecs/ResetValue.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include "graphics/abstraction/ISprite.hpp"
 #include "graphics/abstraction/ITexture.hpp"
-#include "graphics/abstraction/Common.hpp"
-#include "ecs/ResetValue.hpp"
 
-struct SpriteComponent {
+#include <memory>
+#include <optional>
+#include <vector>
+
+struct SpriteComponent
+{
     std::shared_ptr<ITexture> texture;
     std::shared_ptr<ISprite> sprite;
     std::vector<IntRect> customFrames;

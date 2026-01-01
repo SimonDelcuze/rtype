@@ -1,4 +1,5 @@
 #include "graphics/Window.hpp"
+
 #include "graphics/GraphicsFactory.hpp"
 
 Window::Window(const Vector2u& size, const std::string& title)

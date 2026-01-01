@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/abstraction/ITexture.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -9,13 +10,13 @@
 struct RenderTypeData
 {
     std::shared_ptr<ITexture> texture = nullptr;
-    std::uint8_t frameCount    = 1;
-    float frameDuration        = 0.1F;
-    std::uint32_t frameWidth   = 0;
-    std::uint32_t frameHeight  = 0;
-    std::uint32_t columns      = 1;
-    std::uint8_t layer         = 0;
-    const void* animation      = nullptr;
+    std::uint8_t frameCount           = 1;
+    float frameDuration               = 0.1F;
+    std::uint32_t frameWidth          = 0;
+    std::uint32_t frameHeight         = 0;
+    std::uint32_t columns             = 1;
+    std::uint8_t layer                = 0;
+    const void* animation             = nullptr;
     std::string spriteId;
 };
 

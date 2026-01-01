@@ -111,8 +111,8 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
             Logger::instance().warn("Join denied by server - game already in progress");
             return JoinResult::Denied;
         }
-        
-        auto currentTime = std::chrono::steady_clock::now();
+
+        auto currentTime                     = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsed = currentTime - startTime;
         if (elapsed.count() > timeoutSeconds) {
             Logger::instance().warn("Timeout waiting for server response");
@@ -149,10 +149,10 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
     auto lastTime = std::chrono::steady_clock::now();
 
     while (window.isOpen() && !menu.isDone() && g_running) {
-        auto currentTime = std::chrono::steady_clock::now();
+        auto currentTime                     = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsed = currentTime - lastTime;
-        lastTime = currentTime;
-        float dt = std::min(elapsed.count(), 0.1F);
+        lastTime                             = currentTime;
+        float dt                             = std::min(elapsed.count(), 0.1F);
 
         window.pollEvents([&](const Event& event) {
             if (event.type == EventType::Closed) {
@@ -171,9 +171,9 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         window.clear(Color{30, 30, 40});
 
         for (EntityId entity : registry.view<TransformComponent, SpriteComponent>()) {
-            auto& transform = registry.get<TransformComponent>(entity);
+            auto& transform  = registry.get<TransformComponent>(entity);
             auto& spriteConf = registry.get<SpriteComponent>(entity);
-            
+
             if (spriteConf.sprite) {
                 spriteConf.sprite->setPosition(Vector2f{transform.x, transform.y});
                 spriteConf.sprite->setScale(Vector2f{transform.scaleX, transform.scaleY});

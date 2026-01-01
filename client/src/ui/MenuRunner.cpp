@@ -4,8 +4,8 @@
 #include "components/TransformComponent.hpp"
 
 MenuRunner::MenuRunner(Window& window, FontManager& fonts, TextureManager& textures, std::atomic<bool>& running)
-    : window_(window), fonts_(fonts), textures_(textures), running_(running), renderSystem_(window), inputFieldSystem_(window, fonts),
-      buttonSystem_(window, fonts), hudSystem_(window, fonts, textures)
+    : window_(window), fonts_(fonts), textures_(textures), running_(running), renderSystem_(window),
+      inputFieldSystem_(window, fonts), buttonSystem_(window, fonts), hudSystem_(window, fonts, textures)
 {}
 
 Registry& MenuRunner::getRegistry()

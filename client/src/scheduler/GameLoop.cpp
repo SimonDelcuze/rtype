@@ -23,10 +23,10 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
             }
         });
 
-        auto now       = std::chrono::steady_clock::now();
+        auto now        = std::chrono::steady_clock::now();
         float deltaTime = std::chrono::duration<float>(now - lastCheck).count();
-        lastCheck      = now;
-        deltaTime      = std::min(deltaTime, 0.1F);
+        lastCheck       = now;
+        deltaTime       = std::min(deltaTime, 0.1F);
 
         window.clear();
         auto updateStart = std::chrono::steady_clock::now();

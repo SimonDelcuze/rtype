@@ -1,15 +1,15 @@
 #include "systems/HUDSystem.hpp"
 
 #include "components/ChargeMeterComponent.hpp"
+#include "components/LayerComponent.hpp"
 #include "components/TagComponent.hpp"
-#include "components/LayerComponent.hpp" 
+#include "graphics/GraphicsFactory.hpp"
 #include "graphics/abstraction/Common.hpp"
 
 #include <algorithm>
-#include <string>
 #include <iomanip>
 #include <sstream>
-#include "graphics/GraphicsFactory.hpp"
+#include <string>
 
 namespace
 {
@@ -46,19 +46,20 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
     if (!livesSprite) {
         GraphicsFactory factory;
         livesSprite = factory.createSprite();
-        auto tex = textures_.get("player_ship");
+        auto tex    = textures_.get("player_ship");
         if (tex) {
             livesSprite->setTexture(*tex);
-             livesSprite->setTextureRect({0, 0, 33, 17}); 
-             livesSprite->setScale({1.5f, 1.5f});
+            livesSprite->setTextureRect({0, 0, 33, 17});
+            livesSprite->setScale({1.5f, 1.5f});
         }
     }
-    
-    if (!livesSprite) return;
 
-    float startX = transform.x;
-    float startY = transform.y;
-    float spacing = 40.0f; 
+    if (!livesSprite)
+        return;
+
+    float startX  = transform.x;
+    float startY  = transform.y;
+    float spacing = 40.0f;
 
     for (int i = 0; i < lives.current; ++i) {
         livesSprite->setPosition({startX + (static_cast<float>(i) * spacing), startY});
@@ -85,35 +86,29 @@ void HUDSystem::update(Registry& registry, float)
             break;
         }
     }
-    
+
     for (EntityId id : registry.view<TagComponent, ChargeMeterComponent>()) {
         const auto& tag = registry.get<TagComponent>(id);
         if (tag.hasTag(EntityTag::Player)) {
             float progress = registry.get<ChargeMeterComponent>(id).progress;
-            
-            auto size = window_.getSize();
+
+            auto size  = window_.getSize();
             float barW = 200.0f;
             float barH = 15.0f;
-            float x = (size.x - barW) / 2.0f;
-            float y = size.y - 40.0f;
-            
-            Vector2f bg[4] = {
-                {x, y}, {x, y + barH}, {x + barW, y}, {x + barW, y + barH}
-            };
+            float x    = (size.x - barW) / 2.0f;
+            float y    = size.y - 40.0f;
+
+            Vector2f bg[4] = {{x, y}, {x, y + barH}, {x + barW, y}, {x + barW, y + barH}};
             window_.draw(bg, 4, Color{100, 100, 100}, 4);
-            
-            float fillW = barW * std::clamp(progress, 0.0f, 1.0f);
-            Vector2f fg[4] = {
-                {x, y}, {x, y + barH}, {x + fillW, y}, {x + fillW, y + barH}
-            };
+
+            float fillW    = barW * std::clamp(progress, 0.0f, 1.0f);
+            Vector2f fg[4] = {{x, y}, {x, y + barH}, {x + fillW, y}, {x + fillW, y + barH}};
             window_.draw(fg, 4, Color{0, 255, 255}, 4);
-            
-            Vector2f outline[5] = {
-                {x, y}, {x + barW, y}, {x + barW, y + barH}, {x, y + barH}, {x, y}
-            };
+
+            Vector2f outline[5] = {{x, y}, {x + barW, y}, {x + barW, y + barH}, {x, y + barH}, {x, y}};
             window_.draw(outline, 5, Color::White, 2);
-            
-            break; 
+
+            break;
         }
     }
 
@@ -140,15 +135,15 @@ void HUDSystem::update(Registry& registry, float)
                     textComp.text->setFont(*font);
                     textComp.text->setCharacterSize(textComp.characterSize);
                 }
-                
+
                 textComp.text->setString(textComp.content);
                 textComp.text->setFillColor(textComp.color);
-                
+
                 if (registry.has<ScoreComponent>(entity)) {
-                    const auto size   = window_.getSize();
+                    const auto size  = window_.getSize();
                     FloatRect bounds = textComp.text->getLocalBounds();
-                    transform.x = static_cast<float>(size.x) - kScoreRightMargin - (bounds.left + bounds.width);
-                    transform.y = static_cast<float>(size.y) - kScoreBottomMargin - (bounds.top + bounds.height);
+                    transform.x      = static_cast<float>(size.x) - kScoreRightMargin - (bounds.left + bounds.width);
+                    transform.y      = static_cast<float>(size.y) - kScoreBottomMargin - (bounds.top + bounds.height);
                 }
                 textComp.text->setPosition(Vector2f{transform.x, transform.y});
                 textComp.text->setScale(Vector2f{transform.scaleX, transform.scaleY});
@@ -158,17 +153,17 @@ void HUDSystem::update(Registry& registry, float)
             }
         }
     }
-    
+
     for (EntityId id : registry.view<LivesComponent, TransformComponent, LayerComponent>()) {
         if (registry.get<LayerComponent>(id).layer == 100) {
-             const auto& transform = registry.get<TransformComponent>(id);
-             auto& lives = registry.get<LivesComponent>(id);
-             
-             if (playerLives != -1) {
-                 lives.current = playerLives;
-             }
-             
-             drawLivesPips(transform, lives);
+            const auto& transform = registry.get<TransformComponent>(id);
+            auto& lives           = registry.get<LivesComponent>(id);
+
+            if (playerLives != -1) {
+                lives.current = playerLives;
+            }
+
+            drawLivesPips(transform, lives);
         }
     }
 }
