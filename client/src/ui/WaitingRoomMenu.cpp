@@ -75,7 +75,10 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(200.0F, 60.0F, fill, Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40), static_cast<std::uint8_t>(fill.b + 40)));
+        auto box =
+            BoxComponent::create(200.0F, 60.0F, fill,
+                                 Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40),
+                                       static_cast<std::uint8_t>(fill.b + 40)));
         box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
@@ -101,7 +104,7 @@ void WaitingRoomMenu::create(Registry& registry)
 
     createText(registry, 450.0F, 280.0F, "Waiting Room", 48, Color(255, 255, 255));
 
-    readyButton_ = createButton(registry, 540.0F, 400.0F, "READY", Color(0, 180, 80), [this]() { onReadyClicked(); });
+    readyButton_   = createButton(registry, 540.0F, 400.0F, "READY", Color(0, 180, 80), [this]() { onReadyClicked(); });
     waitingText_   = createText(registry, 280.0F, 500.0F, "", 28, Color(200, 200, 200));
     countdownText_ = createText(registry, 600.0F, 350.0F, "", 96, Color(255, 220, 0));
 }

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "../../abstraction/IText.hpp"
+
 #include <SFML/Graphics/Text.hpp>
 
-class SFMLText : public IText {
-public:
+class SFMLText : public IText
+{
+  public:
     SFMLText();
     void setFont(const IFont& font) override;
     void setString(const std::string& string) override;
@@ -26,6 +28,6 @@ public:
 
     const sf::Text& getSFMLText() const;
 
-private:
+  private:
     sf::Text text_;
 };

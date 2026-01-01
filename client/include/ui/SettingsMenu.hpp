@@ -5,7 +5,6 @@
 #include "input/KeyBindings.hpp"
 #include "ui/IMenu.hpp"
 
-
 #include <optional>
 #include <unordered_map>
 

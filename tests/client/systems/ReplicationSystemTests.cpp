@@ -6,10 +6,10 @@
 #include "components/VelocityComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
+#include "graphics/backends/sfml/SFMLTexture.hpp"
 #include "level/EntityTypeRegistry.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ReplicationSystem.hpp"
-#include "graphics/backends/sfml/SFMLTexture.hpp"
 
 #include <gtest/gtest.h>
 #include <vector>
@@ -57,7 +57,8 @@ static SnapshotParseResult makeCustomSnapshot(std::uint32_t tick, const std::vec
 static std::shared_ptr<ITexture> dummyTexture()
 {
     static auto t = std::make_shared<SFMLTexture>();
-    if (t->getSize().x == 0) t->create(1, 1);
+    if (t->getSize().x == 0)
+        t->create(1, 1);
     return t;
 }
 
@@ -85,7 +86,7 @@ TEST_F(ReplicationSystemTests, SpawnsEntityWithTexture)
     queue.push(makeSnapshot(1, 10, 5.0F, 6.0F, 1.0F, 2.0F, 50));
     system.initialize();
     system.update(registry, 0.0F);
-    
+
     EXPECT_EQ(registry.entityCount(), 1u);
     auto id = registry.view<SpriteComponent>().begin().operator*();
     auto& s = registry.get<SpriteComponent>(id);
@@ -103,7 +104,7 @@ TEST_F(ReplicationSystemTests, CreatesAndUpdatesEntity)
 {
     queue.push(makeSnapshot(1, 10, 5.0F, 6.0F, 1.0F, 2.0F, 50));
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -183,7 +184,7 @@ TEST_F(ReplicationSystemTests, MultipleEntitiesCreated)
 
     registerType(types, 1);
     registerType(types, 2);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -204,7 +205,7 @@ TEST_F(ReplicationSystemTests, VelocityOnlyDoesNotCreateTransform)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -225,7 +226,7 @@ TEST_F(ReplicationSystemTests, TransformOnlyNoVelocity)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -240,7 +241,7 @@ TEST_F(ReplicationSystemTests, UpdatesExistingEntityAndPreservesMaxHealth)
     queue.push(makeSnapshot(2, 30, 3.0F, 4.0F, 5.0F, 6.0F, 8));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -266,7 +267,7 @@ TEST_F(ReplicationSystemTests, HealthDoesNotLowerMax)
     queue.push(makeSnapshot(2, 31, 0.0F, 0.0F, 0.0F, 0.0F, 10));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -281,7 +282,7 @@ TEST_F(ReplicationSystemTests, ResetsInterpolationOnNewSnapshot)
     queue.push(makeSnapshot(1, 40, 0.0F, 0.0F, 0.0F, 0.0F, 5));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -304,7 +305,7 @@ TEST_F(ReplicationSystemTests, PositionNotOverwrittenWhenMissingFields)
     queue.push(makeSnapshot(1, 50, 2.0F, 3.0F, 0.0F, 0.0F, 5));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -333,7 +334,7 @@ TEST_F(ReplicationSystemTests, InterpolationNotCreatedWithoutPosition)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -347,7 +348,7 @@ TEST_F(ReplicationSystemTests, MultipleSnapshotsInQueueAreConsumed)
 
     registerType(types, 1);
     registerType(types, 2);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -359,7 +360,7 @@ TEST_F(ReplicationSystemTests, ReusesEntityMappingForSameRemoteId)
     queue.push(makeSnapshot(1, 80, 1.0F, 1.0F, 0.0F, 0.0F, 5));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -389,7 +390,7 @@ TEST_F(ReplicationSystemTests, StatusFieldIgnoredButEntityCreated)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -412,7 +413,7 @@ TEST_F(ReplicationSystemTests, DeadFlagDoesNotLeaveComponents)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -432,7 +433,7 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeMissing)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 
@@ -451,7 +452,7 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeUnknown)
     queue.push(makeCustomSnapshot(1, {e}));
 
     registerType(types, 1);
-    
+
     system.initialize();
     system.update(registry, 0.0F);
 

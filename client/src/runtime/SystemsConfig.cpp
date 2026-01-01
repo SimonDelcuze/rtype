@@ -30,7 +30,8 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager, EventBus& eventBus, float& musicVolume, GraphicsFactory& graphicsFactory, SoundManager& soundManager)
+                      FontManager& fontManager, EventBus& eventBus, float& musicVolume,
+                      GraphicsFactory& graphicsFactory, SoundManager& soundManager)
 {
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
                                                      textures, animations));

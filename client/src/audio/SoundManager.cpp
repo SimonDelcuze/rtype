@@ -1,6 +1,8 @@
 #include "audio/SoundManager.hpp"
-#include "graphics/GraphicsFactory.hpp"
+
 #include "errors/AssetLoadError.hpp"
+#include "graphics/GraphicsFactory.hpp"
+
 #include <SFML/Audio/Listener.hpp>
 #include <utility>
 

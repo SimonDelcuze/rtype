@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/abstraction/ISoundBuffer.hpp"
+
 #include <memory>
 #include <string>
 #include <unordered_map>

@@ -1,8 +1,8 @@
 #pragma once
 
+#include "graphics/abstraction/Event.hpp"
 #include "input/KeyBindings.hpp"
 
-#include "graphics/abstraction/Event.hpp"
 #include <cstdint>
 #include <network/InputPacket.hpp>
 

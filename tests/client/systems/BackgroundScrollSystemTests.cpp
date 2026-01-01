@@ -1,8 +1,8 @@
 #include "components/BackgroundScrollComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
-#include "systems/BackgroundScrollSystem.hpp"
 #include "graphics/GraphicsFactory.hpp"
+#include "systems/BackgroundScrollSystem.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -31,8 +31,8 @@ class BackgroundScrollSystemTest : public ::testing::Test
         EntityId e = registry.createEntity();
         registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
         registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(speedX, speedY, 0.0F, 0.0F));
-        
-        auto tex = makeTexture(texW, texH);
+
+        auto tex     = makeTexture(texW, texH);
         auto& sprite = registry.emplace<SpriteComponent>(e);
         sprite.setTexture(tex);
         return e;

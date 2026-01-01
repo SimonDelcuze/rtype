@@ -13,7 +13,7 @@ class HitboxDebugSystemTests : public ::testing::Test
     {
         window = new Window({64u, 64u}, "Test");
         system = new HitboxDebugSystem(*window);
-        e = registry.createEntity();
+        e      = registry.createEntity();
     }
 
     void TearDown() override

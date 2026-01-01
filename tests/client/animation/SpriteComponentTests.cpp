@@ -73,7 +73,7 @@ TEST(SpriteComponentTest, SetFrameUpdatesTextureRect)
     texture->create(100, 100);
 
     SpriteComponent sprite;
-    sprite.setTexture(texture); 
+    sprite.setTexture(texture);
     sprite.setFrameSize(32, 32, 4);
 
     sprite.setFrame(1);

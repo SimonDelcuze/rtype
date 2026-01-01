@@ -34,9 +34,9 @@ void showErrorMessage(Window& window, const std::string& message, float displayT
     errorText->setPosition(Vector2f{640.0F, 360.0F});
 
     auto start = std::chrono::steady_clock::now();
-    
+
     while (window.isOpen() && g_running) {
-        auto now = std::chrono::steady_clock::now();
+        auto now                             = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsed = now - start;
         if (elapsed.count() > displayTime) {
             break;

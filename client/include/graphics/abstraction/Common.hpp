@@ -2,15 +2,14 @@
 
 #include <cstdint>
 
-struct Color {
+struct Color
+{
     std::uint8_t r;
     std::uint8_t g;
     std::uint8_t b;
     std::uint8_t a;
 
-    Color(std::uint8_t r = 0, std::uint8_t g = 0, std::uint8_t b = 0, std::uint8_t a = 255)
-        : r(r), g(g), b(b), a(a)
-    {}
+    Color(std::uint8_t r = 0, std::uint8_t g = 0, std::uint8_t b = 0, std::uint8_t a = 255) : r(r), g(g), b(b), a(a) {}
 
     static const Color Red;
     static const Color Green;
@@ -43,8 +42,8 @@ inline const Color Color::Magenta{255, 0, 255};
 inline const Color Color::Cyan{0, 255, 255};
 inline const Color Color::Transparent{0, 0, 0, 0};
 
-template <typename T>
-struct Vector2 {
+template <typename T> struct Vector2
+{
     T x{0};
     T y{0};
 
@@ -63,8 +62,8 @@ using Vector2f = Vector2<float>;
 using Vector2i = Vector2<int>;
 using Vector2u = Vector2<unsigned int>;
 
-template <typename T>
-struct Rect {
+template <typename T> struct Rect
+{
     T left{0};
     T top{0};
     T width{0};
@@ -82,6 +81,4 @@ struct Rect {
 };
 
 using FloatRect = Rect<float>;
-using IntRect = Rect<int>;
-
-
+using IntRect   = Rect<int>;

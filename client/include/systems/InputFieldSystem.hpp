@@ -2,10 +2,6 @@
 
 #include "graphics/FontManager.hpp"
 #include "graphics/Window.hpp"
-#include "systems/ISystem.hpp"
-
-#include "graphics/FontManager.hpp"
-#include "graphics/Window.hpp"
 #include "graphics/abstraction/Event.hpp"
 #include "systems/ISystem.hpp"
 

@@ -1,12 +1,13 @@
 #pragma once
 
-#include "graphics/abstraction/IWindow.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include "graphics/abstraction/ISprite.hpp"
 #include "graphics/abstraction/IText.hpp"
-#include "graphics/abstraction/Common.hpp"
+#include "graphics/abstraction/IWindow.hpp"
+
 #include <functional>
-#include <string>
 #include <memory>
+#include <string>
 
 class Window
 {

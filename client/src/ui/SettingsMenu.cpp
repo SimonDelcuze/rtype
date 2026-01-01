@@ -190,11 +190,11 @@ void SettingsMenu::render(Registry&, Window& window)
 {
     float ratio       = musicVolume_ / 100.0F;
     float filledWidth = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
-    (void)filledWidth;
-    (void)window;
+    (void) filledWidth;
+    (void) window;
 
     GraphicsFactory factory;
-    (void)factory;
+    (void) factory;
 }
 
 SettingsMenu::Result SettingsMenu::getResult(Registry&) const
@@ -362,4 +362,3 @@ std::string SettingsMenu::keyToString(KeyCode code)
             return "Key(" + std::to_string(static_cast<int>(code)) + ")";
     }
 }
-

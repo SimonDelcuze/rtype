@@ -3,10 +3,10 @@
 #include "audio/SoundManager.hpp"
 #include "components/AudioComponent.hpp"
 #include "ecs/Registry.hpp"
-
-#include "systems/ISystem.hpp"
 #include "graphics/GraphicsFactory.hpp"
 #include "graphics/abstraction/ISound.hpp"
+#include "systems/ISystem.hpp"
+
 #include <memory>
 #include <unordered_map>
 

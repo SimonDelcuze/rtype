@@ -1,6 +1,8 @@
 #include "graphics/TextureManager.hpp"
-#include "graphics/GraphicsFactory.hpp"
+
 #include "errors/AssetLoadError.hpp"
+#include "graphics/GraphicsFactory.hpp"
+
 #include <utility>
 
 const ITexture& TextureManager::load(const std::string& id, const std::string& path)
