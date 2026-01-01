@@ -1,13 +1,14 @@
 #include "systems/BackgroundScrollSystem.hpp"
+#include "graphics/GraphicsFactory.hpp"
 
 #include <algorithm>
 #include <limits>
 
 BackgroundScrollSystem::BackgroundScrollSystem(Window& window) : window_(window) {}
 
-void BackgroundScrollSystem::setNextBackground(const sf::Texture& texture)
+void BackgroundScrollSystem::setNextBackground(const std::shared_ptr<ITexture>& texture)
 {
-    nextTexture_ = &texture;
+    nextTexture_ = texture;
 }
 
 void BackgroundScrollSystem::collectEntries(Registry& registry, std::vector<Entry>& entries) const
@@ -19,26 +20,25 @@ void BackgroundScrollSystem::collectEntries(Registry& registry, std::vector<Entr
         auto& transform = registry.get<TransformComponent>(entity);
         auto& scroll    = registry.get<BackgroundScrollComponent>(entity);
         auto& sprite    = registry.get<SpriteComponent>(entity);
-        if (!sprite.hasSprite()) {
+        if (!sprite.sprite) {
             continue;
         }
-        const sf::Sprite* raw = sprite.raw();
-        if (raw == nullptr) {
-            continue;
-        }
-        const sf::Texture& tex = raw->getTexture();
-        int layer              = 0;
+        
+        auto tex = sprite.texture;
+        if (!tex) continue;
+
+        int layer = 0;
         if (registry.has<LayerComponent>(entity)) {
             layer = registry.get<LayerComponent>(entity).layer;
         }
-        entries.push_back(Entry{entity, &transform, &scroll, &sprite, 0.0F, 0.0F, layer, &tex});
+        entries.push_back(Entry{entity, &transform, &scroll, &sprite, 0.0F, 0.0F, layer, tex});
     }
 }
 
 void BackgroundScrollSystem::applyScaleAndOffsets(std::vector<Entry>& entries, float windowHeight) const
 {
     for (auto& entry : entries) {
-        if (entry.texture == nullptr) {
+        if (!entry.texture) {
             continue;
         }
         const auto texSize = entry.texture->getSize();
@@ -78,7 +78,7 @@ void BackgroundScrollSystem::ensureCoverage(Registry& registry, std::vector<Entr
     float maxX                 = -std::numeric_limits<float>::infinity();
     float baseWidth            = entries.front().width;
     float baseHeight           = entries.front().height;
-    const sf::Texture* baseTex = entries.front().texture;
+    std::shared_ptr<ITexture> baseTex = entries.front().texture;
     int baseLayer              = entries.front().layer;
     const float baseSpeedX     = entries.front().scroll->speedX;
     const float baseSpeedY     = entries.front().scroll->speedY;
@@ -91,13 +91,13 @@ void BackgroundScrollSystem::ensureCoverage(Registry& registry, std::vector<Entr
         baseWidth  = std::max(baseWidth, entry.width);
         baseHeight = std::max(baseHeight, entry.height);
     }
-    if (baseWidth <= 0.0F || baseTex == nullptr) {
+    if (baseWidth <= 0.0F || !baseTex) {
         return;
     }
     float coverage = (maxX + baseWidth) - minX;
     while (coverage < windowWidth + baseWidth) {
         EntityId e = registry.createEntity();
-        registry.emplace<SpriteComponent>(e, SpriteComponent(*baseTex));
+        registry.emplace<SpriteComponent>(e, SpriteComponent(baseTex));
         registry.emplace<TransformComponent>(e, TransformComponent::create(maxX + baseWidth, baseY));
         registry.emplace<BackgroundScrollComponent>(
             e, BackgroundScrollComponent::create(baseSpeedX, baseSpeedY, baseWidth, baseHeight));
@@ -115,11 +115,14 @@ void BackgroundScrollSystem::ensureCoverage(Registry& registry, std::vector<Entr
     }
 }
 
-void BackgroundScrollSystem::applyTextureChange(Entry& entry, const sf::Texture& texture, float windowHeight) const
+void BackgroundScrollSystem::applyTextureChange(Entry& entry, const std::shared_ptr<ITexture>& texture, float windowHeight) const
 {
-    entry.sprite->setTexture(texture);
-    entry.texture      = &texture;
-    const auto texSize = texture.getSize();
+    if (entry.sprite && entry.sprite->sprite && texture) {
+        entry.sprite->sprite->setTexture(*texture);
+        entry.sprite->texture = texture;
+    }
+    entry.texture      = texture;
+    const auto texSize = texture->getSize();
     float scale        = 1.0F;
     if (texSize.y != 0) {
         scale                   = windowHeight / static_cast<float>(texSize.y);
@@ -143,7 +146,7 @@ void BackgroundScrollSystem::wrapAndSwap(std::vector<Entry>& entries, float wind
     for (auto& entry : entries) {
         if (entry.scroll->resetOffsetX > 0.0F && entry.transform->x <= -entry.scroll->resetOffsetX) {
             if (nextTexture_ != nullptr) {
-                applyTextureChange(entry, *nextTexture_, windowHeight);
+                applyTextureChange(entry, nextTexture_, windowHeight);
             }
             entry.transform->x = maxX + entry.scroll->resetOffsetX;
             maxX               = entry.transform->x;
@@ -157,8 +160,8 @@ void BackgroundScrollSystem::wrapAndSwap(std::vector<Entry>& entries, float wind
 
 void BackgroundScrollSystem::update(Registry& registry, float deltaTime)
 {
-    const float windowHeight = static_cast<float>(window_.raw().getSize().y);
-    const float windowWidth  = static_cast<float>(window_.raw().getSize().x);
+    const float windowHeight = static_cast<float>(window_.getSize().y);
+    const float windowWidth  = static_cast<float>(window_.getSize().x);
     std::vector<Entry> entries;
     entries.reserve(registry.entityCount());
     collectEntries(registry, entries);

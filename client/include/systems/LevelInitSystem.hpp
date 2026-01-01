@@ -25,7 +25,7 @@ class LevelInitSystem : public ISystem
     void processLevelInit(Registry& registry, const LevelInitData& data);
     void resolveEntityType(const ArchetypeEntry& entry);
     RenderTypeData buildRenderData(const ArchetypeEntry& entry);
-    const sf::Texture* resolveTexture(const std::string& spriteId);
+    std::shared_ptr<ITexture> resolveTexture(const std::string& spriteId);
     const AnimationClip* resolveAnimation(const ArchetypeEntry& entry) const;
     void applyClipToRenderData(RenderTypeData& data, const AnimationClip* clip) const;
     void applySpriteDefaults(RenderTypeData& data, const std::string& spriteId) const;

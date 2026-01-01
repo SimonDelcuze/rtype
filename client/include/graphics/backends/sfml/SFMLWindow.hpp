@@ -10,6 +10,7 @@ public:
     ~SFMLWindow() override = default;
 
     bool isOpen() const override;
+    Vector2u getSize() const override;
     void close() override;
     void pollEvents(const std::function<void(const Event&)>& handler) override;
     void clear(const Color& color) override;
@@ -17,7 +18,7 @@ public:
     
     void draw(const ISprite& sprite) override;
     void draw(const IText& text) override;
-    void draw(const Vector2f* vertices, std::size_t vertexCount, int type) override;
+    void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type) override;
 
 private:
     sf::RenderWindow window_;

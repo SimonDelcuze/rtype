@@ -8,10 +8,11 @@
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
-#include <SFML/Audio/Sound.hpp>
-#include <SFML/Audio/SoundBuffer.hpp>
 #include <unordered_map>
 #include <vector>
+#include <memory>
+#include "graphics/abstraction/ISound.hpp"
+#include "graphics/abstraction/ISoundBuffer.hpp"
 
 class ReplicationSystem : public ISystem
 {
@@ -48,12 +49,12 @@ class ReplicationSystem : public ISystem
     std::unordered_map<std::uint32_t, int> lastKnownLives_;
     std::unordered_map<std::uint32_t, float> respawnCooldown_;
 
-    sf::SoundBuffer laserBuffer_;
-    sf::SoundBuffer explosionBuffer_;
+    std::shared_ptr<ISoundBuffer> laserBuffer_;
+    std::shared_ptr<ISoundBuffer> explosionBuffer_;
     bool laserLoaded_        = false;
     bool explosionLoaded_    = false;
     bool laserLoadAttempted_ = false;
     bool explosionLoadTried_ = false;
-    std::vector<sf::Sound> laserSounds_;
-    std::vector<sf::Sound> explosionSounds_;
+    std::vector<std::shared_ptr<ISound>> laserSounds_;
+    std::vector<std::shared_ptr<ISound>> explosionSounds_;
 };

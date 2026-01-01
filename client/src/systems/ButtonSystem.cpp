@@ -4,13 +4,13 @@
 #include "components/ButtonComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
-
-#include <SFML/Graphics.hpp>
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/Common.hpp"
 
 ButtonSystem::ButtonSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
 
 void ButtonSystem::update(Registry& registry, float)
-{
+{    
     for (EntityId entity : registry.view<TransformComponent, BoxComponent, ButtonComponent>()) {
         if (!registry.isAlive(entity))
             continue;
@@ -19,42 +19,34 @@ void ButtonSystem::update(Registry& registry, float)
         auto& box       = registry.get<BoxComponent>(entity);
         auto& button    = registry.get<ButtonComponent>(entity);
 
-        sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
-        rect.setPosition(sf::Vector2f{transform.x, transform.y});
-        rect.setOutlineThickness(box.outlineThickness);
-
-        if (button.hovered) {
-            rect.setFillColor(sf::Color(box.fillColor.r + 30, box.fillColor.g + 30, box.fillColor.b + 30));
-            rect.setOutlineColor(box.focusColor);
-        } else {
-            rect.setFillColor(box.fillColor);
-            rect.setOutlineColor(box.outlineColor);
-        }
-
-        window_.draw(rect);
-
-        const sf::Font* font = fonts_.get("ui");
+        auto font = fonts_.get("ui");
         if (font != nullptr && !button.label.empty()) {
-            sf::Text text(*font, button.label, 22);
-            auto bounds   = text.getLocalBounds();
-            float centerX = transform.x + (box.width - bounds.size.x) / 2.0F;
-            float centerY = transform.y + (box.height - bounds.size.y) / 2.0F - 5.0F;
-            text.setPosition(sf::Vector2f{centerX, centerY});
-            text.setFillColor(sf::Color::White);
-            window_.draw(text);
+            GraphicsFactory factory;
+            auto text = factory.createText();
+            text->setFont(*font);
+            text->setString(button.label);
+            text->setCharacterSize(22);
+            
+            FloatRect bounds = text->getLocalBounds();
+            float centerX = transform.x + (box.width - bounds.width) / 2.0F;
+            float centerY = transform.y + (box.height - bounds.height) / 2.0F - 5.0F;
+            
+            text->setPosition(Vector2f{centerX, centerY});
+            text->setFillColor(Color::White);
+            window_.draw(*text);
         }
     }
 }
 
-void ButtonSystem::handleEvent(Registry& registry, const sf::Event& event)
+void ButtonSystem::handleEvent(Registry& registry, const Event& event)
 {
-    if (const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>()) {
-        if (mouseEvent->button == sf::Mouse::Button::Left)
-            handleClick(registry, mouseEvent->position.x, mouseEvent->position.y);
+    if (event.type == EventType::MouseButtonPressed) {
+        if (event.mouseButton.button == MouseButton::Left)
+            handleClick(registry, event.mouseButton.x, event.mouseButton.y);
     }
 
-    if (const auto* mouseMoveEvent = event.getIf<sf::Event::MouseMoved>())
-        handleMouseMove(registry, mouseMoveEvent->position.x, mouseMoveEvent->position.y);
+    if (event.type == EventType::MouseMoved)
+        handleMouseMove(registry, event.mouseMove.x, event.mouseMove.y);
 }
 
 void ButtonSystem::handleClick(Registry& registry, int x, int y)

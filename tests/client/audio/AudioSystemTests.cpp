@@ -2,6 +2,7 @@
 #include "components/AudioComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "systems/AudioSystem.hpp"
+#include "graphics/GraphicsFactory.hpp"
 
 #include <gtest/gtest.h>
 
@@ -9,13 +10,16 @@ class AudioSystemTests : public ::testing::Test
 {
   protected:
     Registry registry;
+    GraphicsFactory graphicsFactory;
     SoundManager soundManager;
+    AudioSystem audioSystem{soundManager, graphicsFactory};
+
+    AudioSystemTests() {}
 };
 
 TEST_F(AudioSystemTests, UpdateWithNoEntities)
 {
-    AudioSystem system(soundManager);
-    EXPECT_NO_THROW(system.update(registry));
+    EXPECT_NO_THROW(audioSystem.update(registry, 0.0f));
 }
 
 TEST_F(AudioSystemTests, UpdateWithEntityNoAudioComponent)
@@ -23,8 +27,7 @@ TEST_F(AudioSystemTests, UpdateWithEntityNoAudioComponent)
     EntityId entity = registry.createEntity();
     (void) entity;
 
-    AudioSystem system(soundManager);
-    EXPECT_NO_THROW(system.update(registry));
+    EXPECT_NO_THROW(audioSystem.update(registry, 0.0f));
 }
 
 TEST_F(AudioSystemTests, UpdateWithAudioComponentNoAction)
@@ -32,8 +35,7 @@ TEST_F(AudioSystemTests, UpdateWithAudioComponentNoAction)
     EntityId entity = registry.createEntity();
     registry.emplace<AudioComponent>(entity);
 
-    AudioSystem system(soundManager);
-    EXPECT_NO_THROW(system.update(registry));
+    EXPECT_NO_THROW(audioSystem.update(registry, 0.0f));
 }
 
 TEST_F(AudioSystemTests, PlayActionWithMissingSound)
@@ -42,8 +44,7 @@ TEST_F(AudioSystemTests, PlayActionWithMissingSound)
     auto& audio     = registry.emplace<AudioComponent>(entity);
     audio.play("nonexistent");
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     EXPECT_EQ(audio.action, AudioAction::None);
     EXPECT_FALSE(audio.isPlaying);
@@ -56,8 +57,7 @@ TEST_F(AudioSystemTests, StopActionResetsIsPlaying)
     audio.isPlaying = true;
     audio.stop();
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     EXPECT_EQ(audio.action, AudioAction::None);
     EXPECT_FALSE(audio.isPlaying);
@@ -70,8 +70,7 @@ TEST_F(AudioSystemTests, PauseActionResetsIsPlaying)
     audio.isPlaying = true;
     audio.pause();
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     EXPECT_EQ(audio.action, AudioAction::None);
     EXPECT_FALSE(audio.isPlaying);
@@ -85,8 +84,7 @@ TEST_F(AudioSystemTests, DeadEntityIsSkipped)
 
     registry.destroyEntity(entity);
 
-    AudioSystem system(soundManager);
-    EXPECT_NO_THROW(system.update(registry));
+    EXPECT_NO_THROW(audioSystem.update(registry, 0.0f));
 }
 
 TEST_F(AudioSystemTests, MultipleEntitiesProcessed)
@@ -105,8 +103,7 @@ TEST_F(AudioSystemTests, MultipleEntitiesProcessed)
     audio2.isPlaying = true;
     audio2.stop();
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     auto& result1 = registry.get<AudioComponent>(entity1);
     auto& result2 = registry.get<AudioComponent>(entity2);
@@ -124,8 +121,7 @@ TEST_F(AudioSystemTests, VolumeAndPitchAreRespected)
     audio.pitch     = 1.5F;
     audio.play("test");
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     EXPECT_FLOAT_EQ(audio.volume, 50.0F);
     EXPECT_FLOAT_EQ(audio.pitch, 1.5F);
@@ -138,8 +134,7 @@ TEST_F(AudioSystemTests, LoopSettingPreserved)
     audio.loop      = true;
     audio.play("test");
 
-    AudioSystem system(soundManager);
-    system.update(registry);
+    audioSystem.update(registry, 0.0f);
 
     EXPECT_TRUE(audio.loop);
 }

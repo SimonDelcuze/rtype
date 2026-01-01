@@ -41,6 +41,17 @@ void SFMLSprite::setColor(const Color& color) {
     sprite_.setColor(toSFML(color));
 }
 
+Color SFMLSprite::getColor() const
+{
+    return fromSFML(sprite_.getColor());
+}
+
+IntRect SFMLSprite::getTextureRect() const
+{
+    sf::IntRect r = sprite_.getTextureRect();
+    return {r.position.x, r.position.y, r.size.x, r.size.y};
+}
+
 Vector2f SFMLSprite::getPosition() const {
     return fromSFML(sprite_.getPosition());
 }

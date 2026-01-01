@@ -5,30 +5,24 @@
 #include "components/InputFieldComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/Common.hpp"
 
-#include <SFML/Graphics.hpp>
 #include <algorithm>
+#include <string>
 
 InputFieldSystem::InputFieldSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
 
 void InputFieldSystem::update(Registry& registry, float)
-{
+{    
     for (EntityId entity : registry.view<TransformComponent, BoxComponent, InputFieldComponent>()) {
         if (!registry.isAlive(entity))
             continue;
 
         auto& transform = registry.get<TransformComponent>(entity);
-        auto& box       = registry.get<BoxComponent>(entity);
         auto& input     = registry.get<InputFieldComponent>(entity);
 
-        sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
-        rect.setPosition(sf::Vector2f{transform.x, transform.y});
-        rect.setFillColor(box.fillColor);
-        rect.setOutlineThickness(box.outlineThickness);
-        rect.setOutlineColor(input.focused ? box.focusColor : box.outlineColor);
-        window_.draw(rect);
-
-        const sf::Font* font = fonts_.get("ui");
+        auto font = fonts_.get("ui");
         if (font == nullptr)
             continue;
 
@@ -38,31 +32,36 @@ void InputFieldSystem::update(Registry& registry, float)
         else if (input.value.empty() && !input.placeholder.empty())
             displayText = input.placeholder;
 
-        sf::Text text(*font, displayText, 20);
-        text.setPosition(sf::Vector2f{transform.x + 10.0F, transform.y + 13.0F});
-        text.setFillColor(sf::Color::White);
-        window_.draw(text);
+        GraphicsFactory factory;
+        auto text = factory.createText();
+        text->setFont(*font);
+        text->setString(displayText);
+        text->setCharacterSize(20);
+        text->setPosition(Vector2f{transform.x + 10.0F, transform.y + 13.0F});
+        text->setFillColor(Color::White);
+        
+        window_.draw(*text);
     }
 }
 
-void InputFieldSystem::handleEvent(Registry& registry, const sf::Event& event)
+void InputFieldSystem::handleEvent(Registry& registry, const Event& event)
 {
-    if (const auto* textEvent = event.getIf<sf::Event::TextEntered>()) {
-        char c = static_cast<char>(textEvent->unicode);
+    if (event.type == EventType::TextEntered) {
+        char c = static_cast<char>(event.text.unicode);
         if (c >= 32 && c < 127)
             handleTextEntered(registry, c);
     }
 
-    if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyEvent->code == sf::Keyboard::Key::Backspace)
+    if (event.type == EventType::KeyPressed) {
+        if (event.key.code == KeyCode::Backspace)
             handleBackspace(registry);
-        else if (keyEvent->code == sf::Keyboard::Key::Tab)
+        else if (event.key.code == KeyCode::Tab)
             handleTab(registry);
     }
 
-    if (const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>()) {
-        if (mouseEvent->button == sf::Mouse::Button::Left)
-            handleClick(registry, mouseEvent->position.x, mouseEvent->position.y);
+    if (event.type == EventType::MouseButtonPressed) {
+        if (event.mouseButton.button == MouseButton::Left)
+            handleClick(registry, event.mouseButton.x, event.mouseButton.y);
     }
 }
 

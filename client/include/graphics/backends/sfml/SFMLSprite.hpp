@@ -13,6 +13,8 @@ public:
     void setScale(const Vector2f& factor) override;
     void setOrigin(const Vector2f& origin) override;
     void setColor(const Color& color) override;
+    Color getColor() const override;
+    IntRect getTextureRect() const override;
     
     Vector2f getPosition() const override;
     float getRotation() const override;

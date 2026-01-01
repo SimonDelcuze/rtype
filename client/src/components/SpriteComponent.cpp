@@ -1,23 +1,41 @@
-#include "components/SpriteComponent.hpp"
 
-SpriteComponent::SpriteComponent(const sf::Texture& texture) : sprite(sf::Sprite(texture))
+#include "components/SpriteComponent.hpp"
+#include "graphics/GraphicsFactory.hpp"
+
+SpriteComponent::SpriteComponent(const std::shared_ptr<ITexture>& texture)
+    : texture(texture)
 {
-    const sf::Vector2u size = texture.getSize();
-    sprite->setTextureRect(
-        sf::IntRect(sf::Vector2i{0, 0}, sf::Vector2i{static_cast<int>(size.x), static_cast<int>(size.y)}));
+    GraphicsFactory factory;
+    sprite = factory.createSprite();
+    if (texture) {
+        sprite->setTexture(*texture);
+        Vector2u size = texture->getSize();
+        sprite->setTextureRect(
+            IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
+    }
 }
 
-void SpriteComponent::setTexture(const sf::Texture& texture)
+void SpriteComponent::setTexture(const std::shared_ptr<ITexture>& texture)
 {
-    sprite.emplace(texture);
+    this->texture = texture;
+    if (!sprite) {
+        GraphicsFactory factory;
+        sprite = factory.createSprite();
+    }
+    if (texture) {
+        sprite->setTexture(*texture);
+    }
+    
     if (!customFrames.empty()) {
         setFrame(currentFrame);
         return;
     }
     if (frameWidth == 0 || frameHeight == 0) {
-        const sf::Vector2u size = texture.getSize();
-        sprite->setTextureRect(
-            sf::IntRect(sf::Vector2i{0, 0}, sf::Vector2i{static_cast<int>(size.x), static_cast<int>(size.y)}));
+        if (texture) {
+            Vector2u size = texture->getSize();
+            sprite->setTextureRect(
+                IntRect{0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
+        }
     } else {
         setFrame(currentFrame);
     }
@@ -26,14 +44,14 @@ void SpriteComponent::setTexture(const sf::Texture& texture)
 void SpriteComponent::setPosition(float x, float y)
 {
     if (sprite) {
-        sprite->setPosition(sf::Vector2f{x, y});
+        sprite->setPosition(Vector2f{x, y});
     }
 }
 
 void SpriteComponent::setScale(float x, float y)
 {
     if (sprite) {
-        sprite->setScale(sf::Vector2f{x, y});
+        sprite->setScale(Vector2f{x, y});
     }
 }
 
@@ -63,8 +81,8 @@ void SpriteComponent::setFrame(std::uint32_t frameIndex)
     std::uint32_t row = frameIndex / columns;
     std::uint32_t x   = col * frameWidth;
     std::uint32_t y   = row * frameHeight;
-    sprite->setTextureRect(sf::IntRect(sf::Vector2i{static_cast<int>(x), static_cast<int>(y)},
-                                       sf::Vector2i{static_cast<int>(frameWidth), static_cast<int>(frameHeight)}));
+    sprite->setTextureRect(IntRect{static_cast<int>(x), static_cast<int>(y),
+                                   static_cast<int>(frameWidth), static_cast<int>(frameHeight)});
 }
 
 std::uint32_t SpriteComponent::getFrame() const
@@ -72,12 +90,12 @@ std::uint32_t SpriteComponent::getFrame() const
     return currentFrame;
 }
 
-const sf::Sprite* SpriteComponent::raw() const
+std::shared_ptr<ISprite> SpriteComponent::getSprite() const
 {
-    return sprite ? &(*sprite) : nullptr;
+    return sprite;
 }
 
 bool SpriteComponent::hasSprite() const
 {
-    return sprite.has_value();
+    return sprite != nullptr;
 }

@@ -1,28 +1,32 @@
 #pragma once
 
-#include <SFML/Graphics/Drawable.hpp>
-#include <SFML/Graphics/RenderTarget.hpp>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/Window/Event.hpp>
+#include "graphics/abstraction/IWindow.hpp"
+#include "graphics/abstraction/ISprite.hpp"
+#include "graphics/abstraction/IText.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include <functional>
 #include <string>
+#include <memory>
 
 class Window
 {
   public:
-    Window(const sf::VideoMode& mode, const std::string& title, bool vsync = true);
+    Window(const Vector2u& size, const std::string& title);
 
     bool isOpen() const;
+    Vector2u getSize() const;
     void close();
 
-    void pollEvents(const std::function<void(const sf::Event&)>& handler);
+    void pollEvents(const std::function<void(const Event&)>& handler);
 
-    void clear(const sf::Color& color = sf::Color::Black);
+    void clear(const Color& color = Color::Black);
     void display();
-    void draw(const sf::Drawable& drawable);
+    void draw(const ISprite& sprite);
+    void draw(const IText& text);
+    void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type);
 
-    sf::RenderWindow& raw();
+    std::shared_ptr<IWindow> getNativeWindow() const;
 
   private:
-    sf::RenderWindow window_;
+    std::shared_ptr<IWindow> window_;
 };

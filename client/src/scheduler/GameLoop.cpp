@@ -8,22 +8,25 @@
 #include <iostream>
 
 int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, const IpEndpoint* serverEndpoint,
-                  std::atomic<bool>& runningFlag, const std::function<void(const sf::Event&)>& onEvent)
+                  std::atomic<bool>& runningFlag, const std::function<void(const Event&)>& onEvent)
 {
-    sf::Clock clock;
+    auto lastCheck = std::chrono::steady_clock::now();
 
     while (window.isOpen() && runningFlag) {
-        window.pollEvents([&](const sf::Event& event) {
+        window.pollEvents([&](const Event& event) {
             if (onEvent) {
                 onEvent(event);
             }
-            if (event.is<sf::Event::Closed>()) {
+            if (event.type == EventType::Closed) {
                 runningFlag = false;
                 window.close();
             }
         });
 
-        const float deltaTime = std::min(clock.restart().asSeconds(), 0.1F);
+        auto now       = std::chrono::steady_clock::now();
+        float deltaTime = std::chrono::duration<float>(now - lastCheck).count();
+        lastCheck      = now;
+        deltaTime      = std::min(deltaTime, 0.1F);
 
         window.clear();
         auto updateStart = std::chrono::steady_clock::now();

@@ -17,6 +17,11 @@ void SFMLWindow::close() {
     window_.close();
 }
 
+Vector2u SFMLWindow::getSize() const
+{
+    return fromSFML(window_.getSize());
+}
+
 void SFMLWindow::pollEvents(const std::function<void(const Event&)>& handler) {
     while (const std::optional<sf::Event> event = window_.pollEvent()) {
         handler(fromSFML(*event));
@@ -45,8 +50,18 @@ void SFMLWindow::draw(const IText& text) {
     }
 }
 
-void SFMLWindow::draw(const Vector2f* vertices, std::size_t vertexCount, int type) {
-    (void)vertices;
-    (void)vertexCount;
-    (void)type;
+#include <vector>
+
+void SFMLWindow::draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type) {
+    if (vertexCount == 0 || vertices == nullptr) return;
+    
+    std::vector<sf::Vertex> sfVertices(vertexCount);
+    sf::Color sfColor(color.r, color.g, color.b, color.a);
+    
+    for (std::size_t i = 0; i < vertexCount; ++i) {
+        sfVertices[i].position = sf::Vector2f(vertices[i].x, vertices[i].y);
+        sfVertices[i].color = sfColor;
+    }
+    
+    window_.draw(sfVertices.data(), vertexCount, static_cast<sf::PrimitiveType>(type));
 }

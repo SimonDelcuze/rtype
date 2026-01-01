@@ -10,12 +10,13 @@ namespace
             return;
         if (!textures.has(entry->id))
             textures.load(entry->id, "client/assets/" + entry->path);
-        auto* tex = textures.get(entry->id);
+        auto tex = textures.get(entry->id);
         if (tex == nullptr)
             return;
 
         RenderTypeData data{};
         data.texture       = tex;
+
         data.layer         = 0;
         data.spriteId      = "player_ship";
         auto size          = tex->getSize();
@@ -34,7 +35,7 @@ namespace
             return;
         if (!textures.has(entry->id))
             textures.load(entry->id, "client/assets/" + entry->path);
-        auto* tex = textures.get(entry->id);
+        auto tex = textures.get(entry->id);
         if (tex == nullptr)
             return;
 
@@ -52,7 +53,7 @@ namespace
             return;
         if (!textures.has(entry->id))
             textures.load(entry->id, "client/assets/" + entry->path);
-        auto* tex = textures.get(entry->id);
+        auto tex = textures.get(entry->id);
         if (tex == nullptr)
             return;
 
@@ -67,7 +68,7 @@ namespace
             if (!textures.has(enemyEntry->id))
                 textures.load(enemyEntry->id, "client/assets/" + enemyEntry->path);
 
-            auto* enemyTex = textures.get(enemyEntry->id);
+            auto enemyTex = textures.get(enemyEntry->id);
             if (enemyTex) {
                 RenderTypeData enemyData{};
                 enemyData.texture  = enemyTex;
@@ -86,7 +87,7 @@ namespace
             return;
         if (!textures.has(entry->id))
             textures.load(entry->id, "client/assets/" + entry->path);
-        auto* tex = textures.get(entry->id);
+        auto tex = textures.get(entry->id);
         if (tex == nullptr)
             return;
 

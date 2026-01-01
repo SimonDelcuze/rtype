@@ -1,4 +1,5 @@
 #include "components/SpriteComponent.hpp"
+#include "graphics/backends/sfml/SFMLTexture.hpp"
 
 #include <gtest/gtest.h>
 
@@ -13,7 +14,38 @@ TEST(SpriteComponent, DefaultValues)
     EXPECT_FALSE(sprite.hasSprite());
 }
 
-TEST(SpriteComponent, SetFrameSize)
+TEST(SpriteComponentTest, Constructor)
+{
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
+
+    SpriteComponent sprite(texture);
+
+    EXPECT_EQ(sprite.texture, texture);
+    EXPECT_TRUE(sprite.hasSprite());
+}
+
+TEST(SpriteComponentTest, SetTexture)
+{
+    SpriteComponent sprite;
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
+
+    sprite.setTexture(texture);
+
+    EXPECT_EQ(sprite.texture, texture);
+    EXPECT_TRUE(sprite.hasSprite());
+}
+
+TEST(SpriteComponentTest, ResetTexture)
+{
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
+
+    SpriteComponent sprite(texture);
+}
+
+TEST(SpriteComponentTest, SetFrameSize)
 {
     SpriteComponent sprite;
     sprite.setFrameSize(32, 64, 8);
@@ -23,7 +55,7 @@ TEST(SpriteComponent, SetFrameSize)
     EXPECT_EQ(sprite.columns, 8);
 }
 
-TEST(SpriteComponent, SetFrame)
+TEST(SpriteComponentTest, SetFrame)
 {
     SpriteComponent sprite;
     sprite.setFrameSize(32, 32, 4);
@@ -35,76 +67,76 @@ TEST(SpriteComponent, SetFrame)
     EXPECT_EQ(sprite.getFrame(), 0);
 }
 
-TEST(SpriteComponent, SetFrameUpdatesTextureRect)
+TEST(SpriteComponentTest, SetFrameUpdatesTextureRect)
 {
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({128, 32}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
 
     SpriteComponent sprite;
-    sprite.setTexture(texture);
+    sprite.setTexture(texture); 
     sprite.setFrameSize(32, 32, 4);
 
     sprite.setFrame(1);
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
-    sf::IntRect rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 32);
-    EXPECT_EQ(rect.position.y, 0);
-    EXPECT_EQ(rect.size.x, 32);
-    EXPECT_EQ(rect.size.y, 32);
+    IntRect rect = raw->getTextureRect();
+    EXPECT_EQ(rect.left, 32);
+    EXPECT_EQ(rect.top, 0);
+    EXPECT_EQ(rect.width, 32);
+    EXPECT_EQ(rect.height, 32);
 
     sprite.setFrame(3);
     rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 96);
-    EXPECT_EQ(rect.position.y, 0);
+    EXPECT_EQ(rect.left, 96);
+    EXPECT_EQ(rect.top, 0);
 }
 
-TEST(SpriteComponent, SetFrameWithMultipleRows)
+TEST(SpriteComponentTest, SetFrameWithMultipleRows)
 {
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({64, 64}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
 
     SpriteComponent sprite;
     sprite.setTexture(texture);
     sprite.setFrameSize(32, 32, 2);
 
     sprite.setFrame(0);
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
-    sf::IntRect rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 0);
-    EXPECT_EQ(rect.position.y, 0);
+    IntRect rect = raw->getTextureRect();
+    EXPECT_EQ(rect.left, 0);
+    EXPECT_EQ(rect.top, 0);
 
     sprite.setFrame(1);
     rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 32);
-    EXPECT_EQ(rect.position.y, 0);
+    EXPECT_EQ(rect.left, 32);
+    EXPECT_EQ(rect.top, 0);
 
     sprite.setFrame(2);
     rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 0);
-    EXPECT_EQ(rect.position.y, 32);
+    EXPECT_EQ(rect.left, 0);
+    EXPECT_EQ(rect.top, 32);
 
     sprite.setFrame(3);
     rect = raw->getTextureRect();
-    EXPECT_EQ(rect.position.x, 32);
-    EXPECT_EQ(rect.position.y, 32);
+    EXPECT_EQ(rect.left, 32);
+    EXPECT_EQ(rect.top, 32);
 }
 
-TEST(SpriteComponent, SetPositionAndScale)
+TEST(SpriteComponentTest, SetPositionAndScale)
 {
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({32, 32}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
 
     SpriteComponent sprite;
     sprite.setTexture(texture);
     sprite.setPosition(100.0F, 200.0F);
     sprite.setScale(2.0F, 3.0F);
 
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
-    sf::Vector2f pos   = raw->getPosition();
-    sf::Vector2f scale = raw->getScale();
+    Vector2f pos   = raw->getPosition();
+    Vector2f scale = raw->getScale();
 
     EXPECT_FLOAT_EQ(pos.x, 100.0F);
     EXPECT_FLOAT_EQ(pos.y, 200.0F);
@@ -112,7 +144,7 @@ TEST(SpriteComponent, SetPositionAndScale)
     EXPECT_FLOAT_EQ(scale.y, 3.0F);
 }
 
-TEST(SpriteComponent, SetFrameIgnoredWhenNoFrameSize)
+TEST(SpriteComponentTest, SetFrameIgnoredWhenNoFrameSize)
 {
     SpriteComponent sprite;
     sprite.setFrame(5);
@@ -120,14 +152,14 @@ TEST(SpriteComponent, SetFrameIgnoredWhenNoFrameSize)
     EXPECT_EQ(sprite.getFrame(), 5);
 }
 
-TEST(SpriteComponent, ConstructorWithTexture)
+TEST(SpriteComponentTest, ConstructorWithTexture)
 {
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({64, 64}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(100, 100);
 
     SpriteComponent sprite(texture);
 
     EXPECT_TRUE(sprite.hasSprite());
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
 }

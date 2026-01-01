@@ -4,18 +4,21 @@
 #include "components/AudioComponent.hpp"
 #include "ecs/Registry.hpp"
 
-#include <SFML/Audio/Sound.hpp>
+#include "systems/ISystem.hpp"
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/ISound.hpp"
 #include <memory>
 #include <unordered_map>
 
-class AudioSystem
+class AudioSystem : public ISystem
 {
   public:
-    explicit AudioSystem(SoundManager& soundManager);
+    AudioSystem(SoundManager& soundManager, GraphicsFactory& graphicsFactory);
 
-    void update(Registry& registry);
+    void update(Registry& registry, float deltaTime) override;
 
   private:
     SoundManager& soundManager_;
-    std::unordered_map<EntityId, std::unique_ptr<sf::Sound>> sounds_;
+    GraphicsFactory& graphicsFactory_;
+    std::unordered_map<EntityId, std::unique_ptr<ISound>> sounds_;
 };
