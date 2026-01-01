@@ -5,7 +5,7 @@
 #include "input/KeyBindings.hpp"
 #include "ui/IMenu.hpp"
 
-#include <SFML/System/Vector2.hpp>
+
 #include <optional>
 #include <unordered_map>
 
@@ -33,19 +33,19 @@ class SettingsMenu : public IMenu
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
     bool isDone() const override;
-    void handleEvent(Registry& registry, const sf::Event& event) override;
+    void handleEvent(Registry& registry, const Event& event) override;
     void render(Registry& registry, Window& window) override;
     Result getResult(Registry& registry) const;
 
   private:
     void startRebinding(Registry& registry, BindingAction action);
-    void applyBinding(Registry& registry, BindingAction action, sf::Keyboard::Key key);
+    void applyBinding(Registry& registry, BindingAction action, KeyCode key);
     void setAwaitingState(Registry& registry, BindingAction action, bool awaiting);
     void refreshButtonLabel(Registry& registry, BindingAction action);
     void setMusicVolume(Registry& registry, float volume);
     void refreshVolumeLabel(Registry& registry);
-    bool handleVolumeMouseEvent(Registry& registry, const sf::Vector2i& mousePos, bool isClick);
-    static std::string keyToString(sf::Keyboard::Key key);
+    bool handleVolumeMouseEvent(Registry& registry, const Vector2i& mousePos, bool isClick);
+    static std::string keyToString(KeyCode key);
 
     FontManager& fonts_;
     TextureManager& textures_;

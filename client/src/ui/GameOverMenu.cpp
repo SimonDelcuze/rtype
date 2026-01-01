@@ -7,9 +7,8 @@
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
-
-#include <SFML/Graphics/RectangleShape.hpp>
-#include <SFML/Graphics/Text.hpp>
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/Common.hpp"
 
 namespace
 {
@@ -20,14 +19,14 @@ namespace
         transform.x     = 0.0F;
         transform.y     = 0.0F;
 
-        auto box = BoxComponent::create(1280.0F, 720.0F, sf::Color(0, 0, 0, 180), sf::Color(0, 0, 0, 180));
+        auto box = BoxComponent::create(1280.0F, 720.0F, Color{0, 0, 0, 180}, Color{0, 0, 0, 180});
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<LayerComponent>(entity, LayerComponent::create(100));
         return entity;
     }
 
     EntityId createCenteredText(Registry& registry, float y, const std::string& content, unsigned int size,
-                                sf::Color color, int layer = 101)
+                                Color color, int layer = 101)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
@@ -41,7 +40,7 @@ namespace
         return entity;
     }
 
-    EntityId createCenteredButton(Registry& registry, float y, const std::string& label, sf::Color fill,
+    EntityId createCenteredButton(Registry& registry, float y, const std::string& label, Color fill,
                                   std::function<void()> onClick, int layer = 101)
     {
         EntityId entity = registry.createEntity();
@@ -49,8 +48,8 @@ namespace
         transform.x     = 540.0F;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(200.0F, 60.0F, fill, sf::Color(fill.r + 40, fill.g + 40, fill.b + 40));
-        box.focusColor = sf::Color(100, 200, 255);
+        auto box       = BoxComponent::create(200.0F, 60.0F, fill, Color{static_cast<uint8_t>(fill.r + 40), static_cast<uint8_t>(fill.g + 40), static_cast<uint8_t>(fill.b + 40)});
+        box.focusColor = Color{100, 200, 255};
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         registry.emplace<LayerComponent>(entity, LayerComponent::create(layer));
@@ -72,17 +71,17 @@ void GameOverMenu::create(Registry& registry)
     backgroundRect_ = createSemiTransparentBackground(registry);
 
     std::string titleStr = victory_ ? "VICTORY!" : "GAME OVER";
-    sf::Color titleColor = victory_ ? sf::Color::Green : sf::Color::Red;
+    Color titleColor = victory_ ? Color::Green : Color::Red;
     titleText_           = createCenteredText(registry, 150.0F, titleStr, 72, titleColor, 101);
 
     scoreText_ =
-        createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, sf::Color::White, 101);
+        createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, Color::White, 101);
 
     retryButton_ =
-        createCenteredButton(registry, 350.0F, "Retry", sf::Color(50, 150, 50), [this]() { onRetryClicked(); }, 101);
+        createCenteredButton(registry, 350.0F, "Retry", Color{50, 150, 50}, [this]() { onRetryClicked(); }, 101);
 
     quitButton_ =
-        createCenteredButton(registry, 430.0F, "Quit", sf::Color(150, 50, 50), [this]() { onQuitClicked(); }, 101);
+        createCenteredButton(registry, 430.0F, "Quit", Color{150, 50, 50}, [this]() { onQuitClicked(); }, 101);
 
     Logger::instance().info("[GameOverMenu] Created game over screen");
 }
@@ -113,10 +112,8 @@ bool GameOverMenu::isDone() const
     return done_;
 }
 
-void GameOverMenu::handleEvent(Registry& registry, const sf::Event& event)
+void GameOverMenu::handleEvent(Registry&, const Event&)
 {
-    (void) registry;
-    (void) event;
 }
 
 void GameOverMenu::render(Registry& registry, Window& window)
@@ -136,13 +133,7 @@ void GameOverMenu::render(Registry& registry, Window& window)
 void GameOverMenu::renderRectangle(Registry& registry, EntityId entityId, Window& window)
 {
     if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
-        const auto& box       = registry.get<BoxComponent>(entityId);
-        const auto& transform = registry.get<TransformComponent>(entityId);
-
-        sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
-        rect.setPosition(sf::Vector2f{transform.x, transform.y});
-        rect.setFillColor(box.fillColor);
-        window.draw(rect);
+        (void) window;
     }
 }
 
@@ -152,12 +143,16 @@ void GameOverMenu::renderText(Registry& registry, EntityId entityId, Window& win
         const auto& text      = registry.get<TextComponent>(entityId);
         const auto& transform = registry.get<TransformComponent>(entityId);
 
-        const sf::Font* font = fonts_.get(text.fontId);
+        auto font = fonts_.get(text.fontId);
         if (font != nullptr) {
-            sf::Text sfText(*font, text.content, text.characterSize);
-            sfText.setPosition(sf::Vector2f{transform.x, transform.y});
-            sfText.setFillColor(text.color);
-            window.draw(sfText);
+            GraphicsFactory factory;
+            auto sfText = factory.createText();
+            sfText->setFont(*font);
+            sfText->setString(text.content);
+            sfText->setCharacterSize(text.characterSize);
+            sfText->setPosition(Vector2f{transform.x, transform.y});
+            sfText->setFillColor(text.color);
+            window.draw(*sfText);
         }
     }
 }
@@ -166,23 +161,19 @@ void GameOverMenu::renderButton(Registry& registry, EntityId entityId, Window& w
                                 float labelOffsetY)
 {
     if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
-        const auto& box       = registry.get<BoxComponent>(entityId);
         const auto& transform = registry.get<TransformComponent>(entityId);
         const auto& button    = registry.get<ButtonComponent>(entityId);
-
-        sf::RectangleShape rect(sf::Vector2f{box.width, box.height});
-        rect.setPosition(sf::Vector2f{transform.x, transform.y});
-        rect.setFillColor(button.hovered ? box.focusColor : box.fillColor);
-        rect.setOutlineColor(box.outlineColor);
-        rect.setOutlineThickness(box.outlineThickness);
-        window.draw(rect);
-
-        const sf::Font* font = fonts_.get("ui");
+        
+        auto font = fonts_.get("ui");
         if (font != nullptr) {
-            sf::Text label(*font, button.label, 24);
-            label.setPosition(sf::Vector2f{transform.x + labelOffsetX, transform.y + labelOffsetY});
-            label.setFillColor(sf::Color::White);
-            window.draw(label);
+            GraphicsFactory factory;
+            auto label = factory.createText();
+            label->setFont(*font);
+            label->setString(button.label);
+            label->setCharacterSize(24);
+            label->setPosition(Vector2f{transform.x + labelOffsetX, transform.y + labelOffsetY});
+            label->setFillColor(Color::White);
+            window.draw(*label);
         }
     }
 }

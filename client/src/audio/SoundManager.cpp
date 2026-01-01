@@ -1,24 +1,36 @@
 #include "audio/SoundManager.hpp"
-
+#include "graphics/GraphicsFactory.hpp"
 #include "errors/AssetLoadError.hpp"
+#include <SFML/Audio/Listener.hpp>
+#include <utility>
 
-const sf::SoundBuffer& SoundManager::load(const std::string& id, const std::string& filepath)
+void SoundManager::setGlobalVolume(float volume)
 {
-    sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile(filepath)) {
-        throw AssetLoadError("Failed to load sound: " + filepath);
-    }
-    buffers_[id] = std::move(buffer);
-    return buffers_.at(id);
+    sf::Listener::setGlobalVolume(volume);
 }
 
-const sf::SoundBuffer* SoundManager::get(const std::string& id) const
+const ISoundBuffer& SoundManager::load(const std::string& id, const std::string& filepath)
+{
+    GraphicsFactory factory;
+    auto buffer = factory.createSoundBuffer();
+    if (!buffer->loadFromFile(filepath)) {
+        throw AssetLoadError("Failed to load sound: " + filepath);
+    }
+    const auto it = buffers_.find(id);
+    if (it != buffers_.end()) {
+        it->second = std::move(buffer);
+        return *it->second;
+    }
+    return *buffers_.emplace(id, std::move(buffer)).first->second;
+}
+
+std::shared_ptr<ISoundBuffer> SoundManager::get(const std::string& id) const
 {
     auto it = buffers_.find(id);
     if (it == buffers_.end()) {
         return nullptr;
     }
-    return &it->second;
+    return it->second;
 }
 
 bool SoundManager::has(const std::string& id) const

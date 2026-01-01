@@ -11,9 +11,9 @@ TEST(FontManager, LoadGetAndClear)
 
     EXPECT_NE(&font, nullptr);
 
-    const sf::Font* fetched = manager.get("test_font");
+    auto fetched = manager.get("test_font");
     EXPECT_NE(fetched, nullptr);
-    EXPECT_EQ(fetched, &font);
+    EXPECT_EQ(fetched.get(), &font);
 
     manager.clear();
     EXPECT_EQ(manager.get("test_font"), nullptr);
@@ -27,7 +27,7 @@ TEST(FontManager, LoadTwiceReplacesExisting)
 
     EXPECT_NE(&first, nullptr);
     EXPECT_NE(&second, nullptr);
-    EXPECT_EQ(manager.get("test_font"), &second);
+    EXPECT_EQ(manager.get("test_font").get(), &second);
 }
 
 TEST(FontManager, LoadThrowsOnMissingFile)
@@ -96,10 +96,10 @@ TEST(FontManager, ReloadPreservesId)
 {
     FontManager manager;
     manager.load("test_font", assetPath("fonts/ui.ttf"));
-    const sf::Font* first = manager.get("test_font");
+    auto first = manager.get("test_font");
 
     manager.load("test_font", assetPath("fonts/ui.ttf"));
-    const sf::Font* second = manager.get("test_font");
+    auto second = manager.get("test_font");
 
     EXPECT_NE(first, nullptr);
     EXPECT_NE(second, nullptr);

@@ -1,8 +1,10 @@
 #include "systems/AudioSystem.hpp"
 
-AudioSystem::AudioSystem(SoundManager& soundManager) : soundManager_(soundManager) {}
+AudioSystem::AudioSystem(SoundManager& soundManager, GraphicsFactory& graphicsFactory)
+    : soundManager_(soundManager), graphicsFactory_(graphicsFactory)
+{}
 
-void AudioSystem::update(Registry& registry)
+void AudioSystem::update(Registry& registry, float /*deltaTime*/)
 {
     for (EntityId entity = 0; entity < registry.entityCount(); ++entity) {
         if (!registry.isAlive(entity) || !registry.has<AudioComponent>(entity)) {
@@ -19,14 +21,19 @@ void AudioSystem::update(Registry& registry)
 
         switch (audio.action) {
             case AudioAction::Play: {
-                const sf::SoundBuffer* buffer = soundManager_.get(audio.soundId);
-                if (buffer != nullptr) {
-                    soundPtr = std::make_unique<sf::Sound>(*buffer);
-                    soundPtr->setVolume(audio.volume);
-                    soundPtr->setPitch(audio.pitch);
-                    soundPtr->setLooping(audio.loop);
-                    soundPtr->play();
-                    audio.isPlaying = true;
+                auto bufferPtr = soundManager_.get(audio.soundId);
+                if (bufferPtr) {
+                    if (!soundPtr) {
+                        soundPtr = graphicsFactory_.createSound();
+                    }
+                    if (soundPtr) {
+                        soundPtr->setBuffer(*bufferPtr);
+                        soundPtr->setVolume(audio.volume);
+                        soundPtr->setPitch(audio.pitch);
+                        soundPtr->setLoop(audio.loop);
+                        soundPtr->play();
+                        audio.isPlaying = true;
+                    }
                 }
                 break;
             }
@@ -58,7 +65,7 @@ void AudioSystem::update(Registry& registry)
             continue;
         }
 
-        if (soundPtr && soundPtr->getStatus() == sf::Sound::Status::Stopped) {
+        if (soundPtr && soundPtr->getStatus() == ISound::Stopped) {
             AudioComponent& audio = registry.get<AudioComponent>(entity);
             audio.isPlaying       = false;
         }

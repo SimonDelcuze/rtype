@@ -2,6 +2,7 @@
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
+#include "graphics/GraphicsFactory.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -10,17 +11,19 @@
 class BackgroundScrollSystemTest : public ::testing::Test
 {
   protected:
-    Window window{sf::VideoMode({100u, 100u}), "Test", false};
+    Window window{{100, 100}, "Test"};
     Registry registry;
     BackgroundScrollSystem system{window};
-    std::vector<std::unique_ptr<sf::Texture>> textures;
+    GraphicsFactory graphicsFactory;
+    std::vector<std::shared_ptr<ITexture>> textures;
 
-    sf::Texture& makeTexture(unsigned w, unsigned h)
+    std::shared_ptr<ITexture> makeTexture(unsigned w, unsigned h)
     {
-        auto tex = std::make_unique<sf::Texture>();
-        EXPECT_TRUE(tex->resize({w, h}));
-        textures.push_back(std::move(tex));
-        return *textures.back();
+        auto tex = graphicsFactory.createTexture();
+        tex->create(w, h);
+        std::shared_ptr<ITexture> sharedTex = std::move(tex);
+        textures.push_back(sharedTex);
+        return sharedTex;
     }
 
     EntityId createBand(float speedX, float speedY, unsigned texW = 50, unsigned texH = 50)
@@ -28,7 +31,8 @@ class BackgroundScrollSystemTest : public ::testing::Test
         EntityId e = registry.createEntity();
         registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
         registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(speedX, speedY, 0.0F, 0.0F));
-        auto& tex    = makeTexture(texW, texH);
+        
+        auto tex = makeTexture(texW, texH);
         auto& sprite = registry.emplace<SpriteComponent>(e);
         sprite.setTexture(tex);
         return e;
@@ -82,7 +86,7 @@ TEST_F(BackgroundScrollSystemTest, NextBackgroundAppliedOnWrap)
     EntityId e = createBand(-100.0F, 0.0F, 50, 50);
     system.update(registry, 0.0F);
 
-    sf::Texture& newTex = makeTexture(25, 25);
+    auto newTex = makeTexture(25, 25);
     system.setNextBackground(newTex);
 
     auto& scroll = registry.get<BackgroundScrollComponent>(e);

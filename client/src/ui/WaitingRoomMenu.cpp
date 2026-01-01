@@ -16,7 +16,7 @@ namespace
         if (!textures.has("menu_bg"))
             textures.load("menu_bg", "client/assets/backgrounds/menu.jpg");
 
-        auto* tex = textures.get("menu_bg");
+        auto tex = textures.get("menu_bg");
         if (tex == nullptr)
             return 0;
 
@@ -27,7 +27,7 @@ namespace
         transform.scaleX = 2.25F;
         transform.scaleY = 2.0F;
 
-        SpriteComponent sprite(*tex);
+        SpriteComponent sprite(tex);
         registry.emplace<SpriteComponent>(entity, sprite);
         return entity;
     }
@@ -37,7 +37,7 @@ namespace
         if (!textures.has("logo"))
             textures.load("logo", "client/assets/other/rtype-logo.png");
 
-        auto* tex = textures.get("logo");
+        auto tex = textures.get("logo");
         if (tex == nullptr)
             return 0;
 
@@ -48,13 +48,13 @@ namespace
         transform.scaleX = 2.0F;
         transform.scaleY = 2.0F;
 
-        SpriteComponent sprite(*tex);
+        SpriteComponent sprite(tex);
         registry.emplace<SpriteComponent>(entity, sprite);
         return entity;
     }
 
     EntityId createText(Registry& registry, float x, float y, const std::string& content, unsigned int size,
-                        sf::Color color)
+                        Color color)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
@@ -67,7 +67,7 @@ namespace
         return entity;
     }
 
-    EntityId createButton(Registry& registry, float x, float y, const std::string& label, sf::Color fill,
+    EntityId createButton(Registry& registry, float x, float y, const std::string& label, Color fill,
                           std::function<void()> onClick)
     {
         EntityId entity = registry.createEntity();
@@ -75,8 +75,8 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(200.0F, 60.0F, fill, sf::Color(fill.r + 40, fill.g + 40, fill.b + 40));
-        box.focusColor = sf::Color(100, 200, 255);
+        auto box       = BoxComponent::create(200.0F, 60.0F, fill, Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40), static_cast<std::uint8_t>(fill.b + 40)));
+        box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         return entity;
@@ -99,13 +99,11 @@ void WaitingRoomMenu::create(Registry& registry)
     createBackground(registry, textures_);
     createLogo(registry, textures_);
 
-    createText(registry, 450.0F, 280.0F, "Waiting Room", 48, sf::Color(255, 255, 255));
+    createText(registry, 450.0F, 280.0F, "Waiting Room", 48, Color(255, 255, 255));
 
-    readyButton_ =
-        createButton(registry, 540.0F, 400.0F, "READY", sf::Color(0, 180, 80), [this]() { onReadyClicked(); });
-
-    waitingText_   = createText(registry, 280.0F, 500.0F, "", 28, sf::Color(200, 200, 200));
-    countdownText_ = createText(registry, 600.0F, 350.0F, "", 96, sf::Color(255, 220, 0));
+    readyButton_ = createButton(registry, 540.0F, 400.0F, "READY", Color(0, 180, 80), [this]() { onReadyClicked(); });
+    waitingText_   = createText(registry, 280.0F, 500.0F, "", 28, Color(200, 200, 200));
+    countdownText_ = createText(registry, 600.0F, 350.0F, "", 96, Color(255, 220, 0));
 }
 
 void WaitingRoomMenu::destroy(Registry& registry)
@@ -118,7 +116,7 @@ bool WaitingRoomMenu::isDone() const
     return done_;
 }
 
-void WaitingRoomMenu::handleEvent(Registry&, const sf::Event&) {}
+void WaitingRoomMenu::handleEvent(Registry&, const Event&) {}
 
 void WaitingRoomMenu::render(Registry&, Window&) {}
 

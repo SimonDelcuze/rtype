@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "input/InputSystem.hpp"
 #include "systems/AnimationSystem.hpp"
+#include "systems/AudioSystem.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
 #include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/GameOverSystem.hpp"
@@ -23,11 +24,13 @@ AssetManifest loadManifest()
     }
 }
 
+#include "systems/AudioSystem.hpp"
+
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager, EventBus& eventBus, float& musicVolume)
+                      FontManager& fontManager, EventBus& eventBus, float& musicVolume, GraphicsFactory& graphicsFactory, SoundManager& soundManager)
 {
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
                                                      textures, animations));
@@ -43,4 +46,5 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures));
+    gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
 }

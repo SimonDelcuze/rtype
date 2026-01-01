@@ -1,13 +1,14 @@
 #pragma once
 
-#include <SFML/Graphics/Texture.hpp>
+#include "graphics/abstraction/ITexture.hpp"
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
 struct RenderTypeData
 {
-    const sf::Texture* texture = nullptr;
+    std::shared_ptr<ITexture> texture = nullptr;
     std::uint8_t frameCount    = 1;
     float frameDuration        = 0.1F;
     std::uint32_t frameWidth   = 0;

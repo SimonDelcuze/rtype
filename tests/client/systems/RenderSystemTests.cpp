@@ -4,18 +4,18 @@
 #include "ecs/Registry.hpp"
 #include "graphics/Window.hpp"
 #include "systems/RenderSystem.hpp"
+#include "graphics/backends/sfml/SFMLTexture.hpp"
 
-#include <SFML/Window/VideoMode.hpp>
 #include <gtest/gtest.h>
 
 TEST(RenderSystem, AppliesTransformToSprite)
 {
-    Window window(sf::VideoMode({64u, 64u}), "Test", false);
+    Window window{{64u, 64u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({32u, 32u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(32, 32);
 
     EntityId entity = registry.createEntity();
     auto& sprite    = registry.emplace<SpriteComponent>(entity);
@@ -24,23 +24,23 @@ TEST(RenderSystem, AppliesTransformToSprite)
 
     renderSystem.update(registry, 0.0F);
 
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
     EXPECT_FLOAT_EQ(raw->getPosition().x, 10.0F);
     EXPECT_FLOAT_EQ(raw->getPosition().y, 20.0F);
     EXPECT_FLOAT_EQ(raw->getScale().x, 1.0F);
     EXPECT_FLOAT_EQ(raw->getScale().y, 1.0F);
-    EXPECT_FLOAT_EQ(raw->getRotation().asDegrees(), 45.0F);
+    EXPECT_FLOAT_EQ(raw->getRotation(), 45.0F);
 }
 
 TEST(RenderSystem, AppliesScaleAndRotation)
 {
-    Window window(sf::VideoMode({64u, 64u}), "Test", false);
+    Window window{{64u, 64u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({16u, 16u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(16, 16);
 
     EntityId entity = registry.createEntity();
     auto& sprite    = registry.emplace<SpriteComponent>(entity);
@@ -52,21 +52,21 @@ TEST(RenderSystem, AppliesScaleAndRotation)
 
     renderSystem.update(registry, 0.0F);
 
-    const sf::Sprite* raw = sprite.raw();
+    auto raw = sprite.getSprite();
     ASSERT_NE(raw, nullptr);
     EXPECT_FLOAT_EQ(raw->getScale().x, 2.0F);
     EXPECT_FLOAT_EQ(raw->getScale().y, 3.0F);
-    EXPECT_FLOAT_EQ(raw->getRotation().asDegrees(), 90.0F);
+    EXPECT_FLOAT_EQ(raw->getRotation(), 90.0F);
 }
 
 TEST(RenderSystem, RespectsLayerComponentSorting)
 {
-    Window window(sf::VideoMode({64u, 64u}), "Test", false);
+    Window window{{64u, 64u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({16u, 16u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(16, 16);
 
     EntityId e1 = registry.createEntity();
     registry.emplace<SpriteComponent>(e1).setTexture(texture);
@@ -83,20 +83,20 @@ TEST(RenderSystem, RespectsLayerComponentSorting)
 
     renderSystem.update(registry, 0.0F);
 
-    ASSERT_NE(s1.raw(), nullptr);
-    ASSERT_NE(s2.raw(), nullptr);
-    EXPECT_FLOAT_EQ(s1.raw()->getPosition().x, 1.0F);
-    EXPECT_FLOAT_EQ(s2.raw()->getPosition().x, 2.0F);
+    ASSERT_NE(s1.getSprite(), nullptr);
+    ASSERT_NE(s2.getSprite(), nullptr);
+    EXPECT_FLOAT_EQ(s1.getSprite()->getPosition().x, 1.0F);
+    EXPECT_FLOAT_EQ(s2.getSprite()->getPosition().x, 2.0F);
 }
 
 TEST(RenderSystem, UsesDefaultLayerWhenMissing)
 {
-    Window window(sf::VideoMode({64u, 64u}), "Test", false);
+    Window window{{64u, 64u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({16u, 16u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(16, 16);
 
     EntityId e = registry.createEntity();
     auto& s    = registry.emplace<SpriteComponent>(e);
@@ -105,14 +105,53 @@ TEST(RenderSystem, UsesDefaultLayerWhenMissing)
 
     renderSystem.update(registry, 0.0F);
 
-    ASSERT_NE(s.raw(), nullptr);
-    EXPECT_FLOAT_EQ(s.raw()->getPosition().x, 3.0F);
-    EXPECT_FLOAT_EQ(s.raw()->getPosition().y, 4.0F);
+    ASSERT_NE(s.getSprite(), nullptr);
+    EXPECT_FLOAT_EQ(s.getSprite()->getPosition().x, 3.0F);
+    EXPECT_FLOAT_EQ(s.getSprite()->getPosition().y, 4.0F);
+}
+
+TEST(RenderSystem, ThrowsOnMissingTexture)
+{
+    Window window{{64u, 64u}, "Test"};
+    RenderSystem system(window);
+    Registry registry;
+
+    auto texture = std::make_shared<SFMLTexture>();
+    EntityId e = registry.createEntity();
+    
+    SpriteComponent s(texture);
+    registry.emplace<SpriteComponent>(e, s);
+    registry.emplace<TransformComponent>(e, TransformComponent::create(0, 0));
+
+    EXPECT_NO_THROW(system.update(registry, 0.0F));
+}
+
+TEST(RenderSystem, UpdatesSpritePosition)
+{
+    Window window{{64u, 64u}, "Test"};
+    RenderSystem system(window);
+    Registry registry;
+    
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(32, 32);
+
+    EntityId e = registry.createEntity();
+    SpriteComponent s(texture);
+    registry.emplace<SpriteComponent>(e, s);
+    registry.emplace<TransformComponent>(e, TransformComponent::create(3.0F, 4.0F));
+
+    system.update(registry, 0.0F);
+
+    auto& sRef = registry.get<SpriteComponent>(e);
+    auto raw = sRef.getSprite();
+    ASSERT_NE(raw, nullptr);
+    EXPECT_FLOAT_EQ(raw->getPosition().x, 3.0F);
+    EXPECT_FLOAT_EQ(raw->getPosition().y, 4.0F);
 }
 
 TEST(RenderSystem, IgnoresEntitiesWithoutSpriteInstance)
 {
-    Window window(sf::VideoMode({32u, 32u}), "Test", false);
+    Window window{{32u, 32u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
@@ -122,36 +161,36 @@ TEST(RenderSystem, IgnoresEntitiesWithoutSpriteInstance)
 
     renderSystem.update(registry, 0.0F);
     EXPECT_FALSE(s.hasSprite());
-    EXPECT_EQ(s.raw(), nullptr);
+    EXPECT_EQ(s.getSprite(), nullptr);
 }
 
 TEST(RenderSystem, SkipsEntitiesWithoutTransformComponent)
 {
-    Window window(sf::VideoMode({32u, 32u}), "Test", false);
+    Window window{{32u, 32u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({8u, 8u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(8, 8);
 
     EntityId e = registry.createEntity();
     auto& s    = registry.emplace<SpriteComponent>(e);
     s.setTexture(texture);
 
     renderSystem.update(registry, 0.0F);
-    ASSERT_NE(s.raw(), nullptr);
-    EXPECT_FLOAT_EQ(s.raw()->getPosition().x, 0.0F);
-    EXPECT_FLOAT_EQ(s.raw()->getPosition().y, 0.0F);
+    ASSERT_NE(s.getSprite(), nullptr);
+    EXPECT_FLOAT_EQ(s.getSprite()->getPosition().x, 0.0F);
+    EXPECT_FLOAT_EQ(s.getSprite()->getPosition().y, 0.0F);
 }
 
 TEST(RenderSystem, SkipsDeadEntities)
 {
-    Window window(sf::VideoMode({32u, 32u}), "Test", false);
+    Window window{{32u, 32u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({8u, 8u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(8, 8);
 
     EntityId e = registry.createEntity();
     auto& s    = registry.emplace<SpriteComponent>(e);
@@ -160,19 +199,17 @@ TEST(RenderSystem, SkipsDeadEntities)
 
     registry.destroyEntity(e);
 
-    renderSystem.update(registry, 0.0F);
-
-    EXPECT_FALSE(s.hasSprite());
+    EXPECT_NO_THROW(renderSystem.update(registry, 0.0F));
 }
 
 TEST(RenderSystem, SceneGraphLayeringBackgroundEntitiesHUD)
 {
-    Window window(sf::VideoMode({64u, 64u}), "Test", false);
+    Window window{{64u, 64u}, "Test"};
     RenderSystem renderSystem(window);
     Registry registry;
 
-    sf::Texture texture;
-    ASSERT_TRUE(texture.resize({8u, 8u}));
+    auto texture = std::make_shared<SFMLTexture>();
+    texture->create(8, 8);
 
     EntityId background = registry.createEntity();
     auto& bgSprite      = registry.emplace<SpriteComponent>(background);

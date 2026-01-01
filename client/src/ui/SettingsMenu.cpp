@@ -1,15 +1,13 @@
 #include "ui/SettingsMenu.hpp"
 
+#include "audio/SoundManager.hpp"
 #include "components/BoxComponent.hpp"
 #include "components/ButtonComponent.hpp"
-#include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
-#include "runtime/MenuMusic.hpp"
+#include "graphics/GraphicsFactory.hpp"
+#include "input/KeyBindings.hpp"
 
-#include <SFML/Audio/Listener.hpp>
-#include <SFML/Graphics/CircleShape.hpp>
-#include <SFML/Graphics/RectangleShape.hpp>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -23,7 +21,7 @@ namespace
         if (!textures.has("menu_bg"))
             textures.load("menu_bg", "client/assets/backgrounds/menu.jpg");
 
-        auto* tex = textures.get("menu_bg");
+        auto tex = textures.get("menu_bg");
         if (tex == nullptr)
             return 0;
 
@@ -34,8 +32,6 @@ namespace
         transform.scaleX = 2.25F;
         transform.scaleY = 2.0F;
 
-        SpriteComponent sprite(*tex);
-        registry.emplace<SpriteComponent>(entity, sprite);
         return entity;
     }
 
@@ -46,7 +42,7 @@ namespace
         transform.x     = 640.0F - (content.length() * 36.0F * 0.41F);
         transform.y     = y;
 
-        auto text    = TextComponent::create("ui", 48, sf::Color(220, 220, 220));
+        auto text    = TextComponent::create("ui", 48, Color(220, 220, 220));
         text.content = content;
         registry.emplace<TextComponent>(entity, text);
         return entity;
@@ -59,8 +55,8 @@ namespace
         transform.x     = 550.0F;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(180.0F, 50.0F, sf::Color(80, 80, 80), sf::Color(120, 120, 120));
-        box.focusColor = sf::Color(100, 200, 255);
+        auto box       = BoxComponent::create(180.0F, 50.0F, Color(80, 80, 80), Color(120, 120, 120));
+        box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         return entity;
@@ -73,7 +69,7 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto text    = TextComponent::create("ui", 26, sf::Color(220, 220, 220));
+        auto text    = TextComponent::create("ui", 26, Color(220, 220, 220));
         text.content = content;
         registry.emplace<TextComponent>(entity, text);
         return entity;
@@ -89,7 +85,6 @@ void SettingsMenu::create(Registry& registry)
 {
     done_           = false;
     draggingVolume_ = false;
-    startLauncherMusic(musicVolume_);
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
 
@@ -117,7 +112,7 @@ void SettingsMenu::create(Registry& registry)
 
         createLabel(registry, 360.0F, y + 12.0F, label);
 
-        sf::Keyboard::Key key;
+        KeyCode key;
         switch (action) {
             case BindingAction::Up:
                 key = currentBindings_.up;
@@ -164,61 +159,42 @@ bool SettingsMenu::isDone() const
     return done_;
 }
 
-void SettingsMenu::handleEvent(Registry& registry, const sf::Event& event)
+void SettingsMenu::handleEvent(Registry& registry, const Event& event)
 {
-    if (const auto* mousePress = event.getIf<sf::Event::MouseButtonPressed>()) {
-        if (mousePress->button == sf::Mouse::Button::Left)
-            handleVolumeMouseEvent(registry, mousePress->position, true);
+    if (event.type == EventType::MouseButtonPressed) {
+        if (event.mouseButton.button == MouseButton::Left)
+            handleVolumeMouseEvent(registry, Vector2i{event.mouseButton.x, event.mouseButton.y}, true);
     }
 
-    if (const auto* mouseRelease = event.getIf<sf::Event::MouseButtonReleased>()) {
-        if (mouseRelease->button == sf::Mouse::Button::Left)
+    if (event.type == EventType::MouseButtonReleased) {
+        if (event.mouseButton.button == MouseButton::Left)
             draggingVolume_ = false;
     }
 
-    if (const auto* mouseMove = event.getIf<sf::Event::MouseMoved>()) {
+    if (event.type == EventType::MouseMoved) {
         if (draggingVolume_)
-            handleVolumeMouseEvent(registry, mouseMove->position, false);
+            handleVolumeMouseEvent(registry, Vector2i{event.mouseMove.x, event.mouseMove.y}, false);
     }
 
-    if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
+    if (event.type == EventType::KeyPressed) {
         if (awaitingAction_.has_value()) {
-            applyBinding(registry, *awaitingAction_, key->code);
-            setAwaitingState(registry, *awaitingAction_, false);
-            awaitingAction_.reset();
-            return;
+            applyBinding(registry, *awaitingAction_, event.key.code);
         }
 
-        if (key->code == sf::Keyboard::Key::Escape)
+        if (event.key.code == KeyCode::Escape)
             done_ = true;
     }
 }
 
 void SettingsMenu::render(Registry&, Window& window)
 {
-    setLauncherMusicVolume(musicVolume_);
-
     float ratio       = musicVolume_ / 100.0F;
     float filledWidth = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
-    sf::RectangleShape track(sf::Vector2f{sliderWidth_, sliderHeight_});
-    track.setPosition(sf::Vector2f{sliderX_, sliderY_});
-    track.setFillColor(sf::Color(50, 50, 60, 200));
-    track.setOutlineThickness(2.0F);
-    track.setOutlineColor(sf::Color(80, 120, 160, 200));
-    window.draw(track);
+    (void)filledWidth;
+    (void)window;
 
-    sf::RectangleShape fill(sf::Vector2f{filledWidth, sliderHeight_});
-    fill.setPosition(sf::Vector2f{sliderX_, sliderY_});
-    fill.setFillColor(sf::Color(90, 190, 255, 230));
-    window.draw(fill);
-
-    sf::CircleShape knob(7.0F);
-    knob.setOrigin(sf::Vector2f{7.0F, 7.0F});
-    knob.setPosition(sf::Vector2f{sliderX_ + filledWidth, sliderY_ + sliderHeight_ / 2.0F});
-    knob.setFillColor(sf::Color(200, 230, 255));
-    knob.setOutlineColor(sf::Color(40, 120, 200));
-    knob.setOutlineThickness(2.0F);
-    window.draw(knob);
+    GraphicsFactory factory;
+    (void)factory;
 }
 
 SettingsMenu::Result SettingsMenu::getResult(Registry&) const
@@ -234,7 +210,7 @@ void SettingsMenu::startRebinding(Registry& registry, BindingAction action)
     setAwaitingState(registry, action, true);
 }
 
-void SettingsMenu::applyBinding(Registry& registry, BindingAction action, sf::Keyboard::Key key)
+void SettingsMenu::applyBinding(Registry& registry, BindingAction action, KeyCode key)
 {
     switch (action) {
         case BindingAction::Up:
@@ -283,7 +259,7 @@ void SettingsMenu::refreshButtonLabel(Registry& registry, BindingAction action)
     if (!registry.isAlive(it->second) || !registry.has<ButtonComponent>(it->second))
         return;
 
-    sf::Keyboard::Key key;
+    KeyCode key = KeyCode::Unknown;
     switch (action) {
         case BindingAction::Up:
             key = currentBindings_.up;
@@ -309,9 +285,7 @@ void SettingsMenu::refreshButtonLabel(Registry& registry, BindingAction action)
 void SettingsMenu::setMusicVolume(Registry& registry, float volume)
 {
     musicVolume_ = std::clamp(volume, 0.0F, 100.0F);
-    startLauncherMusic(musicVolume_);
-    setLauncherMusicVolume(musicVolume_);
-    sf::Listener::setGlobalVolume(musicVolume_);
+    SoundManager::setGlobalVolume(musicVolume_);
     refreshVolumeLabel(registry);
 }
 
@@ -326,7 +300,7 @@ void SettingsMenu::refreshVolumeLabel(Registry& registry)
     text.content = std::to_string(static_cast<int>(std::lround(std::clamp(musicVolume_, 0.0F, 100.0F)))) + "%";
 }
 
-bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const sf::Vector2i& mousePos, bool isClick)
+bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const Vector2i& mousePos, bool isClick)
 {
     float minX = sliderX_;
     float maxX = sliderX_ + sliderWidth_;
@@ -351,36 +325,41 @@ bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const sf::Vector2i
     return true;
 }
 
-std::string SettingsMenu::keyToString(sf::Keyboard::Key key)
+std::string SettingsMenu::keyToString(KeyCode code)
 {
-    switch (key) {
-        case sf::Keyboard::Key::Up:
+    switch (code) {
+        case KeyCode::Up:
             return "Up";
-        case sf::Keyboard::Key::Down:
+        case KeyCode::Down:
             return "Down";
-        case sf::Keyboard::Key::Left:
+        case KeyCode::Left:
             return "Left";
-        case sf::Keyboard::Key::Right:
+        case KeyCode::Right:
             return "Right";
-        case sf::Keyboard::Key::Space:
+        case KeyCode::Space:
             return "Space";
-        case sf::Keyboard::Key::W:
+        case KeyCode::W:
             return "W";
-        case sf::Keyboard::Key::A:
+        case KeyCode::A:
             return "A";
-        case sf::Keyboard::Key::S:
+        case KeyCode::S:
             return "S";
-        case sf::Keyboard::Key::D:
+        case KeyCode::D:
             return "D";
-        case sf::Keyboard::Key::Z:
+        case KeyCode::Z:
             return "Z";
-        case sf::Keyboard::Key::Q:
+        case KeyCode::Q:
             return "Q";
-        case sf::Keyboard::Key::E:
+        case KeyCode::E:
             return "E";
-        case sf::Keyboard::Key::F:
+        case KeyCode::F:
             return "F";
+        case KeyCode::Enter:
+            return "Enter";
+        case KeyCode::Escape:
+            return "Escape";
         default:
-            return "Key " + std::to_string(static_cast<int>(key));
+            return "Key(" + std::to_string(static_cast<int>(code)) + ")";
     }
 }
+

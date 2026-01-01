@@ -1,32 +1,32 @@
 #pragma once
 
+#include <optional>
+#include <memory>
+#include <vector>
+#include "graphics/abstraction/ISprite.hpp"
+#include "graphics/abstraction/ITexture.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include "ecs/ResetValue.hpp"
 
-#include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Texture.hpp>
-#include <cstdint>
-#include <optional>
-#include <vector>
-
-struct SpriteComponent
-{
-    std::optional<sf::Sprite> sprite;
-    std::uint32_t frameWidth   = 0;
-    std::uint32_t frameHeight  = 0;
-    std::uint32_t columns      = 1;
-    std::uint32_t currentFrame = 0;
-    std::vector<sf::IntRect> customFrames;
+struct SpriteComponent {
+    std::shared_ptr<ITexture> texture;
+    std::shared_ptr<ISprite> sprite;
+    std::vector<IntRect> customFrames;
+    std::uint32_t currentFrame{0};
+    std::uint32_t frameWidth{0};
+    std::uint32_t frameHeight{0};
+    std::uint32_t columns{1};
 
     SpriteComponent() = default;
-    explicit SpriteComponent(const sf::Texture& texture);
+    explicit SpriteComponent(const std::shared_ptr<ITexture>& texture);
 
-    void setTexture(const sf::Texture& texture);
+    void setTexture(const std::shared_ptr<ITexture>& texture);
     void setPosition(float x, float y);
     void setScale(float x, float y);
     void setFrame(std::uint32_t frameIndex);
     void setFrameSize(std::uint32_t width, std::uint32_t height, std::uint32_t cols = 1);
     std::uint32_t getFrame() const;
-    const sf::Sprite* raw() const;
+    std::shared_ptr<ISprite> getSprite() const;
     bool hasSprite() const;
 };
 

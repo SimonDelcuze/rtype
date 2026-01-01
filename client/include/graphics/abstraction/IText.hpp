@@ -18,8 +18,11 @@ public:
     virtual void setRotation(float angle) = 0;
     virtual void setScale(const Vector2f& factor) = 0;
     virtual void setOrigin(const Vector2f& origin) = 0;
+    
+    virtual unsigned int getCharacterSize() const = 0;
 
     virtual std::string getString() const = 0;
     virtual Vector2f getPosition() const = 0;
     virtual FloatRect getGlobalBounds() const = 0;
+    virtual FloatRect getLocalBounds() const = 0;
 };

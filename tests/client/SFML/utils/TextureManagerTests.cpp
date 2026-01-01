@@ -12,9 +12,9 @@ TEST(TextureManager, LoadGetAndClear)
     EXPECT_GT(texture.getSize().x, 0u);
     EXPECT_GT(texture.getSize().y, 0u);
 
-    const sf::Texture* fetched = manager.get("background");
+    auto fetched = manager.get("background");
     EXPECT_NE(fetched, nullptr);
-    EXPECT_EQ(fetched, &texture);
+    EXPECT_EQ(fetched.get(), &texture);
 
     manager.clear();
     EXPECT_EQ(manager.get("background"), nullptr);
@@ -23,12 +23,12 @@ TEST(TextureManager, LoadGetAndClear)
 TEST(TextureManager, LoadTwiceReplacesExisting)
 {
     TextureManager manager;
-    const auto& first  = manager.load("background", assetPath("backgrounds/space.png"));
-    const auto& second = manager.load("background", assetPath("backgrounds/space.png"));
+    const auto& first  = manager.load("test_tex", assetPath("backgrounds/menu.jpg"));
+    const auto& second = manager.load("test_tex", assetPath("backgrounds/menu.jpg"));
 
     EXPECT_NE(&first, nullptr);
     EXPECT_NE(&second, nullptr);
-    EXPECT_EQ(manager.get("background"), &second);
+    EXPECT_EQ(manager.get("test_tex").get(), &second);
 }
 
 TEST(TextureManager, LoadThrowsOnMissingFile)
@@ -97,10 +97,10 @@ TEST(TextureManager, ReloadPreservesId)
 {
     TextureManager manager;
     manager.load("background", assetPath("backgrounds/space.png"));
-    sf::Vector2u firstSize = manager.get("background")->getSize();
+    auto firstSize = manager.get("background")->getSize();
 
     manager.load("background", assetPath("backgrounds/space.png"));
-    sf::Vector2u secondSize = manager.get("background")->getSize();
+    auto secondSize = manager.get("background")->getSize();
 
     EXPECT_EQ(firstSize, secondSize);
     EXPECT_EQ(manager.size(), 1u);

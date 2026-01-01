@@ -7,9 +7,13 @@
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "graphics/abstraction/Common.hpp"
 
-#include <SFML/Graphics.hpp>
+#include "components/BoxComponent.hpp"
 #include <algorithm>
+#include <cmath>
+
+#include "Logger.hpp"
 
 RenderSystem::RenderSystem(Window& window) : window_(window) {}
 
@@ -18,7 +22,7 @@ void RenderSystem::update(Registry& registry, float deltaTime)
     struct DrawItem
     {
         int layer;
-        SpriteComponent* sprite;
+        SpriteComponent* spriteComp;
         TransformComponent* transform;
         bool isVisible;
     };
@@ -34,6 +38,7 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         auto& transform       = registry.get<TransformComponent>(id);
         int layer             = 0;
         bool currentIsVisible = true;
+        auto sprite = spriteComp.getSprite();
 
         if (registry.has<InvincibilityComponent>(id)) {
             auto& inv = registry.get<InvincibilityComponent>(id);
@@ -43,14 +48,14 @@ void RenderSystem::update(Registry& registry, float deltaTime)
                 inv.isVisible  = !inv.isVisible;
             }
             currentIsVisible = inv.isVisible;
-            auto color       = spriteComp.sprite->getColor();
+            auto color       = sprite->getColor();
             color.a          = inv.isVisible ? 255 : 50;
-            spriteComp.sprite->setColor(color);
+            sprite->setColor(color);
         } else {
-            auto color = spriteComp.sprite->getColor();
+            auto color = sprite->getColor();
             if (color.a != 255) {
                 color.a = 255;
-                spriteComp.sprite->setColor(color);
+                sprite->setColor(color);
             }
         }
 
@@ -64,72 +69,56 @@ void RenderSystem::update(Registry& registry, float deltaTime)
                      [](const DrawItem& a, const DrawItem& b) { return a.layer < b.layer; });
 
     for (auto& item : drawQueue) {
-        auto* raw = item.sprite->raw();
-        if (raw == nullptr) {
+        if (!item.isVisible) continue;
+        
+        auto spritePtr = item.spriteComp->getSprite();
+        if (!spritePtr) {
             continue;
         }
-        auto& sprite = *item.sprite->sprite;
-        sprite.setPosition(sf::Vector2f{item.transform->x, item.transform->y});
-        sprite.setScale(sf::Vector2f{item.transform->scaleX, item.transform->scaleY});
-        sprite.setRotation(sf::degrees(item.transform->rotation));
+        ISprite& sprite = *spritePtr;
+        sprite.setPosition(Vector2f{item.transform->x, item.transform->y});
+        sprite.setScale(Vector2f{item.transform->scaleX, item.transform->scaleY});
+        sprite.setRotation(item.transform->rotation);
         window_.draw(sprite);
     }
 
-    constexpr bool kDebugColliders = false;
-    if (!kDebugColliders) {
-        return;
-    }
-    const sf::Color debugColor = sf::Color::Red;
-    for (EntityId id : registry.view<TransformComponent, TagComponent>()) {
-        if (!registry.isAlive(id))
-            continue;
-        const auto& tag = registry.get<TagComponent>(id);
-        if (!tag.hasTag(EntityTag::Obstacle))
-            continue;
-        const auto& t = registry.get<TransformComponent>(id);
-        if (registry.has<ColliderComponent>(id)) {
-            const auto& col = registry.get<ColliderComponent>(id);
-            if (!col.isActive)
-                continue;
-            if (col.shape == ColliderComponent::Shape::Circle) {
-                float scale   = std::max(std::abs(t.scaleX), std::abs(t.scaleY));
-                float radius  = col.radius * scale;
-                float centerX = t.x + col.offsetX;
-                float centerY = t.y + col.offsetY;
-                sf::CircleShape circle(radius);
-                circle.setPosition(sf::Vector2f{centerX - radius, centerY - radius});
-                circle.setFillColor(sf::Color::Transparent);
-                circle.setOutlineColor(debugColor);
-                circle.setOutlineThickness(1.0F);
-                window_.draw(circle);
-            } else {
-                sf::VertexArray poly;
-                poly.setPrimitiveType(sf::PrimitiveType::LineStrip);
-                for (const auto& p : col.points) {
-                    float x = t.x + (p[0] + col.offsetX) * t.scaleX;
-                    float y = t.y + (p[1] + col.offsetY) * t.scaleY;
-                    poly.append(sf::Vertex{{x, y}, debugColor});
-                }
-                if (!col.points.empty()) {
-                    float x = t.x + (col.points.front()[0] + col.offsetX) * t.scaleX;
-                    float y = t.y + (col.points.front()[1] + col.offsetY) * t.scaleY;
-                    poly.append(sf::Vertex{{x, y}, debugColor});
-                }
-                window_.draw(poly);
-            }
-            continue;
+    for (EntityId id : registry.view<TransformComponent, BoxComponent>()) {
+        const auto& transform = registry.get<TransformComponent>(id);
+        const auto& box = registry.get<BoxComponent>(id);
+
+        float w = box.width;
+        float h = box.height;
+        
+        Vector2f loc[4] = {
+            {0.0f, 0.0f},
+            {0.0f, h},
+            {w, 0.0f},
+            {w, h}
+        };
+
+        float rad = transform.rotation * 3.14159265359f / 180.0f;
+        float c = std::cos(rad);
+        float s = std::sin(rad);
+        
+        Vector2f world[4];
+        for (int i=0; i<4; ++i) {
+            float sx = loc[i].x * transform.scaleX;
+            float sy = loc[i].y * transform.scaleY;
+            
+            float rx = sx * c - sy * s;
+            float ry = sx * s + sy * c;
+            
+            world[i].x = rx + transform.x;
+            world[i].y = ry + transform.y;
         }
-        if (registry.has<HitboxComponent>(id)) {
-            const auto& h = registry.get<HitboxComponent>(id);
-            if (!h.isActive)
-                continue;
-            sf::RectangleShape rect;
-            rect.setPosition(sf::Vector2f{t.x + h.offsetX, t.y + h.offsetY});
-            rect.setSize(sf::Vector2f{h.width * t.scaleX, h.height * t.scaleY});
-            rect.setFillColor(sf::Color::Transparent);
-            rect.setOutlineColor(debugColor);
-            rect.setOutlineThickness(1.0F);
-            window_.draw(rect);
+
+        if (box.fillColor.a > 0) {
+            window_.draw(world, 4, box.fillColor, 4);
+        }
+
+        if (box.outlineThickness > 0.0f && box.outlineColor.a > 0) {
+            Vector2f outline[5] = { world[0], world[2], world[3], world[1], world[0] };
+            window_.draw(outline, 5, box.outlineColor, 2);
         }
     }
 }

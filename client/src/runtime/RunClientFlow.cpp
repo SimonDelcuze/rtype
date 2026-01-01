@@ -6,19 +6,21 @@
 #include "events/GameEvents.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "graphics/abstraction/Event.hpp"
 #include "input/InputMapper.hpp"
 #include "level/EntityTypeSetup.hpp"
 #include "level/LevelState.hpp"
 #include "network/PacketHeader.hpp"
+#include "graphics/GraphicsFactory.hpp"
 #include "scheduler/ClientScheduler.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
+#include "audio/SoundManager.hpp"
 
-#include <SFML/Audio/Listener.hpp>
-#include <SFML/System/Clock.hpp>
+#include <chrono>
 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage)
@@ -86,22 +88,25 @@ namespace
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem)
     {
-        auto onEvent = [&](const sf::Event& event) {
+        auto onEvent = [&](const Event& event) {
             mapper.handleEvent(event);
             buttonSystem.handleEvent(registry, event);
         };
 
-        sf::Clock gameClock;
+        auto lastTime = std::chrono::steady_clock::now();
         while (window.isOpen() && g_running) {
-            window.pollEvents([&](const sf::Event& event) {
+            window.pollEvents([&](const Event& event) {
                 onEvent(event);
-                if (event.is<sf::Event::Closed>()) {
+                if (event.type == EventType::Closed) {
                     g_running = false;
                     window.close();
                 }
             });
 
-            const float deltaTime = std::min(gameClock.restart().asSeconds(), 0.1F);
+            auto currentTime = std::chrono::steady_clock::now();
+            std::chrono::duration<float> elapsed = currentTime - lastTime;
+            lastTime = currentTime;
+            const float deltaTime = std::min(elapsed.count(), 0.1F);
 
             window.clear();
             gameLoop.update(registry, deltaTime);
@@ -117,11 +122,11 @@ namespace
         gameOverMenu.create(registry);
 
         g_running = true;
-        sf::Clock clock;
+        auto lastTime = std::chrono::steady_clock::now();
 
         while (window.isOpen() && g_running && !gameOverMenu.isDone()) {
-            window.pollEvents([&](const sf::Event& event) {
-                if (event.is<sf::Event::Closed>()) {
+            window.pollEvents([&](const Event& event) {
+                if (event.type == EventType::Closed) {
                     g_running = false;
                     window.close();
                 }
@@ -129,7 +134,11 @@ namespace
                 buttonSystem.handleEvent(registry, event);
             });
 
-            const float deltaTime = std::min(clock.restart().asSeconds(), 0.1F);
+            auto currentTime = std::chrono::steady_clock::now();
+            std::chrono::duration<float> elapsed = currentTime - lastTime;
+            lastTime = currentTime;
+            const float deltaTime = std::min(elapsed.count(), 0.1F);
+            
             buttonSystem.update(registry, deltaTime);
 
             window.clear();
@@ -148,6 +157,12 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
                                  FontManager& fontManager)
 {
+    GraphicsFactory graphicsFactory;
+    SoundManager soundManager;
+    InputMapper mapper;
+    mapper.setBindings(g_keyBindings);
+    SoundManager::setGlobalVolume(g_musicVolume);
+
     Registry registry;
     EntityTypeRegistry typeRegistry;
     AssetManifest manifest        = loadManifest();
@@ -186,13 +201,10 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     std::uint32_t inputSequence = 0;
     float playerPosX            = 0.0F;
     float playerPosY            = 0.0F;
-    InputMapper mapper;
-    mapper.setBindings(g_keyBindings);
-    sf::Listener::setGlobalVolume(g_musicVolume);
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     g_musicVolume);
+                     g_musicVolume, graphicsFactory, soundManager);
 
     ButtonSystem buttonSystem(window, fontManager);
 

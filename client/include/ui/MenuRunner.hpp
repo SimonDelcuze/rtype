@@ -7,6 +7,7 @@
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/InputFieldSystem.hpp"
+#include "systems/RenderSystem.hpp"
 #include "ui/IMenu.hpp"
 
 #include <atomic>
@@ -32,6 +33,7 @@ class MenuRunner
     std::atomic<bool>& running_;
     Registry registry_;
 
+    RenderSystem renderSystem_;
     InputFieldSystem inputFieldSystem_;
     ButtonSystem buttonSystem_;
     HUDSystem hudSystem_;

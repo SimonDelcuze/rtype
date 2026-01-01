@@ -1,45 +1,58 @@
 #include "graphics/Window.hpp"
+#include "graphics/GraphicsFactory.hpp"
 
-#include <optional>
-
-Window::Window(const sf::VideoMode& mode, const std::string& title, bool vsync) : window_(mode, title, sf::Style::Close)
+Window::Window(const Vector2u& size, const std::string& title)
 {
-    window_.setVerticalSyncEnabled(vsync);
+    GraphicsFactory factory;
+    window_ = factory.createWindow(size.x, size.y, title);
 }
 
 bool Window::isOpen() const
 {
-    return window_.isOpen();
+    return window_->isOpen();
+}
+
+Vector2u Window::getSize() const
+{
+    return window_->getSize();
 }
 
 void Window::close()
 {
-    window_.close();
+    window_->close();
 }
 
-void Window::pollEvents(const std::function<void(const sf::Event&)>& handler)
+void Window::pollEvents(const std::function<void(const Event&)>& handler)
 {
-    while (const std::optional<sf::Event> event = window_.pollEvent()) {
-        handler(*event);
-    }
+    window_->pollEvents(handler);
 }
 
-void Window::clear(const sf::Color& color)
+void Window::clear(const Color& color)
 {
-    window_.clear(color);
+    window_->clear(color);
 }
 
 void Window::display()
 {
-    window_.display();
+    window_->display();
 }
 
-void Window::draw(const sf::Drawable& drawable)
+void Window::draw(const ISprite& sprite)
 {
-    window_.draw(drawable);
+    window_->draw(sprite);
 }
 
-sf::RenderWindow& Window::raw()
+void Window::draw(const IText& text)
+{
+    window_->draw(text);
+}
+
+void Window::draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type)
+{
+    window_->draw(vertices, vertexCount, color, type);
+}
+
+std::shared_ptr<IWindow> Window::getNativeWindow() const
 {
     return window_;
 }

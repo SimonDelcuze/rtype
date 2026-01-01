@@ -17,9 +17,12 @@ public:
     void setScale(const Vector2f& factor) override;
     void setOrigin(const Vector2f& origin) override;
 
+    unsigned int getCharacterSize() const override;
+
     std::string getString() const override;
     Vector2f getPosition() const override;
     FloatRect getGlobalBounds() const override;
+    FloatRect getLocalBounds() const override;
 
     const sf::Text& getSFMLText() const;
 

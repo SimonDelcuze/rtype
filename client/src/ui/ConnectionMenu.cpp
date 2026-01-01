@@ -19,7 +19,7 @@ namespace
         if (!textures.has("menu_bg"))
             textures.load("menu_bg", "client/assets/backgrounds/menu.jpg");
 
-        auto* tex = textures.get("menu_bg");
+        auto tex = textures.get("menu_bg");
         if (tex == nullptr)
             return 0;
 
@@ -30,7 +30,7 @@ namespace
         transform.scaleX = 2.25F;
         transform.scaleY = 2.0F;
 
-        SpriteComponent sprite(*tex);
+        SpriteComponent sprite(tex);
         registry.emplace<SpriteComponent>(entity, sprite);
         return entity;
     }
@@ -40,7 +40,7 @@ namespace
         if (!textures.has("logo"))
             textures.load("logo", "client/assets/other/rtype-logo.png");
 
-        auto* tex = textures.get("logo");
+        auto tex = textures.get("logo");
         if (tex == nullptr)
             return 0;
 
@@ -51,7 +51,7 @@ namespace
         transform.scaleX = 2.0F;
         transform.scaleY = 2.0F;
 
-        SpriteComponent sprite(*tex);
+        SpriteComponent sprite(tex);
         registry.emplace<SpriteComponent>(entity, sprite);
         return entity;
     }
@@ -63,7 +63,7 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto text    = TextComponent::create("ui", 24, sf::Color(200, 200, 200));
+        auto text    = TextComponent::create("ui", 24, Color(200, 200, 200));
         text.content = content;
         registry.emplace<TextComponent>(entity, text);
         return entity;
@@ -76,15 +76,15 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(400.0F, 50.0F, sf::Color(50, 50, 50), sf::Color(100, 100, 100));
-        box.focusColor = sf::Color(100, 200, 255);
+        auto box       = BoxComponent::create(400.0F, 50.0F, Color(50, 50, 50), Color(100, 100, 100));
+        box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<InputFieldComponent>(entity, field);
         registry.emplace<FocusableComponent>(entity, FocusableComponent::create(tabOrder));
         return entity;
     }
 
-    EntityId createButton(Registry& registry, float x, float y, const std::string& label, sf::Color fill,
+    EntityId createButton(Registry& registry, float x, float y, const std::string& label, Color fill,
                           std::function<void()> onClick)
     {
         EntityId entity = registry.createEntity();
@@ -92,8 +92,8 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(180.0F, 50.0F, fill, sf::Color(fill.r + 40, fill.g + 40, fill.b + 40));
-        box.focusColor = sf::Color(100, 200, 255);
+        auto box       = BoxComponent::create(180.0F, 50.0F, fill, Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40), static_cast<std::uint8_t>(fill.b + 40)));
+        box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         return entity;
@@ -121,25 +121,25 @@ void ConnectionMenu::create(Registry& registry)
     createInputField(registry, 440.0F, 290.0F, InputFieldComponent::ipField("127.0.0.1"), 0);
     createInputField(registry, 440.0F, 430.0F, InputFieldComponent::portField("50010"), 1);
 
-    createButton(registry, 440.0F, 550.0F, "Connect", sf::Color(0, 120, 200), [this]() {
+    createButton(registry, 440.0F, 550.0F, "Connect", Color(0, 120, 200), [this]() {
         Logger::instance().info("Connect clicked");
         done_       = true;
         useDefault_ = false;
     });
 
-    createButton(registry, 660.0F, 550.0F, "Use Default", sf::Color(80, 80, 80), [this]() {
+    createButton(registry, 660.0F, 550.0F, "Use Default", Color(80, 80, 80), [this]() {
         Logger::instance().info("Use Default clicked");
         done_       = true;
         useDefault_ = true;
     });
 
-    createButton(registry, 550.0F, 620.0F, "Settings", sf::Color(70, 70, 70), [this]() {
+    createButton(registry, 550.0F, 620.0F, "Settings", Color(70, 70, 70), [this]() {
         Logger::instance().info("Settings clicked");
         done_         = true;
         openSettings_ = true;
     });
 
-    createButton(registry, 1050.0F, 620.0F, "Quit", sf::Color(120, 50, 50), [this]() {
+    createButton(registry, 1050.0F, 620.0F, "Quit", Color(120, 50, 50), [this]() {
         Logger::instance().info("Quit clicked");
         done_          = true;
         exitRequested_ = true;
@@ -161,7 +161,7 @@ bool ConnectionMenu::isDone() const
     return done_;
 }
 
-void ConnectionMenu::handleEvent(Registry&, const sf::Event&) {}
+void ConnectionMenu::handleEvent(Registry&, const Event&) {}
 
 void ConnectionMenu::render(Registry&, Window&) {}
 
@@ -196,7 +196,7 @@ void ConnectionMenu::setError(Registry& registry, const std::string& message)
     transform.x     = 440.0F;
     transform.y     = 620.0F;
 
-    auto text    = TextComponent::create("ui", 20, sf::Color::Red);
+    auto text    = TextComponent::create("ui", 20, Color::Red);
     text.content = message;
     registry.emplace<TextComponent>(entity, text);
     errorText_ = entity;

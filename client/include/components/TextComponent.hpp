@@ -1,9 +1,10 @@
 #pragma once
 
+#include "graphics/abstraction/IText.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include "ecs/ResetValue.hpp"
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/Text.hpp>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -11,11 +12,11 @@ struct TextComponent
 {
     std::string fontId;
     unsigned int characterSize = 24;
-    sf::Color color            = sf::Color::White;
+    Color color                = Color::White;
     std::string content;
-    std::optional<sf::Text> text;
+    std::shared_ptr<IText> text;
 
-    static TextComponent create(const std::string& font, unsigned int size, const sf::Color& c)
+    static TextComponent create(const std::string& font, unsigned int size, const Color& c)
     {
         TextComponent t;
         t.fontId        = font;

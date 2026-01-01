@@ -6,6 +6,7 @@
 class SFMLTexture : public ITexture {
 public:
     bool loadFromFile(const std::string& filename) override;
+    bool create(unsigned int width, unsigned int height) override;
     Vector2u getSize() const override;
     void setRepeated(bool repeated) override;
     bool isRepeated() const override;

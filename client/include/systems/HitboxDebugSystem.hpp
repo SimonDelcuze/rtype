@@ -17,8 +17,8 @@ class HitboxDebugSystem
     void setThickness(float thickness);
 
   private:
+    bool enabled_{false};
+    sf::Color color_{sf::Color::Red};
+    float thickness_{1.0f};
     Window& window_;
-    bool enabled_    = true;
-    sf::Color color_ = sf::Color::Red;
-    float thickness_ = 1.0F;
 };

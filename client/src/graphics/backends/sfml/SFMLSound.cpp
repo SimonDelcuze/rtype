@@ -46,6 +46,14 @@ float SFMLSound::getVolume() const {
     return sound_.getVolume();
 }
 
+void SFMLSound::setPitch(float pitch) {
+    sound_.setPitch(pitch);
+}
+
+float SFMLSound::getPitch() const {
+    return sound_.getPitch();
+}
+
 void SFMLSound::setLoop(bool loop) {
     sound_.setLooping(loop);
 }

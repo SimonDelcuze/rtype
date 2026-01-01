@@ -83,7 +83,7 @@ void LevelEventSystem::applyBackground(Registry& registry, const std::string& ba
             return;
         }
     }
-    const sf::Texture* tex = textures_->get(entry->id);
+    auto tex = textures_->get(entry->id);
     if (tex == nullptr) {
         return;
     }
@@ -94,7 +94,9 @@ void LevelEventSystem::applyBackground(Registry& registry, const std::string& ba
             continue;
         }
         auto& sprite = registry.get<SpriteComponent>(id);
-        sprite.setTexture(*tex);
+        if (sprite.hasSprite()) {
+            sprite.setTexture(tex);
+        }
         auto& scroll        = registry.get<BackgroundScrollComponent>(id);
         scroll.resetOffsetX = 0.0F;
         scroll.resetOffsetY = 0.0F;
@@ -103,7 +105,7 @@ void LevelEventSystem::applyBackground(Registry& registry, const std::string& ba
 
     if (!updated) {
         EntityId e = registry.createEntity();
-        registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
+        registry.emplace<SpriteComponent>(e, SpriteComponent(tex));
         registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
         registry.emplace<BackgroundScrollComponent>(
             e, BackgroundScrollComponent::create(currentScrollSpeed(), 0.0F, 0.0F));

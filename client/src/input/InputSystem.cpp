@@ -190,20 +190,22 @@ void InputSystem::ensureChargeFx(Registry& registry, float x, float y)
         } catch (...) {
         }
     }
-    const auto* tex  = textures_->get("bullet");
+    auto texPtr  = textures_->get("bullet");
+    std::shared_ptr<ITexture> actualTex = texPtr;
     const auto* clip = animations_->get("bullet_charge_warmup");
-    if (tex == nullptr) {
-        tex = &textures_->getPlaceholder();
+
+    if (!actualTex) {
+        actualTex = textures_->getPlaceholder();
     }
     if (clip == nullptr || clip->frames.empty()) {
         return;
     }
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(x + 20.0F, y));
-    auto& s = registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
+    auto& s = registry.emplace<SpriteComponent>(e, SpriteComponent(actualTex));
     s.customFrames.reserve(clip->frames.size());
     for (const auto& f : clip->frames) {
-        s.customFrames.emplace_back(sf::Vector2i{f.x, f.y}, sf::Vector2i{f.width, f.height});
+        s.customFrames.emplace_back(f.x, f.y, f.width, f.height);
     }
     s.setFrame(0);
     auto anim = AnimationComponent::create(static_cast<std::uint32_t>(clip->frames.size()), clip->frameTime, true);

@@ -9,6 +9,10 @@ inline sf::Color toSFML(const Color& color) {
     return sf::Color(color.r, color.g, color.b, color.a);
 }
 
+inline Color fromSFML(const sf::Color& color) {
+    return {color.r, color.g, color.b, color.a};
+}
+
 inline sf::Vector2f toSFML(const Vector2f& vec) {
     return sf::Vector2f(vec.x, vec.y);
 }
@@ -19,6 +23,10 @@ inline sf::Vector2u toSFML(const Vector2u& vec) {
 
 inline sf::IntRect toSFML(const IntRect& rect) {
     return sf::IntRect({rect.left, rect.top}, {rect.width, rect.height});
+}
+
+inline Vector2u fromSFML(const sf::Vector2u& vec) {
+    return {vec.x, vec.y};
 }
 
 inline Vector2f fromSFML(const sf::Vector2f& vec) {

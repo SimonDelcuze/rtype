@@ -1,4 +1,7 @@
 #include "systems/ReplicationSystem.hpp"
+#include "graphics/GraphicsFactory.hpp"
+#include "graphics/abstraction/ISound.hpp"
+#include "graphics/abstraction/ISoundBuffer.hpp"
 
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
@@ -32,24 +35,6 @@ ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snaps
 
 namespace
 {
-    bool loadBufferWithFallback(sf::SoundBuffer& buffer, bool& attempted, bool& loaded, const std::string& primary,
-                                const std::string& fallback)
-    {
-        if (loaded) {
-            return loaded;
-        }
-        attempted = true;
-        if (buffer.loadFromFile(primary)) {
-            loaded = true;
-            return true;
-        }
-        if (!fallback.empty() && buffer.loadFromFile(fallback)) {
-            loaded = true;
-            return true;
-        }
-        return false;
-    }
-
     ThreadSafeQueue<EntitySpawnPacket>& dummySpawnQueue()
     {
         static ThreadSafeQueue<EntitySpawnPacket> q;
@@ -61,24 +46,6 @@ namespace
         return q;
     }
 
-    void ensurePool(std::vector<sf::Sound>& pool, const sf::SoundBuffer& buffer, std::size_t minSize)
-    {
-        if (pool.size() < minSize) {
-            pool.reserve(minSize);
-            for (std::size_t i = pool.size(); i < minSize; ++i) {
-                sf::Sound s(buffer);
-                pool.push_back(std::move(s));
-            }
-        }
-    }
-} // namespace
-
-ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
-    : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)
-{}
-
-namespace
-{
     std::pair<float, float> defaultScaleForType(std::uint16_t typeId)
     {
         if (typeId == 9)
@@ -88,6 +55,10 @@ namespace
         return {1.0F, 1.0F};
     }
 } // namespace
+
+ReplicationSystem::ReplicationSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots, const EntityTypeRegistry& types)
+    : snapshots_(&snapshots), spawnQueue_(&dummySpawnQueue()), destroyQueue_(&dummyDestroyQueue()), types_(&types)
+{}
 
 void ReplicationSystem::initialize() {}
 
@@ -155,36 +126,54 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             }
         }
 
+#include "graphics/GraphicsFactory.hpp"
+
+
         if (spawnPkt.entityType == 3) {
-            loadBufferWithFallback(laserBuffer_, laserLoadAttempted_, laserLoaded_, "client/assets/sounds/laser.wav",
-                                   "sounds/laser.wav");
-            if (!laserLoaded_ && laserLoadAttempted_) {
-                Logger::instance().warn(
-                    "[Audio] Failed to load laser sound (tried client/assets/sounds/laser.wav and sounds/laser.wav)");
+            
+            
+            if (!laserBuffer_) {
+                 GraphicsFactory factory;
+                 laserBuffer_ = factory.createSoundBuffer();
+                 if (laserBuffer_->loadFromFile("client/assets/sounds/laser.wav") || laserBuffer_->loadFromFile("sounds/laser.wav")) {
+                     laserLoaded_ = true;
+                 } else {
+                     laserLoadAttempted_ = true;
+                     Logger::instance().warn("[Audio] Failed to load laser sound");
+                 }
             }
+
             if (laserLoaded_ && playerReadyToFire) {
-                ensurePool(laserSounds_, laserBuffer_, 6);
+                if (laserSounds_.size() < 6) {
+                    GraphicsFactory factory;
+                    while(laserSounds_.size() < 6) {
+                        laserSounds_.push_back(factory.createSound());
+                    }
+                }
+                
                 bool played = false;
                 for (auto& sound : laserSounds_) {
-                    if (sound.getStatus() != sf::Sound::Status::Playing) {
-                        sound.setBuffer(laserBuffer_);
-                        sound.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                        sound.play();
+                    if (sound->getStatus() != ISound::Status::Playing) {
+                        sound->setBuffer(*laserBuffer_);
+                        sound->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        sound->play();
                         played = true;
                         break;
                     }
                 }
                 if (!played) {
                     if (laserSounds_.size() < 32) {
-                        sf::Sound s(laserBuffer_);
-                        s.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                        s.play();
+                        GraphicsFactory factory;
+                        auto s = factory.createSound();
+                        s->setBuffer(*laserBuffer_);
+                        s->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        s->play();
                         laserSounds_.push_back(std::move(s));
                     } else {
-                        laserSounds_[0].stop();
-                        laserSounds_[0].setBuffer(laserBuffer_);
-                        laserSounds_[0].setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                        laserSounds_[0].play();
+                        laserSounds_[0]->stop();
+                        laserSounds_[0]->setBuffer(*laserBuffer_);
+                        laserSounds_[0]->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                        laserSounds_[0]->play();
                     }
                 }
             }
@@ -197,38 +186,49 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         if (it != remoteToLocal_.end()) {
             auto typeIt = remoteToType_.find(destroyPkt.entityId);
             if (typeIt != remoteToType_.end() && typeIt->second == 2) {
-                loadBufferWithFallback(explosionBuffer_, explosionLoadTried_, explosionLoaded_,
-                                       "client/assets/sounds/explosion.wav", "sounds/explosion.wav");
-                if (!explosionLoaded_ && explosionLoadTried_) {
-                    Logger::instance().warn("[Audio] Failed to load explosion sound (tried "
-                                            "client/assets/sounds/explosion.wav and sounds/explosion.wav)");
-                }
+                 if (!explosionBuffer_) {
+                     GraphicsFactory factory;
+                     explosionBuffer_ = factory.createSoundBuffer();
+                     if (explosionBuffer_->loadFromFile("client/assets/sounds/explosion.wav") || explosionBuffer_->loadFromFile("sounds/explosion.wav")) {
+                         explosionLoaded_ = true;
+                     } else {
+                         explosionLoadTried_ = true;
+                         Logger::instance().warn("[Audio] Failed to load explosion sound");
+                     }
+                 }
+
                 if (explosionLoaded_) {
-                    explosionSounds_.erase(
-                        std::remove_if(explosionSounds_.begin(), explosionSounds_.end(),
-                                       [](const sf::Sound& s) { return s.getStatus() == sf::Sound::Status::Stopped; }),
-                        explosionSounds_.end());
+                    for (auto it = explosionSounds_.begin(); it != explosionSounds_.end(); ) {
+                         if ((*it)->getStatus() == ISound::Status::Stopped) {
+                             it = explosionSounds_.erase(it);
+                         } else {
+                             ++it;
+                         }
+                    }
+                        
                     bool played = false;
                     for (auto& sound : explosionSounds_) {
-                        if (sound.getStatus() != sf::Sound::Status::Playing) {
-                            sound.setBuffer(explosionBuffer_);
-                            sound.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            sound.play();
+                        if (sound->getStatus() != ISound::Status::Playing) {
+                            sound->setBuffer(*explosionBuffer_);
+                            sound->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            sound->play();
                             played = true;
                             break;
                         }
                     }
                     if (!played) {
                         if (explosionSounds_.size() < 32) {
-                            sf::Sound s(explosionBuffer_);
-                            s.setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            s.play();
+                            GraphicsFactory factory;
+                            auto s = factory.createSound();
+                            s->setBuffer(*explosionBuffer_);
+                            s->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            s->play();
                             explosionSounds_.push_back(std::move(s));
                         } else {
-                            explosionSounds_[0].stop();
-                            explosionSounds_[0].setBuffer(explosionBuffer_);
-                            explosionSounds_[0].setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            explosionSounds_[0].play();
+                            explosionSounds_[0]->stop();
+                            explosionSounds_[0]->setBuffer(*explosionBuffer_);
+                            explosionSounds_[0]->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
+                            explosionSounds_[0]->play();
                         }
                     }
                 }
@@ -348,12 +348,12 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     const AnimationClip* clip =
         data->animation != nullptr ? reinterpret_cast<const AnimationClip*>(data->animation) : nullptr;
     if (data->texture != nullptr) {
-        SpriteComponent sprite(*data->texture);
+        SpriteComponent sprite(data->texture);
         if (clip != nullptr) {
             sprite.customFrames.clear();
             sprite.customFrames.reserve(clip->frames.size());
             for (const auto& f : clip->frames) {
-                sprite.customFrames.emplace_back(sf::Vector2i{f.x, f.y}, sf::Vector2i{f.width, f.height});
+                sprite.customFrames.emplace_back(f.x, f.y, f.width, f.height);
             }
             if (!sprite.customFrames.empty()) {
                 sprite.setFrame(0);

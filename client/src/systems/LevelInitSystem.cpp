@@ -49,14 +49,13 @@ void LevelInitSystem::createHUDEntities(Registry& registry)
 {
     EntityId score = registry.createEntity();
     registry.emplace<TransformComponent>(score, TransformComponent::create(0.0F, 0.0F));
-    auto& scoreText = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, sf::Color::White));
+    auto& scoreText = registry.emplace<TextComponent>(score, TextComponent::create("score_font", 20, Color::White));
     scoreText.content = "SCORE 0000000";
     registry.emplace<ScoreComponent>(score, ScoreComponent::create(0));
     registry.emplace<LayerComponent>(score, LayerComponent::create(100));
 
     EntityId lives = registry.createEntity();
     registry.emplace<TransformComponent>(lives, TransformComponent::create(10.0F, 680.0F));
-    registry.emplace<TextComponent>(lives, TextComponent::create("score_font", 20, sf::Color::White));
     registry.emplace<LivesComponent>(lives, LivesComponent::create(3, 3));
     registry.emplace<LayerComponent>(lives, LayerComponent::create(100));
 }
@@ -95,21 +94,23 @@ RenderTypeData LevelInitSystem::buildRenderData(const ArchetypeEntry& entry)
     return data;
 }
 
-const sf::Texture* LevelInitSystem::resolveTexture(const std::string& spriteId)
+std::shared_ptr<ITexture> LevelInitSystem::resolveTexture(const std::string& spriteId)
 {
     auto textureEntry = manifest_->findTextureById(spriteId);
-    if (textureEntry) {
-        if (!textures_->has(textureEntry->id)) {
-            try {
-                textures_->load(textureEntry->id, "client/assets/" + textureEntry->path);
-            } catch (...) {
-                logMissingAsset(spriteId);
-            }
-        }
-        return textures_->get(textureEntry->id);
+    if (!textureEntry) {
+        Logger::instance().warn("[LevelInit] Unknown sprite id=" + spriteId);
+        return nullptr;
     }
-    logMissingAsset(spriteId);
-    return &textures_->getPlaceholder();
+
+    if (!textures_->has(textureEntry->id)) {
+        try {
+            textures_->load(textureEntry->id, "client/assets/" + textureEntry->path);
+        } catch (...) {
+            Logger::instance().warn("[LevelInit] Failed to load texture id=" + textureEntry->id);
+            return nullptr;
+        }
+    }
+    return textures_->get(textureEntry->id);
 }
 
 const AnimationClip* LevelInitSystem::resolveAnimation(const ArchetypeEntry& entry) const
@@ -184,7 +185,7 @@ void LevelInitSystem::applyBackground(Registry& registry, const LevelInitData& d
             return;
         }
     }
-    auto* tex = textures_->get(entry->id);
+    auto tex = textures_->get(entry->id);
     if (tex == nullptr) {
         return;
     }
@@ -192,7 +193,7 @@ void LevelInitSystem::applyBackground(Registry& registry, const LevelInitData& d
         registry.destroyEntity(id);
     }
     EntityId e = registry.createEntity();
-    registry.emplace<SpriteComponent>(e, SpriteComponent(*tex));
+    registry.emplace<SpriteComponent>(e, SpriteComponent(tex));
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
     registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(-50.0F, 0.0F, 0.0F));
     registry.emplace<LayerComponent>(e, LayerComponent::create(RenderLayer::Background));

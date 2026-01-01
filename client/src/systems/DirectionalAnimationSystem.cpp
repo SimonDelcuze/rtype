@@ -37,7 +37,7 @@ void DirectionalAnimationSystem::applyClipFrame(Registry& registry, EntityId id,
     sprite.customFrames.clear();
     sprite.customFrames.reserve(clip.frames.size());
     for (const auto& f : clip.frames) {
-        sprite.customFrames.emplace_back(sf::Vector2i{f.x, f.y}, sf::Vector2i{f.width, f.height});
+        sprite.customFrames.emplace_back(f.x, f.y, f.width, f.height);
     }
     sprite.setFrame(anim.currentFrame);
 }

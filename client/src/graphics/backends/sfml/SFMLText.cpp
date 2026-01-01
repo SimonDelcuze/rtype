@@ -49,8 +49,14 @@ void SFMLText::setScale(const Vector2f& factor) {
     text_.setScale(toSFML(factor));
 }
 
-void SFMLText::setOrigin(const Vector2f& origin) {
-    text_.setOrigin(toSFML(origin));
+void SFMLText::setOrigin(const Vector2f& origin)
+{
+    text_.setOrigin({origin.x, origin.y});
+}
+
+unsigned int SFMLText::getCharacterSize() const
+{
+    return text_.getCharacterSize();
 }
 
 std::string SFMLText::getString() const {
@@ -63,6 +69,10 @@ Vector2f SFMLText::getPosition() const {
 
 FloatRect SFMLText::getGlobalBounds() const {
     return fromSFML(text_.getGlobalBounds());
+}
+
+FloatRect SFMLText::getLocalBounds() const {
+    return fromSFML(text_.getLocalBounds());
 }
 
 const sf::Text& SFMLText::getSFMLText() const {

@@ -16,6 +16,8 @@ public:
     
     virtual void setVolume(float volume) = 0;
     virtual float getVolume() const = 0;
+    virtual void setPitch(float pitch) = 0;
+    virtual float getPitch() const = 0;
     virtual void setLoop(bool loop) = 0;
     virtual bool getLoop() const = 0;
 };

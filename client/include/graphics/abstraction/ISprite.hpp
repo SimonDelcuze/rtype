@@ -14,6 +14,8 @@ public:
     virtual void setScale(const Vector2f& factor) = 0;
     virtual void setOrigin(const Vector2f& origin) = 0;
     virtual void setColor(const Color& color) = 0;
+    virtual Color getColor() const = 0;
+    virtual IntRect getTextureRect() const = 0;
     
     virtual Vector2f getPosition() const = 0;
     virtual float getRotation() const = 0;

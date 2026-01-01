@@ -24,7 +24,7 @@ class ConnectionMenu : public IMenu
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
     bool isDone() const override;
-    void handleEvent(Registry& registry, const sf::Event& event) override;
+    void handleEvent(Registry& registry, const Event& event) override;
     void render(Registry& registry, Window& window) override;
 
     Result getResult(Registry& registry) const;

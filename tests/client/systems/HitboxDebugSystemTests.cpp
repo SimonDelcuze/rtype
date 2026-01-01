@@ -11,8 +11,9 @@ class HitboxDebugSystemTests : public ::testing::Test
   protected:
     void SetUp() override
     {
-        window = new Window(sf::VideoMode({64u, 64u}), "Test", false);
+        window = new Window({64u, 64u}, "Test");
         system = new HitboxDebugSystem(*window);
+        e = registry.createEntity();
     }
 
     void TearDown() override
@@ -24,6 +25,7 @@ class HitboxDebugSystemTests : public ::testing::Test
     Window* window;
     HitboxDebugSystem* system;
     Registry registry;
+    EntityId e;
 };
 
 TEST_F(HitboxDebugSystemTests, UpdateWithNoEntities)

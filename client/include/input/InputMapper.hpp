@@ -2,8 +2,7 @@
 
 #include "input/KeyBindings.hpp"
 
-#include <SFML/Window/Event.hpp>
-#include <SFML/Window/Keyboard.hpp>
+#include "graphics/abstraction/Event.hpp"
 #include <cstdint>
 #include <network/InputPacket.hpp>
 
@@ -27,13 +26,13 @@ class InputMapper
         static_cast<std::uint16_t>(static_cast<std::uint16_t>(InputFlag::Charge5));
 
     virtual ~InputMapper() = default;
-    void handleEvent(const sf::Event& event);
+    void handleEvent(const Event& event);
     virtual std::uint16_t pollFlags() const;
     void setBindings(const KeyBindings& bindings);
     KeyBindings getBindings() const;
 
   private:
-    void setKeyState(sf::Keyboard::Key key, bool pressed);
+    void setKeyState(KeyCode key, bool pressed);
 
     KeyBindings bindings_ = KeyBindings::defaults();
     bool upPressed_       = false;

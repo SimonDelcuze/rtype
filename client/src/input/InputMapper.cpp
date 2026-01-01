@@ -16,18 +16,18 @@ std::uint16_t InputMapper::pollFlags() const
     return flags;
 }
 
-void InputMapper::handleEvent(const sf::Event& event)
+void InputMapper::handleEvent(const Event& event)
 {
-    if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
-        setKeyState(key->code, true);
-    } else if (const auto* key = event.getIf<sf::Event::KeyReleased>()) {
-        setKeyState(key->code, false);
-    } else if (event.is<sf::Event::FocusLost>()) {
+    if (event.type == EventType::KeyPressed) {
+        setKeyState(event.key.code, true);
+    } else if (event.type == EventType::KeyReleased) {
+        setKeyState(event.key.code, false);
+    } else if (event.type == EventType::LostFocus) {
         upPressed_ = downPressed_ = leftPressed_ = rightPressed_ = firePressed_ = false;
     }
 }
 
-void InputMapper::setKeyState(sf::Keyboard::Key key, bool pressed)
+void InputMapper::setKeyState(KeyCode key, bool pressed)
 {
     if (key == bindings_.up)
         upPressed_ = pressed;

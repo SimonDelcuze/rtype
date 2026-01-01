@@ -5,6 +5,7 @@
 #include "ecs/Registry.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "graphics/abstraction/Event.hpp"
 #include "network/EndpointParser.hpp"
 #include "runtime/MenuMusic.hpp"
 #include "systems/ButtonSystem.hpp"
@@ -14,7 +15,6 @@
 #include "ui/SettingsMenu.hpp"
 #include "ui/WaitingRoomMenu.hpp"
 
-#include <SFML/System/Clock.hpp>
 #include <chrono>
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
@@ -98,7 +98,7 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
 
 JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutSeconds)
 {
-    sf::Clock clock;
+    auto startTime = std::chrono::steady_clock::now();
     while (window.isOpen() && g_running) {
         if (net.handler)
             net.handler->poll();
@@ -111,13 +111,16 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
             Logger::instance().warn("Join denied by server - game already in progress");
             return JoinResult::Denied;
         }
-        if (clock.getElapsedTime().asSeconds() > timeoutSeconds) {
+        
+        auto currentTime = std::chrono::steady_clock::now();
+        std::chrono::duration<float> elapsed = currentTime - startTime;
+        if (elapsed.count() > timeoutSeconds) {
             Logger::instance().warn("Timeout waiting for server response");
             return JoinResult::Timeout;
         }
 
-        window.pollEvents([&](const sf::Event& event) {
-            if (event.is<sf::Event::Closed>()) {
+        window.pollEvents([&](const Event& event) {
+            if (event.type == EventType::Closed) {
                 window.close();
             }
         });
@@ -143,13 +146,16 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
     ButtonSystem buttonSystem(window, fontManager);
     HUDSystem hudSystem(window, fontManager, textureManager);
 
-    sf::Clock clock;
+    auto lastTime = std::chrono::steady_clock::now();
 
     while (window.isOpen() && !menu.isDone() && g_running) {
-        float dt = clock.restart().asSeconds();
+        auto currentTime = std::chrono::steady_clock::now();
+        std::chrono::duration<float> elapsed = currentTime - lastTime;
+        lastTime = currentTime;
+        float dt = std::min(elapsed.count(), 0.1F);
 
-        window.pollEvents([&](const sf::Event& event) {
-            if (event.is<sf::Event::Closed>()) {
+        window.pollEvents([&](const Event& event) {
+            if (event.type == EventType::Closed) {
                 window.close();
                 return;
             }
@@ -162,16 +168,16 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
 
         menu.update(registry, dt);
 
-        window.clear(sf::Color(30, 30, 40));
+        window.clear(Color{30, 30, 40});
 
         for (EntityId entity : registry.view<TransformComponent, SpriteComponent>()) {
             auto& transform = registry.get<TransformComponent>(entity);
-            auto& sprite    = registry.get<SpriteComponent>(entity);
-            if (sprite.hasSprite()) {
-                auto* spr = const_cast<sf::Sprite*>(sprite.raw());
-                spr->setPosition(sf::Vector2f{transform.x, transform.y});
-                spr->setScale(sf::Vector2f{transform.scaleX, transform.scaleY});
-                window.draw(*spr);
+            auto& spriteConf = registry.get<SpriteComponent>(entity);
+            
+            if (spriteConf.sprite) {
+                spriteConf.sprite->setPosition(Vector2f{transform.x, transform.y});
+                spriteConf.sprite->setScale(Vector2f{transform.scaleX, transform.scaleY});
+                window.draw(*spriteConf.sprite);
             }
         }
 
