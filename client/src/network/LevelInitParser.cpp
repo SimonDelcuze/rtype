@@ -128,8 +128,16 @@ std::optional<LevelInitData> LevelInitParser::parse(const std::vector<std::uint8
         return std::nullopt;
     }
 
+    auto hdr = PacketHeader::decode(data.data(), data.size());
+    if (!hdr) {
+        return std::nullopt;
+    }
+    const std::size_t payloadEnd = PacketHeader::kSize + hdr->payloadSize;
+    if (data.size() < payloadEnd) {
+        return std::nullopt;
+    }
     std::size_t offset = PacketHeader::kSize;
-    std::size_t total  = data.size();
+    std::size_t total  = payloadEnd;
 
     if (!ensureAvailable(offset, 6, total)) {
         return std::nullopt;
