@@ -21,6 +21,8 @@ class SFMLWindow : public IWindow
     void draw(const ISprite& sprite) override;
     void draw(const IText& text) override;
     void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type) override;
+    void drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
+                       Color outlineColor, float outlineThickness) override;
 
   private:
     sf::RenderWindow window_;

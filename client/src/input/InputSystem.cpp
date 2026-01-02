@@ -253,15 +253,16 @@ AnimationRegistry& InputSystem::dummyAnimations()
 
 void InputSystem::updateChargeMeter(Registry& registry, float progress)
 {
-    EntityId id{};
-    if (chargeMeterId_.has_value() && registry.isAlive(*chargeMeterId_)) {
-        id = *chargeMeterId_;
-    } else {
-        id             = registry.createEntity();
-        chargeMeterId_ = id;
+    if (!playerId_.has_value() || !registry.isAlive(*playerId_)) {
+        return;
     }
+    EntityId id = *playerId_;
+
     if (!registry.has<ChargeMeterComponent>(id)) {
         registry.emplace<ChargeMeterComponent>(id);
+        if (!registry.has<TagComponent>(id)) {
+            registry.emplace<TagComponent>(id, TagComponent::create(EntityTag::Player));
+        }
     }
     auto& meter    = registry.get<ChargeMeterComponent>(id);
     meter.progress = progress;
