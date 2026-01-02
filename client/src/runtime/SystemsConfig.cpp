@@ -24,18 +24,12 @@ AssetManifest loadManifest()
     }
 }
 
-#include "systems/AudioSystem.hpp"
-
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-<<<<<<< HEAD
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
                       SoundManager& soundManager)
-=======
-                      FontManager& fontManager, EventBus& eventBus)
->>>>>>> 066cffc (fix: error on music test)
 {
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
                                                      textures, animations));
