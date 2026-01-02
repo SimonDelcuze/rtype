@@ -97,17 +97,11 @@ void HUDSystem::update(Registry& registry, float)
         Vector2f bg[4] = {{x, y}, {x, y + barHeight}, {x + barWidth, y}, {x + barWidth, y + barHeight}};
         window_.draw(bg, 4, Color{30, 20, 20, 200}, 4);
 
-        Vector2f fg[4] = {{x, y},
-                          {x, y + barHeight},
-                          {x + (barWidth * ratio), y},
-                          {x + (barWidth * ratio), y + barHeight}};
+        Vector2f fg[4] = {
+            {x, y}, {x, y + barHeight}, {x + (barWidth * ratio), y}, {x + (barWidth * ratio), y + barHeight}};
         window_.draw(fg, 4, Color{220, 60, 60, 230}, 4);
 
-        Vector2f outline[5] = {{x, y},
-                               {x + barWidth, y},
-                               {x + barWidth, y + barHeight},
-                               {x, y + barHeight},
-                               {x, y}};
+        Vector2f outline[5] = {{x, y}, {x + barWidth, y}, {x + barWidth, y + barHeight}, {x, y + barHeight}, {x, y}};
         window_.draw(outline, 5, Color{140, 60, 60, 220}, 2);
 
         auto font = fonts_.get("score_font");
