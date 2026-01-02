@@ -86,34 +86,8 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         const auto& transform = registry.get<TransformComponent>(id);
         const auto& box       = registry.get<BoxComponent>(id);
 
-        float w = box.width;
-        float h = box.height;
-
-        Vector2f loc[4] = {{0.0f, 0.0f}, {0.0f, h}, {w, 0.0f}, {w, h}};
-
-        float rad = transform.rotation * 3.14159265359f / 180.0f;
-        float c   = std::cos(rad);
-        float s   = std::sin(rad);
-
-        Vector2f world[4];
-        for (int i = 0; i < 4; ++i) {
-            float sx = loc[i].x * transform.scaleX;
-            float sy = loc[i].y * transform.scaleY;
-
-            float rx = sx * c - sy * s;
-            float ry = sx * s + sy * c;
-
-            world[i].x = rx + transform.x;
-            world[i].y = ry + transform.y;
-        }
-
-        if (box.fillColor.a > 0) {
-            window_.draw(world, 4, box.fillColor, 4);
-        }
-
-        if (box.outlineThickness > 0.0f && box.outlineColor.a > 0) {
-            Vector2f outline[5] = {world[0], world[2], world[3], world[1], world[0]};
-            window_.draw(outline, 5, box.outlineColor, 2);
-        }
+        window_.drawRectangle({box.width, box.height}, {transform.x, transform.y}, transform.rotation,
+                              {transform.scaleX, transform.scaleY}, box.fillColor, box.outlineColor,
+                              box.outlineThickness);
     }
 }

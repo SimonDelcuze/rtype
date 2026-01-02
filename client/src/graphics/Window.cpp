@@ -53,6 +53,12 @@ void Window::draw(const Vector2f* vertices, std::size_t vertexCount, Color color
     window_->draw(vertices, vertexCount, color, type);
 }
 
+void Window::drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
+                           Color outlineColor, float outlineThickness)
+{
+    window_->drawRectangle(size, position, rotation, scale, fillColor, outlineColor, outlineThickness);
+}
+
 std::shared_ptr<IWindow> Window::getNativeWindow() const
 {
     return window_;

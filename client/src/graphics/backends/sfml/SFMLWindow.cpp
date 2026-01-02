@@ -75,3 +75,16 @@ void SFMLWindow::draw(const Vector2f* vertices, std::size_t vertexCount, Color c
 
     window_.draw(sfVertices.data(), vertexCount, static_cast<sf::PrimitiveType>(type));
 }
+
+void SFMLWindow::drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
+                               Color outlineColor, float outlineThickness)
+{
+    sf::RectangleShape rect(sf::Vector2f(size.x, size.y));
+    rect.setPosition(sf::Vector2f(position.x, position.y));
+    rect.setRotation(sf::degrees(rotation));
+    rect.setScale(sf::Vector2f(scale.x, scale.y));
+    rect.setFillColor(sf::Color(fillColor.r, fillColor.g, fillColor.b, fillColor.a));
+    rect.setOutlineColor(sf::Color(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a));
+    rect.setOutlineThickness(outlineThickness);
+    window_.draw(rect);
+}

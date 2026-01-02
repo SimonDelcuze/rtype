@@ -10,6 +10,7 @@
 #include "runtime/MenuMusic.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
+#include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/MenuRunner.hpp"
 #include "ui/SettingsMenu.hpp"
@@ -145,6 +146,7 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
 
     ButtonSystem buttonSystem(window, fontManager);
     HUDSystem hudSystem(window, fontManager, textureManager);
+    RenderSystem renderSystem(window);
 
     auto lastTime = std::chrono::steady_clock::now();
 
@@ -170,16 +172,7 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
 
         window.clear(Color{30, 30, 40});
 
-        for (EntityId entity : registry.view<TransformComponent, SpriteComponent>()) {
-            auto& transform  = registry.get<TransformComponent>(entity);
-            auto& spriteConf = registry.get<SpriteComponent>(entity);
-
-            if (spriteConf.sprite) {
-                spriteConf.sprite->setPosition(Vector2f{transform.x, transform.y});
-                spriteConf.sprite->setScale(Vector2f{transform.scaleX, transform.scaleY});
-                window.draw(*spriteConf.sprite);
-            }
-        }
+        renderSystem.update(registry, dt);
 
         buttonSystem.update(registry, dt);
         hudSystem.update(registry, dt);

@@ -188,13 +188,22 @@ void SettingsMenu::handleEvent(Registry& registry, const Event& event)
 
 void SettingsMenu::render(Registry&, Window& window)
 {
-    float ratio       = musicVolume_ / 100.0F;
-    float filledWidth = sliderWidth_ * std::clamp(ratio, 0.0F, 1.0F);
-    (void) filledWidth;
-    (void) window;
+    float ratio       = std::clamp(musicVolume_ / 100.0F, 0.0F, 1.0F);
+    float filledWidth = sliderWidth_ * ratio;
 
-    GraphicsFactory factory;
-    (void) factory;
+    window.drawRectangle({sliderWidth_, sliderHeight_}, {sliderX_, sliderY_}, 0.0F, {1.0F, 1.0F}, Color(60, 60, 60),
+                         Color::Transparent, 1.0F);
+
+    if (filledWidth > 0.0F) {
+        window.drawRectangle({filledWidth, sliderHeight_}, {sliderX_, sliderY_}, 0.0F, {1.0F, 1.0F}, Color(0, 180, 255),
+                             Color::Transparent, 0.0F);
+    }
+
+    float knobSize = 16.0F;
+    float knobX    = sliderX_ + filledWidth - (knobSize / 2.0F);
+    float knobY    = sliderY_ + (sliderHeight_ / 2.0F) - (knobSize / 2.0F);
+    window.drawRectangle({knobSize, knobSize}, {knobX, knobY}, 0.0F, {1.0F, 1.0F}, Color::White, Color(0, 100, 200),
+                         2.0F);
 }
 
 SettingsMenu::Result SettingsMenu::getResult(Registry&) const
