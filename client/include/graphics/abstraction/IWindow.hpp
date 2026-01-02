@@ -25,4 +25,6 @@ class IWindow
     virtual void draw(const ISprite& sprite)                                                    = 0;
     virtual void draw(const IText& text)                                                        = 0;
     virtual void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type) = 0;
+    virtual void drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
+                               Color outlineColor, float outlineThickness)                      = 0;
 };

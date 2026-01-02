@@ -50,7 +50,7 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
         if (tex) {
             livesSprite->setTexture(*tex);
             livesSprite->setTextureRect({0, 0, 33, 17});
-            livesSprite->setScale({1.5f, 1.5f});
+            livesSprite->setScale({1.0f, 1.0f});
         }
     }
 
@@ -87,28 +87,30 @@ void HUDSystem::update(Registry& registry, float)
         }
     }
 
-    for (EntityId id : registry.view<TagComponent, ChargeMeterComponent>()) {
-        const auto& tag = registry.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Player)) {
-            float progress = registry.get<ChargeMeterComponent>(id).progress;
+    float chargeProgress = 0.0f;
+    bool hasCharge       = false;
+    for (EntityId e : registry.view<ChargeMeterComponent>()) {
+        if (!registry.isAlive(e))
+            continue;
+        chargeProgress = std::clamp(registry.get<ChargeMeterComponent>(e).progress, 0.0f, 1.0f);
+        hasCharge      = true;
+        break;
+    }
 
-            auto size  = window_.getSize();
-            float barW = 200.0f;
-            float barH = 15.0f;
-            float x    = (size.x - barW) / 2.0f;
-            float y    = size.y - 40.0f;
+    if (hasCharge) {
+        auto size       = window_.getSize();
+        float barWidth  = 220.0f;
+        float barHeight = 12.0f;
+        float x         = (static_cast<float>(size.x) - barWidth) / 2.0f;
+        float y         = static_cast<float>(size.y) - 30.0f;
 
-            Vector2f bg[4] = {{x, y}, {x, y + barH}, {x + barW, y}, {x + barW, y + barH}};
-            window_.draw(bg, 4, Color{100, 100, 100}, 4);
+        window_.drawRectangle({barWidth, barHeight}, {x, y}, 0.0f, {1.0f, 1.0f}, Color{20, 20, 40, 160},
+                              Color{80, 120, 220, 200}, 2.0f);
 
-            float fillW    = barW * std::clamp(progress, 0.0f, 1.0f);
-            Vector2f fg[4] = {{x, y}, {x, y + barH}, {x + fillW, y}, {x + fillW, y + barH}};
-            window_.draw(fg, 4, Color{0, 255, 255}, 4);
-
-            Vector2f outline[5] = {{x, y}, {x + barW, y}, {x + barW, y + barH}, {x, y + barH}, {x, y}};
-            window_.draw(outline, 5, Color::White, 2);
-
-            break;
+        if (chargeProgress > 0.0f) {
+            float fillWidth = barWidth * chargeProgress;
+            window_.drawRectangle({fillWidth, barHeight}, {x, y}, 0.0f, {1.0f, 1.0f}, Color{70, 160, 255, 230},
+                                  Color::Transparent, 0.0f);
         }
     }
 

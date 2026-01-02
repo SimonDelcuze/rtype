@@ -25,6 +25,8 @@ class Window
     void draw(const ISprite& sprite);
     void draw(const IText& text);
     void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type);
+    void drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
+                       Color outlineColor, float outlineThickness);
 
     std::shared_ptr<IWindow> getNativeWindow() const;
 
