@@ -101,6 +101,7 @@ void ServerApp::maybeStartGame()
         sendThread_.sendTo(levelPkt, s.endpoint);
         s.levelSent = true;
     }
+    introCinematic_.start(playerEntities_, registry_);
     gameStarted_ = true;
 }
 

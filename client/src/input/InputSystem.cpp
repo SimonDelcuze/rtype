@@ -21,14 +21,14 @@ namespace
 }
 
 InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
-                         float& posY, TextureManager& textures, AnimationRegistry& animations)
+                         float& posY, TextureManager& textures, AnimationRegistry& animations, LevelState* levelState)
     : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY),
-      textures_(&textures), animations_(&animations)
+      textures_(&textures), animations_(&animations), levelState_(levelState)
 {}
 
 InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
-                         float& posY)
-    : InputSystem(buffer, mapper, sequenceCounter, posX, posY, dummyTextures(), dummyAnimations())
+                         float& posY, LevelState* levelState)
+    : InputSystem(buffer, mapper, sequenceCounter, posX, posY, dummyTextures(), dummyAnimations(), levelState)
 {}
 
 void InputSystem::initialize() {}
@@ -36,6 +36,10 @@ void InputSystem::initialize() {}
 void InputSystem::update(Registry& registry, float deltaTime)
 {
     ensurePlayerPosition(registry);
+    if (levelState_ != nullptr && levelState_->introCinematicActive) {
+        resetInputState(registry);
+        return;
+    }
 
     fireElapsed_ += deltaTime;
     repeatElapsed_ += deltaTime;
@@ -261,6 +265,17 @@ void InputSystem::updateChargeMeter(Registry& registry, float progress)
     }
     auto& meter    = registry.get<ChargeMeterComponent>(id);
     meter.progress = progress;
+}
+
+void InputSystem::resetInputState(Registry& registry)
+{
+    destroyChargeFx(registry);
+    updateChargeMeter(registry, 0.0F);
+    fireHoldTime_      = 0.0F;
+    fireHeldLastFrame_ = false;
+    fireElapsed_       = 0.0F;
+    repeatElapsed_     = 0.0F;
+    lastSentMoveFlags_ = 0;
 }
 
 bool InputSystem::ensurePlayerPosition(Registry& registry)

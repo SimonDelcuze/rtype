@@ -5,6 +5,7 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
+#include "server/IntroCinematic.hpp"
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"
 #include "server/LevelLoader.hpp"
@@ -107,6 +108,7 @@ class ServerApp
     ScoreSystem scoreSys_;
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
+    IntroCinematic introCinematic_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent> timeoutQueue_;

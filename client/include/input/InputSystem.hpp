@@ -4,6 +4,7 @@
 #include "graphics/TextureManager.hpp"
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
+#include "level/LevelState.hpp"
 #include "systems/ISystem.hpp"
 
 #include <optional>
@@ -12,8 +13,9 @@ class InputSystem : public ISystem
 {
   public:
     InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY,
-                TextureManager& textures, AnimationRegistry& animations);
-    InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY);
+                TextureManager& textures, AnimationRegistry& animations, LevelState* levelState = nullptr);
+    InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY,
+                LevelState* levelState = nullptr);
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;
@@ -28,6 +30,7 @@ class InputSystem : public ISystem
     void updateChargeFx(Registry& registry, float x, float y);
     bool ensurePlayerPosition(Registry& registry);
     void updateChargeMeter(Registry& registry, float progress);
+    void resetInputState(Registry& registry);
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
 
@@ -40,6 +43,7 @@ class InputSystem : public ISystem
     std::uint16_t lastSentMoveFlags_ = 0;
     TextureManager* textures_;
     AnimationRegistry* animations_;
+    LevelState* levelState_ = nullptr;
     float fireElapsed_      = 0.0F;
     float repeatInterval_   = 0.05F;
     float repeatElapsed_    = 0.0F;
