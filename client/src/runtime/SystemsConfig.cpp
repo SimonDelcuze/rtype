@@ -7,6 +7,7 @@
 #include "systems/DirectionalAnimationSystem.hpp"
 #include "systems/GameOverSystem.hpp"
 #include "systems/HUDSystem.hpp"
+#include "systems/IntroCinematicSystem.hpp"
 #include "systems/InvincibilitySystem.hpp"
 #include "systems/LevelEventSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
@@ -31,8 +32,9 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
                       SoundManager& soundManager)
 {
+    gameLoop.addSystem(std::make_shared<IntroCinematicSystem>(levelState));
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
-                                                     textures, animations));
+                                                     textures, animations, &levelState));
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));

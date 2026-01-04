@@ -43,9 +43,11 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
         meta.scaleY = boss.scaleY;
         bossMeta_.emplace(boss.typeId, std::move(meta));
     }
-    state_->levelId = data.levelId;
-    state_->seed    = data.seed;
-    state_->active  = true;
+    state_->levelId              = data.levelId;
+    state_->seed                 = data.seed;
+    state_->active               = true;
+    state_->introCinematicActive = true;
+    state_->introCinematicTime   = 0.0F;
     applyBackground(registry, data);
     createHUDEntities(registry);
     for (const auto& entry : data.archetypes) {

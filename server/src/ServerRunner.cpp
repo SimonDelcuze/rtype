@@ -162,15 +162,20 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
         return;
     }
 
-    auto mapped = mapInputs(inputs);
-    playerInputSys_.update(registry_, mapped);
+    introCinematic_.update(registry_, playerEntities_, deltaTime);
+    const bool introActive = introCinematic_.active();
+    if (!introActive) {
+        auto mapped = mapInputs(inputs);
+        playerInputSys_.update(registry_, mapped);
+    }
 
     movementSys_.update(registry_, deltaTime);
     monsterMovementSys_.update(registry_, deltaTime);
     if (levelLoaded_) {
-        levelDirector_->update(registry_, deltaTime);
+        float levelDelta = introActive ? 0.0F : deltaTime;
+        levelDirector_->update(registry_, levelDelta);
         auto events = levelDirector_->consumeEvents();
-        levelSpawnSys_->update(registry_, deltaTime, events);
+        levelSpawnSys_->update(registry_, levelDelta, events);
         sendSegmentState();
         sendLevelEvents(events);
         captureCheckpoint(events);
@@ -296,6 +301,7 @@ void ServerApp::resetGame()
     sendThread_.clearLatest();
     currentTick_ = 0;
     gameStarted_ = false;
+    introCinematic_.reset();
     eventBus_.clear();
     knownEntities_.clear();
     ControlEvent ctrl;
