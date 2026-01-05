@@ -24,13 +24,12 @@ void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& input
     logCollisions(collisions);
     damageSys_.apply(registry_, collisions);
 
-    std::vector<EntityId> toDestroy = collectDeadEntities();
-    broadcastDestructions(toDestroy);
-    destructionSys_.update(registry_, toDestroy);
+    handleDeathAndRespawn();
 
     auto current = collectCurrentEntities();
     syncEntityLifecycle(current);
 }
+
 
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {
@@ -67,32 +66,12 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     }
     enemyShootingSys_.update(registry_, deltaTime);
 
+    updateRespawnTimers(deltaTime);
+    updateInvincibilityTimers(deltaTime);
+
     cleanupExpiredMissiles(deltaTime);
+
     cleanupOffscreenEntities();
-}
-
-std::vector<EntityId> ServerApp::collectDeadEntities()
-{
-    std::vector<EntityId> toDestroy;
-    for (EntityId id : registry_.view<HealthComponent>()) {
-        if (registry_.isAlive(id) && registry_.get<HealthComponent>(id).current <= 0) {
-            toDestroy.push_back(id);
-        }
-    }
-    return toDestroy;
-}
-
-void ServerApp::broadcastDestructions(const std::vector<EntityId>& toDestroy)
-{
-    if (toDestroy.empty()) {
-        return;
-    }
-    Logger::instance().info("[Replication] Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
-    for (EntityId id : toDestroy) {
-        EntityDestroyedPacket pkt{};
-        pkt.entityId = id;
-        sendThread_.broadcast(pkt);
-    }
 }
 
 std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
@@ -105,6 +84,8 @@ std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
     }
     return current;
 }
+
+
 
 void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 {
