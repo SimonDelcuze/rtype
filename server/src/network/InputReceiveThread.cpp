@@ -1,6 +1,6 @@
 #include "network/InputReceiveThread.hpp"
-
 #include "Logger.hpp"
+#include "server/Session.hpp"
 
 #include <array>
 #include <chrono>
@@ -12,26 +12,8 @@
 namespace
 {
     constexpr std::chrono::milliseconds kPollDelay(1);
-    std::string endpointToString(const IpEndpoint& ep)
-    {
-        std::ostringstream ss;
-        ss << static_cast<int>(ep.addr[0]) << '.' << static_cast<int>(ep.addr[1]) << '.' << static_cast<int>(ep.addr[2])
-           << '.' << static_cast<int>(ep.addr[3]) << ':' << ep.port;
-        return ss.str();
-    }
-    std::string parseStatusToString(InputParseStatus status)
-    {
-        switch (status) {
-            case InputParseStatus::Ok:
-                return "ok";
-            case InputParseStatus::DecodeFailed:
-                return "decode_failed";
-            case InputParseStatus::InvalidFlags:
-                return "invalid_flags";
-        }
-        return "unknown";
-    }
 } // namespace
+
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
                                        ThreadSafeQueue<ControlEvent>& controlQueue,
@@ -110,6 +92,7 @@ void InputReceiveThread::run()
             checkTimeouts(now);
             lastTimeoutCheck_ = now;
         }
+
         IpEndpoint src{};
         auto r = socket_.recvFrom(buf.data(), buf.size(), src);
         if (!r.ok()) {
@@ -119,67 +102,95 @@ void InputReceiveThread::run()
             }
             if (r.error == UdpError::Interrupted)
                 continue;
-            continue;
-        }
-        auto hdr = PacketHeader::decode(buf.data(), r.size);
-        if (!hdr) {
-            Logger::instance().warn("input_drop status=decode_failed from=" + endpointToString(src) +
-                                    " size=" + std::to_string(r.size));
-            continue;
-        }
-        if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ClientToServer)) {
+
+            Logger::instance().warn("[Input] recvFrom failed: error=" + std::to_string(static_cast<int>(r.error)));
             continue;
         }
 
-        if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Input)) {
-            EndpointKey key{src.addr, src.port};
-            bool stale = false;
-            {
-                std::lock_guard<std::mutex> lock(sessionMutex_);
-                auto it = sessions_.find(key);
-                if (it != sessions_.end() && hdr->sequenceId <= it->second.lastSequenceId)
-                    stale = true;
-            }
-            if (stale) {
-                Logger::instance().warn("input_drop status=stale_sequence from=" + endpointToString(src) +
-                                        " size=" + std::to_string(r.size));
-                continue;
-            }
-            auto parsed = parseInputPacket(buf.data(), r.size);
-            if (!parsed.input) {
-                Logger::instance().warn("input_drop status=" + parseStatusToString(parsed.status) +
-                                        " from=" + endpointToString(src) + " size=" + std::to_string(r.size));
-                continue;
-            }
-            now = std::chrono::steady_clock::now();
-            {
-                std::lock_guard<std::mutex> lock(sessionMutex_);
-                auto& state          = sessions_[key];
-                state.lastSequenceId = parsed.input->sequenceId;
-                state.lastPacketTime = now;
-                lastAccepted_        = key;
-            }
-            ReceivedInput ev{*parsed.input, src};
-            queue_.push(std::move(ev));
-            continue;
-        }
-
-        if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
-            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
-            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
-            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientPing) ||
-            hdr->messageType == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
-            ControlEvent ev{};
-            ev.header = *hdr;
-            ev.from   = src;
-            controlQueue_.push(std::move(ev));
-            continue;
-        }
-
-        Logger::instance().warn("input_drop status=decode_failed from=" + endpointToString(src) +
-                                " size=" + std::to_string(r.size));
+        processIncomingPacket(buf.data(), r.size, src);
     }
 }
+
+void InputReceiveThread::processIncomingPacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& src)
+{
+    Logger::instance().addBytesReceived(size);
+    Logger::instance().info("[Packets] Received " + std::to_string(size) + " bytes from " + endpointKey(src));
+
+    if (size < PacketHeader::kSize) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=decode_failed from=" + endpointKey(src) +
+                                " size=" + std::to_string(size));
+        return;
+    }
+
+    auto hdr = PacketHeader::decode(data, size);
+    if (!hdr) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=decode_failed from=" + endpointKey(src) +
+                                " size=" + std::to_string(size));
+        return;
+    }
+
+    if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ClientToServer))
+        return;
+
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Input)) {
+        handleInputPacket(*hdr, data, size, src);
+    } else {
+        handleControlPacket(*hdr, src);
+    }
+}
+
+void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& src)
+{
+    EndpointKey key{src.addr, src.port};
+    bool stale = false;
+    {
+        std::lock_guard<std::mutex> lock(sessionMutex_);
+        auto it = sessions_.find(key);
+        if (it != sessions_.end() && hdr.sequenceId <= it->second.lastSequenceId)
+            stale = true;
+    }
+
+    if (stale) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=stale_sequence from=" + endpointKey(src));
+        return;
+    }
+
+    auto parsed = parseInputPacket(data, size);
+    if (parsed.status != InputParseStatus::Ok) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=" + std::to_string(static_cast<int>(parsed.status)) +
+                                " from=" + endpointKey(src));
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(sessionMutex_);
+        auto& state          = sessions_[key];
+        state.lastSequenceId = parsed.input->sequenceId;
+        state.lastPacketTime = std::chrono::steady_clock::now();
+        lastAccepted_        = key;
+    }
+    queue_.push(ReceivedInput{*parsed.input, src});
+}
+
+void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const IpEndpoint& src)
+{
+    if (hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientPing) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
+        controlQueue_.push(ControlEvent{hdr, src});
+    } else {
+        Logger::instance().warn("[Input] input_drop status=unknown_message from=" + endpointKey(src));
+    }
+}
+
+
+
 
 void InputReceiveThread::checkTimeouts(std::chrono::steady_clock::time_point now)
 {

@@ -5,6 +5,7 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
+#include "server/EntityStateCache.hpp"
 #include "server/IntroCinematic.hpp"
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"
@@ -42,6 +43,7 @@ class ServerApp
 
   private:
     static constexpr double kTickRate = 60.0;
+    static constexpr std::uint32_t kFullStateInterval = 60;
 
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
@@ -49,12 +51,15 @@ class ServerApp
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
     void tick(const std::vector<ReceivedInput>& inputs);
+    void updateNetworkStats(float dt);
+    void updateGameplay(float dt, const std::vector<ReceivedInput>& inputs);
     void updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs);
     std::vector<EntityId> collectDeadEntities();
     void broadcastDestructions(const std::vector<EntityId>& toDestroy);
     std::unordered_set<EntityId> collectCurrentEntities();
     void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
     void sendSnapshots();
+    void logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull);
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
     void processTimeouts();
     LevelDefinition buildLevel() const;
@@ -124,4 +129,7 @@ class ServerApp
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
     std::unordered_set<EntityId> knownEntities_;
+    EntityStateCache entityStateCache_;
+    std::uint32_t lastFullStateTick_{0};
 };
+

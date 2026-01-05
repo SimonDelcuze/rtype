@@ -1,4 +1,6 @@
 #include "network/SendThread.hpp"
+#include "Logger.hpp"
+#include "server/Session.hpp"
 
 #include <chrono>
 #include <thread>
@@ -60,6 +62,8 @@ void SendThread::sendTo(const std::vector<std::uint8_t>& payload, const IpEndpoi
     if (!running_)
         return;
     socket_.sendTo(payload.data(), payload.size(), dst);
+    Logger::instance().addBytesSent(payload.size());
+    Logger::instance().info("[Packets] Sent " + std::to_string(payload.size()) + " bytes to " + endpointKey(dst));
 }
 
 void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
@@ -69,6 +73,8 @@ void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
         return;
     for (const auto& c : clients_) {
         socket_.sendTo(payload.data(), payload.size(), c);
+        Logger::instance().addBytesSent(payload.size());
+        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
 
@@ -79,6 +85,8 @@ void SendThread::broadcast(const EntitySpawnPacket& packet)
         return;
     for (const auto& c : clients_) {
         socket_.sendTo(payload.data(), payload.size(), c);
+        Logger::instance().addBytesSent(payload.size());
+        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
 
@@ -89,8 +97,11 @@ void SendThread::broadcast(const EntityDestroyedPacket& packet)
         return;
     for (const auto& c : clients_) {
         socket_.sendTo(payload.data(), payload.size(), c);
+        Logger::instance().addBytesSent(payload.size());
+        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
+
 
 void SendThread::clearLatest()
 {
@@ -117,6 +128,8 @@ void SendThread::run()
         if (!payload.empty()) {
             for (const auto& c : clients_) {
                 socket_.sendTo(payload.data(), payload.size(), c);
+                Logger::instance().addBytesSent(payload.size());
+                Logger::instance().info("[Packets] Sent " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
             }
         }
         auto now = steady_clock::now();

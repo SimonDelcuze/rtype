@@ -110,7 +110,7 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
         levelSpawnSys_ = std::make_unique<LevelSpawnSystem>(levelData_, levelDirector_.get());
     } else {
         levelLoaded_ = false;
-        Logger::instance().error("Level load failed: " + error.message + " path=" + error.path +
+        Logger::instance().error("[Level] Level load failed: " + error.message + " path=" + error.path +
                                  " ptr=" + error.jsonPointer);
     }
 }
@@ -118,7 +118,7 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
 bool ServerApp::start()
 {
     if (!levelLoaded_) {
-        Logger::instance().error("Server start aborted: level not loaded");
+        Logger::instance().error("[Level] Server start aborted: level not loaded");
         return false;
     }
     if (!receiveThread_.start()) {
@@ -151,148 +151,11 @@ void ServerApp::stop()
     receiveThread_.stop();
 }
 
-void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
-{
-    const float deltaTime = 1.0F / kTickRate;
-
-    handleControl();
-    maybeStartGame();
-    updateCountdown(deltaTime);
-    if (!gameStarted_) {
-        return;
-    }
-
-    introCinematic_.update(registry_, playerEntities_, deltaTime);
-    const bool introActive = introCinematic_.active();
-    if (!introActive) {
-        auto mapped = mapInputs(inputs);
-        playerInputSys_.update(registry_, mapped);
-    }
-
-    movementSys_.update(registry_, deltaTime);
-    monsterMovementSys_.update(registry_, deltaTime);
-    if (levelLoaded_) {
-        float levelDelta = introActive ? 0.0F : deltaTime;
-        levelDirector_->update(registry_, levelDelta);
-        auto events = levelDirector_->consumeEvents();
-        levelSpawnSys_->update(registry_, levelDelta, events);
-        sendSegmentState();
-        sendLevelEvents(events);
-        captureCheckpoint(events);
-    }
-    enemyShootingSys_.update(registry_, deltaTime);
-    boundarySys_.update(registry_);
-
-    updateRespawnTimers(deltaTime);
-    updateInvincibilityTimers(deltaTime);
-
-    cleanupExpiredMissiles(deltaTime);
-    cleanupOffscreenEntities();
-
-    auto collisions = collisionSys_.detect(registry_);
-    logCollisions(collisions);
-    damageSys_.apply(registry_, collisions);
-
-    handleDeathAndRespawn();
-    syncEntityLifecycle();
-
-    auto snapshotPkt = buildSnapshotPacket(registry_, currentTick_);
-    for (const auto& c : clients_) {
-        sendThread_.sendTo(snapshotPkt, c);
-    }
-    currentTick_++;
-}
-
-void ServerApp::cleanupExpiredMissiles(float deltaTime)
-{
-    std::vector<EntityId> expired;
-    for (EntityId id : registry_.view<MissileComponent>()) {
-        if (!registry_.isAlive(id)) {
-            continue;
-        }
-        auto& missile = registry_.get<MissileComponent>(id);
-        missile.lifetime -= deltaTime;
-        if (missile.lifetime <= 0.0F) {
-            expired.push_back(id);
-        }
-    }
-    if (expired.empty()) {
-        return;
-    }
-    for (EntityId id : expired) {
-        EntityDestroyedPacket pkt{};
-        pkt.entityId = id;
-        sendThread_.broadcast(pkt);
-        registry_.destroyEntity(id);
-    }
-}
-
-void ServerApp::cleanupOffscreenEntities()
-{
-    std::vector<EntityId> offscreenEntities;
-    for (EntityId id : registry_.view<TransformComponent, TagComponent>()) {
-        if (!registry_.isAlive(id)) {
-            continue;
-        }
-        auto& t   = registry_.get<TransformComponent>(id);
-        auto& tag = registry_.get<TagComponent>(id);
-        if ((tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Projectile)) && (t.x < -100.0F || t.x > 2000.0F)) {
-            offscreenEntities.push_back(id);
-        }
-    }
-    if (!offscreenEntities.empty()) {
-        for (EntityId id : offscreenEntities) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = id;
-            sendThread_.broadcast(pkt);
-            registry_.destroyEntity(id);
-        }
-    }
-}
-
-std::string ServerApp::getEntityTagName(EntityId id) const
-{
-    if (!registry_.has<TagComponent>(id)) {
-        return "Unknown";
-    }
-    const auto& tag = registry_.get<TagComponent>(id);
-    if (tag.hasTag(EntityTag::Player)) {
-        return "Player";
-    }
-    if (tag.hasTag(EntityTag::Enemy)) {
-        return "Enemy";
-    }
-    if (tag.hasTag(EntityTag::Projectile)) {
-        return "Projectile";
-    }
-    return "Unknown";
-}
-
-void ServerApp::logCollisions(const std::vector<Collision>& collisions)
-{
-    if (collisions.empty()) {
-        return;
-    }
-    Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
-    for (const auto& col : collisions) {
-        std::string aTag = getEntityTagName(col.a);
-        std::string bTag = getEntityTagName(col.b);
-        std::string msg  = "  Collision: ";
-        msg += aTag;
-        msg += " (ID:";
-        msg += std::to_string(col.a);
-        msg += ") <-> ";
-        msg += bTag;
-        msg += " (ID:";
-        msg += std::to_string(col.b);
-        msg += ")";
-        Logger::instance().info(msg);
-    }
-}
 
 void ServerApp::resetGame()
+
 {
-    Logger::instance().info("Resetting game state...");
+    Logger::instance().info("[Game] Resetting game state...");
     registry_.clear();
     playerEntities_.clear();
     sessions_.clear();
@@ -314,7 +177,7 @@ void ServerApp::resetGame()
     ClientTimeoutEvent timeout;
     while (timeoutQueue_.tryPop(timeout))
         ;
-    Logger::instance().info("Game state reset complete");
+    Logger::instance().info("[Game] Game state reset complete");
     if (levelLoaded_) {
         levelDirector_->reset();
         levelSpawnSys_->reset();
@@ -350,7 +213,7 @@ void ServerApp::updateInvincibilityTimers(float deltaTime)
     }
     for (EntityId id : vulnerable) {
         registry_.remove<InvincibilityComponent>(id);
-        Logger::instance().info("Player (ID:" + std::to_string(id) + ") is no longer invincible.");
+        Logger::instance().info("[Player] Player (ID:" + std::to_string(id) + ") is no longer invincible.");
     }
 }
 

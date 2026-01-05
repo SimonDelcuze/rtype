@@ -7,18 +7,19 @@
 
 #include <algorithm>
 
-void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
+void ServerApp::updateNetworkStats(float dt)
 {
-    constexpr float dt = 1.0F / kTickRate;
-
-    handleControl();
-    maybeStartGame();
-    updateCountdown(dt);
-    if (!gameStarted_) {
-        return;
+    static float statsTimer = 0.0F;
+    statsTimer += dt;
+    if (statsTimer >= 5.0F) {
+        statsTimer = 0.0F;
+        Logger::instance().logNetworkStats();
     }
-    updateSystems(dt, inputs);
+}
 
+void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& inputs)
+{
+    updateSystems(dt, inputs);
     auto collisions = collisionSys_.detect(registry_);
     logCollisions(collisions);
     damageSys_.apply(registry_, collisions);
@@ -29,10 +30,25 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
     auto current = collectCurrentEntities();
     syncEntityLifecycle(current);
+}
 
-    sendSnapshots();
+void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
+{
+    constexpr float dt = 1.0F / kTickRate;
+
+    updateNetworkStats(dt);
+    handleControl();
+    maybeStartGame();
+    updateCountdown(dt);
+
+    if (gameStarted_) {
+        updateGameplay(dt, inputs);
+        sendSnapshots();
+    }
     currentTick_++;
 }
+
+
 
 void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs)
 {
@@ -73,7 +89,7 @@ void ServerApp::broadcastDestructions(const std::vector<EntityId>& toDestroy)
     if (toDestroy.empty()) {
         return;
     }
-    Logger::instance().info("Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
+    Logger::instance().info("[Replication] Destroying " + std::to_string(toDestroy.size()) + " dead entity(ies)");
     for (EntityId id : toDestroy) {
         EntityDestroyedPacket pkt{};
         pkt.entityId = id;
@@ -117,27 +133,41 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
     knownEntities_ = current;
 }
 
+void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
+{
+    Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
+                            " size=" + std::to_string(totalBytes) +
+                            " payload=" + std::to_string(payloadSize) +
+                            " entities=" + std::to_string(registry_.entityCount()) +
+                            (forceFull ? " (FULL)" : " (delta)"));
+}
+
 void ServerApp::sendSnapshots()
 {
-    auto snapshotPkt                           = buildSnapshotPacket(registry_, currentTick_);
-    constexpr std::size_t kSnapshotPayloadWarn = 1400;
-    std::size_t payloadSize                    = 0;
-    if (snapshotPkt.size() >= PacketHeader::kSize + PacketHeader::kCrcSize) {
-        payloadSize = snapshotPkt.size() - PacketHeader::kSize - PacketHeader::kCrcSize;
-    }
-    if (payloadSize > kSnapshotPayloadWarn) {
+    bool forceFull = (currentTick_ - lastFullStateTick_) >= kFullStateInterval;
+    if (forceFull)
+        lastFullStateTick_ = currentTick_;
+
+    auto pkt = buildDeltaSnapshotPacket(registry_, currentTick_, entityStateCache_, forceFull);
+
+    std::size_t payloadSize = 0;
+    if (pkt.size() >= PacketHeader::kSize + PacketHeader::kCrcSize)
+        payloadSize = pkt.size() - PacketHeader::kSize - PacketHeader::kCrcSize;
+
+    logSnapshotSummary(pkt.size(), payloadSize, forceFull);
+
+    if (payloadSize > 1400) {
         auto chunks = buildSnapshotChunks(registry_, currentTick_);
         for (const auto& c : clients_) {
-            for (const auto& chunk : chunks) {
+            for (const auto& chunk : chunks)
                 sendThread_.sendTo(chunk, c);
-            }
         }
-        return;
-    }
-    for (const auto& c : clients_) {
-        sendThread_.sendTo(snapshotPkt, c);
+    } else {
+        for (const auto& c : clients_)
+            sendThread_.sendTo(pkt, c);
     }
 }
+
 
 void ServerApp::cleanupExpiredMissiles(float deltaTime)
 {
@@ -155,7 +185,7 @@ void ServerApp::cleanupExpiredMissiles(float deltaTime)
     if (expired.empty()) {
         return;
     }
-    Logger::instance().info("Cleaning up " + std::to_string(expired.size()) + " expired missile(s)");
+    Logger::instance().info("[Replication] Cleaning up " + std::to_string(expired.size()) + " expired missile(s)");
     for (EntityId id : expired) {
         EntityDestroyedPacket pkt{};
         pkt.entityId = id;
@@ -178,7 +208,7 @@ void ServerApp::cleanupOffscreenEntities()
         }
     }
     if (!offscreenEntities.empty()) {
-        Logger::instance().info("Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
+        Logger::instance().info("[Replication] Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
         for (EntityId id : offscreenEntities) {
             EntityDestroyedPacket pkt{};
             pkt.entityId = id;
@@ -214,7 +244,7 @@ void ServerApp::logCollisions(const std::vector<Collision>& collisions)
     if (collisions.empty()) {
         return;
     }
-    Logger::instance().info("Detected " + std::to_string(collisions.size()) + " collision(s)");
+    Logger::instance().info("[Collision] Detected " + std::to_string(collisions.size()) + " collision(s)");
     for (const auto& col : collisions) {
         std::string aTag = getEntityTagName(col.a);
         std::string bTag = getEntityTagName(col.b);
@@ -227,6 +257,6 @@ void ServerApp::logCollisions(const std::vector<Collision>& collisions)
         msg += " (ID:";
         msg += std::to_string(col.b);
         msg += ")";
-        Logger::instance().info(msg);
+        Logger::instance().info("[Collision] " + msg);
     }
 }
