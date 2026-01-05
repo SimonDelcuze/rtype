@@ -19,7 +19,7 @@ void ServerApp::handleControlMessage(const ControlEvent& ctrl)
     if (gameStarted_) {
         if (type == static_cast<std::uint8_t>(MessageType::ClientHello) ||
             type == static_cast<std::uint8_t>(MessageType::ClientJoinRequest)) {
-            Logger::instance().warn("Rejecting connection - game already started");
+            Logger::instance().warn("[Net] Rejecting connection - game already started");
             sendThread_.sendTo(buildJoinDeny(ctrl.header.sequenceId), ctrl.from);
             return;
         }
@@ -48,7 +48,7 @@ void ServerApp::handleControlMessage(const ControlEvent& ctrl)
 void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 {
     if (gameStarted_) {
-        Logger::instance().warn("Rejecting join request - game already started");
+        Logger::instance().warn("[Net] Rejecting join request - game already started");
         sendThread_.sendTo(buildJoinDeny(ctrl.header.sequenceId), ctrl.from);
         return;
     }
@@ -89,7 +89,7 @@ void ServerApp::maybeStartGame()
     if (gameStarted_ || !ready())
         return;
 
-    Logger::instance().info("All players ready, starting game");
+    Logger::instance().info("[Game] All players ready, starting game");
 
     auto startPkt = buildGameStart(0);
     for (auto& [_, s] : sessions_) {
@@ -134,7 +134,7 @@ void ServerApp::processTimeouts()
 {
     ClientTimeoutEvent timeoutEvent;
     while (timeoutQueue_.tryPop(timeoutEvent)) {
-        Logger::instance().warn("Client timeout");
+        Logger::instance().warn("[Net] Client timeout");
     }
 }
 
@@ -177,7 +177,7 @@ std::uint32_t ServerApp::nextSeed() const
 
 void ServerApp::onDisconnect(const IpEndpoint& endpoint)
 {
-    Logger::instance().info("Client disconnected: " + endpointKey(endpoint));
+    Logger::instance().info("[Net] Client disconnected: " + endpointKey(endpoint));
 
     auto it = sessions_.find(endpointKey(endpoint));
     if (it != sessions_.end()) {
@@ -196,7 +196,7 @@ void ServerApp::onDisconnect(const IpEndpoint& endpoint)
     std::erase_if(clients_, [&](const IpEndpoint& ep) { return endpointKey(ep) == endpointKey(endpoint); });
     sendThread_.setClients(clients_);
     if (sessions_.empty()) {
-        Logger::instance().info("No more clients connected, resetting game");
+        Logger::instance().info("[Game] No more clients connected, resetting game");
         resetGame();
     }
 }

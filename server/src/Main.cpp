@@ -16,11 +16,13 @@ int main(int argc, char* argv[])
     }
 
     Logger::instance().setVerbose(verbose);
+    Logger::instance().loadTagConfig("server.log.config");
 
     if (verbose) {
-        Logger::instance().info("Verbose logging enabled");
+        Logger::instance().info("[Net] Verbose logging enabled");
     }
 
     run_server();
     return 0;
 }
+

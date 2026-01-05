@@ -21,7 +21,7 @@ void run_server()
     std::signal(SIGINT, signalHandler);
     ServerApp app(50010, g_running);
     if (!app.start()) {
-        Logger::instance().error("Failed to start server");
+        Logger::instance().error("[Net] Failed to start server");
         return;
     }
     app.run();
