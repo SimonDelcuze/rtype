@@ -170,9 +170,10 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
         std::int32_t before = h.current;
         h.damage(dmg);
         const std::string attacker = tagLabel(registry, entityA);
-        Logger::instance().info(std::string(entityA == 1 ? "[Player] " : "[Enemy] ") + attacker + " (ID:" + std::to_string(entityA) +
-                                ") damaged Player (ID:" + std::to_string(entityB) + ") for " + std::to_string(dmg) +
-                                " damage. Health: " + std::to_string(before) + " -> " + std::to_string(h.current));
+        Logger::instance().info(std::string(entityA == 1 ? "[Player] " : "[Enemy] ") + attacker +
+                                " (ID:" + std::to_string(entityA) + ") damaged Player (ID:" + std::to_string(entityB) +
+                                ") for " + std::to_string(dmg) + " damage. Health: " + std::to_string(before) + " -> " +
+                                std::to_string(h.current));
         emitDamageEvent(entityA, entityB, std::min(before, dmg), h.current);
     }
 }

@@ -22,7 +22,6 @@ class Logger
     void addPacketDropped();
     void logNetworkStats();
 
-
     Logger(const Logger&)            = delete;
     Logger& operator=(const Logger&) = delete;
 
@@ -44,5 +43,3 @@ class Logger
     std::atomic<std::size_t> _totalBytesReceived{0};
     std::atomic<std::size_t> _totalPacketsDropped{0};
 };
-
-

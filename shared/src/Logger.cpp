@@ -131,8 +131,8 @@ void Logger::logNetworkStats()
     std::size_t received = _totalBytesReceived.exchange(0);
     std::size_t dropped  = _totalPacketsDropped.exchange(0);
 
-    info("[Net] Network Stats (last 5s): Sent=" + std::to_string(sent) + " bytes, Received=" + std::to_string(received) +
-         " bytes, Dropped=" + std::to_string(dropped) + " packets");
+    info("[Net] Network Stats (last 5s): Sent=" + std::to_string(sent) +
+         " bytes, Received=" + std::to_string(received) + " bytes, Dropped=" + std::to_string(dropped) + " packets");
 }
 
 void Logger::log(const std::string& level, const std::string& message, bool alwaysConsole)
@@ -163,11 +163,9 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
     if (!consoleEnabled)
         return;
 
-
     if (level == "ERROR") {
         std::cerr << line;
     } else {
         std::cout << line;
     }
 }
-

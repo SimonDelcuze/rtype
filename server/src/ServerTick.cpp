@@ -48,8 +48,6 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
     currentTick_++;
 }
 
-
-
 void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs)
 {
     introCinematic_.update(registry_, playerEntities_, deltaTime);
@@ -135,11 +133,9 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 
 void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
 {
-    Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
-                            " size=" + std::to_string(totalBytes) +
-                            " payload=" + std::to_string(payloadSize) +
-                            " entities=" + std::to_string(registry_.entityCount()) +
-                            (forceFull ? " (FULL)" : " (delta)"));
+    Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) + " size=" + std::to_string(totalBytes) +
+                            " payload=" + std::to_string(payloadSize) + " entities=" +
+                            std::to_string(registry_.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
 }
 
 void ServerApp::sendSnapshots()
@@ -167,7 +163,6 @@ void ServerApp::sendSnapshots()
             sendThread_.sendTo(pkt, c);
     }
 }
-
 
 void ServerApp::cleanupExpiredMissiles(float deltaTime)
 {
@@ -208,7 +203,8 @@ void ServerApp::cleanupOffscreenEntities()
         }
     }
     if (!offscreenEntities.empty()) {
-        Logger::instance().info("[Replication] Cleaning up " + std::to_string(offscreenEntities.size()) + " offscreen entity(ies)");
+        Logger::instance().info("[Replication] Cleaning up " + std::to_string(offscreenEntities.size()) +
+                                " offscreen entity(ies)");
         for (EntityId id : offscreenEntities) {
             EntityDestroyedPacket pkt{};
             pkt.entityId = id;
