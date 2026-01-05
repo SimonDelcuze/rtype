@@ -4,6 +4,7 @@
 #include "ecs/Registry.hpp"
 #include "network/LevelEventData.hpp"
 #include "network/PacketHeader.hpp"
+#include "server/EntityStateCache.hpp"
 
 #include <cstdint>
 #include <string>
@@ -49,6 +50,8 @@ struct LevelDefinition
 std::vector<std::uint8_t> buildLevelInitPacket(const LevelDefinition& lvl);
 std::vector<std::uint8_t> buildLevelEventPacket(const LevelEventData& event, std::uint32_t tick);
 std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick);
+std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t tick,
+                                                    EntityStateCache& cache, bool forceFullState);
 std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, uint32_t tick,
                                                            std::size_t maxPayloadBytes = 1000);
 std::vector<std::uint8_t> buildPong(const PacketHeader& req);
