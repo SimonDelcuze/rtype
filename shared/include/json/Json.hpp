@@ -1,31 +1,36 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <stdexcept>
-#include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
 
-namespace rtype {
+namespace rtype
+{
 
-    class JsonParseError : public std::runtime_error {
-    public:
+    class JsonParseError : public std::runtime_error
+    {
+      public:
         using std::runtime_error::runtime_error;
     };
 
-    class JsonKeyError : public std::runtime_error {
-    public:
+    class JsonKeyError : public std::runtime_error
+    {
+      public:
         using std::runtime_error::runtime_error;
     };
 
-    class JsonTypeError : public std::runtime_error {
-    public:
+    class JsonTypeError : public std::runtime_error
+    {
+      public:
         using std::runtime_error::runtime_error;
     };
 
-    class Json {
-    public:
+    class Json
+    {
+      public:
         Json();
         ~Json() = default;
 
@@ -38,9 +43,9 @@ namespace rtype {
         [[nodiscard]] std::string dump(int indent = -1) const;
 
         [[nodiscard]] bool contains(const std::string& key) const;
-        
-        template<typename T>
-        T getValue(const std::string& key) const {
+
+        template <typename T> T getValue(const std::string& key) const
+        {
             if (!_data.contains(key)) {
                 throw JsonKeyError("Key not found: " + key);
             }
@@ -51,17 +56,17 @@ namespace rtype {
             }
         }
 
-        template<typename T>
-        T get() const {
+        template <typename T> T get() const
+        {
             try {
                 return _data.get<T>();
             } catch (const nlohmann::json::exception& e) {
-                 throw JsonTypeError("Type error: " + std::string(e.what()));
+                throw JsonTypeError("Type error: " + std::string(e.what()));
             }
         }
 
-        template<typename T>
-        T getValue(const std::string& key, const T& defaultValue) const {
+        template <typename T> T getValue(const std::string& key, const T& defaultValue) const
+        {
             if (!_data.contains(key)) {
                 return defaultValue;
             }
@@ -72,8 +77,8 @@ namespace rtype {
             }
         }
 
-        template<typename T>
-        void setValue(const std::string& key, const T& value) {
+        template <typename T> void setValue(const std::string& key, const T& value)
+        {
             _data[key] = value;
         }
         void pushBack(const Json& element);
@@ -89,13 +94,19 @@ namespace rtype {
 
         [[nodiscard]] std::vector<std::string> getKeys() const;
 
-        const nlohmann::json& getInternal() const { return _data; }
-        nlohmann::json& getInternal() { return _data; }
+        const nlohmann::json& getInternal() const
+        {
+            return _data;
+        }
+        nlohmann::json& getInternal()
+        {
+            return _data;
+        }
 
         Json operator[](const std::string& key) const;
         Json operator[](std::size_t index) const;
 
-    private:
+      private:
         nlohmann::json _data;
     };
 

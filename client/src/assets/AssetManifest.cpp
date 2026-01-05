@@ -2,8 +2,8 @@
 
 #include "errors/FileNotFoundError.hpp"
 #include "errors/ManifestParseError.hpp"
-#include "json/Json.hpp"
 
+#include "json/Json.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -36,7 +36,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
 
         if (j.contains("textures") && j["textures"].isArray()) {
             auto textures = j["textures"];
-            for (size_t i=0; i < textures.size(); ++i) {
+            for (size_t i = 0; i < textures.size(); ++i) {
                 auto item = textures[i];
                 TextureEntry entry;
                 entry.id   = item.getValue<std::string>("id", "");
@@ -53,7 +53,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
 
         if (j.contains("sounds") && j["sounds"].isArray()) {
             auto sounds = j["sounds"];
-            for (size_t i=0; i < sounds.size(); ++i) {
+            for (size_t i = 0; i < sounds.size(); ++i) {
                 auto item = sounds[i];
                 SoundEntry entry;
                 entry.id   = item.getValue<std::string>("id", "");
@@ -70,7 +70,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
 
         if (j.contains("fonts") && j["fonts"].isArray()) {
             auto fonts = j["fonts"];
-            for (size_t i=0; i < fonts.size(); ++i) {
+            for (size_t i = 0; i < fonts.size(); ++i) {
                 auto item = fonts[i];
                 FontEntry entry;
                 entry.id   = item.getValue<std::string>("id", "");
