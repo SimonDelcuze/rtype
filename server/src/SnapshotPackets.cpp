@@ -117,26 +117,6 @@ namespace
             writeI32(block, s.score);
     }
 
-    std::vector<std::uint8_t> buildDeltaEntityBlock(const Registry& registry, EntityId id, EntityStateCache& cache,
-                                                    bool forceFull)
-    {
-        auto cur  = captureState(registry, id);
-        auto* old = cache.get(id);
-        auto mask = calculateMask(cur, old, registry, id, forceFull);
-
-        cache.update(id, cur);
-
-        if (mask == 0)
-            return {};
-
-        std::vector<std::uint8_t> block;
-        writeU32(block, id);
-        writeU16(block, mask);
-        writeDeltaData(block, mask, cur);
-
-        return block;
-    }
-
     std::vector<std::uint8_t> buildEntityBlock(const Registry& registry, EntityId id)
     {
         auto s    = captureState(registry, id);
@@ -196,83 +176,136 @@ namespace
         writeU32(out, PacketHeader::crc32(out.data(), out.size()));
         return out;
     }
+    struct DeltaResult
+    {
+        EntityId id;
+        CachedEntityState state;
+        std::vector<std::uint8_t> block;
+    };
+
+    std::vector<DeltaResult> getDeltaResults(Registry& registry, EntityStateCache& cache, bool forceFull)
+    {
+        auto view = registry.view<TransformComponent>();
+        std::vector<DeltaResult> results;
+        results.reserve(registry.entityCount());
+
+        for (EntityId id : view) {
+            auto cur  = captureState(registry, id);
+            auto* old = cache.get(id);
+            auto mask = calculateMask(cur, old, registry, id, forceFull);
+
+            if (mask == 0) {
+                // Still need to update cache even if no changes for some components?
+                // Actually, if mask is 0, it means nothing changed.
+                // We should still update cache to ensure 'initialized' is true?
+                // But calculateMask already handles initialized.
+                continue;
+            }
+
+            DeltaResult res;
+            res.id    = id;
+            res.state = cur;
+            res.block.reserve(22); // Typical size
+            writeU32(res.block, id);
+            writeU16(res.block, mask);
+            writeDeltaData(res.block, mask, cur);
+            results.push_back(std::move(res));
+        }
+        return results;
+    }
+    std::vector<std::uint8_t> buildPacketFromBlocks(const std::vector<SnapshotChunkBlock>& blocks, std::uint32_t tick)
+    {
+        std::vector<std::uint8_t> payload;
+        payload.reserve(blocks.size() * 16 + 2);
+
+        writeU16(payload, static_cast<std::uint16_t>(blocks.size()));
+        for (const auto& b : blocks)
+            payload.insert(payload.end(), b.data.begin(), b.data.end());
+
+        PacketHeader hdr{};
+        hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        hdr.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
+        hdr.sequenceId  = static_cast<std::uint16_t>(tick & 0xFFFF);
+        hdr.tickId      = tick;
+        hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
+
+        auto hdrBytes = hdr.encode();
+        std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+        out.insert(out.end(), payload.begin(), payload.end());
+        writeU32(out, PacketHeader::crc32(out.data(), out.size()));
+        return out;
+    }
+
+    std::vector<std::vector<std::uint8_t>>
+    buildChunksFromBlocksWithHeader(const std::vector<SnapshotChunkBlock>& blocks, std::uint32_t tick,
+                                    std::size_t maxPayloadBytes)
+    {
+        const auto chunks = buildChunksFromBlocks(blocks, maxPayloadBytes);
+        std::vector<std::vector<std::uint8_t>> packets;
+        const std::uint16_t totalChunks = static_cast<std::uint16_t>(chunks.size());
+        packets.reserve(totalChunks);
+        for (std::uint16_t idx = 0; idx < totalChunks; ++idx)
+            packets.push_back(buildChunkPacket(chunks[idx], totalChunks, idx, tick));
+        return packets;
+    }
 } // namespace
 
 std::vector<std::uint8_t> buildSnapshotPacket(Registry& registry, uint32_t tick)
 {
     auto view = registry.view<TransformComponent>();
-    std::vector<std::uint8_t> payload;
-    payload.reserve(registry.entityCount() * 16);
-
-    std::uint16_t count = 0;
-    for ([[maybe_unused]] auto id : view)
-        ++count;
-    writeU16(payload, count);
-
-    for (EntityId id : view) {
-        auto block = buildEntityBlock(registry, id);
-        payload.insert(payload.end(), block.begin(), block.end());
-    }
-
-    PacketHeader hdr{};
-    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    hdr.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
-    hdr.sequenceId  = static_cast<std::uint16_t>(tick & 0xFFFF);
-    hdr.tickId      = tick;
-    hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
-
-    auto hdrBytes = hdr.encode();
-    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
-    out.insert(out.end(), payload.begin(), payload.end());
-    writeU32(out, PacketHeader::crc32(out.data(), out.size()));
-    return out;
+    return buildPacketFromBlocks(buildBlocks(registry, view), tick);
 }
 
 std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, uint32_t tick,
                                                            std::size_t maxPayloadBytes)
 {
-    auto view         = registry.view<TransformComponent>();
-    const auto blocks = buildBlocks(registry, view);
-    const auto chunks = buildChunksFromBlocks(blocks, maxPayloadBytes);
+    auto view = registry.view<TransformComponent>();
+    return buildChunksFromBlocksWithHeader(buildBlocks(registry, view), tick, maxPayloadBytes);
+}
 
-    std::vector<std::vector<std::uint8_t>> packets;
-    const std::uint16_t totalChunks = static_cast<std::uint16_t>(chunks.size());
-    packets.reserve(totalChunks);
-    for (std::uint16_t idx = 0; idx < totalChunks; ++idx)
-        packets.push_back(buildChunkPacket(chunks[idx], totalChunks, idx, tick));
-    return packets;
+std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registry, uint32_t tick,
+                                                               EntityStateCache& cache, bool forceFullState,
+                                                               std::size_t maxSinglePacketSize,
+                                                               std::size_t maxChunkSize)
+
+{
+    auto deltas = getDeltaResults(registry, cache, forceFullState);
+    if (deltas.empty())
+        return {};
+
+    std::vector<SnapshotChunkBlock> blocks;
+    blocks.reserve(deltas.size());
+    std::size_t totalBytes = 2; // For entity count
+    for (const auto& d : deltas) {
+        totalBytes += d.block.size();
+        blocks.push_back({d.block});
+    }
+
+    std::vector<std::vector<std::uint8_t>> result;
+    if (totalBytes <= maxSinglePacketSize) {
+        result.push_back(buildPacketFromBlocks(blocks, tick));
+    } else {
+        result = buildChunksFromBlocksWithHeader(blocks, tick, maxChunkSize);
+    }
+
+    // Update cache only after we're sure we've built the packets
+    for (const auto& d : deltas) {
+        cache.update(d.id, d.state);
+    }
+
+    return result;
 }
 
 std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t tick, EntityStateCache& cache,
                                                    bool forceFullState)
 {
-    auto view = registry.view<TransformComponent>();
-    std::vector<std::uint8_t> payload;
-    payload.reserve(registry.entityCount() * 8);
+    auto results = buildSmartDeltaSnapshot(registry, tick, cache, forceFullState, 65535);
+    return results.empty() ? std::vector<std::uint8_t>{} : results[0];
+}
 
-    std::vector<std::vector<std::uint8_t>> entityBlocks;
-    entityBlocks.reserve(registry.entityCount());
-
-    for (EntityId id : view) {
-        auto block = buildDeltaEntityBlock(registry, id, cache, forceFullState);
-        if (!block.empty())
-            entityBlocks.push_back(std::move(block));
-    }
-
-    writeU16(payload, static_cast<std::uint16_t>(entityBlocks.size()));
-    for (const auto& block : entityBlocks)
-        payload.insert(payload.end(), block.begin(), block.end());
-
-    PacketHeader hdr{};
-    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
-    hdr.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
-    hdr.sequenceId  = static_cast<std::uint16_t>(tick & 0xFFFF);
-    hdr.tickId      = tick;
-    hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
-
-    auto hdrBytes = hdr.encode();
-    std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
-    out.insert(out.end(), payload.begin(), payload.end());
-    writeU32(out, PacketHeader::crc32(out.data(), out.size()));
-    return out;
+std::vector<std::vector<std::uint8_t>> buildDeltaSnapshotChunks(Registry& registry, uint32_t tick,
+                                                                EntityStateCache& cache, bool forceFullState,
+                                                                std::size_t maxPayloadBytes)
+{
+    return buildSmartDeltaSnapshot(registry, tick, cache, forceFullState, 0, maxPayloadBytes);
 }

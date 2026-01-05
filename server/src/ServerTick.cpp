@@ -122,23 +122,32 @@ void ServerApp::sendSnapshots()
     if (forceFull)
         lastFullStateTick_ = currentTick_;
 
-    auto pkt = buildDeltaSnapshotPacket(registry_, currentTick_, entityStateCache_, forceFull);
+    std::vector<std::vector<std::uint8_t>> packets;
 
-    std::size_t payloadSize = 0;
-    if (pkt.size() >= PacketHeader::kSize + PacketHeader::kCrcSize)
-        payloadSize = pkt.size() - PacketHeader::kSize - PacketHeader::kCrcSize;
-
-    logSnapshotSummary(pkt.size(), payloadSize, forceFull);
-
-    if (payloadSize > 1400) {
-        auto chunks = buildSnapshotChunks(registry_, currentTick_);
-        for (const auto& c : clients_) {
-            for (const auto& chunk : chunks)
-                sendThread_.sendTo(chunk, c);
-        }
+    if (forceFull) {
+        packets = buildSnapshotChunks(registry_, currentTick_);
     } else {
-        for (const auto& c : clients_)
-            sendThread_.sendTo(pkt, c);
+        packets = buildSmartDeltaSnapshot(registry_, currentTick_, entityStateCache_, false, 1400);
+    }
+
+    if (packets.empty())
+        return;
+
+    std::size_t totalSize = 0;
+    for (const auto& p : packets)
+        totalSize += p.size();
+
+    if (packets.size() > 1) {
+        Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
+                                " chunks=" + std::to_string(packets.size()) +
+                                " total_size=" + std::to_string(totalSize) + (forceFull ? " (FULL)" : " (delta)"));
+    } else {
+        logSnapshotSummary(packets[0].size(), 0, forceFull);
+    }
+
+    for (const auto& c : clients_) {
+        for (const auto& p : packets)
+            sendThread_.sendTo(p, c);
     }
 }
 
