@@ -30,7 +30,6 @@ void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& input
     syncEntityLifecycle(current);
 }
 
-
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 {
     constexpr float dt = 1.0F / kTickRate;
@@ -84,8 +83,6 @@ std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
     }
     return current;
 }
-
-
 
 void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 {
