@@ -31,7 +31,7 @@ void EnemyShootingSystem::update(Registry& registry, float deltaTime)
         if (shooting.timeSinceLastShot >= shooting.shootInterval) {
             shooting.timeSinceLastShot = 0.0F;
 
-            Logger::instance().info("Enemy " + std::to_string(id) + " firing projectile at (" +
+            Logger::instance().info("[Spawn] Enemy " + std::to_string(id) + " firing projectile at (" +
                                     std::to_string(transform.x) + ", " + std::to_string(transform.y) + ")");
 
             EntityId projectile = registry.createEntity();

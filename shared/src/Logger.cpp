@@ -13,7 +13,7 @@ Logger& Logger::instance()
     return instance;
 }
 
-Logger::Logger() : _verbose(false)
+Logger::Logger() : _verbose(false), _tagFilterActive(false)
 {
     const std::filesystem::path directory("logs");
     const std::filesystem::path filePath = directory / "server.log";
@@ -40,6 +40,61 @@ void Logger::setVerbose(bool enabled)
     _verbose = enabled;
 }
 
+void Logger::loadTagConfig(const std::string& configPath)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _enabledTags.clear();
+    _tagFilterActive = false;
+
+    std::ifstream file(configPath);
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        size_t start = line.find('[');
+        size_t end   = line.find(']');
+        if (start != std::string::npos && end != std::string::npos && end > start) {
+            std::string tag = line.substr(start, end - start + 1);
+            _enabledTags.insert(tag);
+        }
+    }
+    _tagFilterActive = !_enabledTags.empty();
+
+    std::cout << "[Logger] Loaded " << _enabledTags.size() << " tags from " << configPath << "\n";
+    for (const auto& tag : _enabledTags) {
+        std::cout << "[Logger]   - " << tag << "\n";
+    }
+}
+
+std::string Logger::extractTag(const std::string& message)
+{
+    if (message.empty() || message[0] != '[') {
+        return "";
+    }
+    size_t end = message.find(']');
+    if (end == std::string::npos) {
+        return "";
+    }
+    return message.substr(0, end + 1);
+}
+
+bool Logger::isTagEnabled(const std::string& message) const
+{
+    if (!_tagFilterActive) {
+        return true;
+    }
+    std::string tag = extractTag(message);
+    if (tag.empty()) {
+        return true;
+    }
+    return _enabledTags.contains(tag);
+}
+
 void Logger::info(const std::string& message)
 {
     log("INFO", message, false);
@@ -53,6 +108,31 @@ void Logger::warn(const std::string& message)
 void Logger::error(const std::string& message)
 {
     log("ERROR", message, true);
+}
+
+void Logger::addBytesSent(std::size_t bytes)
+{
+    _totalBytesSent += bytes;
+}
+
+void Logger::addBytesReceived(std::size_t bytes)
+{
+    _totalBytesReceived += bytes;
+}
+
+void Logger::addPacketDropped()
+{
+    _totalPacketsDropped++;
+}
+
+void Logger::logNetworkStats()
+{
+    std::size_t sent     = _totalBytesSent.exchange(0);
+    std::size_t received = _totalBytesReceived.exchange(0);
+    std::size_t dropped  = _totalPacketsDropped.exchange(0);
+
+    info("[Net] Network Stats (last 5s): Sent=" + std::to_string(sent) + " bytes, Received=" + std::to_string(received) +
+         " bytes, Dropped=" + std::to_string(dropped) + " packets");
 }
 
 void Logger::log(const std::string& level, const std::string& message, bool alwaysConsole)
@@ -78,10 +158,11 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
         _file.flush();
     }
 
-    const bool consoleEnabled = alwaysConsole || _verbose;
-    if (!consoleEnabled) {
+    bool tagAllowed     = isTagEnabled(message);
+    bool consoleEnabled = (alwaysConsole || _verbose) && tagAllowed;
+    if (!consoleEnabled)
         return;
-    }
+
 
     if (level == "ERROR") {
         std::cerr << line;
@@ -89,3 +170,4 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
         std::cout << line;
     }
 }
+
