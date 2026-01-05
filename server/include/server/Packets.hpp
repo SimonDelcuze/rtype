@@ -54,6 +54,14 @@ std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t 
                                                    bool forceFullState);
 std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, uint32_t tick,
                                                            std::size_t maxPayloadBytes = 1000);
+std::vector<std::vector<std::uint8_t>> buildDeltaSnapshotChunks(Registry& registry, uint32_t tick,
+                                                                EntityStateCache& cache, bool forceFullState,
+                                                                std::size_t maxPayloadBytes = 1000);
+std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registry, uint32_t tick,
+                                                               EntityStateCache& cache, bool forceFullState,
+                                                               std::size_t maxSinglePacketSize = 1400,
+                                                               std::size_t maxChunkSize        = 1000);
+
 std::vector<std::uint8_t> buildPong(const PacketHeader& req);
 std::vector<std::uint8_t> buildServerHello(std::uint16_t sequence);
 std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence);
