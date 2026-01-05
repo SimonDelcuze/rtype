@@ -2,7 +2,7 @@
 
 #include "animation/AnimationRegistry.hpp"
 
-#include <nlohmann/json.hpp>
+#include "json/Json.hpp"
 #include <string>
 #include <unordered_map>
 
@@ -16,5 +16,5 @@ class AnimationManifest
 {
   public:
     static AnimationAtlas loadFromFile(const std::string& path);
-    static AnimationAtlas loadFromJson(const nlohmann::json& j);
+    static AnimationAtlas loadFromJson(const rtype::Json& j);
 };

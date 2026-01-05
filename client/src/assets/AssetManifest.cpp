@@ -2,11 +2,12 @@
 
 #include "errors/FileNotFoundError.hpp"
 #include "errors/ManifestParseError.hpp"
+#include "json/Json.hpp"
 
 #include <fstream>
-#include <nlohmann/json.hpp>
+#include <sstream>
 
-using json = nlohmann::json;
+using Json = rtype::Json;
 
 AssetManifest AssetManifest::fromFile(const std::string& filepath)
 {
@@ -15,14 +16,15 @@ AssetManifest AssetManifest::fromFile(const std::string& filepath)
         throw FileNotFoundError("Failed to open asset manifest: " + filepath);
     }
 
-    json j;
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
     try {
-        file >> j;
-    } catch (const json::parse_error& e) {
+        Json j = Json::parse(buffer.str());
+        return fromString(j.dump());
+    } catch (const rtype::JsonParseError& e) {
         throw ManifestParseError("Failed to parse asset manifest: " + std::string(e.what()));
     }
-
-    return fromString(j.dump());
 }
 
 AssetManifest AssetManifest::fromString(const std::string& jsonStr)
@@ -30,14 +32,16 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
     AssetManifest manifest;
 
     try {
-        json j = json::parse(jsonStr);
+        Json j = Json::parse(jsonStr);
 
-        if (j.contains("textures") && j["textures"].is_array()) {
-            for (const auto& item : j["textures"]) {
+        if (j.contains("textures") && j["textures"].isArray()) {
+            auto textures = j["textures"];
+            for (size_t i=0; i < textures.size(); ++i) {
+                auto item = textures[i];
                 TextureEntry entry;
-                entry.id   = item.value("id", "");
-                entry.path = item.value("path", "");
-                entry.type = item.value("type", "");
+                entry.id   = item.getValue<std::string>("id", "");
+                entry.path = item.getValue<std::string>("path", "");
+                entry.type = item.getValue<std::string>("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
                     throw ManifestParseError("Invalid texture entry: missing id or path");
@@ -47,12 +51,14 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
             }
         }
 
-        if (j.contains("sounds") && j["sounds"].is_array()) {
-            for (const auto& item : j["sounds"]) {
+        if (j.contains("sounds") && j["sounds"].isArray()) {
+            auto sounds = j["sounds"];
+            for (size_t i=0; i < sounds.size(); ++i) {
+                auto item = sounds[i];
                 SoundEntry entry;
-                entry.id   = item.value("id", "");
-                entry.path = item.value("path", "");
-                entry.type = item.value("type", "");
+                entry.id   = item.getValue<std::string>("id", "");
+                entry.path = item.getValue<std::string>("path", "");
+                entry.type = item.getValue<std::string>("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
                     throw ManifestParseError("Invalid sound entry: missing id or path");
@@ -62,12 +68,14 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
             }
         }
 
-        if (j.contains("fonts") && j["fonts"].is_array()) {
-            for (const auto& item : j["fonts"]) {
+        if (j.contains("fonts") && j["fonts"].isArray()) {
+            auto fonts = j["fonts"];
+            for (size_t i=0; i < fonts.size(); ++i) {
+                auto item = fonts[i];
                 FontEntry entry;
-                entry.id   = item.value("id", "");
-                entry.path = item.value("path", "");
-                entry.type = item.value("type", "");
+                entry.id   = item.getValue<std::string>("id", "");
+                entry.path = item.getValue<std::string>("path", "");
+                entry.type = item.getValue<std::string>("type", "");
 
                 if (entry.id.empty() || entry.path.empty()) {
                     throw ManifestParseError("Invalid font entry: missing id or path");
@@ -76,7 +84,7 @@ AssetManifest AssetManifest::fromString(const std::string& jsonStr)
                 manifest.fonts_.push_back(entry);
             }
         }
-    } catch (const json::exception& e) {
+    } catch (const std::exception& e) {
         throw ManifestParseError("Failed to parse asset manifest JSON: " + std::string(e.what()));
     }
 
