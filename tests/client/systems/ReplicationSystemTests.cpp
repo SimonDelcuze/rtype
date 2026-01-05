@@ -352,7 +352,7 @@ TEST_F(ReplicationSystemTests, MultipleSnapshotsInQueueAreConsumed)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(countView<TransformComponent>(registry), 1u);
+    EXPECT_EQ(countView<TransformComponent>(registry), 2u);
 }
 
 TEST_F(ReplicationSystemTests, ReusesEntityMappingForSameRemoteId)

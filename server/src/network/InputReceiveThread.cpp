@@ -13,6 +13,20 @@
 namespace
 {
     constexpr std::chrono::milliseconds kPollDelay(1);
+
+    std::string parseStatusToString(InputParseStatus status)
+    {
+        switch (status) {
+            case InputParseStatus::Ok:
+                return "ok";
+            case InputParseStatus::DecodeFailed:
+                return "decode_failed";
+            case InputParseStatus::InvalidFlags:
+                return "invalid_flags";
+            default:
+                return "unknown";
+        }
+    }
 } // namespace
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
@@ -162,7 +176,7 @@ void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::u
     auto parsed = parseInputPacket(data, size);
     if (parsed.status != InputParseStatus::Ok) {
         Logger::instance().addPacketDropped();
-        Logger::instance().warn("[Input] input_drop status=" + std::to_string(static_cast<int>(parsed.status)) +
+        Logger::instance().warn("[Input] input_drop status=" + parseStatusToString(parsed.status) +
                                 " from=" + endpointKey(src));
         return;
     }
@@ -186,7 +200,8 @@ void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const IpEn
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
         controlQueue_.push(ControlEvent{hdr, src});
     } else {
-        Logger::instance().warn("[Input] input_drop status=unknown_message from=" + endpointKey(src));
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=decode_failed from=" + endpointKey(src));
     }
 }
 
