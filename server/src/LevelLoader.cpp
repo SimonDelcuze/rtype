@@ -1,23 +1,22 @@
 #include "server/LevelLoader.hpp"
 
+#include "components/HitboxComponent.hpp"
+#include "components/MovementComponent.hpp"
+#include "components/ScoreComponent.hpp"
+#include "server/LevelData.hpp"
+
+#include "json/Json.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <sstream>
-
-#include "json/Json.hpp"
-
-#include "components/HitboxComponent.hpp"
-#include "components/MovementComponent.hpp"
-#include "components/ScoreComponent.hpp"
-#include "server/LevelData.hpp"
+#include <vector>
 
 namespace
 {
@@ -259,9 +258,8 @@ namespace
             }
             Json pts = j["points"];
             if (!pts.isArray()) {
-                 setError(error, LevelLoadErrorCode::SchemaError, "Expected points array", "",
-                         joinPath(path, "points"));
-                 return false;
+                setError(error, LevelLoadErrorCode::SchemaError, "Expected points array", "", joinPath(path, "points"));
+                return false;
             }
             if (pts.size() < 3) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Polygon needs at least 3 points", "", path);
@@ -308,44 +306,47 @@ namespace
     bool parseScroll(const Json& j, ScrollSettings& out, const std::string& path, LevelLoadError& error)
     {
         if (!j.isObject()) {
-             setError(error, LevelLoadErrorCode::SchemaError, "Expected scroll object", "", path);
-             return false;
+            setError(error, LevelLoadErrorCode::SchemaError, "Expected scroll object", "", path);
+            return false;
         }
-        
+
         std::string modeStr;
         readString(j, "mode", modeStr, path, error, false);
 
         ScrollMode mode = ScrollMode::Constant;
-        if (modeStr == "stopped") mode = ScrollMode::Stopped;
-        else if (modeStr == "curve") mode = ScrollMode::Curve;
-        else mode = ScrollMode::Constant;
+        if (modeStr == "stopped")
+            mode = ScrollMode::Stopped;
+        else if (modeStr == "curve")
+            mode = ScrollMode::Curve;
+        else
+            mode = ScrollMode::Constant;
 
         double speedX = 0.0;
-        readNumber(j, "speedX", speedX, path, error, false); 
+        readNumber(j, "speedX", speedX, path, error, false);
         if (j.contains("speed")) {
-             readNumber(j, "speed", speedX, path, error, false);
+            readNumber(j, "speed", speedX, path, error, false);
         }
 
         std::vector<ScrollKeyframe> curve;
         if (mode == ScrollMode::Curve && j.contains("curve")) {
-             Json curveArr;
-             if (requireArray(j, "curve", curveArr, path, error)) {
-                 for(size_t i=0; i < curveArr.size(); ++i) {
-                     Json p = curveArr[i];
-                     double time = 0.0;
-                     double sx = 0.0;
-                     readNumber(p, "time", time, path, error, true);
-                     readNumber(p, "speedX", sx, path, error, true);
-                     curve.push_back({static_cast<float>(time), static_cast<float>(sx)});
-                 }
-             } else {
-                 return false;
-             }
+            Json curveArr;
+            if (requireArray(j, "curve", curveArr, path, error)) {
+                for (size_t i = 0; i < curveArr.size(); ++i) {
+                    Json p      = curveArr[i];
+                    double time = 0.0;
+                    double sx   = 0.0;
+                    readNumber(p, "time", time, path, error, true);
+                    readNumber(p, "speedX", sx, path, error, true);
+                    curve.push_back({static_cast<float>(time), static_cast<float>(sx)});
+                }
+            } else {
+                return false;
+            }
         }
 
-        out.mode = mode;
+        out.mode   = mode;
         out.speedX = static_cast<float>(speedX);
-        out.curve = std::move(curve);
+        out.curve  = std::move(curve);
         return true;
     }
 
@@ -358,26 +359,29 @@ namespace
             return false;
         }
         if (j.contains("count")) {
-             std::int32_t c = 0;
-             if(readInt(j, "count", c, path, error, true))
-                 out.count = c;
-             else return false;
+            std::int32_t c = 0;
+            if (readInt(j, "count", c, path, error, true))
+                out.count = c;
+            else
+                return false;
         }
-        
-        
+
         double iv = 0.0;
-        if(readNumber(j, "interval", iv, path, error, true))
+        if (readNumber(j, "interval", iv, path, error, true))
             out.interval = static_cast<float>(iv);
-        else return false;
+        else
+            return false;
 
         if (j.contains("until")) {
             Json u;
-            if(requireObject(j, "until", u, path, error)) {
+            if (requireObject(j, "until", u, path, error)) {
                 Trigger t;
-                if(parseTrigger(u, t, joinPath(path, "until"), error))
+                if (parseTrigger(u, t, joinPath(path, "until"), error))
                     out.until = t;
-                else return false;
-            } else return false;
+                else
+                    return false;
+            } else
+                return false;
         }
         return true;
     }
@@ -394,10 +398,11 @@ namespace
             return false;
 
         if (type == "time") {
-            out.type = TriggerType::Time;
+            out.type   = TriggerType::Time;
             double val = 0.0;
             readNumber(j, "value", val, path, error, false);
-            if(j.contains("time")) readNumber(j, "time", val, path, error, false);
+            if (j.contains("time"))
+                readNumber(j, "time", val, path, error, false);
             out.time = static_cast<float>(val);
             return true;
         }
@@ -414,51 +419,55 @@ namespace
             return true;
         }
         if (type == "boss_dead") {
-             out.type = TriggerType::BossDead;
-             readString(j, "bossId", out.bossId, path, error, true);
-             return true;
+            out.type = TriggerType::BossDead;
+            readString(j, "bossId", out.bossId, path, error, true);
+            return true;
         }
         if (type == "checkpoint_reached") {
-             out.type = TriggerType::CheckpointReached;
-             readString(j, "checkpointId", out.checkpointId, path, error, true);
-             return true;
+            out.type = TriggerType::CheckpointReached;
+            readString(j, "checkpointId", out.checkpointId, path, error, true);
+            return true;
         }
         if (type == "hp_below") {
-             out.type = TriggerType::HpBelow;
-             readString(j, "bossId", out.bossId, path, error, true);
-             std::int32_t val = 0;
-             readInt(j, "value", val, path, error, true);
-             out.value = val;
-             return true;
+            out.type = TriggerType::HpBelow;
+            readString(j, "bossId", out.bossId, path, error, true);
+            std::int32_t val = 0;
+            readInt(j, "value", val, path, error, true);
+            out.value = val;
+            return true;
         }
         if (type == "enemy_count_at_most") {
-             out.type = TriggerType::EnemyCountAtMost;
-             std::int32_t c = 0;
-             readInt(j, "count", c, path, error, true);
-             out.count = c;
-             return true;
+            out.type       = TriggerType::EnemyCountAtMost;
+            std::int32_t c = 0;
+            readInt(j, "count", c, path, error, true);
+            out.count = c;
+            return true;
         }
         if (type == "and" || type == "all_of") {
-             out.type = TriggerType::AllOf;
-             Json triggers;
-             if (!requireArray(j, "triggers", triggers, path, error)) return false;
-             for(size_t i=0; i<triggers.size(); ++i) {
-                 Trigger sub;
-                 if(!parseTrigger(triggers[i], sub, joinPath(path, "triggers"), error)) return false;
-                 out.triggers.push_back(sub);
-             }
-             return true;
+            out.type = TriggerType::AllOf;
+            Json triggers;
+            if (!requireArray(j, "triggers", triggers, path, error))
+                return false;
+            for (size_t i = 0; i < triggers.size(); ++i) {
+                Trigger sub;
+                if (!parseTrigger(triggers[i], sub, joinPath(path, "triggers"), error))
+                    return false;
+                out.triggers.push_back(sub);
+            }
+            return true;
         }
         if (type == "or" || type == "any_of") {
-             out.type = TriggerType::AnyOf;
-             Json triggers;
-             if (!requireArray(j, "triggers", triggers, path, error)) return false;
-             for(size_t i=0; i<triggers.size(); ++i) {
-                 Trigger sub;
-                 if(!parseTrigger(triggers[i], sub, joinPath(path, "triggers"), error)) return false;
-                 out.triggers.push_back(sub);
-             }
-             return true;
+            out.type = TriggerType::AnyOf;
+            Json triggers;
+            if (!requireArray(j, "triggers", triggers, path, error))
+                return false;
+            for (size_t i = 0; i < triggers.size(); ++i) {
+                Trigger sub;
+                if (!parseTrigger(triggers[i], sub, joinPath(path, "triggers"), error))
+                    return false;
+                out.triggers.push_back(sub);
+            }
+            return true;
         }
 
         setError(error, LevelLoadErrorCode::SchemaError, "Unknown trigger type: " + type, "", path);
@@ -497,42 +506,86 @@ namespace
                 return false;
             out.shootingEnabled = shootingEnabled;
         }
-        
-        std::int32_t count=1;
+
+        std::int32_t count = 1;
         readInt(j, "count", count, path, error, false);
         out.count = count;
 
-        double val=0;
-        if(j.contains("spawnX")) { readNumber(j, "spawnX", val, path, error, false); out.spawnX = static_cast<float>(val); }
-        if(j.contains("startY")) { readNumber(j, "startY", val, path, error, false); out.startY = static_cast<float>(val); }
-        if(j.contains("deltaY")) { readNumber(j, "deltaY", val, path, error, false); out.deltaY = static_cast<float>(val); }
-        if(j.contains("stepY")) { readNumber(j, "stepY", val, path, error, false); out.stepY = static_cast<float>(val); }
-        
-        if(j.contains("spacing")) { readNumber(j, "spacing", val, path, error, false); out.spacing = static_cast<float>(val); }
-        if(j.contains("stepTime")) { readNumber(j, "stepTime", val, path, error, false); out.stepTime = static_cast<float>(val); }
+        double val = 0;
+        if (j.contains("spawnX")) {
+            readNumber(j, "spawnX", val, path, error, false);
+            out.spawnX = static_cast<float>(val);
+        }
+        if (j.contains("startY")) {
+            readNumber(j, "startY", val, path, error, false);
+            out.startY = static_cast<float>(val);
+        }
+        if (j.contains("deltaY")) {
+            readNumber(j, "deltaY", val, path, error, false);
+            out.deltaY = static_cast<float>(val);
+        }
+        if (j.contains("stepY")) {
+            readNumber(j, "stepY", val, path, error, false);
+            out.stepY = static_cast<float>(val);
+        }
 
-        if(type == "line") {
+        if (j.contains("spacing")) {
+            readNumber(j, "spacing", val, path, error, false);
+            out.spacing = static_cast<float>(val);
+        }
+        if (j.contains("stepTime")) {
+            readNumber(j, "stepTime", val, path, error, false);
+            out.stepTime = static_cast<float>(val);
+        }
+
+        if (type == "line") {
             out.type = WaveType::Line;
-        } else if(type == "stagger") {
+        } else if (type == "stagger") {
             out.type = WaveType::Stagger;
-            if(j.contains("interval")) { readNumber(j, "interval", val, path, error, false); out.stepTime = static_cast<float>(val); }
-        } else if(type == "triangle") {
-            out.type = WaveType::Triangle;
-            std::int32_t layers=1;
-            readInt(j, "layers", layers, path, error, false); out.layers = layers;
-            if(j.contains("rowHeight")) { readNumber(j, "rowHeight", val, path, error, false); out.rowHeight = static_cast<float>(val); }
-            if(j.contains("horizontalStep")) { readNumber(j, "horizontalStep", val, path, error, false); out.horizontalStep = static_cast<float>(val); }
-            if(j.contains("apexY")) { readNumber(j, "apexY", val, path, error, false); out.apexY = static_cast<float>(val); }
-        } else if(type == "serpent") {
+            if (j.contains("interval")) {
+                readNumber(j, "interval", val, path, error, false);
+                out.stepTime = static_cast<float>(val);
+            }
+        } else if (type == "triangle") {
+            out.type            = WaveType::Triangle;
+            std::int32_t layers = 1;
+            readInt(j, "layers", layers, path, error, false);
+            out.layers = layers;
+            if (j.contains("rowHeight")) {
+                readNumber(j, "rowHeight", val, path, error, false);
+                out.rowHeight = static_cast<float>(val);
+            }
+            if (j.contains("horizontalStep")) {
+                readNumber(j, "horizontalStep", val, path, error, false);
+                out.horizontalStep = static_cast<float>(val);
+            }
+            if (j.contains("apexY")) {
+                readNumber(j, "apexY", val, path, error, false);
+                out.apexY = static_cast<float>(val);
+            }
+        } else if (type == "serpent") {
             out.type = WaveType::Serpent;
-            if(j.contains("amplitudeX")) { readNumber(j, "amplitudeX", val, path, error, false); out.amplitudeX = static_cast<float>(val); }
-        } else if(type == "cross") {
+            if (j.contains("amplitudeX")) {
+                readNumber(j, "amplitudeX", val, path, error, false);
+                out.amplitudeX = static_cast<float>(val);
+            }
+        } else if (type == "cross") {
             out.type = WaveType::Cross;
-            if(j.contains("centerX")) { readNumber(j, "centerX", val, path, error, false); out.centerX = static_cast<float>(val); }
-            if(j.contains("centerY")) { readNumber(j, "centerY", val, path, error, false); out.centerY = static_cast<float>(val); }
-            if(j.contains("step")) { readNumber(j, "step", val, path, error, false); out.step = static_cast<float>(val); }
-             std::int32_t al=0;
-            readInt(j, "armLength", al, path, error, false); out.armLength = al;
+            if (j.contains("centerX")) {
+                readNumber(j, "centerX", val, path, error, false);
+                out.centerX = static_cast<float>(val);
+            }
+            if (j.contains("centerY")) {
+                readNumber(j, "centerY", val, path, error, false);
+                out.centerY = static_cast<float>(val);
+            }
+            if (j.contains("step")) {
+                readNumber(j, "step", val, path, error, false);
+                out.step = static_cast<float>(val);
+            }
+            std::int32_t al = 0;
+            readInt(j, "armLength", al, path, error, false);
+            out.armLength = al;
         } else {
             out.type = WaveType::Line;
         }
@@ -548,143 +601,181 @@ namespace
         }
         double x = 0, y = 0, width = 0, height = 0;
         if (j.contains("minX")) {
-            readNumber(j, "minX", x, path, error, true); out.minX = static_cast<float>(x);
-            readNumber(j, "maxX", width, path, error, true); out.maxX = static_cast<float>(width);
-            readNumber(j, "minY", y, path, error, true); out.minY = static_cast<float>(y);
-            readNumber(j, "maxY", height, path, error, true); out.maxY = static_cast<float>(height);
+            readNumber(j, "minX", x, path, error, true);
+            out.minX = static_cast<float>(x);
+            readNumber(j, "maxX", width, path, error, true);
+            out.maxX = static_cast<float>(width);
+            readNumber(j, "minY", y, path, error, true);
+            out.minY = static_cast<float>(y);
+            readNumber(j, "maxY", height, path, error, true);
+            out.maxY = static_cast<float>(height);
         } else {
-             if (!readNumber(j, "x", x, path, error, true)) return false;
-             if (!readNumber(j, "y", y, path, error, true)) return false;
-             if (!readNumber(j, "width", width, path, error, true)) return false;
-             if (!readNumber(j, "height", height, path, error, true)) return false;
-             out.minX = static_cast<float>(x);
-             out.minY = static_cast<float>(y);
-             out.maxX = static_cast<float>(x + width);
-             out.maxY = static_cast<float>(y + height);
+            if (!readNumber(j, "x", x, path, error, true))
+                return false;
+            if (!readNumber(j, "y", y, path, error, true))
+                return false;
+            if (!readNumber(j, "width", width, path, error, true))
+                return false;
+            if (!readNumber(j, "height", height, path, error, true))
+                return false;
+            out.minX = static_cast<float>(x);
+            out.minY = static_cast<float>(y);
+            out.maxX = static_cast<float>(x + width);
+            out.maxY = static_cast<float>(y + height);
         }
         return true;
     }
 
     bool parseEvent(const Json& j, LevelEvent& out, const std::string& path, LevelLoadError& error)
     {
-         if (!j.isObject()) {
-             setError(error, LevelLoadErrorCode::SchemaError, "Expected event object", "", path);
-             return false;
-         }
-         std::string type;
-         if (!readString(j, "type", type, path, error, true))
-             return false;
-             
-         if(type == "spawn_wave") out.type = EventType::SpawnWave;
-         else if(type == "spawn_obstacle") out.type = EventType::SpawnObstacle;
-         else if(type == "spawn_boss") out.type = EventType::SpawnBoss;
-         else if(type == "set_scroll") out.type = EventType::SetScroll;
-         else if(type == "set_background") out.type = EventType::SetBackground;
-         else if(type == "set_music") out.type = EventType::SetMusic;
-         else if(type == "set_camera_bounds") out.type = EventType::SetCameraBounds;
-         else if(type == "gate_open") out.type = EventType::GateOpen;
-         else if(type == "gate_close") out.type = EventType::GateClose;
-         else if(type == "checkpoint") out.type = EventType::Checkpoint;
-         else {
-             setError(error, LevelLoadErrorCode::SchemaError, "Unknown event type: " + type, "", path);
-             return false;
-         }
+        if (!j.isObject()) {
+            setError(error, LevelLoadErrorCode::SchemaError, "Expected event object", "", path);
+            return false;
+        }
+        std::string type;
+        if (!readString(j, "type", type, path, error, true))
+            return false;
 
-         out.id = "";
-         if(j.contains("id")) readString(j, "id", out.id, path, error, false);
+        if (type == "spawn_wave")
+            out.type = EventType::SpawnWave;
+        else if (type == "spawn_obstacle")
+            out.type = EventType::SpawnObstacle;
+        else if (type == "spawn_boss")
+            out.type = EventType::SpawnBoss;
+        else if (type == "set_scroll")
+            out.type = EventType::SetScroll;
+        else if (type == "set_background")
+            out.type = EventType::SetBackground;
+        else if (type == "set_music")
+            out.type = EventType::SetMusic;
+        else if (type == "set_camera_bounds")
+            out.type = EventType::SetCameraBounds;
+        else if (type == "gate_open")
+            out.type = EventType::GateOpen;
+        else if (type == "gate_close")
+            out.type = EventType::GateClose;
+        else if (type == "checkpoint")
+            out.type = EventType::Checkpoint;
+        else {
+            setError(error, LevelLoadErrorCode::SchemaError, "Unknown event type: " + type, "", path);
+            return false;
+        }
 
-         if (j.contains("trigger")) {
-             Json t;
-             if (requireObject(j, "trigger", t, path, error)) {
-                 if (!parseTrigger(t, out.trigger, joinPath(path, "trigger"), error))
-                     return false;
-             } else return false;
-         }
+        out.id = "";
+        if (j.contains("id"))
+            readString(j, "id", out.id, path, error, false);
 
-         if (j.contains("repeat")) {
-             Json r;
-             if(requireObject(j, "repeat", r, path, error)) {
-                 RepeatSpec rs;
-                 if(parseRepeat(r, rs, joinPath(path, "repeat"), error))
-                     out.repeat = rs;
-                 else return false;
-             }
-         }
-         
-         if (out.type == EventType::SpawnWave && j.contains("wave")) {
-             Json w;
-             if(requireObject(j, "wave", w, path, error)) {
-                 if(!parseWave(w, out.wave.emplace(), joinPath(path, "wave"), error)) return false;
-             }
-         }
-         if (out.type == EventType::SetScroll && j.contains("scroll")) {
-             Json s;
-             if(requireObject(j, "scroll", s, path, error)) {
-                 if(!parseScroll(s, out.scroll.emplace(), joinPath(path, "scroll"), error)) return false;
-             }
-         }
-         if (out.type == EventType::SetCameraBounds && j.contains("bounds")) {
-             Json b;
-             if(requireObject(j, "bounds", b, path, error)) {
-                 if(!parseBounds(b, out.cameraBounds.emplace(), joinPath(path, "bounds"), error)) return false;
-             }
-         }
-         if (out.type == EventType::SetBackground && j.contains("backgroundId")) {
-             readString(j, "backgroundId", out.backgroundId.emplace(), path, error, true);
-         }
-         
-         if (out.type == EventType::Checkpoint) {
-             CheckpointDefinition cp;
-             if (!readString(j, "checkpointId", cp.checkpointId, path, error, true))
-                 return false;
-             if (j.contains("respawn")) {
-                 parseVec2(j["respawn"], cp.respawn, joinPath(path, "respawn"), error);
-             }
-             out.checkpoint = cp;
-         }
+        if (j.contains("trigger")) {
+            Json t;
+            if (requireObject(j, "trigger", t, path, error)) {
+                if (!parseTrigger(t, out.trigger, joinPath(path, "trigger"), error))
+                    return false;
+            } else
+                return false;
+        }
 
-         if (out.type == EventType::SpawnObstacle) {
-             SpawnObstacleSettings obs;
-             if (!readString(j, "obstacle", obs.obstacle, path, error, true))
-                  return false;
-             
-             double val = 0.0;
-             if (!readNumber(j, "x", val, path, error, true)) return false;
-             obs.x = static_cast<float>(val);
+        if (j.contains("repeat")) {
+            Json r;
+            if (requireObject(j, "repeat", r, path, error)) {
+                RepeatSpec rs;
+                if (parseRepeat(r, rs, joinPath(path, "repeat"), error))
+                    out.repeat = rs;
+                else
+                    return false;
+            }
+        }
 
-             if (j.contains("y")) {
-                 readNumber(j, "y", val, path, error, false); obs.y = static_cast<float>(val);
-             }
-             if (j.contains("spawnId")) {
-                 readString(j, "spawnId", obs.spawnId, path, error, false);
-             } else {
-                 obs.spawnId = out.id;
-             }
-             
-             if (j.contains("margin")) { readNumber(j, "margin", val, path, error, false); obs.margin = static_cast<float>(val); }
-             if (j.contains("speedX")) { readNumber(j, "speedX", val, path, error, false); obs.speedX = static_cast<float>(val); }
-             if (j.contains("speedY")) { readNumber(j, "speedY", val, path, error, false); obs.speedY = static_cast<float>(val); }
-             if (j.contains("health")) { 
-                 std::int32_t h=0; 
-                 readInt(j, "health", h, path, error, false); 
-                 obs.health = h; 
-             }
-             if (j.contains("anchor")) {
-                 std::string aStr;
-                 readString(j, "anchor", aStr, path, error, false);
-                 if(aStr == "top") obs.anchor = ObstacleAnchor::Top;
-                 else if(aStr == "bottom") obs.anchor = ObstacleAnchor::Bottom;
-                 else obs.anchor = ObstacleAnchor::Absolute;
-             }
-             if (j.contains("scale")) {
-                 Vec2f s{};
-                 parseVec2(j["scale"], s, path, error);
-                 obs.scale = s;
-             }
-             
-             out.obstacle = obs;
-         }
-         return true;
+        if (out.type == EventType::SpawnWave && j.contains("wave")) {
+            Json w;
+            if (requireObject(j, "wave", w, path, error)) {
+                if (!parseWave(w, out.wave.emplace(), joinPath(path, "wave"), error))
+                    return false;
+            }
+        }
+        if (out.type == EventType::SetScroll && j.contains("scroll")) {
+            Json s;
+            if (requireObject(j, "scroll", s, path, error)) {
+                if (!parseScroll(s, out.scroll.emplace(), joinPath(path, "scroll"), error))
+                    return false;
+            }
+        }
+        if (out.type == EventType::SetCameraBounds && j.contains("bounds")) {
+            Json b;
+            if (requireObject(j, "bounds", b, path, error)) {
+                if (!parseBounds(b, out.cameraBounds.emplace(), joinPath(path, "bounds"), error))
+                    return false;
+            }
+        }
+        if (out.type == EventType::SetBackground && j.contains("backgroundId")) {
+            readString(j, "backgroundId", out.backgroundId.emplace(), path, error, true);
+        }
+
+        if (out.type == EventType::Checkpoint) {
+            CheckpointDefinition cp;
+            if (!readString(j, "checkpointId", cp.checkpointId, path, error, true))
+                return false;
+            if (j.contains("respawn")) {
+                parseVec2(j["respawn"], cp.respawn, joinPath(path, "respawn"), error);
+            }
+            out.checkpoint = cp;
+        }
+
+        if (out.type == EventType::SpawnObstacle) {
+            SpawnObstacleSettings obs;
+            if (!readString(j, "obstacle", obs.obstacle, path, error, true))
+                return false;
+
+            double val = 0.0;
+            if (!readNumber(j, "x", val, path, error, true))
+                return false;
+            obs.x = static_cast<float>(val);
+
+            if (j.contains("y")) {
+                readNumber(j, "y", val, path, error, false);
+                obs.y = static_cast<float>(val);
+            }
+            if (j.contains("spawnId")) {
+                readString(j, "spawnId", obs.spawnId, path, error, false);
+            } else {
+                obs.spawnId = out.id;
+            }
+
+            if (j.contains("margin")) {
+                readNumber(j, "margin", val, path, error, false);
+                obs.margin = static_cast<float>(val);
+            }
+            if (j.contains("speedX")) {
+                readNumber(j, "speedX", val, path, error, false);
+                obs.speedX = static_cast<float>(val);
+            }
+            if (j.contains("speedY")) {
+                readNumber(j, "speedY", val, path, error, false);
+                obs.speedY = static_cast<float>(val);
+            }
+            if (j.contains("health")) {
+                std::int32_t h = 0;
+                readInt(j, "health", h, path, error, false);
+                obs.health = h;
+            }
+            if (j.contains("anchor")) {
+                std::string aStr;
+                readString(j, "anchor", aStr, path, error, false);
+                if (aStr == "top")
+                    obs.anchor = ObstacleAnchor::Top;
+                else if (aStr == "bottom")
+                    obs.anchor = ObstacleAnchor::Bottom;
+                else
+                    obs.anchor = ObstacleAnchor::Absolute;
+            }
+            if (j.contains("scale")) {
+                Vec2f s{};
+                parseVec2(j["scale"], s, path, error);
+                obs.scale = s;
+            }
+
+            out.obstacle = obs;
+        }
+        return true;
     }
 
     bool parsePatterns(const Json& j, std::vector<PatternDefinition>& out, const std::string& path,
@@ -697,7 +788,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            Json p = j[i];
+            Json p            = j[i];
             std::string ppath = joinPath(path, std::to_string(i));
             if (!p.isObject()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid pattern object", "", ppath);
@@ -709,7 +800,7 @@ namespace
                 return false;
             if (!readString(p, "type", type, ppath, error, true))
                 return false;
-                
+
             if (type == "linear") {
                 double speed = 0.0;
                 readNumber(p, "speed", speed, ppath, error, true);
@@ -719,16 +810,18 @@ namespace
                 readNumber(p, "speed", speed, ppath, error, true);
                 readNumber(p, "amplitude", amp, ppath, error, true);
                 readNumber(p, "frequency", freq, ppath, error, true);
-                out.push_back(PatternDefinition{id, MovementComponent::zigzag(
-                    static_cast<float>(speed), static_cast<float>(amp), static_cast<float>(freq))});
+                out.push_back(
+                    PatternDefinition{id, MovementComponent::zigzag(static_cast<float>(speed), static_cast<float>(amp),
+                                                                    static_cast<float>(freq))});
             } else if (type == "sine") {
                 double speed = 0.0, amp = 0.0, freq = 0.0, phase = 0.0;
                 readNumber(p, "speed", speed, ppath, error, false);
                 readNumber(p, "amplitude", amp, ppath, error, true);
                 readNumber(p, "frequency", freq, ppath, error, true);
                 readNumber(p, "phase", phase, ppath, error, false);
-                out.push_back(PatternDefinition{id, MovementComponent::sine(
-                    static_cast<float>(speed), static_cast<float>(amp), static_cast<float>(freq), static_cast<float>(phase))});
+                out.push_back(PatternDefinition{
+                    id, MovementComponent::sine(static_cast<float>(speed), static_cast<float>(amp),
+                                                static_cast<float>(freq), static_cast<float>(phase))});
             } else {
                 setError(error, LevelLoadErrorCode::SchemaError, "Unknown pattern type: " + type, "", ppath);
                 return false;
@@ -743,118 +836,132 @@ namespace
             setError(error, LevelLoadErrorCode::SchemaError, "Expected templates object", "", path);
             return false;
         }
-        
+
         if (j.contains("hitboxes")) {
             Json hitboxes = j["hitboxes"];
             if (hitboxes.isObject()) {
-                 std::vector<std::string> keys = hitboxes.getKeys();
-                 for(const auto& key : keys) {
-                     Json val = hitboxes[key];
-                     HitboxComponent hb;
-                     if(parseHitbox(val, hb, joinPath(path, "hitboxes/" + key), error)) {
-                         out.hitboxes[key] = hb;
-                     }
-                 }
+                std::vector<std::string> keys = hitboxes.getKeys();
+                for (const auto& key : keys) {
+                    Json val = hitboxes[key];
+                    HitboxComponent hb;
+                    if (parseHitbox(val, hb, joinPath(path, "hitboxes/" + key), error)) {
+                        out.hitboxes[key] = hb;
+                    }
+                }
             }
         }
-        
+
         if (j.contains("colliders")) {
             Json colliders = j["colliders"];
             if (colliders.isObject()) {
-                 std::vector<std::string> keys = colliders.getKeys();
-                 for(const auto& key : keys) {
-                     Json val = colliders[key];
-                     ColliderComponent cc;
-                     if(parseCollider(val, cc, joinPath(path, "colliders/" + key), error)) {
-                         out.colliders[key] = cc;
-                     }
-                 }
+                std::vector<std::string> keys = colliders.getKeys();
+                for (const auto& key : keys) {
+                    Json val = colliders[key];
+                    ColliderComponent cc;
+                    if (parseCollider(val, cc, joinPath(path, "colliders/" + key), error)) {
+                        out.colliders[key] = cc;
+                    }
+                }
             }
         }
 
         if (j.contains("enemies")) {
             Json enemies = j["enemies"];
             if (enemies.isObject()) {
-                 std::vector<std::string> keys = enemies.getKeys();
-                 for(const auto& key : keys) {
-                     Json e = enemies[key];
-                     EnemyTemplate et;
-                     int typeId=0; 
-                     readInt(e, "typeId", typeId, path, error, true);
-                     et.typeId = typeId;
+                std::vector<std::string> keys = enemies.getKeys();
+                for (const auto& key : keys) {
+                    Json e = enemies[key];
+                    EnemyTemplate et;
+                    int typeId = 0;
+                    readInt(e, "typeId", typeId, path, error, true);
+                    et.typeId = typeId;
 
-                     std::string hbKey, colKey;
-                     if(readString(e, "hitbox", hbKey, path, error, true)) {
-                         if(out.hitboxes.count(hbKey)) et.hitbox = out.hitboxes.at(hbKey);
-                         else setError(error, LevelLoadErrorCode::SchemaError, "Unknown hitbox: " + hbKey, "", path);
-                     }
-                     if(readString(e, "collider", colKey, path, error, true)) {
-                         if(out.colliders.count(colKey)) et.collider = out.colliders.at(colKey);
-                         else setError(error, LevelLoadErrorCode::SchemaError, "Unknown collider: " + colKey, "", path);
-                     }
-                     readInt(e, "health", et.health, path, error, false);
-                     readInt(e, "score", et.score, path, error, false);
-                     
-                     if(e.contains("scale")) {
-                         parseVec2(e["scale"], et.scale, path, error);
-                     }
-                     
-                     if(e.contains("shooting")) {
-                         EnemyShootingComponent shoot;
-                         if(parseShooting(e["shooting"], shoot, path, error)) {
-                             et.shooting = shoot;
-                         }
-                     }
+                    std::string hbKey, colKey;
+                    if (readString(e, "hitbox", hbKey, path, error, true)) {
+                        if (out.hitboxes.count(hbKey))
+                            et.hitbox = out.hitboxes.at(hbKey);
+                        else
+                            setError(error, LevelLoadErrorCode::SchemaError, "Unknown hitbox: " + hbKey, "", path);
+                    }
+                    if (readString(e, "collider", colKey, path, error, true)) {
+                        if (out.colliders.count(colKey))
+                            et.collider = out.colliders.at(colKey);
+                        else
+                            setError(error, LevelLoadErrorCode::SchemaError, "Unknown collider: " + colKey, "", path);
+                    }
+                    readInt(e, "health", et.health, path, error, false);
+                    readInt(e, "score", et.score, path, error, false);
 
-                     out.enemies[key] = et;
-                 }
+                    if (e.contains("scale")) {
+                        parseVec2(e["scale"], et.scale, path, error);
+                    }
+
+                    if (e.contains("shooting")) {
+                        EnemyShootingComponent shoot;
+                        if (parseShooting(e["shooting"], shoot, path, error)) {
+                            et.shooting = shoot;
+                        }
+                    }
+
+                    out.enemies[key] = et;
+                }
             }
         }
-        
+
         if (j.contains("obstacles")) {
             Json obstacles = j["obstacles"];
             if (obstacles.isObject()) {
-                 std::vector<std::string> keys = obstacles.getKeys();
-                 for(const auto& key : keys) {
-                     Json o = obstacles[key];
-                     ObstacleTemplate ot;
-                     
-                     int typeId=0; 
-                     readInt(o, "typeId", typeId, path, error, true);
-                     ot.typeId = typeId;
+                std::vector<std::string> keys = obstacles.getKeys();
+                for (const auto& key : keys) {
+                    Json o = obstacles[key];
+                    ObstacleTemplate ot;
 
-                     std::string hbKey, colKey;
-                     if(readString(o, "hitbox", hbKey, path, error, true)) {
-                         if(out.hitboxes.count(hbKey)) ot.hitbox = out.hitboxes.at(hbKey);
-                         else setError(error, LevelLoadErrorCode::SchemaError, "Unknown hitbox: " + hbKey, "", path);
-                     }
-                     if(readString(o, "collider", colKey, path, error, true)) {
-                         if(out.colliders.count(colKey)) ot.collider = out.colliders.at(colKey);
-                         else setError(error, LevelLoadErrorCode::SchemaError, "Unknown collider: " + colKey, "", path);
-                     }
-                     
-                     readInt(o, "health", ot.health, path, error, false);
-                     
-                     std::string anchorStr;
-                     readString(o, "anchor", anchorStr, path, error, false);
-                     if(anchorStr == "top") ot.anchor = ObstacleAnchor::Top;
-                     else if(anchorStr == "bottom") ot.anchor = ObstacleAnchor::Bottom;
-                     else ot.anchor = ObstacleAnchor::Absolute;
+                    int typeId = 0;
+                    readInt(o, "typeId", typeId, path, error, true);
+                    ot.typeId = typeId;
 
-                     double margin=0, sx=0, sy=0;
-                     readNumber(o, "margin", margin, path, error, false); ot.margin = static_cast<float>(margin);
-                     readNumber(o, "speedX", sx, path, error, false); ot.speedX = static_cast<float>(sx);
-                     readNumber(o, "speedY", sy, path, error, false); ot.speedY = static_cast<float>(sy);
+                    std::string hbKey, colKey;
+                    if (readString(o, "hitbox", hbKey, path, error, true)) {
+                        if (out.hitboxes.count(hbKey))
+                            ot.hitbox = out.hitboxes.at(hbKey);
+                        else
+                            setError(error, LevelLoadErrorCode::SchemaError, "Unknown hitbox: " + hbKey, "", path);
+                    }
+                    if (readString(o, "collider", colKey, path, error, true)) {
+                        if (out.colliders.count(colKey))
+                            ot.collider = out.colliders.at(colKey);
+                        else
+                            setError(error, LevelLoadErrorCode::SchemaError, "Unknown collider: " + colKey, "", path);
+                    }
 
-                     if(o.contains("scale")) {
-                         parseVec2(o["scale"], ot.scale, path, error);
-                     }
+                    readInt(o, "health", ot.health, path, error, false);
 
-                     out.obstacles[key] = ot;
-                 }
+                    std::string anchorStr;
+                    readString(o, "anchor", anchorStr, path, error, false);
+                    if (anchorStr == "top")
+                        ot.anchor = ObstacleAnchor::Top;
+                    else if (anchorStr == "bottom")
+                        ot.anchor = ObstacleAnchor::Bottom;
+                    else
+                        ot.anchor = ObstacleAnchor::Absolute;
+
+                    double margin = 0, sx = 0, sy = 0;
+                    readNumber(o, "margin", margin, path, error, false);
+                    ot.margin = static_cast<float>(margin);
+                    readNumber(o, "speedX", sx, path, error, false);
+                    ot.speedX = static_cast<float>(sx);
+                    readNumber(o, "speedY", sy, path, error, false);
+                    ot.speedY = static_cast<float>(sy);
+
+                    if (o.contains("scale")) {
+                        parseVec2(o["scale"], ot.scale, path, error);
+                    }
+
+                    out.obstacles[key] = ot;
+                }
             }
         }
-        
+
         return true;
     }
 
@@ -869,7 +976,7 @@ namespace
         out.clear();
         std::vector<std::string> keys = j.getKeys();
         for (const auto& key : keys) {
-            Json b = j[key];
+            Json b            = j[key];
             std::string bpath = joinPath(path, key);
             if (!b.isObject()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid boss object", "", bpath);
@@ -933,7 +1040,7 @@ namespace
                     return false;
                 }
                 for (std::size_t i = 0; i < phases.size(); ++i) {
-                    Json p = phases[i];
+                    Json p            = phases[i];
                     std::string ppath = joinPath(joinPath(bpath, "phases"), std::to_string(i));
                     if (!p.isObject()) {
                         setError(error, LevelLoadErrorCode::SchemaError, "Invalid phase", "", ppath);
@@ -956,10 +1063,10 @@ namespace
                     }
                     Json evs = p["events"];
                     for (std::size_t e = 0; e < evs.size(); ++e) {
-                         LevelEvent ev;
-                         if (!parseEvent(evs[e], ev, joinPath(joinPath(ppath, "events"), std::to_string(e)), error))
-                             return false;
-                         phase.events.push_back(std::move(ev));
+                        LevelEvent ev;
+                        if (!parseEvent(evs[e], ev, joinPath(joinPath(ppath, "events"), std::to_string(e)), error))
+                            return false;
+                        phase.events.push_back(std::move(ev));
                     }
                     boss.phases.push_back(std::move(phase));
                 }
@@ -992,7 +1099,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            Json s = j[i];
+            Json s            = j[i];
             std::string spath = joinPath(path, std::to_string(i));
             if (!s.isObject()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid segment object", "", spath);
@@ -1048,7 +1155,7 @@ namespace
         out.clear();
         out.reserve(j.size());
         for (std::size_t i = 0; i < j.size(); ++i) {
-            Json a = j[i];
+            Json a            = j[i];
             std::string apath = joinPath(path, std::to_string(i));
             if (!a.isObject()) {
                 setError(error, LevelLoadErrorCode::SchemaError, "Invalid archetype object", "", apath);
@@ -1516,7 +1623,7 @@ namespace
 
         std::unordered_map<std::string, BossDefinition> bosses;
         if (root.contains("bosses")) {
-            Json b = root["bosses"]; 
+            Json b = root["bosses"];
             if (!parseBosses(b, templateData, bosses, "/bosses", error))
                 return false;
         }
@@ -1559,7 +1666,7 @@ namespace
         out.levels.clear();
         std::unordered_set<std::int32_t> ids;
         for (std::size_t i = 0; i < levels.size(); ++i) {
-            Json entry = levels[i];
+            Json entry        = levels[i];
             std::string epath = joinPath("/levels", std::to_string(i));
             if (!entry.isObject()) {
                 setError(error, LevelLoadErrorCode::RegistryError, "Invalid registry entry", "", epath);

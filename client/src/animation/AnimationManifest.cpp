@@ -12,7 +12,7 @@ static AnimationClip parseClip(const Json& clipJson)
     clip.id        = clipJson.getValue<std::string>("id", "");
     clip.frameTime = clipJson.getValue<float>("frameTime", 0.1F);
     clip.loop      = clipJson.getValue<bool>("loop", true);
-    
+
     if (clipJson.contains("frames") && clipJson["frames"].isArray()) {
         auto frames = clipJson["frames"];
         for (size_t i = 0; i < frames.size(); ++i) {
@@ -26,7 +26,7 @@ static AnimationClip parseClip(const Json& clipJson)
         }
     }
     if (clip.frames.empty() && clipJson.contains("rows") && clipJson["rows"].isArray()) {
-        int y = 0;
+        int y     = 0;
         auto rows = clipJson["rows"];
         for (size_t i = 0; i < rows.size(); ++i) {
             auto row = rows[i];
@@ -34,7 +34,7 @@ static AnimationClip parseClip(const Json& clipJson)
                 continue;
             int rowHeight = row.getValue<int>("height", 0);
             int x         = 0;
-            auto widths = row["widths"];
+            auto widths   = row["widths"];
             if (widths.isArray()) {
                 for (size_t j = 0; j < widths.size(); ++j) {
                     int cw = widths[j].get<int>();
@@ -71,7 +71,7 @@ AnimationAtlas AnimationManifest::loadFromJson(const Json& j)
 
     if (j.contains("labels") && j["labels"].isObject()) {
         auto labels = j["labels"];
-        auto keys = labels.getKeys();
+        auto keys   = labels.getKeys();
         for (const auto& key : keys) {
             auto val = labels[key];
             if (!val.isObject()) {
@@ -101,7 +101,7 @@ AnimationAtlas AnimationManifest::loadFromFile(const std::string& path)
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
-    
+
     try {
         Json j = Json::parse(buffer.str());
         return loadFromJson(j);
