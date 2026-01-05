@@ -7,16 +7,16 @@ using EntityId = std::uint32_t;
 
 struct CachedEntityState
 {
-    float posX       = 0.0F;
-    float posY       = 0.0F;
-    float velX       = 0.0F;
-    float velY       = 0.0F;
-    std::int16_t health = 0;
-    std::int8_t lives   = 0;
-    std::int32_t score  = 0;
-    std::uint8_t status = 0;
+    float posX              = 0.0F;
+    float posY              = 0.0F;
+    float velX              = 0.0F;
+    float velY              = 0.0F;
+    std::int16_t health     = 0;
+    std::int8_t lives       = 0;
+    std::int32_t score      = 0;
+    std::uint8_t status     = 0;
     std::uint8_t entityType = 0;
-    bool initialized = false;
+    bool initialized        = false;
 };
 
 class EntityStateCache

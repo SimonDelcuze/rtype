@@ -92,5 +92,4 @@ class InputReceiveThread
     void processIncomingPacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& src);
     void handleInputPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& src);
     void handleControlPacket(const PacketHeader& hdr, const IpEndpoint& src);
-
 };

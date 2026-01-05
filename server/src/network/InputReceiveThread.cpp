@@ -1,4 +1,5 @@
 #include "network/InputReceiveThread.hpp"
+
 #include "Logger.hpp"
 #include "server/Session.hpp"
 
@@ -13,7 +14,6 @@ namespace
 {
     constexpr std::chrono::milliseconds kPollDelay(1);
 } // namespace
-
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
                                        ThreadSafeQueue<ControlEvent>& controlQueue,
@@ -141,7 +141,8 @@ void InputReceiveThread::processIncomingPacket(const std::uint8_t* data, std::si
     }
 }
 
-void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& src)
+void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                                           const IpEndpoint& src)
 {
     EndpointKey key{src.addr, src.port};
     bool stale = false;
@@ -188,9 +189,6 @@ void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const IpEn
         Logger::instance().warn("[Input] input_drop status=unknown_message from=" + endpointKey(src));
     }
 }
-
-
-
 
 void InputReceiveThread::checkTimeouts(std::chrono::steady_clock::time_point now)
 {

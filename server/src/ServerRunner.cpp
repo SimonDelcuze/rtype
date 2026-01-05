@@ -151,7 +151,6 @@ void ServerApp::stop()
     receiveThread_.stop();
 }
 
-
 void ServerApp::resetGame()
 
 {

@@ -118,7 +118,7 @@ namespace
     }
 
     std::vector<std::uint8_t> buildDeltaEntityBlock(const Registry& registry, EntityId id, EntityStateCache& cache,
-                                                     bool forceFull)
+                                                    bool forceFull)
     {
         auto cur  = captureState(registry, id);
         auto* old = cache.get(id);
@@ -243,8 +243,8 @@ std::vector<std::vector<std::uint8_t>> buildSnapshotChunks(Registry& registry, u
     return packets;
 }
 
-std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t tick,
-                                                    EntityStateCache& cache, bool forceFullState)
+std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t tick, EntityStateCache& cache,
+                                                   bool forceFullState)
 {
     auto view = registry.view<TransformComponent>();
     std::vector<std::uint8_t> payload;
@@ -276,5 +276,3 @@ std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t 
     writeU32(out, PacketHeader::crc32(out.data(), out.size()));
     return out;
 }
-
-

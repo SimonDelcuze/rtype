@@ -42,7 +42,7 @@ class ServerApp
     void stop();
 
   private:
-    static constexpr double kTickRate = 60.0;
+    static constexpr double kTickRate                 = 60.0;
     static constexpr std::uint32_t kFullStateInterval = 60;
 
     void handleControl();
@@ -132,4 +132,3 @@ class ServerApp
     EntityStateCache entityStateCache_;
     std::uint32_t lastFullStateTick_{0};
 };
-
