@@ -2,34 +2,45 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
-static AnimationClip parseClip(const nlohmann::json& clipJson)
+using namespace rtype;
+
+static AnimationClip parseClip(const Json& clipJson)
 {
     AnimationClip clip;
-    clip.id        = clipJson.value("id", "");
-    clip.frameTime = clipJson.value("frameTime", 0.1F);
-    clip.loop      = clipJson.value("loop", true);
-    if (clipJson.contains("frames") && clipJson["frames"].is_array()) {
-        for (const auto& f : clipJson["frames"]) {
+    clip.id        = clipJson.getValue<std::string>("id", "");
+    clip.frameTime = clipJson.getValue<float>("frameTime", 0.1F);
+    clip.loop      = clipJson.getValue<bool>("loop", true);
+    
+    if (clipJson.contains("frames") && clipJson["frames"].isArray()) {
+        auto frames = clipJson["frames"];
+        for (size_t i = 0; i < frames.size(); ++i) {
+            auto f = frames[i];
             AnimationFrame frame{};
-            frame.x      = f.value("x", 0);
-            frame.y      = f.value("y", 0);
-            frame.width  = f.value("width", 0);
-            frame.height = f.value("height", 0);
+            frame.x      = f.getValue<int>("x", 0);
+            frame.y      = f.getValue<int>("y", 0);
+            frame.width  = f.getValue<int>("width", 0);
+            frame.height = f.getValue<int>("height", 0);
             clip.frames.push_back(frame);
         }
     }
-    if (clip.frames.empty() && clipJson.contains("rows") && clipJson["rows"].is_array()) {
+    if (clip.frames.empty() && clipJson.contains("rows") && clipJson["rows"].isArray()) {
         int y = 0;
-        for (const auto& row : clipJson["rows"]) {
-            if (!row.is_object() || !row.contains("height") || !row.contains("widths"))
+        auto rows = clipJson["rows"];
+        for (size_t i = 0; i < rows.size(); ++i) {
+            auto row = rows[i];
+            if (!row.isObject() || !row.contains("height") || !row.contains("widths"))
                 continue;
-            int rowHeight = row.value("height", 0);
+            int rowHeight = row.getValue<int>("height", 0);
             int x         = 0;
-            for (const auto& w : row["widths"]) {
-                int cw = w.get<int>();
-                clip.frames.push_back(AnimationFrame{x, y, cw, rowHeight});
-                x += cw;
+            auto widths = row["widths"];
+            if (widths.isArray()) {
+                for (size_t j = 0; j < widths.size(); ++j) {
+                    int cw = widths[j].get<int>();
+                    clip.frames.push_back(AnimationFrame{x, y, cw, rowHeight});
+                    x += cw;
+                }
             }
             y += rowHeight;
         }
@@ -37,16 +48,18 @@ static AnimationClip parseClip(const nlohmann::json& clipJson)
     return clip;
 }
 
-AnimationAtlas AnimationManifest::loadFromJson(const nlohmann::json& j)
+AnimationAtlas AnimationManifest::loadFromJson(const Json& j)
 {
     AnimationAtlas atlas;
-    if (!j.is_object()) {
+    if (!j.isObject()) {
         return atlas;
     }
 
-    if (j.contains("animations")) {
-        for (const auto& entry : j["animations"]) {
-            if (!entry.is_object()) {
+    if (j.contains("animations") && j["animations"].isArray()) {
+        auto animations = j["animations"];
+        for (size_t i = 0; i < animations.size(); ++i) {
+            auto entry = animations[i];
+            if (!entry.isObject()) {
                 continue;
             }
             AnimationClip clip = parseClip(entry);
@@ -56,18 +69,23 @@ AnimationAtlas AnimationManifest::loadFromJson(const nlohmann::json& j)
         }
     }
 
-    if (j.contains("labels") && j["labels"].is_object()) {
-        for (auto it = j["labels"].begin(); it != j["labels"].end(); ++it) {
-            if (!it.value().is_object()) {
+    if (j.contains("labels") && j["labels"].isObject()) {
+        auto labels = j["labels"];
+        auto keys = labels.getKeys();
+        for (const auto& key : keys) {
+            auto val = labels[key];
+            if (!val.isObject()) {
                 continue;
             }
             std::unordered_map<std::string, std::string> mapping;
-            for (auto lit = it.value().begin(); lit != it.value().end(); ++lit) {
-                if (lit.value().is_string()) {
-                    mapping[lit.key()] = lit.value().get<std::string>();
+            auto subKeys = val.getKeys();
+            for (const auto& subKey : subKeys) {
+                auto subVal = val[subKey];
+                if (subVal.isString()) {
+                    mapping[subKey] = subVal.get<std::string>();
                 }
             }
-            atlas.labels[it.key()] = std::move(mapping);
+            atlas.labels[key] = std::move(mapping);
         }
     }
 
@@ -81,12 +99,14 @@ AnimationAtlas AnimationManifest::loadFromFile(const std::string& path)
         std::cerr << "[AnimationManifest] Failed to open " << path << '\n';
         return AnimationAtlas{};
     }
-    nlohmann::json j;
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    
     try {
-        file >> j;
+        Json j = Json::parse(buffer.str());
+        return loadFromJson(j);
     } catch (const std::exception& e) {
         std::cerr << "[AnimationManifest] Failed to parse " << path << ": " << e.what() << '\n';
         return AnimationAtlas{};
     }
-    return loadFromJson(j);
 }

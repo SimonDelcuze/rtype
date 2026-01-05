@@ -71,6 +71,11 @@ target_include_directories(rtype_shared
         ${CMAKE_SOURCE_DIR}/shared/include
 )
 
+target_link_libraries(rtype_shared
+    PUBLIC
+        nlohmann_json::nlohmann_json
+)
+
 add_subdirectory(client)
 add_subdirectory(server)
 
