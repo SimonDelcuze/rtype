@@ -9,6 +9,7 @@
 * [Introduction](global-overview/introduction.md)
 * [Installation Guide](global-overview/installation-guide.md)
 * [Core Components](core-components.md)
+* [JSON Wrapper](global-overview/json-wrapper.md)
 * [Network Protocol](global-overview/network_protocol.md)
 * [ECS Architecture](global-overview/ecs-architecture/README.md)
   * [Registry](global-overview/ecs-architecture/registry.md)
