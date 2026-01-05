@@ -251,15 +251,11 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         lastSnapshotTick = snapshot.header.tickId;
         lastSnapshotTime = std::chrono::steady_clock::now();
 
-        std::unordered_set<std::uint32_t> seenThisTick;
-        seenThisTick.reserve(snapshot.entities.size());
-
         for (const auto& entity : snapshot.entities) {
             auto localId = ensureEntity(registry, entity);
             if (!localId.has_value()) {
                 continue;
             }
-            seenThisTick.insert(entity.entityId);
             if (entity.entityType.has_value())
                 remoteToType_[entity.entityId] = *entity.entityType;
             lastSeenTick_[entity.entityId] = snapshot.header.tickId;
@@ -270,37 +266,10 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             }
             applyInterpolation(registry, *localId, entity, snapshot.header.tickId);
         }
-
-        for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
-            if (seenThisTick.contains(it->first)) {
-                ++it;
-                continue;
-            }
-            if (registry.isAlive(it->second)) {
-                registry.destroyEntity(it->second);
-            }
-            lastSeenTick_.erase(it->first);
-            remoteToType_.erase(it->first);
-            it = remoteToLocal_.erase(it);
-        }
-    }
-
-    const std::uint32_t staleThreshold = lastSnapshotTick > 5 ? lastSnapshotTick - 5 : 0;
-    for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end();) {
-        auto seenIt = lastSeenTick_.find(it->first);
-        if (seenIt != lastSeenTick_.end() && seenIt->second < staleThreshold) {
-            if (registry.isAlive(it->second)) {
-                registry.destroyEntity(it->second);
-            }
-            lastSeenTick_.erase(seenIt);
-            remoteToType_.erase(it->first);
-            it = remoteToLocal_.erase(it);
-            continue;
-        }
-        ++it;
     }
 
     auto now = std::chrono::steady_clock::now();
+
     if (now - lastSnapshotTime > std::chrono::seconds(1) && now >= nextStaleLog) {
         Logger::instance().warn(
             "[Replication] No snapshots for " +
