@@ -76,4 +76,4 @@ struct PlayerDisconnectedPacket
     }
 };
 
-static_assert(PlayerDisconnectedPacket::kSize == 23, "PlayerDisconnectedPacket wire size must remain 23 bytes");
+static_assert(PlayerDisconnectedPacket::kSize == 25, "PlayerDisconnectedPacket wire size must remain 25 bytes");

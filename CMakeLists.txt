@@ -66,6 +66,14 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
+CPMAddPackage(
+    NAME lz4
+    GITHUB_REPOSITORY lz4/lz4
+    GIT_TAG v1.9.4
+    SOURCE_SUBDIR build/cmake
+    OPTIONS "LZ4_BUILD_CLI OFF" "LZ4_BUILD_LEGACY_LZ4C OFF"
+)
+
 target_include_directories(rtype_shared
     PUBLIC
         ${CMAKE_SOURCE_DIR}/shared/include
@@ -74,6 +82,7 @@ target_include_directories(rtype_shared
 target_link_libraries(rtype_shared
     PUBLIC
         nlohmann_json::nlohmann_json
+        lz4_static
 )
 
 add_subdirectory(client)

@@ -1,6 +1,7 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/ScoreComponent.hpp"
+#include "network/NetworkCompression.hpp"
 #include "network/Packing.hpp"
 #include "server/EntityStateCache.hpp"
 #include "server/EntityTypeResolver.hpp"
@@ -162,6 +163,20 @@ namespace
         hdr.messageType = static_cast<std::uint8_t>(MessageType::SnapshotChunk);
         hdr.sequenceId  = static_cast<std::uint16_t>((tick + idx) & 0xFFFF);
         hdr.tickId      = tick;
+        if (payload.size() > 64) {
+            auto compressed = Compression::compress(payload);
+            if (compressed.size() < payload.size()) {
+                hdr.isCompressed = true;
+                hdr.originalSize = static_cast<std::uint16_t>(payload.size());
+                hdr.payloadSize  = static_cast<std::uint16_t>(compressed.size());
+                auto hdrBytes    = hdr.encode();
+                std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+                out.insert(out.end(), compressed.begin(), compressed.end());
+                writeU32(out, PacketHeader::crc32(out.data(), out.size()));
+                return out;
+            }
+        }
+
         hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
 
         auto hdrBytes = hdr.encode();
@@ -189,17 +204,13 @@ namespace
             auto mask = calculateMask(cur, old, registry, id, forceFull);
 
             if (mask == 0) {
-                // Still need to update cache even if no changes for some components?
-                // Actually, if mask is 0, it means nothing changed.
-                // We should still update cache to ensure 'initialized' is true?
-                // But calculateMask already handles initialized.
                 continue;
             }
 
             DeltaResult res;
             res.id    = id;
             res.state = cur;
-            res.block.reserve(22); // Typical size
+            res.block.reserve(22);
             writeU32(res.block, id);
             writeU16(res.block, mask);
             writeDeltaData(res.block, mask, cur);
@@ -221,6 +232,20 @@ namespace
         hdr.messageType = static_cast<std::uint8_t>(MessageType::Snapshot);
         hdr.sequenceId  = static_cast<std::uint16_t>(tick & 0xFFFF);
         hdr.tickId      = tick;
+        if (payload.size() > 64) {
+            auto compressed = Compression::compress(payload);
+            if (compressed.size() < payload.size()) {
+                hdr.isCompressed = true;
+                hdr.originalSize = static_cast<std::uint16_t>(payload.size());
+                hdr.payloadSize  = static_cast<std::uint16_t>(compressed.size());
+                auto hdrBytes    = hdr.encode();
+                std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+                out.insert(out.end(), compressed.begin(), compressed.end());
+                writeU32(out, PacketHeader::crc32(out.data(), out.size()));
+                return out;
+            }
+        }
+
         hdr.payloadSize = static_cast<std::uint16_t>(payload.size());
 
         auto hdrBytes = hdr.encode();
@@ -269,7 +294,7 @@ std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registr
 
     std::vector<SnapshotChunkBlock> blocks;
     blocks.reserve(deltas.size());
-    std::size_t totalBytes = 2; // For entity count
+    std::size_t totalBytes = 2;
     for (const auto& d : deltas) {
         totalBytes += d.block.size();
         blocks.push_back({d.block});
@@ -282,7 +307,6 @@ std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registr
         result = buildChunksFromBlocksWithHeader(blocks, tick, maxChunkSize);
     }
 
-    // Update cache only after we're sure we've built the packets
     for (const auto& d : deltas) {
         cache.update(d.id, d.state);
     }

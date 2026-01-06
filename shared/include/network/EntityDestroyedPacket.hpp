@@ -74,4 +74,4 @@ struct EntityDestroyedPacket
     }
 };
 
-static_assert(EntityDestroyedPacket::kSize == 23, "EntityDestroyedPacket wire size must remain 23 bytes");
+static_assert(EntityDestroyedPacket::kSize == 25, "EntityDestroyedPacket wire size must remain 25 bytes");

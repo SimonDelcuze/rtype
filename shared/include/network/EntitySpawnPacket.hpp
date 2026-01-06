@@ -110,4 +110,4 @@ struct EntitySpawnPacket
     }
 };
 
-static_assert(EntitySpawnPacket::kSize == 32, "EntitySpawnPacket wire size must remain 32 bytes");
+static_assert(EntitySpawnPacket::kSize == 34, "EntitySpawnPacket wire size must remain 34 bytes");

@@ -48,16 +48,18 @@ enum class PacketType : std::uint8_t
 
 struct PacketHeader
 {
-    std::uint8_t version      = 1;
-    std::uint8_t packetType   = static_cast<std::uint8_t>(PacketType::ClientToServer);
-    std::uint8_t messageType  = static_cast<std::uint8_t>(MessageType::Invalid);
-    std::uint16_t sequenceId  = 0;
-    std::uint32_t tickId      = 0;
-    std::uint16_t payloadSize = 0;
+    std::uint8_t version       = kProtocolVersion;
+    bool isCompressed          = false;
+    std::uint8_t packetType    = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    std::uint8_t messageType   = static_cast<std::uint8_t>(MessageType::Invalid);
+    std::uint16_t sequenceId   = 0;
+    std::uint32_t tickId       = 0;
+    std::uint16_t payloadSize  = 0;
+    std::uint16_t originalSize = 0;
 
     static constexpr std::array<std::uint8_t, 4> kMagic = {0xA3, 0x5F, 0xC8, 0x1D};
     static constexpr std::uint8_t kProtocolVersion      = 1;
-    static constexpr std::size_t kSize                  = 15;
+    static constexpr std::size_t kSize                  = 17;
     static constexpr std::size_t kCrcSize               = 4;
 
     [[nodiscard]] inline std::array<std::uint8_t, kSize> encode() const noexcept
@@ -67,7 +69,7 @@ struct PacketHeader
         out[1]  = kMagic[1];
         out[2]  = kMagic[2];
         out[3]  = kMagic[3];
-        out[4]  = version;
+        out[4]  = static_cast<std::uint8_t>(version | (isCompressed ? 0x80 : 0x00));
         out[5]  = packetType;
         out[6]  = messageType;
         out[7]  = static_cast<std::uint8_t>((sequenceId >> 8) & 0xFF);
@@ -78,6 +80,8 @@ struct PacketHeader
         out[12] = static_cast<std::uint8_t>(tickId & 0xFF);
         out[13] = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
         out[14] = static_cast<std::uint8_t>(payloadSize & 0xFF);
+        out[15] = static_cast<std::uint8_t>((originalSize >> 8) & 0xFF);
+        out[16] = static_cast<std::uint8_t>(originalSize & 0xFF);
         return out;
     }
 
@@ -87,18 +91,21 @@ struct PacketHeader
             return std::nullopt;
         if (data[0] != kMagic[0] || data[1] != kMagic[1] || data[2] != kMagic[2] || data[3] != kMagic[3])
             return std::nullopt;
-        if (data[4] != kProtocolVersion)
+        if ((data[4] & 0x7F) != kProtocolVersion)
             return std::nullopt;
         PacketHeader h{};
-        h.version     = data[4];
-        h.packetType  = data[5];
-        h.messageType = data[6];
-        h.sequenceId  = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[7]) << 8) |
-                                                   static_cast<std::uint16_t>(data[8]));
-        h.tickId      = (static_cast<std::uint32_t>(data[9]) << 24) | (static_cast<std::uint32_t>(data[10]) << 16) |
+        h.version      = data[4] & 0x7F;
+        h.isCompressed = (data[4] & 0x80) != 0;
+        h.packetType   = data[5];
+        h.messageType  = data[6];
+        h.sequenceId   = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[7]) << 8) |
+                                                    static_cast<std::uint16_t>(data[8]));
+        h.tickId       = (static_cast<std::uint32_t>(data[9]) << 24) | (static_cast<std::uint32_t>(data[10]) << 16) |
                    (static_cast<std::uint32_t>(data[11]) << 8) | static_cast<std::uint32_t>(data[12]);
-        h.payloadSize = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[13]) << 8) |
-                                                   static_cast<std::uint16_t>(data[14]));
+        h.payloadSize  = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[13]) << 8) |
+                                                    static_cast<std::uint16_t>(data[14]));
+        h.originalSize = static_cast<std::uint16_t>((static_cast<std::uint16_t>(data[15]) << 8) |
+                                                    static_cast<std::uint16_t>(data[16]));
         return h;
     }
 
@@ -120,4 +127,4 @@ struct PacketHeader
     }
 };
 
-static_assert(PacketHeader::kSize == 15, "PacketHeader wire size must remain 15 bytes");
+static_assert(PacketHeader::kSize == 17, "PacketHeader wire size must remain 17 bytes");
