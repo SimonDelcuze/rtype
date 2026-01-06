@@ -15,6 +15,7 @@ struct ClientSession
     bool started   = false;
     bool levelSent = false;
     std::uint32_t playerId{0};
+    std::uint32_t roomId{0};
     IpEndpoint endpoint{};
 };
 
