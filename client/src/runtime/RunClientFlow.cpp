@@ -26,10 +26,17 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                                                 TextureManager& textureManager, std::string& errorMessage)
 {
     if (options.useDefault) {
-        Logger::instance().info("Using default server: 127.0.0.1:50010");
-        return IpEndpoint::v4(127, 0, 0, 1, 50010);
+        Logger::instance().info("Using default lobby: 127.0.0.1:50010");
+        auto lobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager);
     }
-    return showConnectionMenu(window, fontManager, textureManager, errorMessage);
+
+    auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage);
+    if (!lobbyEp.has_value()) {
+        return std::nullopt;
+    }
+
+    return showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager);
 }
 
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
