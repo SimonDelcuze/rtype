@@ -7,7 +7,6 @@
 #include "network/NetworkBridge.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
-#include "server/EntityStateCache.hpp"
 #include "server/IntroCinematic.hpp"
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"

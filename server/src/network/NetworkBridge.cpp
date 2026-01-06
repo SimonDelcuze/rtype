@@ -3,9 +3,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 
-NetworkBridge::NetworkBridge(SendThread& sendThread) : sendThread_(sendThread)
-{
-}
+NetworkBridge::NetworkBridge(SendThread& sendThread) : sendThread_(sendThread) {}
 
 void NetworkBridge::processEvents(const std::vector<GameEvent>& events)
 {
