@@ -109,36 +109,25 @@ void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSi
 
 void ServerApp::sendSnapshots()
 {
-    auto& reg      = world_.getRegistry();
-    bool forceFull = (currentTick_ - lastFullStateTick_) >= kFullStateInterval;
-    if (forceFull)
-        lastFullStateTick_ = currentTick_;
+    auto result = replicationManager_.synchronize(world_.getRegistry(), currentTick_);
 
-    std::vector<std::vector<std::uint8_t>> packets;
-
-    if (forceFull) {
-        packets = buildSnapshotChunks(reg, currentTick_);
-    } else {
-        packets = buildSmartDeltaSnapshot(reg, currentTick_, entityStateCache_, false, 1400);
-    }
-
-    if (packets.empty())
+    if (result.packets.empty())
         return;
 
     std::size_t totalSize = 0;
-    for (const auto& p : packets)
+    for (const auto& p : result.packets)
         totalSize += p.size();
 
-    if (packets.size() > 1) {
+    if (result.packets.size() > 1) {
         Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
-                                " chunks=" + std::to_string(packets.size()) +
-                                " total_size=" + std::to_string(totalSize) + (forceFull ? " (FULL)" : " (delta)"));
+                                " chunks=" + std::to_string(result.packets.size()) + " total_size=" +
+                                std::to_string(totalSize) + (result.wasFull ? " (FULL)" : " (delta)"));
     } else {
-        logSnapshotSummary(packets[0].size(), 0, forceFull);
+        logSnapshotSummary(result.packets[0].size(), 0, result.wasFull);
     }
 
     for (const auto& c : clients_) {
-        for (const auto& p : packets)
+        for (const auto& p : result.packets)
             sendThread_.sendTo(p, c);
     }
 }
