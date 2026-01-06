@@ -25,11 +25,26 @@ class Logger
     void addPacketReceived();
     void addPacketDropped();
 
-    std::size_t getTotalBytesSent() const { return _totalBytesSent; }
-    std::size_t getTotalBytesReceived() const { return _totalBytesReceived; }
-    std::size_t getTotalPacketsSent() const { return _totalPacketsSent; }
-    std::size_t getTotalPacketsReceived() const { return _totalPacketsReceived; }
-    std::size_t getTotalPacketsDropped() const { return _totalPacketsDropped; }
+    std::size_t getTotalBytesSent() const
+    {
+        return _totalBytesSent;
+    }
+    std::size_t getTotalBytesReceived() const
+    {
+        return _totalBytesReceived;
+    }
+    std::size_t getTotalPacketsSent() const
+    {
+        return _totalPacketsSent;
+    }
+    std::size_t getTotalPacketsReceived() const
+    {
+        return _totalPacketsReceived;
+    }
+    std::size_t getTotalPacketsDropped() const
+    {
+        return _totalPacketsDropped;
+    }
 
     void setConsoleOutputEnabled(bool enabled);
     void setPostLogCallback(std::function<void(const std::string&)> callback);
