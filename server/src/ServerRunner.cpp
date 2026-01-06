@@ -93,7 +93,7 @@ namespace
     }
 } // namespace
 
-ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui)
+ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui, bool enableAdmin)
     : world_(), registry_(world_.getRegistry()), playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
       monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), scoreSys_(eventBus_, registry_),
       destructionSys_(eventBus_), receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_,
@@ -101,10 +101,11 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool en
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
-      running_(&runningFlag), enableTui_(enableTui), networkBridge_(sendThread_)
+      running_(&runningFlag), showNetwork_(enableTui), showAdmin_(enableAdmin), interactive_(enableTui || enableAdmin),
+      networkBridge_(sendThread_)
 {
-    if (enableTui_) {
-        tui_ = std::make_unique<NetworkTui>();
+    if (interactive_) {
+        tui_ = std::make_unique<NetworkTui>(showNetwork_, showAdmin_);
         Logger::instance().setConsoleOutputEnabled(false);
         Logger::instance().setPostLogCallback([this](const std::string& msg) {
             if (tui_)
@@ -154,7 +155,8 @@ void ServerApp::run()
     while (running_ && running_->load()) {
         processTimeouts();
 
-        if (enableTui_ && tui_) {
+        if (interactive_ && tui_) {
+            tui_->handleInput();
             NetworkStats stats;
             stats.bytesIn     = Logger::instance().getTotalBytesReceived();
             stats.bytesOut    = Logger::instance().getTotalBytesSent();
