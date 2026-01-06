@@ -161,7 +161,6 @@ void NetworkMessageHandler::handleSnapshotChunk(const PacketHeader& hdr, const s
         return;
     }
     std::vector<std::uint8_t> payload;
-    payload.reserve(2 + acc.parts.size() * 256);
     payload.push_back(static_cast<std::uint8_t>((acc.totalEntities >> 8) & 0xFF));
     payload.push_back(static_cast<std::uint8_t>(acc.totalEntities & 0xFF));
     for (std::size_t i = 0; i < acc.parts.size(); ++i) {

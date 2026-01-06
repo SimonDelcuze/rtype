@@ -112,7 +112,7 @@ void SettingsMenu::create(Registry& registry)
 
         createLabel(registry, 360.0F, y + 12.0F, label);
 
-        KeyCode key;
+        KeyCode key = KeyCode::Unknown;
         switch (action) {
             case BindingAction::Up:
                 key = currentBindings_.up;
