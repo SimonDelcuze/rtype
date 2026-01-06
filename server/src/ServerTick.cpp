@@ -73,13 +73,12 @@ std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
     return current;
 }
 
-
 void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
 {
     auto& reg = world_.getRegistry();
     Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) + " size=" + std::to_string(totalBytes) +
-                            " payload=" + std::to_string(payloadSize) + " entities=" +
-                            std::to_string(reg.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
+                            " payload=" + std::to_string(payloadSize) +
+                            " entities=" + std::to_string(reg.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
 }
 
 void ServerApp::sendSnapshots()
@@ -95,8 +94,8 @@ void ServerApp::sendSnapshots()
 
     if (result.packets.size() > 1) {
         Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
-                                " chunks=" + std::to_string(result.packets.size()) + " total_size=" +
-                                std::to_string(totalSize) + (result.wasFull ? " (FULL)" : " (delta)"));
+                                " chunks=" + std::to_string(result.packets.size()) +
+                                " total_size=" + std::to_string(totalSize) + (result.wasFull ? " (FULL)" : " (delta)"));
     } else {
         logSnapshotSummary(result.packets[0].size(), 0, result.wasFull);
     }
@@ -219,4 +218,3 @@ std::vector<PlayerCommand> ServerApp::convertInputsToCommands(const std::vector<
 
     return commands;
 }
-

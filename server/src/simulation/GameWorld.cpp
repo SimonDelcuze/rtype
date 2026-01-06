@@ -3,18 +3,10 @@
 #include "server/EntityTypeResolver.hpp"
 
 GameWorld::GameWorld()
-    : playerInputSys_(250.0F, 400.0F, 2.0F, 10),
-      movementSys_(),
-      monsterMovementSys_(),
-      enemyShootingSys_(),
-      collisionSys_(),
-      damageSys_(eventBus_),
-      scoreSys_(eventBus_, registry_),
-      destructionSys_(eventBus_),
-      boundarySys_(),
-      introCinematic_()
-{
-}
+    : playerInputSys_(250.0F, 400.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
+      collisionSys_(), damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
+      boundarySys_(), introCinematic_()
+{}
 
 void GameWorld::tick(float deltaTime, const std::vector<PlayerCommand>& commands,
                      const std::map<std::uint32_t, EntityId>& playerEntities)

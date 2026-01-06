@@ -33,25 +33,55 @@ class GameWorld
 
     std::vector<GameEvent> consumeEvents();
 
-    const Registry& getRegistry() const { return registry_; }
+    const Registry& getRegistry() const
+    {
+        return registry_;
+    }
 
-    Registry& getRegistry() { return registry_; }
+    Registry& getRegistry()
+    {
+        return registry_;
+    }
 
-    CollisionSystem& getCollisionSystem() { return collisionSys_; }
+    CollisionSystem& getCollisionSystem()
+    {
+        return collisionSys_;
+    }
 
-    bool isLevelLoaded() const { return levelLoaded_; }
+    bool isLevelLoaded() const
+    {
+        return levelLoaded_;
+    }
 
-    void setLevelLoaded(bool loaded) { levelLoaded_ = loaded; }
+    void setLevelLoaded(bool loaded)
+    {
+        levelLoaded_ = loaded;
+    }
 
-    LevelDirector* getLevelDirector() { return levelDirector_.get(); }
+    LevelDirector* getLevelDirector()
+    {
+        return levelDirector_.get();
+    }
 
-    void setLevelDirector(std::unique_ptr<LevelDirector> director) { levelDirector_ = std::move(director); }
+    void setLevelDirector(std::unique_ptr<LevelDirector> director)
+    {
+        levelDirector_ = std::move(director);
+    }
 
-    LevelSpawnSystem* getLevelSpawnSystem() { return levelSpawnSys_.get(); }
+    LevelSpawnSystem* getLevelSpawnSystem()
+    {
+        return levelSpawnSys_.get();
+    }
 
-    void setLevelSpawnSystem(std::unique_ptr<LevelSpawnSystem> system) { levelSpawnSys_ = std::move(system); }
+    void setLevelSpawnSystem(std::unique_ptr<LevelSpawnSystem> system)
+    {
+        levelSpawnSys_ = std::move(system);
+    }
 
-    IntroCinematic& getIntroCinematic() { return introCinematic_; }
+    IntroCinematic& getIntroCinematic()
+    {
+        return introCinematic_;
+    }
 
   private:
     void emitSpawn(EntityId id, std::uint8_t type, float x, float y);

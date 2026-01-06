@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 
 static PlayerCommand makeInput(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x = 0.0F,
-                                float y = 0.0F, float angle = 0.0F)
+                               float y = 0.0F, float angle = 0.0F)
 {
     PlayerCommand cmd{};
     cmd.playerId   = playerId;

@@ -2,12 +2,6 @@
 
 #include <cstdint>
 
-/**
- * @brief Pure gameplay command abstraction, decoupled from network protocol.
- *
- * This structure represents a player's input in a network-agnostic way.
- * The simulation layer only deals with PlayerCommand, never with ReceivedInput or network packets.
- */
 struct PlayerCommand
 {
     std::uint32_t playerId;

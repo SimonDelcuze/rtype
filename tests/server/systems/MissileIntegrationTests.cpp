@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 static PlayerCommand inputWithFlags(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x, float y,
-                                     float angle)
+                                    float angle)
 {
     PlayerCommand cmd{};
     cmd.playerId   = playerId;
