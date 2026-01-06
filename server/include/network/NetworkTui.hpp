@@ -36,7 +36,7 @@ class NetworkTui
     void resetCursor();
 
     NetworkStats _currentStats{0, 0, 0, 0, 0};
-    NetworkStats _lastStats{0, 0, 0, 0, 0};
+    [[maybe_unused]] NetworkStats _lastStats{0, 0, 0, 0, 0};
     std::deque<float> _bandwidthHistory;
     std::deque<std::string> _logs;
     std::chrono::steady_clock::time_point _lastUpdate;
