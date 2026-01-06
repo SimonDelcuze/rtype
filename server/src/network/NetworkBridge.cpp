@@ -25,7 +25,6 @@ void NetworkBridge::processEvents(const std::vector<GameEvent>& events)
                     sendThread_.broadcast(pkt);
                     knownEntities_.erase(evt.entityId);
                 } else if constexpr (std::is_same_v<T, CollisionEvent>) {
-                    // Could be used for sound/FX in the future
                 }
             },
             event);
