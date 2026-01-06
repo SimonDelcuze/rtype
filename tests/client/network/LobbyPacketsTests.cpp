@@ -69,9 +69,9 @@ TEST_F(LobbyPacketsTest, BuildJoinRoomPacketContainsCorrectRoomId)
     auto packet                  = buildJoinRoomPacket(expectedRoomId, sequence_);
 
     const std::uint8_t* payload = packet.data() + PacketHeader::kSize;
-    std::uint32_t decodedRoomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
-                                  (static_cast<std::uint32_t>(payload[1]) << 16) |
-                                  (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+    std::uint32_t decodedRoomId =
+        (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
+        (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
 
     EXPECT_EQ(decodedRoomId, expectedRoomId);
 }

@@ -20,8 +20,7 @@ void LobbyManager::addRoom(std::uint32_t roomId, std::uint16_t port, std::size_t
 
     rooms_[roomId] = info;
 
-    Logger::instance().info("[LobbyManager] Added room " + std::to_string(roomId) + " on port " +
-                            std::to_string(port));
+    Logger::instance().info("[LobbyManager] Added room " + std::to_string(roomId) + " on port " + std::to_string(port));
 }
 
 void LobbyManager::removeRoom(std::uint32_t roomId)

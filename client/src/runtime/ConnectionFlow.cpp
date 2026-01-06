@@ -99,7 +99,7 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
 }
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                           FontManager& fontManager, TextureManager& textureManager)
+                                                          FontManager& fontManager, TextureManager& textureManager)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running);
 

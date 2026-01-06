@@ -88,10 +88,9 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
     }
 
     const std::uint8_t* payload = data + PacketHeader::kSize;
-    std::uint16_t roomCount     = (static_cast<std::uint16_t>(payload[0]) << 8) | static_cast<std::uint16_t>(payload[1]);
+    std::uint16_t roomCount = (static_cast<std::uint16_t>(payload[0]) << 8) | static_cast<std::uint16_t>(payload[1]);
 
-    constexpr std::size_t roomInfoSize =
-        sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t);
+    constexpr std::size_t roomInfoSize = sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t);
 
     if (size < PacketHeader::kSize + sizeof(std::uint16_t) + (roomCount * roomInfoSize) + PacketHeader::kCrcSize) {
         return std::nullopt;

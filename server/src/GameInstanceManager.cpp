@@ -47,8 +47,7 @@ void GameInstanceManager::destroyInstance(std::uint32_t roomId)
 
     auto it = instances_.find(roomId);
     if (it == instances_.end()) {
-        Logger::instance().warn("[InstanceManager] Attempt to destroy non-existent instance " +
-                                std::to_string(roomId));
+        Logger::instance().warn("[InstanceManager] Attempt to destroy non-existent instance " + std::to_string(roomId));
         return;
     }
 

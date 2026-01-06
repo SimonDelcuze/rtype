@@ -3,9 +3,7 @@
 #include <chrono>
 #include <thread>
 
-LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint) : lobbyEndpoint_(lobbyEndpoint)
-{
-}
+LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint) : lobbyEndpoint_(lobbyEndpoint) {}
 
 LobbyConnection::~LobbyConnection()
 {
@@ -67,8 +65,8 @@ std::optional<JoinSuccessResult> LobbyConnection::joinRoom(std::uint32_t roomId)
 }
 
 std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
-                                                                   MessageType expectedResponse,
-                                                                   std::chrono::milliseconds timeout)
+                                                                  MessageType expectedResponse,
+                                                                  std::chrono::milliseconds timeout)
 {
     constexpr int maxRetries = 3;
     const auto retryDelay    = std::chrono::milliseconds(500);
