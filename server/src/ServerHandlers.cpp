@@ -60,7 +60,6 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     sess.join = true;
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
 
-    // Fix: Prevent duplicate endpoints
     bool alreadyExists = false;
     for (const auto& ep : clients_) {
         if (endpointKey(ep) == endpointKey(ctrl.from)) {
