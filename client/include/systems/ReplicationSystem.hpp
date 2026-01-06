@@ -48,13 +48,12 @@ class ReplicationSystem : public ISystem
     std::unordered_map<std::uint32_t, std::uint32_t> lastSeenTick_;
     std::unordered_map<std::uint32_t, int> lastKnownLives_;
     std::unordered_map<std::uint32_t, float> respawnCooldown_;
+    float explosionCooldown_ = 0.0F;
 
     std::shared_ptr<ISoundBuffer> laserBuffer_;
     std::shared_ptr<ISoundBuffer> explosionBuffer_;
     bool laserLoaded_        = false;
-    bool explosionLoaded_    = false;
     bool laserLoadAttempted_ = false;
-    bool explosionLoadTried_ = false;
     std::vector<std::shared_ptr<ISound>> laserSounds_;
     std::vector<std::shared_ptr<ISound>> explosionSounds_;
 };

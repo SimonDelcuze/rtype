@@ -22,6 +22,7 @@
     { "typeId": 15, "spriteId": "enemy_bullet", "animId": "enemy_bullet_basic", "layer": 0 },
     { "typeId": 16, "spriteId": "bullet", "animId": "player_death", "layer": 50 },
     { "typeId": 2, "spriteId": "mob1", "animId": "left", "layer": 0 },
+    { "typeId": 21, "spriteId": "mob2", "animId": "walking", "layer": 0 },
     { "typeId": 9, "spriteId": "obstacle_top", "animId": "", "layer": 0 },
     { "typeId": 10, "spriteId": "obstacle_middle", "animId": "", "layer": 0 },
     { "typeId": 11, "spriteId": "obstacle_bottom", "animId": "", "layer": 0 },
@@ -34,6 +35,7 @@
   "templates": {
     "hitboxes": {
       "enemy_small": { "width": 50, "height": 50, "offsetX": 0, "offsetY": 0, "active": true },
+      "enemy_walker": { "width": 32, "height": 32, "offsetX": 0, "offsetY": 0, "active": true },
       "ob_top": { "width": 147, "height": 23, "offsetX": 0, "offsetY": 0, "active": true },
       "ob_mid": { "width": 105, "height": 47, "offsetX": 0, "offsetY": 0, "active": true },
       "ob_bot": { "width": 146, "height": 40, "offsetX": 0, "offsetY": 0, "active": true },
@@ -41,6 +43,7 @@
     },
     "colliders": {
       "enemy_small": { "shape": "box", "width": 50, "height": 50, "offsetX": 0, "offsetY": 0, "active": true },
+      "enemy_walker": { "shape": "box", "width": 32, "height": 32, "offsetX": 0, "offsetY": 0, "active": true },
       "ob_top": {
         "shape": "polygon",
         "offsetX": 0,
@@ -116,6 +119,14 @@
         "collider": "enemy_small",
         "health": 2,
         "scale": [1.6, 1.6],
+        "shooting": { "interval": 1.4, "speed": 320, "damage": 6, "lifetime": 3.2 }
+      },
+      "walker": {
+        "typeId": 21,
+        "hitbox": "enemy_walker",
+        "collider": "enemy_walker",
+        "health": 2,
+        "scale": [1.4, 1.4],
         "shooting": { "interval": 1.4, "speed": 320, "damage": 6, "lifetime": 3.2 }
       }
     },
