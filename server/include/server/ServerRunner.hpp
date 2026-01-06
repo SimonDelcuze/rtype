@@ -5,6 +5,7 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
+#include "replication/ReplicationManager.hpp"
 #include "server/EntityStateCache.hpp"
 #include "server/IntroCinematic.hpp"
 #include "server/LevelData.hpp"
@@ -134,6 +135,5 @@ class ServerApp
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
     std::unordered_set<EntityId> knownEntities_;
-    EntityStateCache entityStateCache_;
-    std::uint32_t lastFullStateTick_{0};
+    ReplicationManager replicationManager_;
 };
