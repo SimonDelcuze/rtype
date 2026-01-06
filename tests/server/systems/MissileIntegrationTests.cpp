@@ -1,19 +1,21 @@
+#include "simulation/PlayerCommand.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <gtest/gtest.h>
 
-static ReceivedInput inputWithFlags(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x, float y,
-                                    float angle)
+static PlayerCommand inputWithFlags(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x, float y,
+                                     float angle)
 {
-    ServerInput si{};
-    si.playerId   = playerId;
-    si.sequenceId = seq;
-    si.flags      = flags;
-    si.x          = x;
-    si.y          = y;
-    si.angle      = angle;
-    return ReceivedInput{si, IpEndpoint::v4(0, 0, 0, 0, 0)};
+    PlayerCommand cmd{};
+    cmd.playerId   = playerId;
+    cmd.sequenceId = seq;
+    cmd.inputFlags = flags;
+    cmd.x          = x;
+    cmd.y          = y;
+    cmd.angle      = angle;
+    cmd.tickId     = 0;
+    return cmd;
 }
 
 TEST(MissileIntegration, MissileFiresAndMovesForward)
@@ -28,7 +30,7 @@ TEST(MissileIntegration, MissileFiresAndMovesForward)
     registry.emplace<VelocityComponent>(player);
 
     PlayerInputSystem inputSys(1.0F, 10.0F, 2.0F, 2);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(inputWithFlags(player, 1, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, pic.angle));
     inputSys.update(registry, inputs);
 
@@ -65,7 +67,7 @@ TEST(MissileIntegration, MissileRespectsAngle)
     registry.emplace<VelocityComponent>(player);
 
     PlayerInputSystem inputSys(1.0F, 8.0F, 1.5F, 1);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(inputWithFlags(player, 1, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, pic.angle));
     inputSys.update(registry, inputs);
 
@@ -101,7 +103,7 @@ TEST(MissileIntegration, MultipleMissilesFromSequentialInputs)
     registry.emplace<VelocityComponent>(player);
 
     PlayerInputSystem inputSys(1.0F, 5.0F, 3.0F, 1);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(inputWithFlags(player, 1, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, 0.0F));
     inputs.push_back(inputWithFlags(player, 2, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, 0.0F));
     inputSys.update(registry, inputs);

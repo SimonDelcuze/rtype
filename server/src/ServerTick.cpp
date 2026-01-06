@@ -4,6 +4,7 @@
 #include "network/PacketHeader.hpp"
 #include "server/EntityTypeResolver.hpp"
 #include "server/ServerRunner.hpp"
+#include "simulation/PlayerCommand.hpp"
 
 #include <algorithm>
 
@@ -52,7 +53,8 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     const bool introActive = introCinematic_.active();
     if (!introActive) {
         auto mapped = mapInputs(inputs);
-        playerInputSys_.update(registry_, mapped);
+        auto commands = convertInputsToCommands(mapped);
+        playerInputSys_.update(registry_, commands);
     }
     movementSys_.update(registry_, deltaTime);
     boundarySys_.update(registry_);
@@ -242,4 +244,24 @@ void ServerApp::logCollisions(const std::vector<Collision>& collisions)
         msg += ")";
         Logger::instance().info("[Collision] " + msg);
     }
+}
+
+std::vector<PlayerCommand> ServerApp::convertInputsToCommands(const std::vector<ReceivedInput>& inputs) const
+{
+    std::vector<PlayerCommand> commands;
+    commands.reserve(inputs.size());
+
+    for (const auto& input : inputs) {
+        PlayerCommand cmd;
+        cmd.playerId   = input.input.playerId;
+        cmd.inputFlags = input.input.flags;
+        cmd.x          = input.input.x;
+        cmd.y          = input.input.y;
+        cmd.angle      = input.input.angle;
+        cmd.sequenceId = input.input.sequenceId;
+        cmd.tickId     = input.input.tickId;
+        commands.push_back(cmd);
+    }
+
+    return commands;
 }

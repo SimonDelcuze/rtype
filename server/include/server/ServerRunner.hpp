@@ -13,6 +13,7 @@
 #include "server/LevelSpawnSystem.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
+#include "simulation/PlayerCommand.hpp"
 #include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
 #include "systems/DamageSystem.hpp"
@@ -56,6 +57,7 @@ class ServerApp
     void updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs);
     std::vector<EntityId> collectDeadEntities();
     void broadcastDestructions(const std::vector<EntityId>& toDestroy);
+    std::vector<PlayerCommand> convertInputsToCommands(const std::vector<ReceivedInput>& inputs) const;
     std::unordered_set<EntityId> collectCurrentEntities();
     void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
     void sendSnapshots();
