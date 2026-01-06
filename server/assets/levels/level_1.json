@@ -21,6 +21,7 @@
     { "typeId": 8, "spriteId": "bullet", "animId": "bullet_charge_lvl5", "layer": 0 },
     { "typeId": 15, "spriteId": "enemy_bullet", "animId": "enemy_bullet_basic", "layer": 0 },
     { "typeId": 16, "spriteId": "bullet", "animId": "player_death", "layer": 50 },
+    { "typeId": 22, "spriteId": "walker_special_shot", "animId": "walker_special_shot", "layer": 1 },
     { "typeId": 2, "spriteId": "mob1", "animId": "left", "layer": 0 },
     { "typeId": 21, "spriteId": "mob2", "animId": "walking", "layer": 0 },
     { "typeId": 9, "spriteId": "obstacle_top", "animId": "", "layer": 0 },
@@ -131,7 +132,7 @@
         "health": 2,
         "score": 220,
         "scale": [1.4, 1.4],
-        "shooting": { "interval": 1.6, "speed": 260, "damage": 6, "lifetime": 3.0 }
+        "shooting": { "interval": 2.8, "speed": 260, "damage": 6, "lifetime": 3.0 }
       }
     },
     "obstacles": {
@@ -292,7 +293,7 @@
             "deltaY": 0,
             "count": 1,
             "scale": [1.4, 1.4],
-            "shootingEnabled": false
+            "shootingEnabled": true
           }
         },
         {

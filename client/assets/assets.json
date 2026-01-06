@@ -11,6 +11,11 @@
       "type": "sprite"
     },
     {
+      "id": "walker_special_shot",
+      "path": "sprites/bullet.png",
+      "type": "sprite"
+    },
+    {
       "id": "enemy_ship",
       "path": "sprites/enemy.png",
       "type": "sprite"

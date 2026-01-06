@@ -326,7 +326,7 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
             tag = EntityTag::Player;
         } else if (typeId == 9 || typeId == 10 || typeId == 11) {
             tag = EntityTag::Obstacle;
-        } else if (typeId >= 3 && typeId <= 8) {
+        } else if ((typeId >= 3 && typeId <= 8) || typeId == 22) {
             tag = EntityTag::Projectile;
         } else if (typeId == 16) {
             tag = EntityTag::Background;
