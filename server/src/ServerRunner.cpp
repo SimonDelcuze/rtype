@@ -107,7 +107,8 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool en
         tui_ = std::make_unique<NetworkTui>();
         Logger::instance().setConsoleOutputEnabled(false);
         Logger::instance().setPostLogCallback([this](const std::string& msg) {
-            if (tui_) tui_->addLog(msg);
+            if (tui_)
+                tui_->addLog(msg);
         });
     }
     LevelLoadError error;
@@ -152,15 +153,15 @@ void ServerApp::run()
 {
     while (running_ && running_->load()) {
         processTimeouts();
-        
+
         if (enableTui_ && tui_) {
             NetworkStats stats;
-            stats.bytesIn = Logger::instance().getTotalBytesReceived();
-            stats.bytesOut = Logger::instance().getTotalBytesSent();
-            stats.packetsIn = Logger::instance().getTotalPacketsReceived();
-            stats.packetsOut = Logger::instance().getTotalPacketsSent();
+            stats.bytesIn     = Logger::instance().getTotalBytesReceived();
+            stats.bytesOut    = Logger::instance().getTotalBytesSent();
+            stats.packetsIn   = Logger::instance().getTotalPacketsReceived();
+            stats.packetsOut  = Logger::instance().getTotalPacketsSent();
             stats.packetsLost = Logger::instance().getTotalPacketsDropped();
-            
+
             tui_->setClientCount(clients_.size());
             tui_->update(stats);
             tui_->render();
