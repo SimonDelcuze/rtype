@@ -142,4 +142,4 @@ struct InputPacket
     }
 };
 
-static_assert(InputPacket::kSize == 37, "InputPacket wire size must remain 37 bytes");
+static_assert(InputPacket::kSize == 39, "InputPacket wire size must remain 39 bytes");

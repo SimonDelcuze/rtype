@@ -25,6 +25,8 @@ namespace
         std::size_t payloadSize = buf.size() - PacketHeader::kSize;
         buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
         buf[14]                 = static_cast<std::uint8_t>(payloadSize & 0xFF);
+        buf[15]                 = 0;
+        buf[16]                 = 0;
 
         std::uint32_t crc = PacketHeader::crc32(buf.data(), buf.size());
         buf.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
@@ -79,11 +81,11 @@ TEST(SnapshotParser, ParsesSingleEntityWithFields)
     writeQ16(data, 0.5F);
     writeQ16(data, -0.25F);
     writeU16(data, 50);
-    data.push_back(Packing::pack44(3, 5)); // status=3, lives=5
+    data.push_back(Packing::pack44(3, 5));
     writeFloat(data, 0.1F);
     data.push_back(1);
 
-    auto payload = entityPayload(42, 0x1FF, data); // 0x1FF = bits 0-8 (covering all fields, bit 9 removed)
+    auto payload = entityPayload(42, 0x1FF, data);
     auto pkt     = buildSnapshot(1, {payload});
 
     auto parsed = SnapshotParser::parse(pkt);

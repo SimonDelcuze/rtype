@@ -1,6 +1,7 @@
 #include "network/SnapshotParser.hpp"
 
 #include "Logger.hpp"
+#include "network/NetworkCompression.hpp"
 #include "network/Packing.hpp"
 
 #include <bit>
@@ -20,15 +21,38 @@ std::optional<SnapshotParseResult> SnapshotParser::parse(const std::vector<std::
         return std::nullopt;
     }
 
+    std::vector<std::uint8_t> actualData;
+    const std::vector<std::uint8_t>* currentData = &data;
+    PacketHeader currentHeader                   = header;
+
+    if (header.isCompressed) {
+        try {
+            std::vector<std::uint8_t> decompressed =
+                Compression::decompress(data.data() + PacketHeader::kSize, header.payloadSize, header.originalSize);
+
+            actualData.reserve(PacketHeader::kSize + decompressed.size());
+            auto hdrBytes = header.encode();
+            actualData.insert(actualData.end(), hdrBytes.begin(), hdrBytes.end());
+            actualData.insert(actualData.end(), decompressed.begin(), decompressed.end());
+
+            currentData                = &actualData;
+            currentHeader.isCompressed = false;
+            currentHeader.payloadSize  = static_cast<std::uint16_t>(decompressed.size());
+        } catch (const std::exception& e) {
+            Logger::instance().error("[Net] Decompression failed: " + std::string(e.what()));
+            return std::nullopt;
+        }
+    }
+
     std::size_t offset        = PacketHeader::kSize;
-    std::uint16_t entityCount = readU16(data, offset);
+    std::uint16_t entityCount = readU16(*currentData, offset);
 
     SnapshotParseResult result{};
-    result.header = header;
+    result.header = currentHeader;
     result.entities.reserve(entityCount);
 
     for (std::uint16_t i = 0; i < entityCount; ++i) {
-        auto entity = parseEntity(data, offset, header);
+        auto entity = parseEntity(*currentData, offset, currentHeader);
         if (!entity.has_value()) {
             return std::nullopt;
         }

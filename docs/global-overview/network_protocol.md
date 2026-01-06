@@ -22,17 +22,22 @@ The RType UDP protocol is a compact, binary protocol optimized for real-time gam
 - **Tick ID**: server simulation tick (when applicable).
 
 ## 4. Packet Header
-The header is exactly 15 bytes and MUST precede every payload.
+The header is exactly 17 bytes and MUST precede every payload.
 ```
 0-3   Magic        0xA3 0x5F 0xC8 0x1D
-4     Version      = 0x01
+4     Version      u8 (Bit 7: isCompressed, Bits 0-6: Version=1)
 5     Packet Type  0x01 ClientToServer | 0x02 ServerToClient
 6     Message Type (see Section 5)
 7-8   Sequence ID  u16
 9-12  Tick ID      u32
 13-14 Payload Len  u16
+15-16 Orig. Size   u16 (Decompressed size, 0 if not compressed)
 ```
 Implementations MUST reject packets whose magic or version do not match the values above.
+
+### 4.1 Compression Flag
+If Bit 7 of the `Version` byte is set to 1, the payload is compressed using **LZ4**. The `Payload Len` field then reflects the compressed size on the wire, and `Orig. Size` MUST contain the exact size of the payload after decompression.
+If the flag is 0, `Orig. Size` SHOULD be 0 and is ignored.
 
 ## 5. Message Types
 Unless otherwise stated, payloads MAY be zero-length. Message types are scoped by Packet Type but enumerated here for convenience.
@@ -158,8 +163,14 @@ switch eventType:
      u8  gateIdLen, gateId[Len]
 ```
 
-## 8. Integrity Protection
-All packets MUST append a 4-byte CRC32 footer in big-endian order. The CRC is computed over `[Header + Payload]`. Receivers MUST discard packets whose CRC verification fails.
+All packets MUST append a 4-byte CRC32 footer in big-endian order. The CRC is computed over the entire `[Header + Payload]` (including the compressed payload if applicable). Receivers MUST discard packets whose CRC verification fails.
+
+## 9. Compression Algorithm
+RType uses **LZ4 (default block compression)** for its speed and efficiency in real-time scenarios.
+- **Threshold**: Only payloads larger than 64 bytes are candidates for compression.
+- **Fall-through**: If the compressed size is not strictly smaller than the original size, the packet is sent uncompressed.
+- **Integrity**: Decompression is performed AFTER CRC verification.
+
 
 ## 9. Reason Codes
 Reason codes are 1 byte. The following values are reserved:
