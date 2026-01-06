@@ -77,10 +77,10 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box = BoxComponent::create(
-            width, height, fill,
-            Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40),
-                  static_cast<std::uint8_t>(fill.b + 40)));
+        auto box =
+            BoxComponent::create(width, height, fill,
+                                 Color(static_cast<std::uint8_t>(fill.r + 40), static_cast<std::uint8_t>(fill.g + 40),
+                                       static_cast<std::uint8_t>(fill.b + 40)));
         box.focusColor = Color(100, 200, 255);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
@@ -90,23 +90,23 @@ namespace
     std::string roomStateToString(RoomState state)
     {
         switch (state) {
-        case RoomState::Waiting:
-            return "Waiting";
-        case RoomState::Countdown:
-            return "Starting...";
-        case RoomState::Playing:
-            return "In Game";
-        case RoomState::Finished:
-            return "Finished";
-        default:
-            return "Unknown";
+            case RoomState::Waiting:
+                return "Waiting";
+            case RoomState::Countdown:
+                return "Starting...";
+            case RoomState::Playing:
+                return "In Game";
+            case RoomState::Finished:
+                return "Finished";
+            default:
+                return "Unknown";
         }
     }
 } // namespace
 
-LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint) : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint)
-{
-}
+LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint)
+    : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint)
+{}
 
 void LobbyMenu::create(Registry& registry)
 {
@@ -120,15 +120,14 @@ void LobbyMenu::create(Registry& registry)
     titleEntity_  = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
     statusEntity_ = createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
 
-    createButtonEntity_ =
-        createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
-                     [this]() { onCreateRoomClicked(); });
+    createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
+                                       [this]() { onCreateRoomClicked(); });
 
     refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh", Color(80, 80, 80),
                                         [this]() { onRefreshClicked(); });
 
-    backButtonEntity_ =
-        createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50), [this]() { onBackClicked(); });
+    backButtonEntity_ = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
+                                     [this]() { onBackClicked(); });
 
     lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_);
 
@@ -137,7 +136,7 @@ void LobbyMenu::create(Registry& registry)
         if (registry.has<TextComponent>(statusEntity_)) {
             registry.get<TextComponent>(statusEntity_).content = "Failed to connect!";
         }
-        state_ = State::Done;
+        state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
@@ -167,13 +166,13 @@ bool LobbyMenu::isDone() const
 
 void LobbyMenu::handleEvent(Registry& registry, const Event& event)
 {
-    (void)registry;
-    (void)event;
+    (void) registry;
+    (void) event;
 }
 
 void LobbyMenu::render(Registry& registry, Window& window)
 {
-    (void)window;
+    (void) window;
 
     if (state_ == State::Loading || state_ == State::ShowingRooms) {
         refreshTimer_ += 0.016F;
@@ -213,7 +212,7 @@ void LobbyMenu::onCreateRoomClicked()
     state_ = State::Creating;
 
     if (!lobbyConnection_) {
-        state_ = State::Done;
+        state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
@@ -247,7 +246,7 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
     state_ = State::Joining;
 
     if (!lobbyConnection_) {
-        state_ = State::Done;
+        state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
@@ -299,8 +298,7 @@ void LobbyMenu::updateRoomListDisplay(Registry& registry)
         if (rooms_.empty()) {
             registry.get<TextComponent>(statusEntity_).content = "No rooms available. Create one!";
         } else {
-            registry.get<TextComponent>(statusEntity_).content =
-                "Found " + std::to_string(rooms_.size()) + " room(s)";
+            registry.get<TextComponent>(statusEntity_).content = "Found " + std::to_string(rooms_.size()) + " room(s)";
         }
     }
 }
@@ -321,7 +319,7 @@ void LobbyMenu::createRoomButton(Registry& registry, const RoomInfo& room, std::
     }
 
     auto buttonEntity = createButton(registry, 400.0F, y, 600.0F, 50.0F, label.str(), buttonColor,
-                                      [this, index]() { onJoinRoomClicked(index); });
+                                     [this, index]() { onJoinRoomClicked(index); });
 
     roomButtonEntities_.push_back(buttonEntity);
 }

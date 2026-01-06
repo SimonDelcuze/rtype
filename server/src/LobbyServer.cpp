@@ -14,8 +14,8 @@ LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, st
       enableTui_(enableTui), enableAdmin_(enableAdmin),
       instanceManager_(gameBasePort, maxInstances, runningFlag, enableTui, enableAdmin)
 {
-    Logger::instance().info("[LobbyServer] Initialized on port " + std::to_string(lobbyPort) +
-                            " with game base port " + std::to_string(gameBasePort));
+    Logger::instance().info("[LobbyServer] Initialized on port " + std::to_string(lobbyPort) + " with game base port " +
+                            std::to_string(gameBasePort));
 }
 
 LobbyServer::~LobbyServer()
@@ -130,22 +130,22 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
     auto msgType = static_cast<MessageType>(hdr->messageType);
 
     switch (msgType) {
-    case MessageType::LobbyListRooms:
-        handleLobbyListRooms(*hdr, from);
-        break;
+        case MessageType::LobbyListRooms:
+            handleLobbyListRooms(*hdr, from);
+            break;
 
-    case MessageType::LobbyCreateRoom:
-        handleLobbyCreateRoom(*hdr, from);
-        break;
+        case MessageType::LobbyCreateRoom:
+            handleLobbyCreateRoom(*hdr, from);
+            break;
 
-    case MessageType::LobbyJoinRoom:
-        handleLobbyJoinRoom(*hdr, data, size, from);
-        break;
+        case MessageType::LobbyJoinRoom:
+            handleLobbyJoinRoom(*hdr, data, size, from);
+            break;
 
-    default:
-        Logger::instance().warn("[LobbyServer] Unhandled message type: " +
-                                std::to_string(static_cast<std::uint8_t>(msgType)));
-        break;
+        default:
+            Logger::instance().warn("[LobbyServer] Unhandled message type: " +
+                                    std::to_string(static_cast<std::uint8_t>(msgType)));
+            break;
     }
 }
 
@@ -225,10 +225,10 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
     std::uint16_t port = instance->getPort();
 
     std::lock_guard<std::mutex> lock(sessionsMutex_);
-    std::string key        = endpointToKey(from);
-    auto& session          = lobbySessions_[key];
-    session.endpoint       = from;
-    session.roomId         = roomId;
+    std::string key  = endpointToKey(from);
+    auto& session    = lobbySessions_[key];
+    session.endpoint = from;
+    session.roomId   = roomId;
 
     Logger::instance().info("[LobbyServer] Client joining room " + std::to_string(roomId) + " on port " +
                             std::to_string(port));

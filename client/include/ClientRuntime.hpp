@@ -66,7 +66,7 @@ void showErrorMessage(Window& window, const std::string& message, float displayT
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage);
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                           FontManager& fontManager, TextureManager& textureManager);
+                                                          FontManager& fontManager, TextureManager& textureManager);
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,

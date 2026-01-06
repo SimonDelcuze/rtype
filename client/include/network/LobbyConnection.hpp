@@ -29,8 +29,8 @@ class LobbyConnection
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
-                                                      MessageType expectedResponse,
-                                                      std::chrono::milliseconds timeout = std::chrono::seconds(5));
+                                                     MessageType expectedResponse,
+                                                     std::chrono::milliseconds timeout = std::chrono::seconds(5));
 
     IpEndpoint lobbyEndpoint_;
     UdpSocket socket_;

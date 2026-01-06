@@ -1,8 +1,7 @@
 #include "game/GameInstanceManager.hpp"
 
-#include <gtest/gtest.h>
-
 #include <atomic>
+#include <gtest/gtest.h>
 #include <thread>
 
 class GameInstanceManagerTest : public ::testing::Test
@@ -11,8 +10,7 @@ class GameInstanceManagerTest : public ::testing::Test
     void SetUp() override
     {
         runningFlag = true;
-        manager =
-            std::make_unique<GameInstanceManager>(kBasePort, kMaxInstances, runningFlag, false, false);
+        manager     = std::make_unique<GameInstanceManager>(kBasePort, kMaxInstances, runningFlag, false, false);
     }
 
     void TearDown() override
@@ -21,9 +19,9 @@ class GameInstanceManagerTest : public ::testing::Test
         manager.reset();
     }
 
-    static constexpr std::uint16_t kBasePort       = 60000;
-    static constexpr std::uint32_t kMaxInstances   = 5;
-    std::atomic<bool> runningFlag                  = true;
+    static constexpr std::uint16_t kBasePort     = 60000;
+    static constexpr std::uint32_t kMaxInstances = 5;
+    std::atomic<bool> runningFlag                = true;
     std::unique_ptr<GameInstanceManager> manager;
 };
 

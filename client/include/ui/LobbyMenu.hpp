@@ -18,9 +18,9 @@ class LobbyMenu : public IMenu
   public:
     struct Result
     {
-        bool success        = false;
-        bool exitRequested  = false;
-        bool backRequested  = false;
+        bool success       = false;
+        bool exitRequested = false;
+        bool backRequested = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
     };
@@ -35,7 +35,8 @@ class LobbyMenu : public IMenu
 
     Result getResult(Registry& registry) const
     {
-        (void)registry; return result_;
+        (void) registry;
+        return result_;
     }
 
   private:
