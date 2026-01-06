@@ -1,6 +1,7 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/ScoreComponent.hpp"
+#include "network/Packing.hpp"
 #include "server/EntityStateCache.hpp"
 #include "server/EntityTypeResolver.hpp"
 #include "server/Packets.hpp"
@@ -31,11 +32,6 @@ namespace
     void writeI32(std::vector<std::uint8_t>& out, std::int32_t v)
     {
         writeU32(out, static_cast<std::uint32_t>(v));
-    }
-
-    void writeFloat(std::vector<std::uint8_t>& out, float f)
-    {
-        writeU32(out, std::bit_cast<std::uint32_t>(f));
     }
 
     CachedEntityState captureState(const Registry& registry, EntityId id)
@@ -85,10 +81,9 @@ namespace
         }
         if (registry.has<HealthComponent>(id) && (!isDelta || cur.health != prev->health))
             mask |= 1 << 5;
-        if (registry.has<InvincibilityComponent>(id) && (!isDelta || cur.status != prev->status))
+        if ((registry.has<InvincibilityComponent>(id) || registry.has<LivesComponent>(id)) &&
+            (!isDelta || cur.status != prev->status || cur.lives != prev->lives))
             mask |= 1 << 6;
-        if (registry.has<LivesComponent>(id) && (!isDelta || cur.lives != prev->lives))
-            mask |= 1 << 9;
         if (registry.has<ScoreComponent>(id) && (!isDelta || cur.score != prev->score))
             mask |= 1 << 10;
 
@@ -100,19 +95,18 @@ namespace
         if (mask & (1 << 0))
             block.push_back(s.entityType);
         if (mask & (1 << 1))
-            writeFloat(block, s.posX);
+            writeU16(block, static_cast<std::uint16_t>(Packing::quantizeTo16(s.posX, 10.0F)));
         if (mask & (1 << 2))
-            writeFloat(block, s.posY);
+            writeU16(block, static_cast<std::uint16_t>(Packing::quantizeTo16(s.posY, 10.0F)));
         if (mask & (1 << 3))
-            writeFloat(block, s.velX);
+            writeU16(block, static_cast<std::uint16_t>(Packing::quantizeTo16(s.velX, 10.0F)));
         if (mask & (1 << 4))
-            writeFloat(block, s.velY);
+            writeU16(block, static_cast<std::uint16_t>(Packing::quantizeTo16(s.velY, 10.0F)));
         if (mask & (1 << 5))
             writeU16(block, static_cast<std::uint16_t>(s.health));
         if (mask & (1 << 6))
-            block.push_back(s.status);
-        if (mask & (1 << 9))
-            block.push_back(static_cast<std::uint8_t>(s.lives));
+            block.push_back(
+                Packing::pack44(s.status, static_cast<std::uint8_t>(std::clamp(static_cast<int>(s.lives), 0, 15))));
         if (mask & (1 << 10))
             writeI32(block, s.score);
     }
