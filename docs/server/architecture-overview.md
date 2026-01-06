@@ -64,7 +64,7 @@ This ensures:
 
 ## **2. Diagram – Server Global Architecture**
 
-<figure><img src="../.gitbook/assets/server_EN.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../assets/server_EN.png" alt=""><figcaption></figcaption></figure>
 
 This design ensures:
 

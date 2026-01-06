@@ -61,7 +61,7 @@ Rendering is isolated from the main logic and does not affect gameplay or networ
 
 ### **2. Diagram – Client Global Architecture**
 
-<figure><img src="../.gitbook/assets/client_EN.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../assets/client_EN.png" alt=""><figcaption></figcaption></figure>
 
 ***
 

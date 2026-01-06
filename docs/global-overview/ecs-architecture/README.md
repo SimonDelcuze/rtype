@@ -51,7 +51,7 @@ The ECS design pattern separates game functionality into three independent layer
 
 ### **2. Diagram – ECS Architecture Overview**
 
-<figure><img src="../../.gitbook/assets/ecs_EN (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../assets/ecs_EN (2).png" alt=""><figcaption></figcaption></figure>
 
 ***
 

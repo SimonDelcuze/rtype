@@ -1,0 +1,147 @@
+site_name: R-Type Documentation
+site_description: Technical documentation for the R-Type project
+site_author: Simon Delcuze
+repo_url: https://github.com/SimonDelcuze/rtype
+
+docs_dir: ../docs
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Getting started:
+    - Introduction: README.md
+  - Global overview:
+    - Introduction: global-overview/introduction.md
+    - Installation Guide: global-overview/installation-guide.md
+    - Core Components: core-components.md
+    - JSON Wrapper: global-overview/json-wrapper.md
+    - Network Protocol: global-overview/network_protocol.md
+    - ECS Architecture:
+      - Introduction: global-overview/ecs-architecture/README.md
+      - Registry: global-overview/ecs-architecture/registry.md
+      - Components Overview: global-overview/ecs-architecture/components-overview.md
+      - Systems Overview: global-overview/ecs-architecture/systems-overview.md
+      - Scheduler Architecture: global-overview/ecs-architecture/scheduler-architecture.md
+      - Event Bus: global-overview/ecs-architecture/event-bus.md
+  - Protocol:
+    - Level Messages & Entity Typing: protocol/level-messages.md
+  - Server:
+    - Introduction: server/introduction.md
+    - Architecture Overview: server/architecture-overview.md
+    - Threads:
+      - Introduction: server/threads/README.md
+      - Receive Thread: server/threads/receive-thread.md
+      - Game Loop Thread (Scheduler): server/threads/game-loop-thread-scheduler.md
+      - Send Thread: server/threads/send-thread.md
+    - Components:
+      - Introduction: server/components.md
+      - TransformComponent: server/components/transform-component.md
+      - VelocityComponent: server/components/velocity-component.md
+      - HitboxComponent: server/components/hitbox-component.md
+      - HealthComponent: server/components/health-component.md
+      - PlayerInputComponent: server/components/player-input-component.md
+      - MonsterAIComponent: server/components/monster-ai-component.md
+      - MissileComponent: server/components/missile-component.md
+      - MovementComponent: server/components/movement-component.md
+    - Systems: server/systems.md
+    - Levels & Waves: server/levels-and-waves.md
+    - Level System Specification: server/level-system-spec.md
+    - Level JSON Format (v1): server/level-json-format.md
+    - Level Assets Conventions: server/level-assets-conventions.md
+    - Level Templates: server/level-templates.md
+    - Level Timeline & Triggers: server/level-timeline.md
+    - Level Events: server/level-events.md
+    - Boss Specification: server/level-boss-spec.md
+    - Level Loader Design: server/level-loader-design.md
+    - Level Runtime Overview: server/level-runtime.md
+    - LevelDirector Runtime: server/level-director.md
+    - Checkpoint Runtime Rules: server/level-checkpoints.md
+    - Level Spawn Integration: server/level-spawn-integration.md
+    - Level1 Migration Plan: server/level1-migration-plan.md
+    - Level Test Plan: server/level-test-plan.md
+    - Networking:
+      - Introduction: server/networking/README.md
+      - Packet Header: server/networking/packet-header.md
+      - Delta State Snapshots: server/networking/delta-state.md
+      - Entity/Event Packets: server/networking/entity-events.md
+  - Client:
+    - Introduction: client/introduction.md
+    - Architecture Overview: client/architecture-overview.md
+    - Threads:
+      - Introduction: client/threads/README.md
+      - Receive Thread: client/threads/receive-thread.md
+      - Game Loop Thread (Scheduler): client/threads/game-loop-thread-scheduler.md
+      - Send Thread: client/threads/send-thread.md
+    - Prediction & Reconciliation: client/prediction-and-reconciliation.md
+    - 'EventBus: Publish/Subscribe': client/event-bus.md
+    - Asset Management: asset-manifest.md
+    - Scene Graph & Layering: client/scene-graph-layering.md
+    - Collision Masks & Hitboxes: collision-masks.md
+    - Error Handling: client/error-handling.md
+    - Input Pipeline: client/input-pipeline.md
+    - Network Init Handshake: client/network-init.md
+    - Level Event System: client/level-event-system.md
+    - Networking:
+      - Introduction: client/network-receiver.md
+      - Network Receiver: client/network-receiver.md
+      - Network Sender: client/network-sender.md
+      - Snapshot Parser: client/snapshot-parser.md
+    - Components:
+      - Introduction: client/components.md
+      - AnimationComponent: client/components/animation-component.md
+      - SpriteComponent: client/components/sprite-component.md
+      - AudioComponent: client/components/audio-component.md
+      - ScoreComponent: client/components/score-component.md
+      - LivesComponent: client/components/lives-component.md
+      - TextComponent: client/components/text-component.md
+    - Systems:
+      - Introduction: client/systems.md
+      - AnimationSystem: client/systems/animation-system.md
+      - AudioSystem: client/systems/audio-system.md
+      - CameraSystem: client/systems/camera-system.md
+      - InterpolationSystem: client/systems/interpolation-system.md
+      - ReconciliationSystem: client/systems/reconciliation-system.md
+      - HUDSystem: client/systems/hud-system.md
+      - BackgroundScrollSystem: client/systems/background-scroll.md
+      - ReplicationSystem: client/systems/replication-system.md
+    - Animation Manifest: client/animation-manifest.md
+    - Helpers:
+      - Introduction: client/helpers.md
+      - InterpolationController: client/interpolation-controller.md
