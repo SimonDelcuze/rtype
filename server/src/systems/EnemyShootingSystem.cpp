@@ -28,7 +28,7 @@ namespace
         pt.x     = transform.x + kWalkerShotAnchorOffsetX;
         pt.y     = transform.y + kWalkerShotAnchorOffset;
 
-        auto& walkerShot           = registry.emplace<WalkerShotComponent>(
+        auto& walkerShot = registry.emplace<WalkerShotComponent>(
             projectile, WalkerShotComponent::create(owner, kWalkerShotTickDurationSec, kWalkerShotAnchorOffset,
                                                     kWalkerShotApexOffset, kWalkerShotAnchorOffsetX));
         walkerShot.ascentTicks  = 4;
