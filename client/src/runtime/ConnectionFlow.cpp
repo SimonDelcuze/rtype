@@ -12,6 +12,7 @@
 #include "systems/HUDSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
+#include "ui/LobbyMenu.hpp"
 #include "ui/MenuRunner.hpp"
 #include "ui/SettingsMenu.hpp"
 #include "ui/WaitingRoomMenu.hpp"
@@ -92,6 +93,30 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
             return IpEndpoint::v4(127, 0, 0, 1, 50010);
 
         return parseEndpoint(result.ip, result.port);
+    }
+
+    return std::nullopt;
+}
+
+std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
+                                                           FontManager& fontManager, TextureManager& textureManager)
+{
+    MenuRunner runner(window, fontManager, textureManager, g_running);
+
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint);
+
+    if (!window.isOpen())
+        return std::nullopt;
+
+    if (result.backRequested || result.exitRequested) {
+        return std::nullopt;
+    }
+
+    if (result.success) {
+        Logger::instance().info("[ConnectionFlow] Lobby returned game endpoint: port " +
+                                std::to_string(result.gamePort));
+        return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
+                              lobbyEndpoint.addr[3], result.gamePort);
     }
 
     return std::nullopt;
