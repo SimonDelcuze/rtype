@@ -94,7 +94,9 @@ namespace
 } // namespace
 
 ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
-    : playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
+    : world_(),
+      registry_(world_.getRegistry()),
+      playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
       damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -108,8 +110,13 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
         levelLoaded_   = true;
         levelDirector_ = std::make_unique<LevelDirector>(levelData_);
         levelSpawnSys_ = std::make_unique<LevelSpawnSystem>(levelData_, levelDirector_.get());
+
+        world_.setLevelLoaded(true);
+        world_.setLevelDirector(std::make_unique<LevelDirector>(levelData_));
+        world_.setLevelSpawnSystem(std::make_unique<LevelSpawnSystem>(levelData_, world_.getLevelDirector()));
     } else {
         levelLoaded_ = false;
+        world_.setLevelLoaded(false);
         Logger::instance().error("[Level] Level load failed: " + error.message + " path=" + error.path +
                                  " ptr=" + error.jsonPointer);
     }

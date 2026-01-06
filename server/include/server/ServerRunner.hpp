@@ -13,6 +13,7 @@
 #include "server/LevelSpawnSystem.hpp"
 #include "server/Packets.hpp"
 #include "server/Session.hpp"
+#include "simulation/GameWorld.hpp"
 #include "simulation/PlayerCommand.hpp"
 #include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
@@ -96,7 +97,8 @@ class ServerApp
         Vec2f respawn;
     };
 
-    Registry registry_;
+    GameWorld world_;
+    Registry& registry_;
     std::map<std::uint32_t, EntityId> playerEntities_;
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
