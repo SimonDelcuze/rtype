@@ -21,9 +21,9 @@ void ServerApp::updateNetworkStats(float dt)
 void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& inputs)
 {
     updateSystems(dt, inputs);
-    auto collisions = collisionSys_.detect(registry_);
+
+    auto collisions = world_.getCollisionSystem().detect(world_.getRegistry());
     logCollisions(collisions);
-    damageSys_.apply(registry_, collisions);
 
     handleDeathAndRespawn();
 
@@ -49,37 +49,23 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
 void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs)
 {
-    introCinematic_.update(registry_, playerEntities_, deltaTime);
-    const bool introActive = introCinematic_.active();
-    if (!introActive) {
-        auto mapped = mapInputs(inputs);
-        auto commands = convertInputsToCommands(mapped);
-        playerInputSys_.update(registry_, commands);
-    }
-    movementSys_.update(registry_, deltaTime);
-    boundarySys_.update(registry_);
-    monsterMovementSys_.update(registry_, deltaTime);
-    if (levelLoaded_) {
-        float levelDelta = introActive ? 0.0F : deltaTime;
-        levelDirector_->update(registry_, levelDelta);
-        auto events = levelDirector_->consumeEvents();
-        levelSpawnSys_->update(registry_, levelDelta, events);
-    }
-    enemyShootingSys_.update(registry_, deltaTime);
+    auto mapped   = mapInputs(inputs);
+    auto commands = convertInputsToCommands(mapped);
+
+    world_.tick(deltaTime, commands, playerEntities_);
 
     updateRespawnTimers(deltaTime);
     updateInvincibilityTimers(deltaTime);
-
     cleanupExpiredMissiles(deltaTime);
-
     cleanupOffscreenEntities();
 }
 
 std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
 {
     std::unordered_set<EntityId> current;
-    for (EntityId id : registry_.view<TransformComponent>()) {
-        if (registry_.isAlive(id)) {
+    auto& reg = world_.getRegistry();
+    for (EntityId id : reg.view<TransformComponent>()) {
+        if (reg.isAlive(id)) {
             current.insert(id);
         }
     }
@@ -88,12 +74,13 @@ std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
 
 void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 {
+    auto& reg = world_.getRegistry();
     for (EntityId id : current) {
         if (!knownEntities_.contains(id)) {
             EntitySpawnPacket pkt{};
             pkt.entityId   = id;
-            pkt.entityType = resolveEntityType(registry_, id);
-            auto& t        = registry_.get<TransformComponent>(id);
+            pkt.entityType = resolveEntityType(reg, id);
+            auto& t        = reg.get<TransformComponent>(id);
             pkt.posX       = t.x;
             pkt.posY       = t.y;
             sendThread_.broadcast(pkt);
@@ -113,13 +100,15 @@ void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
 
 void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
 {
+    auto& reg = world_.getRegistry();
     Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) + " size=" + std::to_string(totalBytes) +
                             " payload=" + std::to_string(payloadSize) + " entities=" +
-                            std::to_string(registry_.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
+                            std::to_string(reg.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
 }
 
 void ServerApp::sendSnapshots()
 {
+    auto& reg      = world_.getRegistry();
     bool forceFull = (currentTick_ - lastFullStateTick_) >= kFullStateInterval;
     if (forceFull)
         lastFullStateTick_ = currentTick_;
@@ -127,9 +116,9 @@ void ServerApp::sendSnapshots()
     std::vector<std::vector<std::uint8_t>> packets;
 
     if (forceFull) {
-        packets = buildSnapshotChunks(registry_, currentTick_);
+        packets = buildSnapshotChunks(reg, currentTick_);
     } else {
-        packets = buildSmartDeltaSnapshot(registry_, currentTick_, entityStateCache_, false, 1400);
+        packets = buildSmartDeltaSnapshot(reg, currentTick_, entityStateCache_, false, 1400);
     }
 
     if (packets.empty())
