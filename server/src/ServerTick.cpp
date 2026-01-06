@@ -23,11 +23,13 @@ void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& input
 {
     updateSystems(dt, inputs);
 
-    auto collisions = world_.getCollisionSystem().detect(world_.getRegistry());
+    auto collisions = collisionSys_.detect(registry_);
     logCollisions(collisions);
+    damageSys_.apply(registry_, collisions);
 
     handleDeathAndRespawn();
 
+    world_.trackEntityLifecycle();
     auto events = world_.consumeEvents();
     networkBridge_.processEvents(events);
 }
@@ -50,13 +52,32 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
 void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs)
 {
-    auto mapped   = mapInputs(inputs);
-    auto commands = convertInputsToCommands(mapped);
+    introCinematic_.update(registry_, playerEntities_, deltaTime);
+    const bool introActive = introCinematic_.active();
 
-    world_.tick(deltaTime, commands, playerEntities_);
+    if (!introActive) {
+        auto mapped   = mapInputs(inputs);
+        auto commands = convertInputsToCommands(mapped);
+        playerInputSys_.update(registry_, commands);
+    }
+
+    movementSys_.update(registry_, deltaTime);
+    boundarySys_.update(registry_);
+    monsterMovementSys_.update(registry_, deltaTime);
+
+    if (levelLoaded_) {
+        float levelDelta = introActive ? 0.0F : deltaTime;
+        levelDirector_->update(registry_, levelDelta);
+        auto events = levelDirector_->consumeEvents();
+        levelSpawnSys_->update(registry_, levelDelta, events);
+    }
+
+    enemyShootingSys_.update(registry_, deltaTime);
+    walkerShotSys_.update(registry_, deltaTime);
 
     updateRespawnTimers(deltaTime);
     updateInvincibilityTimers(deltaTime);
+
     cleanupExpiredMissiles(deltaTime);
     cleanupOffscreenEntities();
 }

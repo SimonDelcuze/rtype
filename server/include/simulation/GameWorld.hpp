@@ -83,10 +83,11 @@ class GameWorld
         return introCinematic_;
     }
 
+    void trackEntityLifecycle();
+
   private:
     void emitSpawn(EntityId id, std::uint8_t type, float x, float y);
     void emitDestroy(EntityId id);
-    void trackEntityLifecycle();
 
     Registry registry_;
     EventBus eventBus_;
