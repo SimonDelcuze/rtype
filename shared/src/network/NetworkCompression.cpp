@@ -28,7 +28,7 @@ namespace Compression
     std::vector<std::uint8_t> decompress(const std::uint8_t* data, std::size_t compressedLen, std::size_t originalSize)
     {
         if (compressedLen == 0 || originalSize == 0)
-            return {}
+            return {};
 
         std::vector<std::uint8_t> output(originalSize);
 
