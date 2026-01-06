@@ -36,6 +36,13 @@ enum class MessageType : std::uint8_t
     LevelInit          = 0x30,
     LevelTransition    = 0x31,
     LevelEvent         = 0x32,
+    LobbyListRooms     = 0x40,
+    LobbyRoomList      = 0x41,
+    LobbyCreateRoom    = 0x42,
+    LobbyRoomCreated   = 0x43,
+    LobbyJoinRoom      = 0x44,
+    LobbyJoinSuccess   = 0x45,
+    LobbyJoinFailed    = 0x46,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
 };

@@ -1,6 +1,6 @@
 #include "Logger.hpp"
 #include "Main.hpp"
-#include "server/ServerRunner.hpp"
+#include "lobby/LobbyServer.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -19,11 +19,18 @@ namespace
 void run_server(bool enableTui, bool enableAdmin)
 {
     std::signal(SIGINT, signalHandler);
-    ServerApp app(50010, g_running, enableTui, enableAdmin);
-    if (!app.start()) {
-        Logger::instance().error("[Net] Failed to start server");
+
+    constexpr std::uint16_t kLobbyPort    = 50010;
+    constexpr std::uint16_t kGameBasePort = 50100;
+    constexpr std::uint32_t kMaxInstances = 10;
+
+    LobbyServer server(kLobbyPort, kGameBasePort, kMaxInstances, g_running, enableTui, enableAdmin);
+
+    if (!server.start()) {
+        Logger::instance().error("[Net] Failed to start lobby server");
         return;
     }
-    app.run();
-    app.stop();
+
+    server.run();
+    server.stop();
 }
