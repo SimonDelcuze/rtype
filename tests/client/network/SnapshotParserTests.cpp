@@ -1,4 +1,5 @@
 #include "network/PacketHeader.hpp"
+#include "network/Packing.hpp"
 #include "network/SnapshotParser.hpp"
 
 #include <bit>
@@ -46,6 +47,13 @@ namespace
         return out;
     }
 
+    void writeQ16(std::vector<std::uint8_t>& out, float v)
+    {
+        std::int16_t q = Packing::quantizeTo16(v, 10.0F);
+        out.push_back(static_cast<std::uint8_t>((q >> 8) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>(q & 0xFF));
+    }
+
     void writeFloat(std::vector<std::uint8_t>& out, float v)
     {
         auto bits = std::bit_cast<std::uint32_t>(v);
@@ -66,16 +74,16 @@ TEST(SnapshotParser, ParsesSingleEntityWithFields)
 {
     std::vector<std::uint8_t> data;
     data.push_back(7);
-    writeFloat(data, 1.5F);
-    writeFloat(data, -2.5F);
-    writeFloat(data, 0.5F);
-    writeFloat(data, -0.25F);
+    writeQ16(data, 1.5F);
+    writeQ16(data, -2.5F);
+    writeQ16(data, 0.5F);
+    writeQ16(data, -0.25F);
     writeU16(data, 50);
-    data.push_back(3);
+    data.push_back(Packing::pack44(3, 5)); // status=3, lives=5
     writeFloat(data, 0.1F);
     data.push_back(1);
 
-    auto payload = entityPayload(42, 0x1FF, data);
+    auto payload = entityPayload(42, 0x1FF, data); // 0x1FF = bits 0-8 (covering all fields, bit 9 removed)
     auto pkt     = buildSnapshot(1, {payload});
 
     auto parsed = SnapshotParser::parse(pkt);
@@ -85,14 +93,16 @@ TEST(SnapshotParser, ParsesSingleEntityWithFields)
     EXPECT_EQ(e.entityId, 42u);
     EXPECT_TRUE(e.entityType.has_value());
     EXPECT_EQ(*e.entityType, 7u);
-    EXPECT_NEAR(*e.posX, 1.5F, 1e-5F);
-    EXPECT_NEAR(*e.posY, -2.5F, 1e-5F);
-    EXPECT_NEAR(*e.velX, 0.5F, 1e-5F);
-    EXPECT_NEAR(*e.velY, -0.25F, 1e-5F);
+    EXPECT_NEAR(*e.posX, 1.5F, 0.11F);
+    EXPECT_NEAR(*e.posY, -2.5F, 0.11F);
+    EXPECT_NEAR(*e.velX, 0.5F, 0.11F);
+    EXPECT_NEAR(*e.velY, -0.25F, 0.11F);
     EXPECT_TRUE(e.health.has_value());
     EXPECT_EQ(*e.health, 50);
     EXPECT_TRUE(e.statusEffects.has_value());
     EXPECT_EQ(*e.statusEffects, 3u);
+    EXPECT_TRUE(e.lives.has_value());
+    EXPECT_EQ(*e.lives, 5);
     EXPECT_TRUE(e.orientation.has_value());
     EXPECT_NEAR(*e.orientation, 0.1F, 1e-5F);
     EXPECT_TRUE(e.dead.has_value());
@@ -160,12 +170,12 @@ TEST(SnapshotParser, ParsesMultipleEntities)
 {
     std::vector<std::uint8_t> e1data;
     e1data.push_back(2);
-    writeFloat(e1data, 10.0F);
+    writeQ16(e1data, 10.0F);
     auto e1 = entityPayload(10, 0x003, e1data);
 
     std::vector<std::uint8_t> e2data;
-    writeFloat(e2data, -1.0F);
-    writeFloat(e2data, 2.0F);
+    writeQ16(e2data, -1.0F);
+    writeQ16(e2data, 2.0F);
     auto e2 = entityPayload(20, 0x00C, e2data);
 
     auto pkt    = buildSnapshot(2, {e1, e2});
@@ -174,14 +184,14 @@ TEST(SnapshotParser, ParsesMultipleEntities)
     ASSERT_EQ(parsed->entities.size(), 2u);
     EXPECT_EQ(parsed->entities[0].entityId, 10u);
     EXPECT_TRUE(parsed->entities[0].entityType.has_value());
-    EXPECT_NEAR(*parsed->entities[0].posX, 10.0F, 1e-5F);
+    EXPECT_NEAR(*parsed->entities[0].posX, 10.0F, 0.11F);
     EXPECT_FALSE(parsed->entities[0].posY.has_value());
     EXPECT_EQ(parsed->entities[1].entityId, 20u);
     EXPECT_FALSE(parsed->entities[1].entityType.has_value());
     EXPECT_TRUE(parsed->entities[1].posY.has_value());
-    EXPECT_NEAR(*parsed->entities[1].posY, -1.0F, 1e-5F);
+    EXPECT_NEAR(*parsed->entities[1].posY, -1.0F, 0.11F);
     EXPECT_TRUE(parsed->entities[1].velX.has_value());
-    EXPECT_NEAR(*parsed->entities[1].velX, 2.0F, 1e-5F);
+    EXPECT_NEAR(*parsed->entities[1].velX, 2.0F, 0.11F);
 }
 
 TEST(SnapshotParser, RejectsIfBufferSmallerThanHeaderPlusCrc)

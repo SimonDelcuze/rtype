@@ -1,6 +1,7 @@
 #include "network/SnapshotParser.hpp"
 
 #include "Logger.hpp"
+#include "network/Packing.hpp"
 
 #include <bit>
 #include <cstddef>
@@ -133,24 +134,24 @@ std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std:
         offset += 1;
     }
     if (hasBit(mask, 1)) {
-        if (!ensureAvailable(offset, 4, PacketHeader::kSize + header.payloadSize))
+        if (!ensureAvailable(offset, 2, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
-        e.posX = readFloat(data, offset);
+        e.posX = Packing::dequantizeFrom16(static_cast<std::int16_t>(readU16(data, offset)), 10.0F);
     }
     if (hasBit(mask, 2)) {
-        if (!ensureAvailable(offset, 4, PacketHeader::kSize + header.payloadSize))
+        if (!ensureAvailable(offset, 2, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
-        e.posY = readFloat(data, offset);
+        e.posY = Packing::dequantizeFrom16(static_cast<std::int16_t>(readU16(data, offset)), 10.0F);
     }
     if (hasBit(mask, 3)) {
-        if (!ensureAvailable(offset, 4, PacketHeader::kSize + header.payloadSize))
+        if (!ensureAvailable(offset, 2, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
-        e.velX = readFloat(data, offset);
+        e.velX = Packing::dequantizeFrom16(static_cast<std::int16_t>(readU16(data, offset)), 10.0F);
     }
     if (hasBit(mask, 4)) {
-        if (!ensureAvailable(offset, 4, PacketHeader::kSize + header.payloadSize))
+        if (!ensureAvailable(offset, 2, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
-        e.velY = readFloat(data, offset);
+        e.velY = Packing::dequantizeFrom16(static_cast<std::int16_t>(readU16(data, offset)), 10.0F);
     }
     if (hasBit(mask, 5)) {
         if (!ensureAvailable(offset, 2, PacketHeader::kSize + header.payloadSize))
@@ -161,7 +162,11 @@ std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std:
     if (hasBit(mask, 6)) {
         if (!ensureAvailable(offset, 1, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
-        e.statusEffects = data[offset];
+        std::uint8_t packed = data[offset];
+        std::uint8_t status, lives;
+        Packing::unpack44(packed, status, lives);
+        e.statusEffects = status;
+        e.lives         = static_cast<std::int8_t>(lives);
         offset += 1;
     }
     if (hasBit(mask, 7)) {
@@ -173,12 +178,6 @@ std::optional<SnapshotEntity> SnapshotParser::parseEntity(const std::vector<std:
         if (!ensureAvailable(offset, 1, PacketHeader::kSize + header.payloadSize))
             return std::nullopt;
         e.dead = data[offset] != 0;
-        offset += 1;
-    }
-    if (hasBit(mask, 9)) {
-        if (!ensureAvailable(offset, 1, PacketHeader::kSize + header.payloadSize))
-            return std::nullopt;
-        e.lives = static_cast<std::int8_t>(data[offset]);
         offset += 1;
     }
     if (hasBit(mask, 10)) {

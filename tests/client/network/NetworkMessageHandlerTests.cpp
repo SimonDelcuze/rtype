@@ -2,9 +2,9 @@
 #include "network/LevelInitData.hpp"
 #include "network/NetworkMessageHandler.hpp"
 #include "network/PacketHeader.hpp"
+#include "network/Packing.hpp"
 #include "network/SnapshotParser.hpp"
 
-#include <bit>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -24,9 +24,11 @@ namespace
         out.push_back(static_cast<std::uint8_t>(v & 0xFF));
     }
 
-    void writeFloat(std::vector<std::uint8_t>& out, float v)
+    void writeQ16(std::vector<std::uint8_t>& out, float v)
     {
-        writeU32(out, std::bit_cast<std::uint32_t>(v));
+        std::int16_t q = Packing::quantizeTo16(v, 10.0F);
+        out.push_back(static_cast<std::uint8_t>((q >> 8) & 0xFF));
+        out.push_back(static_cast<std::uint8_t>(q & 0xFF));
     }
 
     std::vector<std::uint8_t> makeSnapshotPacket()
@@ -42,8 +44,8 @@ namespace
         writeU16(buf, 1);
         writeU32(buf, 123);
         writeU16(buf, 0x00C);
-        writeFloat(buf, -5.0F);
-        writeFloat(buf, 10.0F);
+        writeQ16(buf, -5.0F);
+        writeQ16(buf, 10.0F);
 
         std::size_t payloadSize = buf.size() - PacketHeader::kSize;
         buf[13]                 = static_cast<std::uint8_t>((payloadSize >> 8) & 0xFF);
