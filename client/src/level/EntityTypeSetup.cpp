@@ -41,9 +41,9 @@ namespace
             return;
 
         RenderTypeData data{};
-        data.texture    = tex;
-        data.layer      = 1;
-        data.spriteId   = textureId;
+        data.texture     = tex;
+        data.layer       = 1;
+        data.spriteId    = textureId;
         data.frameHeight = static_cast<std::uint32_t>(frameHeight);
         registry.registerType(typeId, data);
     }
