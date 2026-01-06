@@ -9,7 +9,7 @@ TEST(Packing, QuantizeDeQuantize16)
     std::int16_t quantized = Packing::quantizeTo16(original, scale);
     float dequantized      = Packing::dequantizeFrom16(quantized, scale);
 
-    EXPECT_EQ(quantized, 12346); // Rounded
+    EXPECT_EQ(quantized, 12346);
     EXPECT_NEAR(dequantized, 1234.6F, 0.01F);
 }
 
@@ -52,8 +52,8 @@ TEST(Packing, PackUnpack44)
 
 TEST(Packing, Pack44Truncates)
 {
-    std::uint8_t high   = 0xFF; // Should be truncated to 0x0F
-    std::uint8_t low    = 0x11; // Should be truncated to 0x01
+    std::uint8_t high   = 0xFF;
+    std::uint8_t low    = 0x11;
     std::uint8_t packed = Packing::pack44(high, low);
 
     EXPECT_EQ(packed, 0xF1);
