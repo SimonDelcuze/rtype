@@ -61,6 +61,7 @@ class ServerApp
     std::vector<PlayerCommand> convertInputsToCommands(const std::vector<ReceivedInput>& inputs) const;
     std::unordered_set<EntityId> collectCurrentEntities();
     void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
+    void processGameEvents(const std::vector<GameEvent>& events);
     void sendSnapshots();
     void logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull);
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
