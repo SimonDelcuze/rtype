@@ -66,13 +66,38 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
+set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_cmake.cmake")
+
 CPMAddPackage(
     NAME lz4
     GITHUB_REPOSITORY lz4/lz4
     GIT_TAG v1.9.4
-    SOURCE_SUBDIR build/cmake
-    OPTIONS "LZ4_BUILD_CLI OFF" "LZ4_BUILD_LEGACY_LZ4C OFF"
+    GIT_SHALLOW TRUE
+    DOWNLOAD_ONLY YES
 )
+
+if(lz4_ADDED)
+    set(LZ4_CMAKELISTS "${lz4_SOURCE_DIR}/build/cmake/CMakeLists.txt")
+    if(EXISTS "${LZ4_CMAKELISTS}")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND}
+                -DLZ4_CMAKELISTS=${LZ4_CMAKELISTS}
+                -P ${LZ4_MIN_CMAKE_PATCH}
+            WORKING_DIRECTORY ${lz4_SOURCE_DIR}
+        )
+    else()
+        message(FATAL_ERROR "Could not find ${LZ4_CMAKELISTS}")
+    endif()
+
+    if(NOT DEFINED lz4_BINARY_DIR)
+        set(lz4_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lz4-build)
+    endif()
+
+    set(LZ4_BUILD_CLI OFF CACHE BOOL "" FORCE)
+    set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "" FORCE)
+
+    add_subdirectory(${lz4_SOURCE_DIR}/build/cmake ${lz4_BINARY_DIR})
+endif()
 
 target_include_directories(rtype_shared
     PUBLIC
