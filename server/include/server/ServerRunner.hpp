@@ -41,7 +41,7 @@
 class ServerApp
 {
   public:
-    ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui = false);
+    ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui = false, bool enableAdmin = false);
     bool start();
     void run();
     void stop();
@@ -134,7 +134,9 @@ class ServerApp
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
-    bool enableTui_{false};
+    bool showNetwork_{false};
+    bool showAdmin_{false};
+    bool interactive_{false};
     std::unique_ptr<NetworkTui> tui_;
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;

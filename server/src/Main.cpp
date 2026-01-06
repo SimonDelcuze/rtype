@@ -8,6 +8,7 @@ int main(int argc, char* argv[])
 {
     bool verbose = false;
     bool network = false;
+    bool admin   = false;
 
     for (int i = 1; i < argc; ++i) {
         const std::string argument(argv[i]);
@@ -16,6 +17,9 @@ int main(int argc, char* argv[])
         }
         if (argument == "--network" || argument == "-n") {
             network = true;
+        }
+        if (argument == "--admin" || argument == "-a") {
+            admin = true;
         }
     }
 
@@ -26,6 +30,6 @@ int main(int argc, char* argv[])
         Logger::instance().info("[Net] Verbose logging enabled");
     }
 
-    run_server(network);
+    run_server(network, admin);
     return 0;
 }

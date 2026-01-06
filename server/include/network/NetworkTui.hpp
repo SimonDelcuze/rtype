@@ -3,6 +3,7 @@
 #include <chrono>
 #include <deque>
 #include <string>
+#include <termios.h>
 #include <vector>
 
 struct NetworkStats
@@ -17,7 +18,7 @@ struct NetworkStats
 class NetworkTui
 {
   public:
-    NetworkTui();
+    NetworkTui(bool showNetwork = false, bool showAdmin = false);
     ~NetworkTui();
 
     void update(const NetworkStats& stats);
@@ -26,19 +27,24 @@ class NetworkTui
         _clientCount = count;
     }
     void addLog(const std::string& log);
+    void addAdminLog(const std::string& msg);
     void render();
+    void handleInput();
 
   private:
     void drawHeader(std::ostringstream& frame);
     void drawStats(std::ostringstream& frame);
     void drawGraph(std::ostringstream& frame);
     void drawLogs(std::ostringstream& frame);
+    void drawAdmin(std::ostringstream& frame);
+    void processCommand(const std::string& cmd);
     void resetCursor();
 
     NetworkStats _currentStats{0, 0, 0, 0, 0};
     [[maybe_unused]] NetworkStats _lastStats{0, 0, 0, 0, 0};
     std::deque<float> _bandwidthHistory;
     std::deque<std::string> _logs;
+    std::deque<std::string> _adminLogs;
     std::chrono::steady_clock::time_point _lastUpdate;
     std::chrono::steady_clock::time_point _startTime;
 
@@ -46,4 +52,8 @@ class NetworkTui
     int _height{24};
     float _maxBandwidth{1.0f};
     size_t _clientCount{0};
+    bool _showNetwork{false};
+    bool _adminMode{false};
+    std::string _inputBuffer;
+    struct termios _origTermios;
 };

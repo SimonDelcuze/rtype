@@ -59,8 +59,20 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 
     sess.join = true;
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
-    clients_.push_back(ctrl.from);
-    sendThread_.setClients(clients_);
+
+    // Fix: Prevent duplicate endpoints
+    bool alreadyExists = false;
+    for (const auto& ep : clients_) {
+        if (endpointKey(ep) == endpointKey(ctrl.from)) {
+            alreadyExists = true;
+            break;
+        }
+    }
+    if (!alreadyExists) {
+        clients_.push_back(ctrl.from);
+        sendThread_.setClients(clients_);
+    }
+
     if (!playerEntities_.contains(sess.playerId)) {
         addPlayerEntity(sess.playerId);
     }
@@ -134,7 +146,8 @@ void ServerApp::processTimeouts()
 {
     ClientTimeoutEvent timeoutEvent;
     while (timeoutQueue_.tryPop(timeoutEvent)) {
-        Logger::instance().warn("[Net] Client timeout");
+        Logger::instance().warn("[Net] Client timeout: " + endpointKey(timeoutEvent.endpoint));
+        onDisconnect(timeoutEvent.endpoint);
     }
 }
 

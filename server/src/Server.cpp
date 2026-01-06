@@ -16,10 +16,10 @@ namespace
     }
 } // namespace
 
-void run_server(bool enableTui)
+void run_server(bool enableTui, bool enableAdmin)
 {
     std::signal(SIGINT, signalHandler);
-    ServerApp app(50010, g_running, enableTui);
+    ServerApp app(50010, g_running, enableTui, enableAdmin);
     if (!app.start()) {
         Logger::instance().error("[Net] Failed to start server");
         return;
