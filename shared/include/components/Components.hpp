@@ -16,3 +16,4 @@
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
+#include "components/WalkerShotComponent.hpp"

@@ -64,6 +64,7 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
         levelSpawnSys_->update(registry_, levelDelta, events);
     }
     enemyShootingSys_.update(registry_, deltaTime);
+    walkerShotSys_.update(registry_, deltaTime);
 
     updateRespawnTimers(deltaTime);
     updateInvincibilityTimers(deltaTime);

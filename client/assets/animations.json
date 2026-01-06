@@ -742,6 +742,79 @@
           "height": 7
         }
       ]
+    },
+    {
+      "id": "walker_special_shot",
+      "frameTime": 0.16,
+      "loop": false,
+      "frames": [
+        {
+          "x": 251,
+          "y": 242,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 251,
+          "y": 242,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 234,
+          "y": 241,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 217,
+          "y": 241,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 201,
+          "y": 242,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 183,
+          "y": 250,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 200,
+          "y": 259,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 217,
+          "y": 258,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 234,
+          "y": 258,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 251,
+          "y": 257,
+          "width": 12,
+          "height": 14
+        },
+        {
+          "x": 251,
+          "y": 257,
+          "width": 12,
+          "height": 14
+        }
+      ]
     }
   ],
   "labels": {

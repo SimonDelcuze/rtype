@@ -22,6 +22,7 @@
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 #include "systems/ScoreSystem.hpp"
+#include "systems/WalkerShotSystem.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -108,6 +109,7 @@ class ServerApp
     MovementSystem movementSys_;
     MonsterMovementSystem monsterMovementSys_;
     EnemyShootingSystem enemyShootingSys_;
+    WalkerShotSystem walkerShotSys_;
     CollisionSystem collisionSys_;
     DamageSystem damageSys_;
     ScoreSystem scoreSys_;
