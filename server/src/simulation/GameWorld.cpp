@@ -1,5 +1,7 @@
 #include "simulation/GameWorld.hpp"
 
+#include "server/EntityTypeResolver.hpp"
+
 GameWorld::GameWorld()
     : playerInputSys_(250.0F, 400.0F, 2.0F, 10),
       movementSys_(),
@@ -39,4 +41,56 @@ void GameWorld::tick(float deltaTime, const std::vector<PlayerCommand>& commands
 
     auto collisions = collisionSys_.detect(registry_);
     damageSys_.apply(registry_, collisions);
+
+    trackEntityLifecycle();
+}
+
+std::vector<GameEvent> GameWorld::consumeEvents()
+{
+    std::vector<GameEvent> events = std::move(pendingEvents_);
+    pendingEvents_.clear();
+    return events;
+}
+
+void GameWorld::emitSpawn(EntityId id, std::uint8_t type, float x, float y)
+{
+    EntitySpawnedEvent evt{};
+    evt.entityId   = id;
+    evt.entityType = type;
+    evt.posX       = x;
+    evt.posY       = y;
+    pendingEvents_.push_back(evt);
+}
+
+void GameWorld::emitDestroy(EntityId id)
+{
+    EntityDestroyedEvent evt{};
+    evt.entityId = id;
+    pendingEvents_.push_back(evt);
+}
+
+void GameWorld::trackEntityLifecycle()
+{
+    std::unordered_set<EntityId> current;
+    for (EntityId id : registry_.view<TransformComponent>()) {
+        if (registry_.isAlive(id)) {
+            current.insert(id);
+        }
+    }
+
+    for (EntityId id : current) {
+        if (!knownEntities_.contains(id)) {
+            std::uint8_t type = resolveEntityType(registry_, id);
+            auto& t           = registry_.get<TransformComponent>(id);
+            emitSpawn(id, type, t.x, t.y);
+        }
+    }
+
+    for (EntityId oldId : knownEntities_) {
+        if (!current.contains(oldId)) {
+            emitDestroy(oldId);
+        }
+    }
+
+    knownEntities_ = current;
 }

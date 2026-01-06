@@ -6,6 +6,7 @@
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"
 #include "server/LevelSpawnSystem.hpp"
+#include "simulation/GameEvent.hpp"
 #include "simulation/PlayerCommand.hpp"
 #include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
@@ -19,6 +20,7 @@
 
 #include <map>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 class GameWorld
@@ -28,6 +30,8 @@ class GameWorld
 
     void tick(float deltaTime, const std::vector<PlayerCommand>& commands,
               const std::map<std::uint32_t, EntityId>& playerEntities);
+
+    std::vector<GameEvent> consumeEvents();
 
     const Registry& getRegistry() const { return registry_; }
 
@@ -50,8 +54,14 @@ class GameWorld
     IntroCinematic& getIntroCinematic() { return introCinematic_; }
 
   private:
+    void emitSpawn(EntityId id, std::uint8_t type, float x, float y);
+    void emitDestroy(EntityId id);
+    void trackEntityLifecycle();
+
     Registry registry_;
     EventBus eventBus_;
+    std::vector<GameEvent> pendingEvents_;
+    std::unordered_set<EntityId> knownEntities_;
 
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
