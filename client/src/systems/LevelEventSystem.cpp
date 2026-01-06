@@ -3,8 +3,8 @@
 #include "Logger.hpp"
 
 LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest,
-                                   TextureManager& textures)
-    : queue_(&queue), manifest_(&manifest), textures_(&textures)
+                                   TextureManager& textures, float& musicVolume)
+    : queue_(&queue), manifest_(&manifest), textures_(&textures), musicVolume_(&musicVolume)
 {
     activeScroll_.mode   = LevelScrollMode::Constant;
     activeScroll_.speedX = fallbackSpeed_;
@@ -13,6 +13,13 @@ LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const
 
 void LevelEventSystem::update(Registry& registry, float deltaTime)
 {
+    if (musicVolume_ != nullptr) {
+        music_.setVolume(*musicVolume_);
+    }
+    if (currentMusicId_.empty() && music_.getStatus() != sf::SoundSource::Status::Playing) {
+        applyMusic("theme_music");
+    }
+
     LevelEventData event;
     while (queue_->tryPop(event)) {
         applyEvent(registry, event);
@@ -35,6 +42,12 @@ void LevelEventSystem::applyEvent(Registry& registry, const LevelEventData& even
     if (event.type == LevelEventType::SetBackground) {
         if (event.backgroundId.has_value()) {
             applyBackground(registry, *event.backgroundId);
+        }
+        return;
+    }
+    if (event.type == LevelEventType::SetMusic) {
+        if (event.musicId.has_value()) {
+            applyMusic(*event.musicId);
         }
         return;
     }
@@ -144,4 +157,37 @@ float LevelEventSystem::currentScrollSpeed() const
         }
     }
     return speed;
+}
+
+void LevelEventSystem::applyMusic(const std::string& musicId)
+{
+    if (currentMusicId_ == musicId) {
+        return;
+    }
+
+    auto entry = manifest_->findSoundById(musicId);
+    if (!entry) {
+        Logger::instance().warn("[LevelEvent] Unknown music id=" + musicId);
+        return;
+    }
+    const std::string path = "client/assets/" + entry->path;
+    if (!music_.openFromFile(path)) {
+        Logger::instance().warn("[LevelEvent] Failed to open music path=" + path);
+        return;
+    }
+#if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
+    music_.stop();
+#else
+    music_.stop();
+#endif
+#if defined(SFML_VERSION_MAJOR) && SFML_VERSION_MAJOR >= 3
+    music_.setLooping(true);
+#else
+    music_.setLoop(true);
+#endif
+    if (musicVolume_ != nullptr) {
+        music_.setVolume(*musicVolume_);
+    }
+    music_.play();
+    currentMusicId_ = musicId;
 }

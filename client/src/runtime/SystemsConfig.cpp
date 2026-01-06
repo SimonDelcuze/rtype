@@ -38,7 +38,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));
-    gameLoop.addSystem(std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures));
+    gameLoop.addSystem(std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures, g_musicVolume));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
     gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));

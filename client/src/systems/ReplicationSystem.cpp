@@ -81,6 +81,7 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             ++it;
         }
     }
+    explosionCooldown_ = std::max(0.0F, explosionCooldown_ - deltaTime);
 
     EntitySpawnPacket spawnPkt;
     while (spawnQueue_->tryPop(spawnPkt)) {
@@ -165,7 +166,8 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
                     }
                 }
                 if (!played) {
-                    if (laserSounds_.size() < 32) {
+                    constexpr std::size_t kMaxLaserVoices = 6;
+                    if (laserSounds_.size() < kMaxLaserVoices) {
                         GraphicsFactory factory;
                         auto s = factory.createSound();
                         s->setBuffer(*laserBuffer_);
@@ -187,56 +189,6 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
     while (destroyQueue_->tryPop(destroyPkt)) {
         auto it = remoteToLocal_.find(destroyPkt.entityId);
         if (it != remoteToLocal_.end()) {
-            auto typeIt = remoteToType_.find(destroyPkt.entityId);
-            if (typeIt != remoteToType_.end() && typeIt->second == 2) {
-                if (!explosionBuffer_) {
-                    GraphicsFactory factory;
-                    explosionBuffer_ = factory.createSoundBuffer();
-                    if (explosionBuffer_->loadFromFile("client/assets/sounds/explosion.wav") ||
-                        explosionBuffer_->loadFromFile("sounds/explosion.wav")) {
-                        explosionLoaded_ = true;
-                    } else {
-                        explosionLoadTried_ = true;
-                        Logger::instance().warn("[Audio] Failed to load explosion sound");
-                    }
-                }
-
-                if (explosionLoaded_) {
-                    for (auto it = explosionSounds_.begin(); it != explosionSounds_.end();) {
-                        if ((*it)->getStatus() == ISound::Status::Stopped) {
-                            it = explosionSounds_.erase(it);
-                        } else {
-                            ++it;
-                        }
-                    }
-
-                    bool played = false;
-                    for (auto& sound : explosionSounds_) {
-                        if (sound->getStatus() != ISound::Status::Playing) {
-                            sound->setBuffer(*explosionBuffer_);
-                            sound->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            sound->play();
-                            played = true;
-                            break;
-                        }
-                    }
-                    if (!played) {
-                        if (explosionSounds_.size() < 32) {
-                            GraphicsFactory factory;
-                            auto s = factory.createSound();
-                            s->setBuffer(*explosionBuffer_);
-                            s->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            s->play();
-                            explosionSounds_.push_back(std::move(s));
-                        } else {
-                            explosionSounds_[0]->stop();
-                            explosionSounds_[0]->setBuffer(*explosionBuffer_);
-                            explosionSounds_[0]->setVolume(std::clamp(g_musicVolume, 0.0F, 100.0F));
-                            explosionSounds_[0]->play();
-                        }
-                    }
-                }
-            }
             if (registry.isAlive(it->second)) {
                 registry.destroyEntity(it->second);
             }

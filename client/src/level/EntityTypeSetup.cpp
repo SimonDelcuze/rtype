@@ -28,9 +28,10 @@ namespace
         registry.registerType(1, data);
     }
 
-    void registerEnemyType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+    void registerWalkingMobType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
+                                std::uint16_t typeId, const std::string& textureId, float frameHeight)
     {
-        auto entry = manifest.findTextureById("mob1");
+        auto entry = manifest.findTextureById(textureId);
         if (!entry)
             return;
         if (!textures.has(entry->id))
@@ -40,10 +41,11 @@ namespace
             return;
 
         RenderTypeData data{};
-        data.texture  = tex;
-        data.layer    = 1;
-        data.spriteId = "mob1";
-        registry.registerType(2, data);
+        data.texture    = tex;
+        data.layer      = 1;
+        data.spriteId   = textureId;
+        data.frameHeight = static_cast<std::uint32_t>(frameHeight);
+        registry.registerType(typeId, data);
     }
 
     void registerBulletType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
@@ -103,7 +105,8 @@ namespace
 void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
 {
     registerPlayerType(registry, textures, manifest);
-    registerEnemyType(registry, textures, manifest);
+    registerWalkingMobType(registry, textures, manifest, 2, "mob1", 36.0F);
+    registerWalkingMobType(registry, textures, manifest, 21, "mob2", 32.0F);
     registerBulletType(registry, textures, manifest);
     registerObstacleType(registry, textures, manifest, 9, "obstacle_top");
     registerObstacleType(registry, textures, manifest, 10, "obstacle_middle");

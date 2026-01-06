@@ -69,6 +69,9 @@ template <typename T> struct Rect
     T width{0};
     T height{0};
 
+    constexpr Rect() = default;
+    constexpr Rect(T l, T t, T w, T h) : left(l), top(t), width(w), height(h) {}
+
     bool operator==(const Rect& other) const
     {
         return left == other.left && top == other.top && width == other.width && height == other.height;

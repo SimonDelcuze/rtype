@@ -633,6 +633,68 @@
       ]
     },
     {
+      "id": "mob1_walking",
+      "frameTime": 0.2,
+      "loop": true,
+      "frames": [
+        {
+          "x": 68,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 34,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 68,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
+      "id": "mob2_walking",
+      "frameTime": 0.2,
+      "loop": true,
+      "frames": [
+        {
+          "x": 68,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 34,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 68,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
       "id": "enemy_bullet_basic",
       "frameTime": 0.12,
       "loop": true,
@@ -705,7 +767,11 @@
       "enemy1": "enemy_ship_row1"
     },
     "mob1": {
-      "left": "mob1_left"
+      "left": "mob1_left",
+      "walking": "mob1_walking"
+    },
+    "mob2": {
+      "walking": "mob2_walking"
     },
     "enemy_bullet": {
       "base": "enemy_bullet_basic"

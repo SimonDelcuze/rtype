@@ -31,6 +31,11 @@
       "type": "sprite"
     },
     {
+      "id": "mob2",
+      "path": "sprites/mob2.png",
+      "type": "sprite"
+    },
+    {
       "id": "obstacle_top",
       "path": "sprites/obstacle/top.png",
       "type": "sprite"
