@@ -103,7 +103,7 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag)
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
-      running_(&runningFlag)
+      running_(&runningFlag), networkBridge_(sendThread_)
 {
     LevelLoadError error;
     if (LevelLoader::load(1, levelData_, error)) {
@@ -172,7 +172,7 @@ void ServerApp::resetGame()
     gameStarted_ = false;
     introCinematic_.reset();
     eventBus_.clear();
-    knownEntities_.clear();
+    networkBridge_.clear();
     ControlEvent ctrl;
     while (controlQueue_.tryPop(ctrl))
         ;
@@ -438,29 +438,3 @@ void ServerApp::handleDeathAndRespawn()
     destructionSys_.update(registry_, toDestroy);
 }
 
-void ServerApp::syncEntityLifecycle()
-{
-    std::unordered_set<EntityId> current;
-    for (EntityId id : registry_.view<TransformComponent>()) {
-        if (registry_.isAlive(id)) {
-            current.insert(id);
-            if (!knownEntities_.contains(id)) {
-                EntitySpawnPacket pkt{};
-                pkt.entityId   = id;
-                pkt.entityType = resolveEntityType(registry_, id);
-                auto& t        = registry_.get<TransformComponent>(id);
-                pkt.posX       = t.x;
-                pkt.posY       = t.y;
-                sendThread_.broadcast(pkt);
-            }
-        }
-    }
-    for (EntityId oldId : knownEntities_) {
-        if (!current.contains(oldId)) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = oldId;
-            sendThread_.broadcast(pkt);
-        }
-    }
-    knownEntities_ = std::move(current);
-}

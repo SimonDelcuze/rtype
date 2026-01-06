@@ -29,7 +29,7 @@ void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& input
     handleDeathAndRespawn();
 
     auto events = world_.consumeEvents();
-    processGameEvents(events);
+    networkBridge_.processEvents(events);
 }
 
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
@@ -73,31 +73,6 @@ std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
     return current;
 }
 
-void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
-{
-    auto& reg = world_.getRegistry();
-    for (EntityId id : current) {
-        if (!knownEntities_.contains(id)) {
-            EntitySpawnPacket pkt{};
-            pkt.entityId   = id;
-            pkt.entityType = resolveEntityType(reg, id);
-            auto& t        = reg.get<TransformComponent>(id);
-            pkt.posX       = t.x;
-            pkt.posY       = t.y;
-            sendThread_.broadcast(pkt);
-        }
-    }
-
-    for (EntityId oldId : knownEntities_) {
-        if (!current.contains(oldId)) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = oldId;
-            sendThread_.broadcast(pkt);
-        }
-    }
-
-    knownEntities_ = current;
-}
 
 void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
 {
@@ -245,29 +220,3 @@ std::vector<PlayerCommand> ServerApp::convertInputsToCommands(const std::vector<
     return commands;
 }
 
-void ServerApp::processGameEvents(const std::vector<GameEvent>& events)
-{
-    for (const auto& event : events) {
-        std::visit(
-            [this](auto&& evt) {
-                using T = std::decay_t<decltype(evt)>;
-                if constexpr (std::is_same_v<T, EntitySpawnedEvent>) {
-                    EntitySpawnPacket pkt{};
-                    pkt.entityId   = evt.entityId;
-                    pkt.entityType = evt.entityType;
-                    pkt.posX       = evt.posX;
-                    pkt.posY       = evt.posY;
-                    sendThread_.broadcast(pkt);
-                    knownEntities_.insert(evt.entityId);
-                } else if constexpr (std::is_same_v<T, EntityDestroyedEvent>) {
-                    EntityDestroyedPacket pkt{};
-                    pkt.entityId = evt.entityId;
-                    sendThread_.broadcast(pkt);
-                    knownEntities_.erase(evt.entityId);
-                } else if constexpr (std::is_same_v<T, CollisionEvent>) {
-                    // Could be used for sound/FX in the future
-                }
-            },
-            event);
-    }
-}

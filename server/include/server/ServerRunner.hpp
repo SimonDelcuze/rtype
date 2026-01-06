@@ -4,6 +4,7 @@
 #include "ecs/Registry.hpp"
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
+#include "network/NetworkBridge.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
 #include "server/EntityStateCache.hpp"
@@ -61,8 +62,6 @@ class ServerApp
     void broadcastDestructions(const std::vector<EntityId>& toDestroy);
     std::vector<PlayerCommand> convertInputsToCommands(const std::vector<ReceivedInput>& inputs) const;
     std::unordered_set<EntityId> collectCurrentEntities();
-    void syncEntityLifecycle(const std::unordered_set<EntityId>& current);
-    void processGameEvents(const std::vector<GameEvent>& events);
     void sendSnapshots();
     void logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull);
     std::vector<ReceivedInput> mapInputs(const std::vector<ReceivedInput>& inputs);
@@ -83,7 +82,6 @@ class ServerApp
     void updateRespawnTimers(float deltaTime);
     void updateInvincibilityTimers(float deltaTime);
     void handleDeathAndRespawn();
-    void syncEntityLifecycle();
     void spawnPlayerDeathFx(float x, float y);
     void sendLevelEvents(const std::vector<DispatchedEvent>& events);
     void sendSegmentState();
@@ -134,6 +132,6 @@ class ServerApp
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
-    std::unordered_set<EntityId> knownEntities_;
+    NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
 };
