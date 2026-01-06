@@ -1,3 +1,3 @@
 #pragma once
 
-void run_server();
+void run_server(bool enableTui = false);

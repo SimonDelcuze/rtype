@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <fstream>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -16,10 +17,38 @@ class Logger
     void info(const std::string& message);
     void warn(const std::string& message);
     void error(const std::string& message);
+    void verbose(const std::string& message);
 
     void addBytesSent(std::size_t bytes);
     void addBytesReceived(std::size_t bytes);
+    void addPacketSent();
+    void addPacketReceived();
     void addPacketDropped();
+
+    std::size_t getTotalBytesSent() const
+    {
+        return _totalBytesSent;
+    }
+    std::size_t getTotalBytesReceived() const
+    {
+        return _totalBytesReceived;
+    }
+    std::size_t getTotalPacketsSent() const
+    {
+        return _totalPacketsSent;
+    }
+    std::size_t getTotalPacketsReceived() const
+    {
+        return _totalPacketsReceived;
+    }
+    std::size_t getTotalPacketsDropped() const
+    {
+        return _totalPacketsDropped;
+    }
+
+    void setConsoleOutputEnabled(bool enabled);
+    void setPostLogCallback(std::function<void(const std::string&)> callback);
+
     void logNetworkStats();
 
     Logger(const Logger&)            = delete;
@@ -34,12 +63,16 @@ class Logger
     static std::string extractTag(const std::string& message);
 
     std::ofstream _file;
-    std::mutex _mutex;
+    mutable std::mutex _mutex;
     bool _verbose;
+    bool _consoleEnabled{true};
     std::unordered_set<std::string> _enabledTags;
     bool _tagFilterActive;
+    std::function<void(const std::string&)> _postLogCallback;
 
     std::atomic<std::size_t> _totalBytesSent{0};
     std::atomic<std::size_t> _totalBytesReceived{0};
+    std::atomic<std::size_t> _totalPacketsSent{0};
+    std::atomic<std::size_t> _totalPacketsReceived{0};
     std::atomic<std::size_t> _totalPacketsDropped{0};
 };

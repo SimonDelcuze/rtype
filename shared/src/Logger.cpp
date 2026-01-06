@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -65,9 +66,11 @@ void Logger::loadTagConfig(const std::string& configPath)
     }
     _tagFilterActive = !_enabledTags.empty();
 
-    std::cout << "[Logger] Loaded " << _enabledTags.size() << " tags from " << configPath << "\n";
-    for (const auto& tag : _enabledTags) {
-        std::cout << "[Logger]   - " << tag << "\n";
+    if (_verbose) {
+        std::cout << "[Logger] Loaded " << _enabledTags.size() << " tags from " << configPath << "\n";
+        for (const auto& tag : _enabledTags) {
+            std::cout << "[Logger]   - " << tag << "\n";
+        }
     }
 }
 
@@ -110,6 +113,11 @@ void Logger::error(const std::string& message)
     log("ERROR", message, true);
 }
 
+void Logger::verbose(const std::string& message)
+{
+    log("VERBOSE", message, false);
+}
+
 void Logger::addBytesSent(std::size_t bytes)
 {
     _totalBytesSent += bytes;
@@ -120,9 +128,31 @@ void Logger::addBytesReceived(std::size_t bytes)
     _totalBytesReceived += bytes;
 }
 
+void Logger::addPacketSent()
+{
+    _totalPacketsSent++;
+}
+
+void Logger::addPacketReceived()
+{
+    _totalPacketsReceived++;
+}
+
 void Logger::addPacketDropped()
 {
     _totalPacketsDropped++;
+}
+
+void Logger::setConsoleOutputEnabled(bool enabled)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _consoleEnabled = enabled;
+}
+
+void Logger::setPostLogCallback(std::function<void(const std::string&)> callback)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _postLogCallback = std::move(callback);
 }
 
 void Logger::logNetworkStats()
@@ -158,14 +188,21 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
         _file.flush();
     }
 
-    bool tagAllowed     = isTagEnabled(message);
-    bool consoleEnabled = (alwaysConsole || _verbose) && tagAllowed;
-    if (!consoleEnabled)
+    bool tagAllowed = isTagEnabled(message);
+    bool shouldLog  = alwaysConsole || (level == "ERROR") || (_verbose && tagAllowed);
+
+    if (!shouldLog)
         return;
 
-    if (level == "ERROR") {
-        std::cerr << line;
-    } else {
-        std::cout << line;
+    if (_consoleEnabled) {
+        if (level == "ERROR") {
+            std::cerr << line;
+        } else {
+            std::cout << line;
+        }
+    }
+
+    if (_postLogCallback) {
+        _postLogCallback(line);
     }
 }

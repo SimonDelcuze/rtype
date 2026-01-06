@@ -1,21 +1,22 @@
-#include "network/InputReceiveThread.hpp"
+#include "simulation/PlayerCommand.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
 #include <cmath>
 #include <gtest/gtest.h>
 
-static ReceivedInput makeInput(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x = 0.0F,
+static PlayerCommand makeInput(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x = 0.0F,
                                float y = 0.0F, float angle = 0.0F)
 {
-    ServerInput si{};
-    si.playerId   = playerId;
-    si.sequenceId = seq;
-    si.flags      = flags;
-    si.x          = x;
-    si.y          = y;
-    si.angle      = angle;
-    return ReceivedInput{si, IpEndpoint::v4(0, 0, 0, 0, 0)};
+    PlayerCommand cmd{};
+    cmd.playerId   = playerId;
+    cmd.sequenceId = seq;
+    cmd.inputFlags = flags;
+    cmd.x          = x;
+    cmd.y          = y;
+    cmd.angle      = angle;
+    cmd.tickId     = 0;
+    return cmd;
 }
 
 TEST(PlayerInputSystem, AppliesNewerSequence)
@@ -27,7 +28,7 @@ TEST(PlayerInputSystem, AppliesNewerSequence)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem sys(2.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 2, static_cast<std::uint16_t>(InputFlag::MoveUp), 1.0F, 2.0F, 0.5F));
 
     sys.update(registry, inputs);
@@ -53,7 +54,7 @@ TEST(PlayerInputSystem, IgnoresStaleSequence)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem sys(1.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 4, static_cast<std::uint16_t>(InputFlag::MoveLeft), 9.0F, 9.0F, 1.0F));
 
     sys.update(registry, inputs);
@@ -74,7 +75,7 @@ TEST(PlayerInputSystem, NormalizesDiagonalVelocity)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem sys(4.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(
         makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::MoveUp | InputFlag::MoveRight), 0.0F, 0.0F, 0.0F));
 
@@ -95,7 +96,7 @@ TEST(PlayerInputSystem, SkipsMissingComponentsOrDead)
     registry.destroyEntity(dead);
 
     PlayerInputSystem sys(1.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(aliveNoInput, 1, static_cast<std::uint16_t>(InputFlag::MoveDown)));
     inputs.push_back(makeInput(dead, 2, static_cast<std::uint16_t>(InputFlag::MoveDown)));
 
@@ -119,7 +120,7 @@ TEST(PlayerInputSystem, CreatesMissileOnFire)
     float expectedY = 8.0F;
 
     PlayerInputSystem sys(1.0F, 6.0F, 2.5F, 3);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::Fire), t.x, t.y, pic.angle));
 
     sys.update(registry, inputs);
@@ -161,7 +162,7 @@ TEST(PlayerInputSystem, MissileMovesWithMovementSystem)
     pic.angle  = static_cast<float>(M_PI) / 2.0F;
 
     PlayerInputSystem sys(1.0F, 4.0F, 1.0F, 1);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::Fire), 0.0F, 0.0F, pic.angle));
     sys.update(registry, inputs);
 
@@ -190,7 +191,7 @@ TEST(PlayerInputSystem, LatestInputWinsPerPlayer)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem sys(3.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 2, static_cast<std::uint16_t>(InputFlag::MoveLeft), 1.0F, 1.0F, 0.1F));
     inputs.push_back(makeInput(p, 3, static_cast<std::uint16_t>(InputFlag::MoveRight), 4.0F, 5.0F, 0.9F));
 
@@ -217,7 +218,7 @@ TEST(PlayerInputSystem, MultiplePlayersIndependent)
     registry.emplace<VelocityComponent>(p2);
 
     PlayerInputSystem sys(2.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p1, 1, static_cast<std::uint16_t>(InputFlag::MoveUp), 1.0F, 2.0F, 0.2F));
     inputs.push_back(
         makeInput(p2, 1, static_cast<std::uint16_t>(InputFlag::MoveDown | InputFlag::MoveLeft), 3.0F, 4.0F, 0.4F));
@@ -246,7 +247,7 @@ TEST(PlayerInputSystem, NoMovementFlagsZeroesVelocity)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem sys(5.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 1, 0, 0.0F, 0.0F, 0.0F));
 
     sys.update(registry, inputs);
@@ -267,7 +268,7 @@ TEST(PlayerInputSystem, InputMovesPlayerWithMovementSystem)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem inputSys(4.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 1, static_cast<std::uint16_t>(InputFlag::MoveRight)));
     inputSys.update(registry, inputs);
 
@@ -291,7 +292,7 @@ TEST(PlayerInputSystem, StaleInputDoesNotMovePlayer)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem inputSys(3.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 4, static_cast<std::uint16_t>(InputFlag::MoveUp)));
     inputSys.update(registry, inputs);
 
@@ -312,7 +313,7 @@ TEST(PlayerInputSystem, LatestInputDeterminesMovementThisFrame)
     registry.emplace<VelocityComponent>(p);
 
     PlayerInputSystem inputSys(6.0F);
-    std::vector<ReceivedInput> inputs;
+    std::vector<PlayerCommand> inputs;
     inputs.push_back(makeInput(p, 2, static_cast<std::uint16_t>(InputFlag::MoveLeft)));
     inputs.push_back(makeInput(p, 3, static_cast<std::uint16_t>(InputFlag::MoveDown)));
     inputSys.update(registry, inputs);

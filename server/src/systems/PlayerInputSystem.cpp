@@ -6,32 +6,32 @@ PlayerInputSystem::PlayerInputSystem(float speed, float missileSpeed, float miss
     : speed_(speed), missileSpeed_(missileSpeed), missileLifetime_(missileLifetime), missileDamage_(missileDamage)
 {}
 
-void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInput>& inputs) const
+void PlayerInputSystem::update(Registry& registry, const std::vector<PlayerCommand>& commands) const
 {
-    for (const auto& ev : inputs) {
-        EntityId id = ev.input.playerId;
+    for (const auto& cmd : commands) {
+        EntityId id = cmd.playerId;
         if (!registry.isAlive(id))
             continue;
         if (!registry.has<PlayerInputComponent>(id))
             continue;
         auto& comp = registry.get<PlayerInputComponent>(id);
-        if (ev.input.sequenceId <= comp.sequenceId)
+        if (cmd.sequenceId <= comp.sequenceId)
             continue;
-        comp.sequenceId = ev.input.sequenceId;
-        comp.x          = ev.input.x;
-        comp.y          = ev.input.y;
-        comp.angle      = ev.input.angle;
+        comp.sequenceId = cmd.sequenceId;
+        comp.x          = cmd.x;
+        comp.y          = cmd.y;
+        comp.angle      = cmd.angle;
 
         if (registry.has<VelocityComponent>(id)) {
             float dx = 0.0F;
             float dy = 0.0F;
-            if (ev.input.flags & static_cast<std::uint16_t>(InputFlag::MoveUp))
+            if (cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::MoveUp))
                 dy -= 1.0F;
-            if (ev.input.flags & static_cast<std::uint16_t>(InputFlag::MoveDown))
+            if (cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::MoveDown))
                 dy += 1.0F;
-            if (ev.input.flags & static_cast<std::uint16_t>(InputFlag::MoveLeft))
+            if (cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::MoveLeft))
                 dx -= 1.0F;
-            if (ev.input.flags & static_cast<std::uint16_t>(InputFlag::MoveRight))
+            if (cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::MoveRight))
                 dx += 1.0F;
             float len = std::sqrt(dx * dx + dy * dy);
             if (len > 0.0F) {
@@ -43,7 +43,7 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             vel.vy    = dy * speed_;
         }
 
-        bool fire = (ev.input.flags & static_cast<std::uint16_t>(InputFlag::Fire)) != 0;
+        bool fire = (cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::Fire)) != 0;
         if (fire && registry.has<TransformComponent>(id)) {
             auto& playerTransform = registry.get<TransformComponent>(id);
             float playerX         = playerTransform.x;
@@ -56,7 +56,7 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<ReceivedInp
             mt.y                  = playerY + 3.0F;
             mt.rotation           = comp.angle;
             auto& mv              = registry.emplace<VelocityComponent>(missile);
-            const int chargeLevel = chargeLevelFromFlags(ev.input.flags);
+            const int chargeLevel = chargeLevelFromFlags(cmd.inputFlags);
             const float speed     = missileSpeed_ * (1.0F + 0.1F * static_cast<float>(chargeLevel - 1));
             const float lifetime  = missileLifetime_ * (1.0F + 0.1F * static_cast<float>(chargeLevel - 1));
             const std::int32_t dmg =

@@ -128,6 +128,7 @@ void InputReceiveThread::run()
 void InputReceiveThread::processIncomingPacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& src)
 {
     Logger::instance().addBytesReceived(size);
+    Logger::instance().addPacketReceived();
     Logger::instance().info("[Packets] Received " + std::to_string(size) + " bytes from " + endpointKey(src));
 
     if (size < PacketHeader::kSize) {

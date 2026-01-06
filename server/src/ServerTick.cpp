@@ -4,6 +4,8 @@
 #include "network/PacketHeader.hpp"
 #include "server/EntityTypeResolver.hpp"
 #include "server/ServerRunner.hpp"
+#include "simulation/GameEvent.hpp"
+#include "simulation/PlayerCommand.hpp"
 
 #include <algorithm>
 
@@ -20,14 +22,14 @@ void ServerApp::updateNetworkStats(float dt)
 void ServerApp::updateGameplay(float dt, const std::vector<ReceivedInput>& inputs)
 {
     updateSystems(dt, inputs);
-    auto collisions = collisionSys_.detect(registry_);
+
+    auto collisions = world_.getCollisionSystem().detect(world_.getRegistry());
     logCollisions(collisions);
-    damageSys_.apply(registry_, collisions);
 
     handleDeathAndRespawn();
 
-    auto current = collectCurrentEntities();
-    syncEntityLifecycle(current);
+    auto events = world_.consumeEvents();
+    networkBridge_.processEvents(events);
 }
 
 void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
@@ -48,106 +50,58 @@ void ServerApp::tick(const std::vector<ReceivedInput>& inputs)
 
 void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>& inputs)
 {
-    introCinematic_.update(registry_, playerEntities_, deltaTime);
-    const bool introActive = introCinematic_.active();
-    if (!introActive) {
-        auto mapped = mapInputs(inputs);
-        playerInputSys_.update(registry_, mapped);
-    }
-    movementSys_.update(registry_, deltaTime);
-    boundarySys_.update(registry_);
-    monsterMovementSys_.update(registry_, deltaTime);
-    if (levelLoaded_) {
-        float levelDelta = introActive ? 0.0F : deltaTime;
-        levelDirector_->update(registry_, levelDelta);
-        auto events = levelDirector_->consumeEvents();
-        levelSpawnSys_->update(registry_, levelDelta, events);
-    }
-    enemyShootingSys_.update(registry_, deltaTime);
-    walkerShotSys_.update(registry_, deltaTime);
+    auto mapped   = mapInputs(inputs);
+    auto commands = convertInputsToCommands(mapped);
+
+    world_.tick(deltaTime, commands, playerEntities_);
 
     updateRespawnTimers(deltaTime);
     updateInvincibilityTimers(deltaTime);
-
     cleanupExpiredMissiles(deltaTime);
-
     cleanupOffscreenEntities();
 }
 
 std::unordered_set<EntityId> ServerApp::collectCurrentEntities()
 {
     std::unordered_set<EntityId> current;
-    for (EntityId id : registry_.view<TransformComponent>()) {
-        if (registry_.isAlive(id)) {
+    auto& reg = world_.getRegistry();
+    for (EntityId id : reg.view<TransformComponent>()) {
+        if (reg.isAlive(id)) {
             current.insert(id);
         }
     }
     return current;
 }
 
-void ServerApp::syncEntityLifecycle(const std::unordered_set<EntityId>& current)
-{
-    for (EntityId id : current) {
-        if (!knownEntities_.contains(id)) {
-            EntitySpawnPacket pkt{};
-            pkt.entityId   = id;
-            pkt.entityType = resolveEntityType(registry_, id);
-            auto& t        = registry_.get<TransformComponent>(id);
-            pkt.posX       = t.x;
-            pkt.posY       = t.y;
-            sendThread_.broadcast(pkt);
-        }
-    }
-
-    for (EntityId oldId : knownEntities_) {
-        if (!current.contains(oldId)) {
-            EntityDestroyedPacket pkt{};
-            pkt.entityId = oldId;
-            sendThread_.broadcast(pkt);
-        }
-    }
-
-    knownEntities_ = current;
-}
-
 void ServerApp::logSnapshotSummary(std::size_t totalBytes, std::size_t payloadSize, bool forceFull)
 {
+    auto& reg = world_.getRegistry();
     Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) + " size=" + std::to_string(totalBytes) +
-                            " payload=" + std::to_string(payloadSize) + " entities=" +
-                            std::to_string(registry_.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
+                            " payload=" + std::to_string(payloadSize) +
+                            " entities=" + std::to_string(reg.entityCount()) + (forceFull ? " (FULL)" : " (delta)"));
 }
 
 void ServerApp::sendSnapshots()
 {
-    bool forceFull = (currentTick_ - lastFullStateTick_) >= kFullStateInterval;
-    if (forceFull)
-        lastFullStateTick_ = currentTick_;
+    auto result = replicationManager_.synchronize(world_.getRegistry(), currentTick_);
 
-    std::vector<std::vector<std::uint8_t>> packets;
-
-    if (forceFull) {
-        packets = buildSnapshotChunks(registry_, currentTick_);
-    } else {
-        packets = buildSmartDeltaSnapshot(registry_, currentTick_, entityStateCache_, false, 1400);
-    }
-
-    if (packets.empty())
+    if (result.packets.empty())
         return;
 
     std::size_t totalSize = 0;
-    for (const auto& p : packets)
+    for (const auto& p : result.packets)
         totalSize += p.size();
 
-    if (packets.size() > 1) {
+    if (result.packets.size() > 1) {
         Logger::instance().info("[Snapshot] tick=" + std::to_string(currentTick_) +
-                                " chunks=" + std::to_string(packets.size()) +
-                                " total_size=" + std::to_string(totalSize) + (forceFull ? " (FULL)" : " (delta)"));
+                                " chunks=" + std::to_string(result.packets.size()) +
+                                " total_size=" + std::to_string(totalSize) + (result.wasFull ? " (FULL)" : " (delta)"));
     } else {
-        logSnapshotSummary(packets[0].size(), 0, forceFull);
+        logSnapshotSummary(result.packets[0].size(), 0, result.wasFull);
     }
 
     for (const auto& c : clients_) {
-        for (const auto& p : packets)
+        for (const auto& p : result.packets)
             sendThread_.sendTo(p, c);
     }
 }
@@ -243,4 +197,24 @@ void ServerApp::logCollisions(const std::vector<Collision>& collisions)
         msg += ")";
         Logger::instance().info("[Collision] " + msg);
     }
+}
+
+std::vector<PlayerCommand> ServerApp::convertInputsToCommands(const std::vector<ReceivedInput>& inputs) const
+{
+    std::vector<PlayerCommand> commands;
+    commands.reserve(inputs.size());
+
+    for (const auto& input : inputs) {
+        PlayerCommand cmd;
+        cmd.playerId   = input.input.playerId;
+        cmd.inputFlags = input.input.flags;
+        cmd.x          = input.input.x;
+        cmd.y          = input.input.y;
+        cmd.angle      = input.input.angle;
+        cmd.sequenceId = input.input.sequenceId;
+        cmd.tickId     = input.input.tickId;
+        commands.push_back(cmd);
+    }
+
+    return commands;
 }
