@@ -7,6 +7,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/LevelEventData.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 #include "server/EntityTypeResolver.hpp"
 
 #include <algorithm>
@@ -91,10 +92,9 @@ namespace
         }
         return std::nullopt;
     }
-} // namespace
+}
 
-GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui,
-                           bool enableAdmin)
+GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag)
     : roomId_(roomId), port_(port), world_(), registry_(world_.getRegistry()),
       playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
       damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
@@ -103,17 +103,8 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
-      running_(&runningFlag), showNetwork_(enableTui), showAdmin_(enableAdmin), interactive_(enableTui || enableAdmin),
-      networkBridge_(sendThread_)
+      running_(&runningFlag), networkBridge_(sendThread_)
 {
-    if (interactive_) {
-        tui_ = std::make_unique<NetworkTui>(showNetwork_, showAdmin_);
-        Logger::instance().setConsoleOutputEnabled(false);
-        Logger::instance().setPostLogCallback([this](const std::string& msg) {
-            if (tui_)
-                tui_->addLog(msg);
-        });
-    }
     LevelLoadError error;
     if (LevelLoader::load(1, levelData_, error)) {
         levelLoaded_   = true;
@@ -156,31 +147,26 @@ void GameInstance::run()
 {
     while (running_ && running_->load()) {
         processTimeouts();
-
-        if (interactive_ && tui_) {
-            tui_->handleInput();
-            NetworkStats stats;
-            stats.bytesIn     = Logger::instance().getTotalBytesReceived();
-            stats.bytesOut    = Logger::instance().getTotalBytesSent();
-            stats.packetsIn   = Logger::instance().getTotalPacketsReceived();
-            stats.packetsOut  = Logger::instance().getTotalPacketsSent();
-            stats.packetsLost = Logger::instance().getTotalPacketsDropped();
-
-            tui_->setClientCount(clients_.size());
-            tui_->update(stats);
-            tui_->render();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
 void GameInstance::stop()
 {
+    notifyDisconnection("Room closed");
     gameLoop_.stop();
     sendThread_.stop();
     receiveThread_.stop();
+}
+
+void GameInstance::notifyDisconnection(const std::string& reason)
+{
+    auto pkt = ServerDisconnectPacket::create(reason);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+    for (const auto& client : clients_) {
+        sendThread_.sendTo(vec, client);
+    }
 }
 
 std::size_t GameInstance::getPlayerCount() const
