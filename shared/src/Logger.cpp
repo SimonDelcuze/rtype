@@ -237,7 +237,6 @@ std::vector<std::string> Logger::getEnabledTags() const
 
 std::vector<std::string> Logger::getAllKnownTags() const
 {
-    // Return common tags used in the codebase
     return {"[Net]",     "[Packets]",     "[Game]",    "[Collision]",   "[Spawn]",
             "[Level]",   "[Replication]", "[Network]", "[Player]",      "[Death]",
             "[Respawn]", "[Snapshot]",    "[Input]",   "[LobbyServer]", "[InstanceManager]"};

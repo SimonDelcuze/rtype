@@ -623,7 +623,6 @@ void ReplicationSystem::playExplosionSound(Registry&)
     auto& voice = explosionVoices_.front();
     voice->stop();
     voice->setBuffer(*explosionBuffer_);
-    // Boost explosion sound significantly (still clamped to 100)
     const float explosionVolume = std::clamp(std::max(80.0F, g_musicVolume * 2.5F), 0.0F, 100.0F);
     voice->setVolume(explosionVolume);
     voice->setLoop(false);
