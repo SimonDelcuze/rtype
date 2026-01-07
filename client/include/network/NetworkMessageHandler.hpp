@@ -18,16 +18,14 @@
 class NetworkMessageHandler
 {
   public:
-    NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
-                          ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-                          ThreadSafeQueue<LevelInitData>& levelInitQueue,
-                          ThreadSafeQueue<LevelEventData>& levelEventQueue,
-                          ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
-                          ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
-                          ThreadSafeQueue<std::string>* disconnectQueue = nullptr,
-                          std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
-                          std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
-                          std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
+    NetworkMessageHandler(
+        ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
+        ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
+        ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+        ThreadSafeQueue<std::string>* disconnectQueue = nullptr, ThreadSafeQueue<std::string>* broadcastQueue = nullptr,
+        std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
+        std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
+        std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                           ThreadSafeQueue<LevelInitData>& levelInitQueue);
@@ -44,6 +42,7 @@ class NetworkMessageHandler
     void handleLevelEvent(const std::vector<std::uint8_t>& data);
     void handleCountdownTick(const std::vector<std::uint8_t>& data);
     void handleServerDisconnect(const std::vector<std::uint8_t>& data);
+    void handleServerBroadcast(const std::vector<std::uint8_t>& data);
     void dispatch(const std::vector<std::uint8_t>& data);
 
     struct ChunkAccumulator
@@ -69,5 +68,6 @@ class NetworkMessageHandler
     std::atomic<bool>* joinDeniedFlag_;
     std::atomic<bool>* joinAcceptedFlag_;
     ThreadSafeQueue<std::string>* disconnectQueue_;
+    ThreadSafeQueue<std::string>* broadcastQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
 };

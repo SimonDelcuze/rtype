@@ -5,6 +5,7 @@
 #include "components/ButtonComponent.hpp"
 #include "components/FocusableComponent.hpp"
 #include "components/InputFieldComponent.hpp"
+#include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -195,13 +196,13 @@ void ConnectionMenu::setError(Registry& registry, const std::string& message)
     }
 
     EntityId entity = registry.createEntity();
-    auto& transform = registry.emplace<TransformComponent>(entity);
-    transform.x     = 440.0F;
-    transform.y     = 620.0F;
+    registry.emplace<TransformComponent>(entity);
 
-    auto text    = TextComponent::create("ui", 20, Color::Red);
-    text.content = message;
+    auto text     = TextComponent::create("ui", 40, Color::Red);
+    text.content  = message;
+    text.centered = true;
     registry.emplace<TextComponent>(entity, text);
+    registry.emplace<LayerComponent>(entity, 1000);
     errorText_ = entity;
 }
 

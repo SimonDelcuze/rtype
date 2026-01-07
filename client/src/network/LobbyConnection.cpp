@@ -1,5 +1,8 @@
 #include "network/LobbyConnection.hpp"
 
+#include "Logger.hpp"
+#include "network/ServerBroadcastPacket.hpp"
+
 #include <chrono>
 #include <thread>
 
@@ -18,7 +21,7 @@ bool LobbyConnection::connect()
         return false;
     }
 
-    socket_.setNonBlocking(false);
+    socket_.setNonBlocking(true);
 
     return true;
 }
@@ -26,6 +29,28 @@ bool LobbyConnection::connect()
 void LobbyConnection::disconnect()
 {
     socket_.close();
+}
+
+void LobbyConnection::poll(ThreadSafeQueue<std::string>& broadcastQueue)
+{
+    std::array<std::uint8_t, 2048> buffer{};
+    IpEndpoint from{};
+
+    while (true) {
+        auto recvResult = socket_.recvFrom(buffer.data(), buffer.size(), from);
+        if (!recvResult.ok() || recvResult.size == 0) {
+            break;
+        }
+
+        auto hdr = PacketHeader::decode(buffer.data(), recvResult.size);
+        if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerBroadcast)) {
+            auto pkt = ServerBroadcastPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                Logger::instance().info("[LobbyConnection] Received broadcast: " + pkt->getMessage());
+                broadcastQueue.push(pkt->getMessage());
+            }
+        }
+    }
 }
 
 std::optional<RoomListResult> LobbyConnection::requestRoomList()
@@ -69,7 +94,7 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
                                                                   std::chrono::milliseconds timeout)
 {
     constexpr int maxRetries = 3;
-    const auto retryDelay    = std::chrono::milliseconds(500);
+    const auto retryDelay    = std::chrono::milliseconds(200);
 
     for (int retry = 0; retry < maxRetries; ++retry) {
         auto sendResult = socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
@@ -99,7 +124,7 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
                 }
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 

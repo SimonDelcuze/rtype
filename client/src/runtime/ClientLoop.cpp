@@ -3,19 +3,21 @@
 #include "runtime/MenuMusic.hpp"
 
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                    TextureManager& textureManager, std::string& errorMessage)
+                                    TextureManager& textureManager, std::string& errorMessage,
+                                    ThreadSafeQueue<std::string>& broadcastQueue)
 {
-    auto serverEndpoint = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage);
+    NetPipelines net;
+    auto serverEndpoint =
+        resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue);
     if (!serverEndpoint) {
         return ClientLoopResult{false, 0};
     }
 
     InputBuffer inputBuffer;
-    NetPipelines net;
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
 
-    if (!setupNetwork(net, inputBuffer, *serverEndpoint, handshakeDone, welcomeThread)) {
+    if (!setupNetwork(net, inputBuffer, *serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
         errorMessage = "Failed to setup network";
         return ClientLoopResult{true, std::nullopt};
     }
@@ -27,8 +29,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     }
 
     stopLauncherMusic();
-    auto gameResult =
-        runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager, errorMessage);
+    auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager,
+                                     errorMessage, broadcastQueue);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     if (gameResult.retry) {
