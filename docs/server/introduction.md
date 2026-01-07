@@ -8,11 +8,12 @@ In our architecture, the server is:
 * **Authoritative** → the single source of truth
 * **Deterministic** → fixed 60 FPS simulation loop
 * **Multithreaded** → networking threads + game loop thread
+* **Multi-instance** → supports multiple concurrent game sessions
 * **ECS-based** → all world state encoded in components
 * **Robust** → designed to continue running even if clients disconnect or send invalid data
 * **Stateless toward clients** → clients cannot influence game logic except through validated input
 
-This section explains the entire server architecture, its threading model, ECS usage, systems, and the full delta-state networking pipeline.
+This section explains the entire server architecture, its threading model, ECS usage, systems, multi-instance support, and the full delta-state networking pipeline.
 
 ***
 
@@ -183,13 +184,42 @@ without running full logic.
 
 ***
 
-## **6. What Comes Next**
+## **6. Multi-Instance Support**
+
+The server has been extended to support **multiple concurrent game instances**.\
+Instead of running a single game world, the server can now:
+
+* Run a **lobby server** that coordinates room creation and player matchmaking
+* Spawn **multiple game instances** dynamically, each on its own UDP port
+* Manage **independent game sessions** running in parallel
+* Handle **hundreds of concurrent rooms** efficiently
+
+Each game instance follows the same architecture described in this section (authoritative, ECS-based, multithreaded).\
+The lobby server acts as a front door, directing clients to the appropriate game instance.
+
+For detailed information on the multi-instance architecture, see:
+
+* **[Multi-Instance Architecture](../global-overview/multi-instance-architecture.md)** - Overall system design
+* **[Lobby System](lobby-system.md)** - Lobby server implementation
+* **[Game Instance Management](game-instance-management.md)** - Instance lifecycle
+
+***
+
+## **7. What Comes Next**
 
 In the next subpages, we will explore:
 
 #### **Server → Architecture Overview**
 
 Full breakdown of the server pipeline with diagrams.
+
+#### **Server → Lobby System**
+
+How the lobby coordinates multiple game instances.
+
+#### **Server → Game Instance Management**
+
+Lifecycle and management of individual game instances.
 
 #### **Server → Threads**
 

@@ -10,6 +10,7 @@ It explains:
 * how responsibilities are divided between the server and the client
 * what role the ECS plays in both sides
 * how networking ties everything together
+* how the multi-instance architecture enables concurrent game sessions
 * how the different threads and subsystems communicate
 * how snapshots, prediction, and interpolation work
 
@@ -24,6 +25,7 @@ After reading this section, you will have a clear mental model of:
 
 From here, you can continue to:
 
+* **Multi-Instance Architecture** to understand how the server supports multiple concurrent games
 * **Server Architecture** to understand authoritative simulation
 * **Client Architecture** to see how visuals and networking are handled
 * **ECS Overview** to learn how entities, components, and systems are implemented

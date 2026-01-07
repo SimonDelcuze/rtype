@@ -8,6 +8,7 @@
 
 * [Introduction](global-overview/introduction.md)
 * [Installation Guide](global-overview/installation-guide.md)
+* [Multi-Instance Architecture](global-overview/multi-instance-architecture.md)
 * [Core Components](core-components.md)
 * [JSON Wrapper](global-overview/json-wrapper.md)
 * [Network Protocol](global-overview/network_protocol.md)
@@ -21,11 +22,14 @@
 ## Protocol
 
 * [Level Messages & Entity Typing](protocol/level-messages.md)
+* [Lobby Protocol](protocol/lobby-protocol.md)
 
 ## Server
 
 * [Introduction](server/introduction.md)
 * [Architecture Overview](server/architecture-overview.md)
+* [Lobby System](server/lobby-system.md)
+* [Game Instance Management](server/game-instance-management.md)
 * [Threads](server/threads/README.md)
   * [Receive Thread](server/threads/receive-thread.md)
   * [Game Loop Thread (Scheduler)](server/threads/game-loop-thread-scheduler.md)

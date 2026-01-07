@@ -157,7 +157,82 @@ No rendering or animation systems exist on the server.
 
 ***
 
-## **5. Design Goals**
+## **5. Multi-Instance Architecture**
+
+The server has been extended to support **multiple concurrent game instances**.\
+This allows the server to host many independent game sessions simultaneously.
+
+### Architecture Layers
+
+```
+┌─────────────────────────────────────────┐
+│         Lobby Server                    │
+│    (Port 8080, Room Management)         │
+└──────────────┬──────────────────────────┘
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+┌───▼────┐ ┌───▼────┐ ┌───▼────┐
+│Instance│ │Instance│ │Instance│
+│   1    │ │   2    │ │   3    │
+│Port    │ │Port    │ │Port    │
+│ 8081   │ │ 8082   │ │ 8083   │
+└────────┘ └────────┘ └────────┘
+```
+
+### Key Components
+
+#### Lobby Server
+
+* Runs on a dedicated port (default: 8080)
+* Handles room listing, creation, and join requests
+* Coordinates with `GameInstanceManager` to spawn instances
+* Tracks room metadata using `LobbyManager`
+* Runs cleanup thread to remove finished instances
+
+#### GameInstanceManager
+
+* Creates and destroys game instances dynamically
+* Assigns unique room IDs and UDP ports
+* Enforces maximum instance limit
+* Provides thread-safe instance access
+
+#### GameInstance
+
+* Each instance is a complete independent server
+* Has its own ECS registry, networking threads, and UDP port
+* Follows the same architecture described in sections 1-4
+* Completely isolated from other instances
+
+### Instance Lifecycle
+
+**Creation**:
+1. Client sends `LOBBY_CREATE_ROOM` to lobby server
+2. Lobby calls `instanceManager.createInstance()`
+3. New `GameInstance` spawned with unique room ID and port
+4. Instance starts networking threads and loads level
+5. Lobby responds with room ID and port
+
+**Active Game**:
+1. Clients connect to instance port using standard game protocol
+2. Instance runs normal 60 FPS ECS simulation
+3. Instance operates completely independently
+
+**Destruction**:
+1. Game finishes or all players disconnect
+2. Cleanup thread detects empty instance
+3. Instance stopped and removed from manager
+4. Port freed for reuse
+
+For detailed information, see:
+
+* **[Multi-Instance Architecture](../global-overview/multi-instance-architecture.md)** - Complete system overview
+* **[Lobby System](lobby-system.md)** - Lobby server details
+* **[Game Instance Management](game-instance-management.md)** - Instance lifecycle
+
+***
+
+## **6. Design Goals**
 
 The architecture was designed with the following goals:
 
@@ -178,11 +253,11 @@ Receive/send threads allow main loop to run uninterrupted.
 
 Invalid packets, disconnects, and client crashes never affect the simulation.
 
-#### **Scalable**
+#### **Scalability**
 
 Server can handle:
 
-* Many entities
-* Many missiles
-* Many monsters\
-  with minimal CPU cost.
+* Many entities per instance
+* Many missiles and monsters per instance
+* **Multiple concurrent game instances**\
+  with efficient resource usage.
