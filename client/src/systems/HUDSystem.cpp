@@ -200,6 +200,15 @@ void HUDSystem::update(Registry& registry, float)
                     FloatRect bounds = textComp.text->getLocalBounds();
                     transform.x      = static_cast<float>(size.x) - kScoreRightMargin - (bounds.left + bounds.width);
                     transform.y      = static_cast<float>(size.y) - kScoreBottomMargin - (bounds.top + bounds.height);
+                } else if (textComp.centered) {
+                    const auto size  = window_.getSize();
+                    FloatRect bounds = textComp.text->getLocalBounds();
+                    textComp.text->setOrigin(
+                        Vector2f{bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
+                    transform.x = static_cast<float>(size.x) / 2.0F;
+                    transform.y = static_cast<float>(size.y) / 2.0F;
+                } else {
+                    textComp.text->setOrigin(Vector2f{0.0F, 0.0F});
                 }
                 textComp.text->setPosition(Vector2f{transform.x, transform.y});
                 textComp.text->setScale(Vector2f{transform.scaleX, transform.scaleY});
