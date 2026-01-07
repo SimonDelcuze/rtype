@@ -3,16 +3,22 @@
 #include "console/ServerConsole.hpp"
 #include "console/commands/CommandUtils.hpp"
 #include "game/GameInstanceManager.hpp"
+#include "lobby/LobbyManager.hpp"
 
-void RoomCommands::handleCommand(ServerConsole* console, GameInstanceManager* instanceManager, const std::string& cmd)
+bool RoomCommands::handleCommand(ServerConsole* console, GameInstanceManager* instanceManager,
+                                 LobbyManager* lobbyManager, const std::string& cmd)
 {
     std::string lowerCmd = CommandUtils::toLower(cmd);
 
     if (lowerCmd == "rooms") {
         handleList(console, instanceManager);
-    } else if (CommandUtils::startsWithIgnoreCase(cmd, "kill ")) {
-        handleKill(console, instanceManager, cmd.substr(5));
+        return true;
     }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "kill ")) {
+        handleKill(console, instanceManager, lobbyManager, cmd.substr(5));
+        return true;
+    }
+    return false;
 }
 
 void RoomCommands::handleList(ServerConsole* console, GameInstanceManager* instanceManager)
@@ -38,12 +44,16 @@ void RoomCommands::handleList(ServerConsole* console, GameInstanceManager* insta
     }
 }
 
-void RoomCommands::handleKill(ServerConsole* console, GameInstanceManager* instanceManager, const std::string& idArg)
+void RoomCommands::handleKill(ServerConsole* console, GameInstanceManager* instanceManager, LobbyManager* lobbyManager,
+                              const std::string& idArg)
 {
     try {
         std::uint32_t roomId = std::stoul(idArg);
         if (instanceManager != nullptr && instanceManager->hasInstance(roomId)) {
             instanceManager->destroyInstance(roomId);
+            if (lobbyManager != nullptr) {
+                lobbyManager->removeRoom(roomId);
+            }
             console->addAdminLog("[Admin] Room " + std::to_string(roomId) + " destroyed");
         } else {
             console->addAdminLog("[Error] Room " + std::to_string(roomId) + " not found");

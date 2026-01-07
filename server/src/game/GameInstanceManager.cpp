@@ -115,3 +115,11 @@ void GameInstanceManager::cleanupEmptyInstances()
         }
     }
 }
+
+void GameInstanceManager::broadcast(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(instancesMutex_);
+    for (const auto& [roomId, instance] : instances_) {
+        instance->broadcast(message);
+    }
+}

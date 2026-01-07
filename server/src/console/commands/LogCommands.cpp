@@ -3,11 +3,13 @@
 #include "console/ServerConsole.hpp"
 #include "console/commands/CommandUtils.hpp"
 
-void LogCommands::handleCommand(ServerConsole* console, const std::string& cmd)
+bool LogCommands::handleCommand(ServerConsole* console, const std::string& cmd)
 {
     if (CommandUtils::startsWithIgnoreCase(cmd, "logs ")) {
         handleFilter(console, cmd.substr(5));
+        return true;
     }
+    return false;
 }
 
 void LogCommands::handleFilter(ServerConsole* console, const std::string& arg)

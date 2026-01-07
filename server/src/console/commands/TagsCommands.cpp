@@ -4,19 +4,27 @@
 #include "console/ServerConsole.hpp"
 #include "console/commands/CommandUtils.hpp"
 
-void TagsCommands::handleCommand(ServerConsole* console, const std::string& cmd)
+bool TagsCommands::handleCommand(ServerConsole* console, const std::string& cmd)
 {
     std::string lowerCmd = CommandUtils::toLower(cmd);
 
     if (lowerCmd == "tags list") {
         handleList(console);
-    } else if (CommandUtils::startsWithIgnoreCase(cmd, "tags add ")) {
-        handleAdd(console, cmd.substr(9));
-    } else if (CommandUtils::startsWithIgnoreCase(cmd, "tags remove ")) {
-        handleRemove(console, cmd.substr(12));
-    } else if (CommandUtils::startsWithIgnoreCase(cmd, "tags")) {
-        handleHelp(console);
+        return true;
     }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "tags add ")) {
+        handleAdd(console, cmd.substr(9));
+        return true;
+    }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "tags remove ")) {
+        handleRemove(console, cmd.substr(12));
+        return true;
+    }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "tags")) {
+        handleHelp(console);
+        return true;
+    }
+    return false;
 }
 
 void TagsCommands::handleList(ServerConsole* console)

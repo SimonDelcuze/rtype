@@ -4,21 +4,41 @@
 #include "console/commands/CommandUtils.hpp"
 #include "game/GameInstanceManager.hpp"
 
-void SystemCommands::handleCommand(ServerConsole* console, const std::string& cmd,
-                                   const std::function<void()>& shutdownCallback)
+bool SystemCommands::handleCommand(ServerConsole* console, const std::string& cmd,
+                                   const std::function<void()>& shutdownCallback,
+                                   const std::function<void(const std::string&)>& broadcastCallback)
 {
     std::string lowerCmd = CommandUtils::toLower(cmd);
 
     if (lowerCmd == "help") {
         handleHelp(console);
-    } else if (lowerCmd == "stats") {
-        handleStats(console);
-    } else if (lowerCmd == "ping") {
-        handlePing(console);
-    } else if (lowerCmd == "quit" || lowerCmd == "q" || lowerCmd == "stop" || lowerCmd == "exit" ||
-               lowerCmd == "leave") {
-        handleQuit(console, shutdownCallback);
+        return true;
     }
+    if (lowerCmd == "stats") {
+        handleStats(console);
+        return true;
+    }
+    if (lowerCmd == "ping") {
+        handlePing(console);
+        return true;
+    }
+    if (lowerCmd == "quit" || lowerCmd == "q" || lowerCmd == "stop" || lowerCmd == "exit" || lowerCmd == "leave") {
+        handleQuit(console, shutdownCallback);
+        return true;
+    }
+
+    if (lowerCmd.find("broadcast ") == 0) {
+        std::string msg = cmd.substr(10);
+        if (broadcastCallback) {
+            broadcastCallback(msg);
+            console->addAdminLog("[Admin] Broadcast sent: " + msg);
+        } else {
+            console->addAdminLog("[Error] Broadcast callback not set!");
+        }
+        return true;
+    }
+
+    return false;
 }
 
 void SystemCommands::handleHelp(ServerConsole* console)
@@ -32,6 +52,7 @@ void SystemCommands::handleHelp(ServerConsole* console)
     console->addAdminLog("  tags add <tag>    - Enable a log tag");
     console->addAdminLog("  tags remove <tag> - Disable a log tag");
     console->addAdminLog("  stats       - Show detailed stats");
+    console->addAdminLog("  broadcast <msg> - Send a message to all clients");
     console->addAdminLog("  quit        - Shutdown the server (q stop exit)");
     console->addAdminLog("  help        - Show this help");
 }

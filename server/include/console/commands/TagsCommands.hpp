@@ -7,7 +7,7 @@ class ServerConsole;
 class TagsCommands
 {
   public:
-    static void handleCommand(ServerConsole* console, const std::string& cmd);
+    static bool handleCommand(ServerConsole* console, const std::string& cmd);
 
   private:
     static void handleList(ServerConsole* console);

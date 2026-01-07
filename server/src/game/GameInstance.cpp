@@ -8,6 +8,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/LevelEventData.hpp"
+#include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 
 #include <algorithm>
@@ -162,6 +163,16 @@ void GameInstance::stop()
 void GameInstance::notifyDisconnection(const std::string& reason)
 {
     auto pkt   = ServerDisconnectPacket::create(reason);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+    for (const auto& client : clients_) {
+        sendThread_.sendTo(vec, client);
+    }
+}
+
+void GameInstance::broadcast(const std::string& message)
+{
+    auto pkt   = ServerBroadcastPacket::create(message);
     auto bytes = pkt.encode();
     std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
     for (const auto& client : clients_) {

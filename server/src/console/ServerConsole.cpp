@@ -8,14 +8,14 @@
 #include <unistd.h>
 #endif
 
-ServerConsole::ServerConsole(GameInstanceManager* instanceManager)
-    : instanceManager_(instanceManager), lastUpdate_(std::chrono::steady_clock::now()),
+ServerConsole::ServerConsole(GameInstanceManager* instanceManager, LobbyManager* lobbyManager)
+    : instanceManager_(instanceManager), lobbyManager_(lobbyManager), lastUpdate_(std::chrono::steady_clock::now()),
       startTime_(std::chrono::steady_clock::now())
 {
     std::cout << "\033[2J" << "\033[?25l";
 
     gui_      = std::make_unique<ConsoleGui>();
-    commands_ = std::make_unique<ConsoleCommands>(instanceManager, this);
+    commands_ = std::make_unique<ConsoleCommands>(instanceManager, lobbyManager, this);
 
     gui_->updateDimensions();
 
@@ -139,5 +139,12 @@ void ServerConsole::setShutdownCallback(std::function<void()> callback)
 {
     if (commands_) {
         commands_->setShutdownCallback(std::move(callback));
+    }
+}
+
+void ServerConsole::setBroadcastCallback(std::function<void(const std::string&)> callback)
+{
+    if (commands_) {
+        commands_->setBroadcastCallback(std::move(callback));
     }
 }
