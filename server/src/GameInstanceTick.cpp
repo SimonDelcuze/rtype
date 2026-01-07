@@ -46,6 +46,12 @@ void GameInstance::tick(const std::vector<ReceivedInput>& inputs)
     if (gameStarted_) {
         updateGameplay(dt, inputs);
         sendSnapshots();
+
+        captureStateSnapshot();
+
+        if (currentTick_ % 60 == 0) {
+            desyncDetector_.checkTimeouts(currentTick_);
+        }
     }
     currentTick_++;
 }

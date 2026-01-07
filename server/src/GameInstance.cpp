@@ -114,6 +114,8 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
                 tui_->addLog(msg);
         });
     }
+    desyncDetector_.setDesyncCallback([this](const DesyncInfo& info) { handleDesync(info); });
+
     LevelLoadError error;
     if (LevelLoader::load(1, levelData_, error)) {
         levelLoaded_   = true;

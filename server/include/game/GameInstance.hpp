@@ -8,6 +8,8 @@
 #include "network/NetworkTui.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
+#include "rollback/DesyncDetector.hpp"
+#include "rollback/RollbackManager.hpp"
 #include "server/IntroCinematic.hpp"
 #include "server/LevelData.hpp"
 #include "server/LevelDirector.hpp"
@@ -162,4 +164,9 @@ class GameInstance
     std::unique_ptr<NetworkTui> tui_;
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
+    RollbackManager rollbackManager_;
+    DesyncDetector desyncDetector_;
+
+    void captureStateSnapshot();
+    void handleDesync(const DesyncInfo& desyncInfo);
 };
