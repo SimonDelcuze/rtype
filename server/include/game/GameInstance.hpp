@@ -56,6 +56,8 @@ class GameInstance
         return port_;
     }
     std::size_t getPlayerCount() const;
+    std::vector<ClientSession> getSessions() const;
+    void kickPlayer(std::uint32_t playerId);
     bool isGameStarted() const
     {
         return gameStarted_;

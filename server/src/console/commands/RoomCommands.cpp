@@ -5,6 +5,9 @@
 #include "game/GameInstanceManager.hpp"
 #include "lobby/LobbyManager.hpp"
 
+#include <sstream>
+#include <vector>
+
 bool RoomCommands::handleCommand(ServerConsole* console, GameInstanceManager* instanceManager,
                                  LobbyManager* lobbyManager, const std::string& cmd)
 {
@@ -16,6 +19,14 @@ bool RoomCommands::handleCommand(ServerConsole* console, GameInstanceManager* in
     }
     if (CommandUtils::startsWithIgnoreCase(cmd, "kill ")) {
         handleKill(console, instanceManager, lobbyManager, cmd.substr(5));
+        return true;
+    }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "list ")) {
+        handleListPlayers(console, instanceManager, cmd.substr(5));
+        return true;
+    }
+    if (CommandUtils::startsWithIgnoreCase(cmd, "kick ")) {
+        handleKickPlayer(console, instanceManager, cmd.substr(5));
         return true;
     }
     return false;
@@ -60,5 +71,72 @@ void RoomCommands::handleKill(ServerConsole* console, GameInstanceManager* insta
         }
     } catch (...) {
         console->addAdminLog("[Error] Invalid room ID: " + idArg);
+    }
+}
+
+void RoomCommands::handleListPlayers(ServerConsole* console, GameInstanceManager* instanceManager,
+                                     const std::string& arg)
+{
+    try {
+        std::uint32_t roomId = std::stoul(arg);
+        if (instanceManager == nullptr || !instanceManager->hasInstance(roomId)) {
+            console->addAdminLog("[Error] Room " + std::to_string(roomId) + " not found");
+            return;
+        }
+
+        auto* instance = instanceManager->getInstance(roomId);
+        auto sessions  = instance->getSessions();
+
+        if (sessions.empty()) {
+            console->addAdminLog("[Room " + std::to_string(roomId) + "] No players connected");
+            return;
+        }
+
+        console->addAdminLog("[Room " + std::to_string(roomId) + "] value: " + std::to_string(sessions.size()) +
+                             " players detected");
+        for (const auto& session : sessions) {
+            std::string status = session.ready ? "READY" : "JOINED";
+            if (session.started)
+                status = "PLAYING";
+            console->addAdminLog("  - ID: " + std::to_string(session.playerId) +
+                                 " | Endpoint: " + endpointKey(session.endpoint) + " | Status: " + status);
+        }
+
+    } catch (...) {
+        console->addAdminLog("[Error] Invalid room ID: " + arg);
+    }
+}
+
+void RoomCommands::handleKickPlayer(ServerConsole* console, GameInstanceManager* instanceManager,
+                                    const std::string& args)
+{
+    std::vector<std::string> parts;
+    std::stringstream ss(args);
+    std::string item;
+    while (std::getline(ss, item, ' ')) {
+        if (!item.empty()) {
+            parts.push_back(item);
+        }
+    }
+
+    if (parts.size() < 2) {
+        console->addAdminLog("[Error] Usage: kick <room_id> <player_id>");
+        return;
+    }
+
+    try {
+        std::uint32_t roomId   = std::stoul(parts[0]);
+        std::uint32_t playerId = std::stoul(parts[1]);
+
+        if (instanceManager == nullptr || !instanceManager->hasInstance(roomId)) {
+            console->addAdminLog("[Error] Room " + std::to_string(roomId) + " not found");
+            return;
+        }
+
+        auto* instance = instanceManager->getInstance(roomId);
+        instance->kickPlayer(playerId);
+
+    } catch (...) {
+        console->addAdminLog("[Error] Invalid arguments. Usage: kick <room_id> <player_id>");
     }
 }
