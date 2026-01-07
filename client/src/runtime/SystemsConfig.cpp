@@ -12,6 +12,7 @@
 #include "systems/LevelEventSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkMessageSystem.hpp"
+#include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
 
@@ -30,7 +31,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
-                      SoundManager& soundManager)
+                      SoundManager& soundManager, ThreadSafeQueue<std::string>& broadcastQueue)
 {
     gameLoop.addSystem(std::make_shared<IntroCinematicSystem>(levelState));
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
@@ -48,4 +49,5 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures));
     gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
+    gameLoop.addSystem(std::make_shared<NotificationSystem>(window, fontManager, broadcastQueue));
 }

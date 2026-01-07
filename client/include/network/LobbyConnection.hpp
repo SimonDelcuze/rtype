@@ -1,5 +1,6 @@
 #pragma once
 
+#include "concurrency/ThreadSafeQueue.hpp"
 #include "network/LobbyPackets.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
@@ -26,6 +27,7 @@ class LobbyConnection
     std::optional<RoomCreatedResult> createRoom();
 
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId);
+    void poll(ThreadSafeQueue<std::string>& broadcastQueue);
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
