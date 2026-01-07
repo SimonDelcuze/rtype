@@ -52,7 +52,6 @@ class Logger
 
     void logNetworkStats();
 
-    // Tag management
     void addTag(const std::string& tag);
     void removeTag(const std::string& tag);
     std::vector<std::string> getEnabledTags() const;
