@@ -22,3 +22,17 @@ target_include_directories(rtype_server_tests
 )
 
 add_test(NAME server_tests COMMAND rtype_server_tests)
+
+set_tests_properties(server_tests PROPERTIES
+    FIXTURES_SETUP server_assets
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_command(
+    TARGET rtype_server_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/server
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/server/assets
+        ${CMAKE_BINARY_DIR}/server/assets
+    COMMENT "Copying server assets for tests"
+)
