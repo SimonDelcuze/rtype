@@ -14,6 +14,7 @@ struct TextComponent
     unsigned int characterSize = 24;
     Color color                = Color::White;
     std::string content;
+    bool centered = false;
     std::shared_ptr<IText> text;
 
     static TextComponent create(const std::string& font, unsigned int size, const Color& c)
