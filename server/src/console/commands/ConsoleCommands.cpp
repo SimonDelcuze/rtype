@@ -10,13 +10,19 @@
 #include "core/Session.hpp"
 #include "game/GameInstanceManager.hpp"
 
-ConsoleCommands::ConsoleCommands(GameInstanceManager* instanceManager, ServerConsole* console)
-    : instanceManager_(instanceManager), console_(console)
+ConsoleCommands::ConsoleCommands(GameInstanceManager* instanceManager, LobbyManager* lobbyManager,
+                                 ServerConsole* console)
+    : instanceManager_(instanceManager), lobbyManager_(lobbyManager), console_(console)
 {}
 
 void ConsoleCommands::setCommandHandler(CommandHandler handler)
 {
     commandHandler_ = std::move(handler);
+}
+
+void ConsoleCommands::setBroadcastCallback(std::function<void(const std::string&)> callback)
+{
+    broadcastCallback_ = std::move(callback);
 }
 
 void ConsoleCommands::setShutdownCallback(std::function<void()> callback)
@@ -26,35 +32,27 @@ void ConsoleCommands::setShutdownCallback(std::function<void()> callback)
 
 void ConsoleCommands::processCommand(const std::string& cmd)
 {
+    if (cmd.empty())
+        return;
+
     console_->addAdminLog("> " + cmd);
 
-    SystemCommands::handleCommand(console_, cmd, shutdownCallback_);
-    RoomCommands::handleCommand(console_, instanceManager_, cmd);
-    LogCommands::handleCommand(console_, cmd);
-    TagsCommands::handleCommand(console_, cmd);
+    if (SystemCommands::handleCommand(console_, cmd, shutdownCallback_, broadcastCallback_))
+        return;
+
+    if (RoomCommands::handleCommand(console_, instanceManager_, lobbyManager_, cmd))
+        return;
+
+    if (LogCommands::handleCommand(console_, cmd))
+        return;
+
+    if (TagsCommands::handleCommand(console_, cmd))
+        return;
 
     if (commandHandler_) {
-        std::string lowerCmd = CommandUtils::toLower(cmd);
-
-        bool handled = false;
-
-        if (lowerCmd == "help" || lowerCmd == "ping" || lowerCmd == "quit" || lowerCmd == "q" || lowerCmd == "stop" ||
-            lowerCmd == "exit" || lowerCmd == "leave") {
-            handled = true;
-        } else if (lowerCmd == "rooms" || lowerCmd == "tags list" || CommandUtils::startsWithIgnoreCase(cmd, "kill ") ||
-                   CommandUtils::startsWithIgnoreCase(cmd, "tags ")) {
-            handled = true;
-        } else if (CommandUtils::startsWithIgnoreCase(cmd, "logs ")) {
-            handled = true;
-        }
-
-        if (!handled && commandHandler_) {
-            commandHandler_(cmd);
-            return;
-        }
-
-        if (!handled) {
-            console_->addAdminLog("[Error] Unknown command: " + cmd);
-        }
+        commandHandler_(cmd);
+        return;
     }
+
+    console_->addAdminLog("[Error] Unknown command: " + cmd);
 }

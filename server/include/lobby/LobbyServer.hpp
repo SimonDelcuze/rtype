@@ -27,6 +27,8 @@ class LobbyServer
     void run();
     void stop();
 
+    void broadcast(const std::string& message);
+
   private:
     void receiveThread();
     void cleanupThread();

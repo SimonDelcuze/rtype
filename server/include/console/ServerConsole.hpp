@@ -24,10 +24,12 @@ struct ServerStats
     std::size_t clientCount{0};
 };
 
+class LobbyManager;
+
 class ServerConsole
 {
   public:
-    explicit ServerConsole(GameInstanceManager* instanceManager);
+    explicit ServerConsole(GameInstanceManager* instanceManager, LobbyManager* lobbyManager);
     ~ServerConsole();
 
     void update(const ServerStats& stats);
@@ -40,6 +42,7 @@ class ServerConsole
 
     void setCommandHandler(ConsoleCommands::CommandHandler handler);
     void setShutdownCallback(std::function<void()> callback);
+    void setBroadcastCallback(std::function<void(const std::string&)> callback);
 
     void setLogFilterRoom(int roomId)
     {
@@ -57,6 +60,7 @@ class ServerConsole
 
   private:
     GameInstanceManager* instanceManager_{nullptr};
+    LobbyManager* lobbyManager_{nullptr};
 
     std::unique_ptr<ConsoleGui> gui_;
     std::unique_ptr<ConsoleCommands> commands_;

@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "core/Session.hpp"
 #include "lobby/LobbyPackets.hpp"
+#include "network/ServerBroadcastPacket.hpp"
 
 #include <array>
 #include <chrono>
@@ -41,7 +42,8 @@ bool LobbyServer::start()
 
     Logger::instance().info("[LobbyServer] Started receive and cleanup threads");
 
-    tui_ = std::make_unique<ServerConsole>(&instanceManager_);
+    tui_ = std::make_unique<ServerConsole>(&instanceManager_, &lobbyManager_);
+    tui_->setBroadcastCallback([this](const std::string& msg) { broadcast(msg); });
     tui_->setShutdownCallback([this]() {
         Logger::instance().info("[LobbyServer] Shutdown requested via TUI");
         if (running_) {
@@ -83,6 +85,24 @@ void LobbyServer::stop()
     tui_.reset();
 
     Logger::instance().info("[LobbyServer] Stopped");
+}
+
+void LobbyServer::broadcast(const std::string& message)
+{
+    Logger::instance().info("[LobbyServer] Broadcast: " + message);
+
+    auto pkt   = ServerBroadcastPacket::create(message);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        for (const auto& [key, session] : lobbySessions_) {
+            sendPacket(vec, session.endpoint);
+        }
+    }
+
+    instanceManager_.broadcast(message);
 }
 
 ServerStats LobbyServer::aggregateStats()

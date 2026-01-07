@@ -1,6 +1,6 @@
 #include "editor/LevelEditor.hpp"
 
-#include "server/LevelLoader.hpp"
+#include "levels/LevelLoader.hpp"
 
 #include <imgui.h>
 

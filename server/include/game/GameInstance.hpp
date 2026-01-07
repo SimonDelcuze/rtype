@@ -45,6 +45,7 @@ class GameInstance
     void run();
     void stop();
     void notifyDisconnection(const std::string& reason);
+    void broadcast(const std::string& message);
 
     std::uint32_t getRoomId() const
     {

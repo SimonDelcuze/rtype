@@ -33,6 +33,8 @@ class GameInstanceManager
 
     void cleanupEmptyInstances();
 
+    void broadcast(const std::string& message);
+
   private:
     std::uint16_t basePort_;
     std::uint32_t maxInstances_;
