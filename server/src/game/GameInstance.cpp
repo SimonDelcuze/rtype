@@ -101,7 +101,7 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
       damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
-      sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
+      sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate, roomId),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
       running_(&runningFlag), networkBridge_(sendThread_)
@@ -118,15 +118,15 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
     } else {
         levelLoaded_ = false;
         world_.setLevelLoaded(false);
-        Logger::instance().error("[Level] Level load failed: " + error.message + " path=" + error.path +
-                                 " ptr=" + error.jsonPointer);
+        world_.setLevelLoaded(false);
+        logError("[Level] Level load failed: " + error.message + " path=" + error.path + " ptr=" + error.jsonPointer);
     }
 }
 
 bool GameInstance::start()
 {
     if (!levelLoaded_) {
-        Logger::instance().error("[Level] Server start aborted: level not loaded");
+        logError("[Level] Server start aborted: level not loaded");
         return false;
     }
     if (!receiveThread_.start()) {
@@ -208,7 +208,7 @@ void GameInstance::handleTimeout(const ClientTimeoutEvent& timeout)
 void GameInstance::resetGame()
 
 {
-    Logger::instance().info("[Game] Resetting game state...");
+    logInfo("[Game] Resetting game state...");
     registry_.clear();
     playerEntities_.clear();
     sessions_.clear();
@@ -230,7 +230,7 @@ void GameInstance::resetGame()
     ClientTimeoutEvent timeout;
     while (timeoutQueue_.tryPop(timeout))
         ;
-    Logger::instance().info("[Game] Game state reset complete");
+    logInfo("[Game] Game state reset complete");
     if (levelLoaded_) {
         levelDirector_->reset();
         levelSpawnSys_->reset();
@@ -266,7 +266,7 @@ void GameInstance::updateInvincibilityTimers(float deltaTime)
     }
     for (EntityId id : vulnerable) {
         registry_.remove<InvincibilityComponent>(id);
-        Logger::instance().info("[Player] Player (ID:" + std::to_string(id) + ") is no longer invincible.");
+        logInfo("[Player] Player (ID:" + std::to_string(id) + ") is no longer invincible.");
     }
 }
 
@@ -483,4 +483,19 @@ void GameInstance::handleDeathAndRespawn()
         }
     }
     destructionSys_.update(registry_, toDestroy);
+}
+
+void GameInstance::logInfo(const std::string& msg) const
+{
+    Logger::instance().logToRoom(roomId_, "INFO", msg);
+}
+
+void GameInstance::logWarn(const std::string& msg) const
+{
+    Logger::instance().logToRoom(roomId_, "WARN", msg);
+}
+
+void GameInstance::logError(const std::string& msg) const
+{
+    Logger::instance().logToRoom(roomId_, "ERROR", msg);
 }
