@@ -4,11 +4,15 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#ifndef _WIN32
 #include <poll.h>
+#endif
 #include <sstream>
+#ifndef _WIN32
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#endif
 
 namespace
 {
@@ -74,27 +78,33 @@ NetworkTui::NetworkTui(bool showNetwork, bool showAdmin)
 {
     std::cout << "\033[2J" << HIDE_CURSOR;
 
+#ifndef _WIN32
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     _width  = w.ws_col;
     _height = w.ws_row;
+#endif
 
     for (int i = 0; i < _width; ++i)
         _bandwidthHistory.push_back(0.0f);
 
+#ifndef _WIN32
     if (_adminMode) {
         tcgetattr(STDIN_FILENO, &_origTermios);
         struct termios raw = _origTermios;
         raw.c_lflag &= ~(ECHO | ICANON);
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
     }
+#endif
 }
 
 NetworkTui::~NetworkTui()
 {
+#ifndef _WIN32
     if (_adminMode) {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &_origTermios);
     }
+#endif
     std::cout << SHOW_CURSOR << RESET << "\033[2J" << "\033[H";
 }
 
@@ -103,6 +113,7 @@ void NetworkTui::handleInput()
     if (!_adminMode)
         return;
 
+#ifndef _WIN32
     struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
     if (poll(&pfd, 1, 0) > 0) {
         char c;
@@ -120,6 +131,7 @@ void NetworkTui::handleInput()
             }
         }
     }
+#endif
 }
 
 void NetworkTui::processCommand(const std::string& cmd)
@@ -179,6 +191,7 @@ void NetworkTui::addAdminLog(const std::string& msg)
 
 void NetworkTui::render()
 {
+#ifndef _WIN32
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     if (w.ws_col != _width || w.ws_row != _height) {
@@ -186,6 +199,7 @@ void NetworkTui::render()
         _height = w.ws_row;
         std::cout << "\033[2J";
     }
+#endif
 
     std::ostringstream frame;
     drawHeader(frame);

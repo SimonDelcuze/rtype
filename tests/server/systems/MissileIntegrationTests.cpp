@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "simulation/PlayerCommand.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"

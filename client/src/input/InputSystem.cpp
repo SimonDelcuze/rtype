@@ -12,6 +12,7 @@
 #include "components/VelocityComponent.hpp"
 
 #include <SFML/Graphics/Rect.hpp>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 

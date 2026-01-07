@@ -1,6 +1,7 @@
 #include "network/SendThread.hpp"
 
 #include <array>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
 
