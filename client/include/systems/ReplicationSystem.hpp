@@ -11,6 +11,7 @@
 #include "systems/ISystem.hpp"
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -38,6 +39,9 @@ class ReplicationSystem : public ISystem
     void applyStatus(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyDead(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t tickId);
+    void playExplosionSound(Registry& registry);
+    bool isEnemyEntity(const Registry& registry, EntityId id) const;
+    bool isPlayerEntity(const Registry& registry, EntityId id) const;
 
     ThreadSafeQueue<SnapshotParseResult>* snapshots_;
     ThreadSafeQueue<EntitySpawnPacket>* spawnQueue_;
@@ -49,11 +53,14 @@ class ReplicationSystem : public ISystem
     std::unordered_map<std::uint32_t, int> lastKnownLives_;
     std::unordered_map<std::uint32_t, float> respawnCooldown_;
     float explosionCooldown_ = 0.0F;
+    std::optional<EntityId> explosionAudioEntity_;
+
+    std::shared_ptr<ISoundBuffer> explosionBuffer_;
+    bool explosionLoaded_ = false;
+    std::vector<std::shared_ptr<ISound>> explosionVoices_;
 
     std::shared_ptr<ISoundBuffer> laserBuffer_;
-    std::shared_ptr<ISoundBuffer> explosionBuffer_;
     bool laserLoaded_        = false;
     bool laserLoadAttempted_ = false;
     std::vector<std::shared_ptr<ISound>> laserSounds_;
-    std::vector<std::shared_ptr<ISound>> explosionSounds_;
 };
