@@ -1,6 +1,7 @@
 #include "network/InputReceiveThread.hpp"
 #include "network/SendThread.hpp"
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
 
