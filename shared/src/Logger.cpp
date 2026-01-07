@@ -25,7 +25,6 @@ Logger::Logger() : _verbose(false), _tagFilterActive(false)
     }
 
     _file.open(filePath, std::ios::app);
-    _file.open(filePath, std::ios::app);
 }
 
 Logger::~Logger()

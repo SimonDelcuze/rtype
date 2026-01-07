@@ -35,18 +35,20 @@ static bool pollTimeout(ThreadSafeQueue<ClientTimeoutEvent>& q, ClientTimeoutEve
     return false;
 }
 
-static void clearLogFile()
+static std::streampos getLogSize()
 {
-    const std::filesystem::path path("logs/server.log");
-    std::filesystem::create_directories(path.parent_path());
-    std::ofstream f(path, std::ios::trunc);
+    std::ifstream f("logs/server.log", std::ios::binary | std::ios::ate);
+    if (!f.is_open())
+        return 0;
+    return f.tellg();
 }
 
-static std::string readLogFile()
+static std::string readLogFileFrom(std::streampos startPos)
 {
-    std::ifstream f("logs/server.log");
+    std::ifstream f("logs/server.log", std::ios::binary);
     if (!f.is_open())
         return {};
+    f.seekg(startPos);
     return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 }
 
@@ -325,7 +327,7 @@ TEST(InputReceiveThread, StaleDoesNotUpdateState)
 
 TEST(InputReceiveThread, LogDecodeFailure)
 {
-    clearLogFile();
+    auto startPos = getLogSize();
     ThreadSafeQueue<ReceivedInput> queue;
     InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
     ASSERT_TRUE(rt.start());
@@ -343,13 +345,13 @@ TEST(InputReceiveThread, LogDecodeFailure)
     EXPECT_FALSE(pollPop(queue, got, 100));
     rt.stop();
 
-    auto log = readLogFile();
+    auto log = readLogFileFrom(startPos);
     EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
 }
 
 TEST(InputReceiveThread, LogInvalidFlags)
 {
-    clearLogFile();
+    auto startPos = getLogSize();
     ThreadSafeQueue<ReceivedInput> queue;
     InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
     ASSERT_TRUE(rt.start());
@@ -368,13 +370,13 @@ TEST(InputReceiveThread, LogInvalidFlags)
     EXPECT_FALSE(pollPop(queue, got, 100));
     rt.stop();
 
-    auto log = readLogFile();
+    auto log = readLogFileFrom(startPos);
     EXPECT_NE(log.find("status=invalid_flags"), std::string::npos);
 }
 
 TEST(InputReceiveThread, LogStaleSequence)
 {
-    clearLogFile();
+    auto startPos = getLogSize();
     ThreadSafeQueue<ReceivedInput> queue;
     InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
     ASSERT_TRUE(rt.start());
@@ -399,13 +401,13 @@ TEST(InputReceiveThread, LogStaleSequence)
     EXPECT_FALSE(pollPop(queue, got, 100));
     rt.stop();
 
-    auto log = readLogFile();
+    auto log = readLogFileFrom(startPos);
     EXPECT_NE(log.find("status=stale_sequence"), std::string::npos);
 }
 
 TEST(InputReceiveThread, LogCrcMismatch)
 {
-    clearLogFile();
+    auto startPos = getLogSize();
     ThreadSafeQueue<ReceivedInput> queue;
     InputReceiveThread rt(IpEndpoint::v4(127, 0, 0, 1, 0), queue);
     ASSERT_TRUE(rt.start());
@@ -424,7 +426,7 @@ TEST(InputReceiveThread, LogCrcMismatch)
     EXPECT_FALSE(pollPop(queue, got, 100));
     rt.stop();
 
-    auto log = readLogFile();
+    auto log = readLogFileFrom(startPos);
     EXPECT_NE(log.find("status=decode_failed"), std::string::npos);
 }
 
