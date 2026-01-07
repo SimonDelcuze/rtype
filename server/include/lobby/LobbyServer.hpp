@@ -5,10 +5,12 @@
 #include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
 #include "server/Session.hpp"
+#include "console/ServerConsole.hpp"
 
 #include <atomic>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -18,7 +20,7 @@ class LobbyServer
 {
   public:
     LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, std::uint32_t maxInstances,
-                std::atomic<bool>& runningFlag, bool enableTui = false, bool enableAdmin = false);
+                std::atomic<bool>& runningFlag);
     ~LobbyServer();
 
     bool start();
@@ -38,12 +40,12 @@ class LobbyServer
 
     std::string endpointToKey(const IpEndpoint& ep) const;
 
+    ServerStats aggregateStats();
+
     std::uint16_t lobbyPort_;
     std::uint16_t gameBasePort_;
     std::uint32_t maxInstances_;
     std::atomic<bool>* running_{nullptr};
-    bool enableTui_;
-    bool enableAdmin_;
 
     UdpSocket lobbySocket_;
     std::atomic<bool> receiveRunning_{false};
@@ -55,6 +57,7 @@ class LobbyServer
 
     GameInstanceManager instanceManager_;
     LobbyManager lobbyManager_;
+    std::unique_ptr<ServerConsole> tui_;
 
     std::uint16_t nextSequence_{0};
 };

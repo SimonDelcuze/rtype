@@ -12,8 +12,7 @@
 class GameInstanceManager
 {
   public:
-    GameInstanceManager(std::uint16_t basePort, std::uint32_t maxInstances, std::atomic<bool>& runningFlag,
-                        bool enableTui = false, bool enableAdmin = false);
+    GameInstanceManager(std::uint16_t basePort, std::uint32_t maxInstances, std::atomic<bool>& runningFlag);
 
     std::optional<std::uint32_t> createInstance();
 
@@ -39,8 +38,6 @@ class GameInstanceManager
     std::uint32_t maxInstances_;
     std::uint32_t nextRoomId_{1};
     std::atomic<bool>* running_{nullptr};
-    bool enableTui_;
-    bool enableAdmin_;
     mutable std::mutex instancesMutex_;
     std::map<std::uint32_t, std::unique_ptr<GameInstance>> instances_;
 };

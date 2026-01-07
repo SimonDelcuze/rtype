@@ -9,10 +9,9 @@
 #include <thread>
 
 LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, std::uint32_t maxInstances,
-                         std::atomic<bool>& runningFlag, bool enableTui, bool enableAdmin)
+                         std::atomic<bool>& runningFlag)
     : lobbyPort_(lobbyPort), gameBasePort_(gameBasePort), maxInstances_(maxInstances), running_(&runningFlag),
-      enableTui_(enableTui), enableAdmin_(enableAdmin),
-      instanceManager_(gameBasePort, maxInstances, runningFlag, enableTui, enableAdmin)
+      instanceManager_(gameBasePort, maxInstances, runningFlag)
 {
     Logger::instance().info("[LobbyServer] Initialized on port " + std::to_string(lobbyPort) + " with game base port " +
                             std::to_string(gameBasePort));
@@ -42,6 +41,14 @@ bool LobbyServer::start()
 
     Logger::instance().info("[LobbyServer] Started receive and cleanup threads");
 
+    tui_ = std::make_unique<ServerConsole>(&instanceManager_);
+    tui_->setShutdownCallback([this]() {
+        Logger::instance().info("[LobbyServer] Shutdown requested via TUI");
+        if (running_) {
+            *running_ = false;
+        }
+    });
+
     return true;
 }
 
@@ -49,6 +56,13 @@ void LobbyServer::run()
 {
     Logger::instance().info("[LobbyServer] Running...");
     while (running_ && running_->load()) {
+        if (tui_) {
+            tui_->handleInput();
+
+            ServerStats stats = aggregateStats();
+            tui_->update(stats);
+            tui_->render();
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -66,7 +80,32 @@ void LobbyServer::stop()
         cleanupWorker_.join();
     }
 
+    tui_.reset();
+
     Logger::instance().info("[LobbyServer] Stopped");
+}
+
+ServerStats LobbyServer::aggregateStats()
+{
+    ServerStats stats;
+    stats.bytesIn     = Logger::instance().getTotalBytesReceived();
+    stats.bytesOut    = Logger::instance().getTotalBytesSent();
+    stats.packetsIn   = Logger::instance().getTotalPacketsReceived();
+    stats.packetsOut  = Logger::instance().getTotalPacketsSent();
+    stats.packetsLost = Logger::instance().getTotalPacketsDropped();
+    stats.roomCount   = instanceManager_.getInstanceCount();
+
+    auto roomIds = instanceManager_.getAllRoomIds();
+    std::size_t totalClients = 0;
+    for (auto roomId : roomIds) {
+        auto* instance = instanceManager_.getInstance(roomId);
+        if (instance != nullptr) {
+            totalClients += instance->getPlayerCount();
+        }
+    }
+    stats.clientCount = totalClients;
+
+    return stats;
 }
 
 void LobbyServer::receiveThread()
@@ -99,8 +138,24 @@ void LobbyServer::cleanupThread()
 
         instanceManager_.cleanupEmptyInstances();
 
-        auto roomIds = instanceManager_.getAllRoomIds();
-        for (std::uint32_t roomId : roomIds) {
+        auto activeRoomIds = instanceManager_.getAllRoomIds();
+        auto lobbyRooms     = lobbyManager_.listRooms();
+
+        for (const auto& room : lobbyRooms) {
+            bool stillExists = false;
+            for (auto activeId : activeRoomIds) {
+                if (activeId == room.roomId) {
+                    stillExists = true;
+                    break;
+                }
+            }
+            if (!stillExists) {
+                lobbyManager_.removeRoom(room.roomId);
+                Logger::instance().info("[LobbyServer] Removed room " + std::to_string(room.roomId) + " from lobby list");
+            }
+        }
+
+        for (std::uint32_t roomId : activeRoomIds) {
             auto* instance = instanceManager_.getInstance(roomId);
             if (instance != nullptr) {
                 lobbyManager_.updateRoomPlayerCount(roomId, instance->getPlayerCount());

@@ -5,7 +5,6 @@
 #include "game/GameLoopThread.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/NetworkBridge.hpp"
-#include "network/NetworkTui.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
 #include "server/IntroCinematic.hpp"
@@ -41,11 +40,11 @@
 class GameInstance
 {
   public:
-    GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui = false,
-                 bool enableAdmin = false);
+    GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag);
     bool start();
     void run();
     void stop();
+    void notifyDisconnection(const std::string& reason);
 
     std::uint32_t getRoomId() const
     {
@@ -156,10 +155,6 @@ class GameInstance
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
-    bool showNetwork_{false};
-    bool showAdmin_{false};
-    bool interactive_{false};
-    std::unique_ptr<NetworkTui> tui_;
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
 };
