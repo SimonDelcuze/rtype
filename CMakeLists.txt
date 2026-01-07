@@ -117,20 +117,6 @@ if (BUILD_TESTS)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
-
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/server)
-    if(NOT EXISTS ${CMAKE_BINARY_DIR}/server/assets)
-        if(UNIX)
-            execute_process(
-                COMMAND ${CMAKE_COMMAND} -E create_symlink
-                    ${CMAKE_SOURCE_DIR}/server/assets
-                    ${CMAKE_BINARY_DIR}/server/assets
-            )
-        else()
-            file(COPY ${CMAKE_SOURCE_DIR}/server/assets
-                 DESTINATION ${CMAKE_BINARY_DIR}/server/)
-        endif()
-    endif()
 endif()
 
 add_custom_target(clang_format
