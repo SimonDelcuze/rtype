@@ -156,7 +156,7 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
     return JoinResult::Timeout;
 }
 
-bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp)
+bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage)
 {
     FontManager fontManager;
     TextureManager textureManager;
@@ -189,6 +189,13 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
             buttonSystem.handleEvent(registry, event);
             menu.handleEvent(registry, event);
         });
+
+        std::string disconnectMsg;
+        if (net.disconnectEvents.tryPop(disconnectMsg)) {
+            Logger::instance().warn("[Net] Disconnected from waiting room: " + disconnectMsg);
+            errorMessage = disconnectMsg;
+            return false;
+        }
 
         if (net.handler)
             net.handler->poll();

@@ -93,7 +93,7 @@ namespace
     }
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
-                         InputMapper& mapper, ButtonSystem& buttonSystem)
+                         InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage)
     {
         auto onEvent = [&](const Event& event) {
             mapper.handleEvent(event);
@@ -109,6 +109,13 @@ namespace
                     window.close();
                 }
             });
+
+            std::string disconnectMsg;
+            if (net.disconnectEvents.tryPop(disconnectMsg)) {
+                Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
+                errorMessage = disconnectMsg;
+                g_running = false;
+            }
 
             auto currentTime                     = std::chrono::steady_clock::now();
             std::chrono::duration<float> elapsed = currentTime - lastTime;
@@ -158,11 +165,11 @@ namespace
         return result;
     }
 
-} // namespace
+}
 
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager)
+                                 FontManager& fontManager, std::string& errorMessage)
 {
     GraphicsFactory graphicsFactory;
     SoundManager soundManager;
@@ -184,8 +191,9 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
 
     if (options.useDefault) {
         sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint)) {
-        return GameSessionResult{false, std::nullopt};
+    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage)) {
+        bool retry = !errorMessage.empty();
+        return GameSessionResult{retry, (retry ? std::nullopt : std::make_optional(0))};
     }
 
     if (!window.isOpen()) {
@@ -215,7 +223,7 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
 
     ButtonSystem buttonSystem(window, fontManager);
 
-    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem);
+    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
@@ -228,5 +236,6 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         }
     }
 
-    return GameSessionResult{false, 0};
+    bool retry = !errorMessage.empty();
+    return GameSessionResult{retry, (retry ? std::nullopt : std::make_optional(0))};
 }
