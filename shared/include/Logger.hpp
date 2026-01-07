@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 class Logger
 {
@@ -50,6 +51,13 @@ class Logger
     void setPostLogCallback(std::function<void(const std::string&)> callback);
 
     void logNetworkStats();
+
+    // Tag management
+    void addTag(const std::string& tag);
+    void removeTag(const std::string& tag);
+    std::vector<std::string> getEnabledTags() const;
+    std::vector<std::string> getAllKnownTags() const;
+    bool hasTag(const std::string& tag) const;
 
     Logger(const Logger&)            = delete;
     Logger& operator=(const Logger&) = delete;

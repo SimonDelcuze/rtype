@@ -1,4 +1,4 @@
-#include "server/WaveLibrary.hpp"
+#include "levels/WaveLibrary.hpp"
 
 #include <algorithm>
 

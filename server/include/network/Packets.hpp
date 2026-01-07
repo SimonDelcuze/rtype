@@ -4,7 +4,7 @@
 #include "ecs/Registry.hpp"
 #include "network/LevelEventData.hpp"
 #include "network/PacketHeader.hpp"
-#include "server/EntityStateCache.hpp"
+#include "replication/EntityStateCache.hpp"
 
 #include <cstdint>
 #include <string>

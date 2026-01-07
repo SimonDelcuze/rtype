@@ -1,13 +1,14 @@
-#include "server/ServerRunner.hpp"
+#include "game/GameInstance.hpp"
 
 #include "Logger.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/RespawnTimerComponent.hpp"
+#include "core/EntityTypeResolver.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/LevelEventData.hpp"
-#include "server/EntityTypeResolver.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -93,25 +94,17 @@ namespace
     }
 } // namespace
 
-ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui, bool enableAdmin)
-    : world_(), registry_(world_.getRegistry()), playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(),
-      monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), scoreSys_(eventBus_, registry_),
-      destructionSys_(eventBus_), receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_,
-                                                 controlQueue_, &timeoutQueue_, std::chrono::seconds(30)),
+GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag)
+    : roomId_(roomId), port_(port), world_(), registry_(world_.getRegistry()),
+      playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
+      damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
+      receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
+                     std::chrono::seconds(30)),
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
-      running_(&runningFlag), showNetwork_(enableTui), showAdmin_(enableAdmin), interactive_(enableTui || enableAdmin),
-      networkBridge_(sendThread_)
+      running_(&runningFlag), networkBridge_(sendThread_)
 {
-    if (interactive_) {
-        tui_ = std::make_unique<NetworkTui>(showNetwork_, showAdmin_);
-        Logger::instance().setConsoleOutputEnabled(false);
-        Logger::instance().setPostLogCallback([this](const std::string& msg) {
-            if (tui_)
-                tui_->addLog(msg);
-        });
-    }
     LevelLoadError error;
     if (LevelLoader::load(1, levelData_, error)) {
         levelLoaded_   = true;
@@ -129,7 +122,7 @@ ServerApp::ServerApp(std::uint16_t port, std::atomic<bool>& runningFlag, bool en
     }
 }
 
-bool ServerApp::start()
+bool GameInstance::start()
 {
     if (!levelLoaded_) {
         Logger::instance().error("[Level] Server start aborted: level not loaded");
@@ -150,38 +143,58 @@ bool ServerApp::start()
     return true;
 }
 
-void ServerApp::run()
+void GameInstance::run()
 {
     while (running_ && running_->load()) {
         processTimeouts();
-
-        if (interactive_ && tui_) {
-            tui_->handleInput();
-            NetworkStats stats;
-            stats.bytesIn     = Logger::instance().getTotalBytesReceived();
-            stats.bytesOut    = Logger::instance().getTotalBytesSent();
-            stats.packetsIn   = Logger::instance().getTotalPacketsReceived();
-            stats.packetsOut  = Logger::instance().getTotalPacketsSent();
-            stats.packetsLost = Logger::instance().getTotalPacketsDropped();
-
-            tui_->setClientCount(clients_.size());
-            tui_->update(stats);
-            tui_->render();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
-void ServerApp::stop()
+void GameInstance::stop()
 {
+    notifyDisconnection("Room closed");
     gameLoop_.stop();
     sendThread_.stop();
     receiveThread_.stop();
 }
 
-void ServerApp::resetGame()
+void GameInstance::notifyDisconnection(const std::string& reason)
+{
+    auto pkt   = ServerDisconnectPacket::create(reason);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+    for (const auto& client : clients_) {
+        sendThread_.sendTo(vec, client);
+    }
+}
+
+std::size_t GameInstance::getPlayerCount() const
+{
+    return sessions_.size();
+}
+
+bool GameInstance::isEmpty() const
+{
+    return sessions_.empty();
+}
+
+void GameInstance::handleInput(const ReceivedInput& input)
+{
+    inputQueue_.push(input);
+}
+
+void GameInstance::handleControlEvent(const ControlEvent& ctrl)
+{
+    controlQueue_.push(ctrl);
+}
+
+void GameInstance::handleTimeout(const ClientTimeoutEvent& timeout)
+{
+    timeoutQueue_.push(timeout);
+}
+
+void GameInstance::resetGame()
 
 {
     Logger::instance().info("[Game] Resetting game state...");
@@ -215,7 +228,7 @@ void ServerApp::resetGame()
     lastSegmentIndex_ = -1;
 }
 
-void ServerApp::updateRespawnTimers(float deltaTime)
+void GameInstance::updateRespawnTimers(float deltaTime)
 {
     bool shouldReset = false;
     for (EntityId id : registry_.view<RespawnTimerComponent>()) {
@@ -230,7 +243,7 @@ void ServerApp::updateRespawnTimers(float deltaTime)
     }
 }
 
-void ServerApp::updateInvincibilityTimers(float deltaTime)
+void GameInstance::updateInvincibilityTimers(float deltaTime)
 {
     std::vector<EntityId> vulnerable;
     for (EntityId id : registry_.view<InvincibilityComponent>()) {
@@ -246,7 +259,7 @@ void ServerApp::updateInvincibilityTimers(float deltaTime)
     }
 }
 
-void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
+void GameInstance::captureCheckpoint(const std::vector<DispatchedEvent>& events)
 {
     if (!levelLoaded_) {
         return;
@@ -263,7 +276,7 @@ void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
     }
 }
 
-void ServerApp::sendLevelEvents(const std::vector<DispatchedEvent>& events)
+void GameInstance::sendLevelEvents(const std::vector<DispatchedEvent>& events)
 {
     if (!levelLoaded_) {
         return;
@@ -281,7 +294,7 @@ void ServerApp::sendLevelEvents(const std::vector<DispatchedEvent>& events)
     }
 }
 
-void ServerApp::sendSegmentState()
+void GameInstance::sendSegmentState()
 {
     if (!levelLoaded_) {
         return;
@@ -317,7 +330,7 @@ void ServerApp::sendSegmentState()
     }
 }
 
-void ServerApp::purgeNonPlayerEntities()
+void GameInstance::purgeNonPlayerEntities()
 {
     std::unordered_set<EntityId> players;
     for (const auto& [_, entityId] : playerEntities_) {
@@ -336,7 +349,7 @@ void ServerApp::purgeNonPlayerEntities()
     }
 }
 
-void ServerApp::respawnPlayers(const Vec2f& respawn)
+void GameInstance::respawnPlayers(const Vec2f& respawn)
 {
     for (const auto& [_, entityId] : playerEntities_) {
         if (!registry_.isAlive(entityId))
@@ -360,7 +373,7 @@ void ServerApp::respawnPlayers(const Vec2f& respawn)
     }
 }
 
-void ServerApp::resetToCheckpoint()
+void GameInstance::resetToCheckpoint()
 {
     Vec2f respawn = kDefaultRespawn;
     std::vector<LevelDirector::BossCheckpointState> bossStates;
@@ -394,7 +407,7 @@ void ServerApp::resetToCheckpoint()
     respawnPlayers(respawn);
 }
 
-void ServerApp::spawnPlayerDeathFx(float x, float y)
+void GameInstance::spawnPlayerDeathFx(float x, float y)
 {
     EntityId fx = registry_.createEntity();
     registry_.emplace<TransformComponent>(fx, TransformComponent::create(x, y));
@@ -406,7 +419,7 @@ void ServerApp::spawnPlayerDeathFx(float x, float y)
     registry_.emplace<MissileComponent>(fx, lifetime);
 }
 
-void ServerApp::handleDeathAndRespawn()
+void GameInstance::handleDeathAndRespawn()
 {
     std::vector<EntityId> toDestroy;
     std::vector<std::pair<float, float>> deathFxToSpawn;

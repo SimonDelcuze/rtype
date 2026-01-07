@@ -1,4 +1,5 @@
 #include "console/ServerConsole.hpp"
+
 #include "Logger.hpp"
 
 #include <iostream>
@@ -16,10 +17,7 @@ ServerConsole::ServerConsole(GameInstanceManager* instanceManager)
     gui_      = std::make_unique<ConsoleGui>();
     commands_ = std::make_unique<ConsoleCommands>(instanceManager, this);
 
-
     gui_->updateDimensions();
-
-
 
     for (int i = 0; i < 200; ++i)
         bandwidthHistory_.push_back(0.0f);

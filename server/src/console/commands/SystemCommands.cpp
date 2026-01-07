@@ -2,6 +2,7 @@
 
 #include "console/ServerConsole.hpp"
 #include "console/commands/CommandUtils.hpp"
+#include "game/GameInstanceManager.hpp"
 
 void SystemCommands::handleCommand(ServerConsole* console, const std::string& cmd,
                                    const std::function<void()>& shutdownCallback)

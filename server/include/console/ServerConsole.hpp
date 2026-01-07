@@ -41,10 +41,19 @@ class ServerConsole
     void setCommandHandler(ConsoleCommands::CommandHandler handler);
     void setShutdownCallback(std::function<void()> callback);
 
-    void setLogFilterRoom(int roomId) { logFilterRoom_ = roomId; }
-    int getLogFilterRoom() const { return logFilterRoom_; }
+    void setLogFilterRoom(int roomId)
+    {
+        logFilterRoom_ = roomId;
+    }
+    int getLogFilterRoom() const
+    {
+        return logFilterRoom_;
+    }
 
-    const ServerStats& getCurrentStats() const { return currentStats_; }
+    const ServerStats& getCurrentStats() const
+    {
+        return currentStats_;
+    }
 
   private:
     GameInstanceManager* instanceManager_{nullptr};

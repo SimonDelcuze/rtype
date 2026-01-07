@@ -5,9 +5,8 @@
 #include <algorithm>
 
 GameInstanceManager::GameInstanceManager(std::uint16_t basePort, std::uint32_t maxInstances,
-                                         std::atomic<bool>& runningFlag, bool enableTui, bool enableAdmin)
-    : basePort_(basePort), maxInstances_(maxInstances), running_(&runningFlag), enableTui_(enableTui),
-      enableAdmin_(enableAdmin)
+                                         std::atomic<bool>& runningFlag)
+    : basePort_(basePort), maxInstances_(maxInstances), running_(&runningFlag)
 {
     Logger::instance().info("[InstanceManager] Initialized with max instances: " + std::to_string(maxInstances));
 }
@@ -26,7 +25,7 @@ std::optional<std::uint32_t> GameInstanceManager::createInstance()
 
     std::uint16_t instancePort = basePort_ + static_cast<std::uint16_t>(roomId);
 
-    auto instance = std::make_unique<GameInstance>(roomId, instancePort, *running_, enableTui_, enableAdmin_);
+    auto instance = std::make_unique<GameInstance>(roomId, instancePort, *running_);
 
     if (!instance->start()) {
         Logger::instance().error("[InstanceManager] Failed to start instance " + std::to_string(roomId));

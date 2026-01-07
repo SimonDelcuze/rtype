@@ -1,7 +1,7 @@
 #pragma once
 
 #include "components/Components.hpp"
-#include "server/Packets.hpp"
+#include "network/Packets.hpp"
 #include "systems/ObstacleSpawnSystem.hpp"
 
 #include <cstdint>

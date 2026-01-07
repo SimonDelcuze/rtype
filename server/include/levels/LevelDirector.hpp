@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ecs/Registry.hpp"
-#include "server/LevelData.hpp"
+#include "levels/LevelData.hpp"
 
 #include <optional>
 #include <string>

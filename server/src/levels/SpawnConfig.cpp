@@ -1,4 +1,4 @@
-#include "server/SpawnConfig.hpp"
+#include "levels/SpawnConfig.hpp"
 
 #include "levels/LevelFactory.hpp"
 

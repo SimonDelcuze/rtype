@@ -1,9 +1,9 @@
 #include "Logger.hpp"
+#include "core/EntityTypeResolver.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/PacketHeader.hpp"
-#include "server/EntityTypeResolver.hpp"
-#include "server/ServerRunner.hpp"
+#include "network/ServerRunner.hpp"
 #include "simulation/GameEvent.hpp"
 #include "simulation/PlayerCommand.hpp"
 

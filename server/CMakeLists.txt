@@ -25,7 +25,7 @@ target_link_libraries(rtype_server_lib
 )
 
 add_executable(rtype_server
-    src/Main.cpp
+    src/core/Main.cpp
 )
 
 target_link_libraries(rtype_server

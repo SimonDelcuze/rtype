@@ -1,4 +1,4 @@
-#include "server/EntityTypeResolver.hpp"
+#include "core/EntityTypeResolver.hpp"
 
 #include "components/OwnershipComponent.hpp"
 

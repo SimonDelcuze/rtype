@@ -13,9 +13,9 @@
 
 namespace
 {
-    const char* RESET       = "\033[0m";
-    const char* BOLD        = "\033[1m";
-    const char* DIM         = "\033[2m";
+    const char* RESET = "\033[0m";
+    const char* BOLD  = "\033[1m";
+    const char* DIM   = "\033[2m";
 
     const char* FG_CYAN    = "\033[36m";
     const char* FG_MAGENTA = "\033[35m";
@@ -65,16 +65,14 @@ namespace
         ss << std::fixed << std::setprecision(1) << (bytes / (1024.0 * 1024.0)) << " MB";
         return ss.str();
     }
-}
+} // namespace
 
 ConsoleGui::ConsoleGui()
 {
     updateDimensions();
 }
 
-ConsoleGui::~ConsoleGui()
-{
-}
+ConsoleGui::~ConsoleGui() {}
 
 void ConsoleGui::updateDimensions()
 {

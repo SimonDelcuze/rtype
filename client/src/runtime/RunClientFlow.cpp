@@ -114,7 +114,7 @@ namespace
             if (net.disconnectEvents.tryPop(disconnectMsg)) {
                 Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
                 errorMessage = disconnectMsg;
-                g_running = false;
+                g_running    = false;
             }
 
             auto currentTime                     = std::chrono::steady_clock::now();
@@ -165,7 +165,7 @@ namespace
         return result;
     }
 
-}
+} // namespace
 
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,

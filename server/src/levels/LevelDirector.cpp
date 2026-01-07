@@ -1,4 +1,4 @@
-#include "server/LevelDirector.hpp"
+#include "levels/LevelDirector.hpp"
 
 #include "components/HealthComponent.hpp"
 #include "components/TagComponent.hpp"

@@ -7,7 +7,7 @@
 
 NetworkMessageHandler::NetworkMessageHandler(
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-    ThreadSafeQueue<LevelInitData>& levelInitQueue,    ThreadSafeQueue<LevelEventData>& levelEventQueue,
+    ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
     ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
     ThreadSafeQueue<std::string>* disconnectQueue, std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag,
     std::atomic<int>* countdownValueFlag, std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag,
@@ -36,7 +36,7 @@ namespace
         static ThreadSafeQueue<LevelEventData> q;
         return q;
     }
-}
+} // namespace
 
 NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,

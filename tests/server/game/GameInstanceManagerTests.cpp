@@ -10,7 +10,7 @@ class GameInstanceManagerTest : public ::testing::Test
     void SetUp() override
     {
         runningFlag = true;
-        manager     = std::make_unique<GameInstanceManager>(kBasePort, kMaxInstances, runningFlag, false, false);
+        manager     = std::make_unique<GameInstanceManager>(kBasePort, kMaxInstances, runningFlag);
     }
 
     void TearDown() override

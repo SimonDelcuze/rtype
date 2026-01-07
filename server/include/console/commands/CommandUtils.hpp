@@ -31,4 +31,4 @@ namespace CommandUtils
         ss << std::fixed << std::setprecision(1) << (bytes / (1024.0 * 1024.0)) << " MB";
         return ss.str();
     }
-}
+} // namespace CommandUtils
