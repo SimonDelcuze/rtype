@@ -24,6 +24,7 @@ class NetworkMessageHandler
                           ThreadSafeQueue<LevelEventData>& levelEventQueue,
                           ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
                           ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+                          ThreadSafeQueue<std::string>* disconnectQueue = nullptr,
                           std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
                           std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
                           std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
@@ -42,6 +43,7 @@ class NetworkMessageHandler
     void handleLevelInit(const std::vector<std::uint8_t>& data);
     void handleLevelEvent(const std::vector<std::uint8_t>& data);
     void handleCountdownTick(const std::vector<std::uint8_t>& data);
+    void handleServerDisconnect(const std::vector<std::uint8_t>& data);
     void dispatch(const std::vector<std::uint8_t>& data);
 
     struct ChunkAccumulator
@@ -66,5 +68,6 @@ class NetworkMessageHandler
     std::atomic<bool>* gameStartFlag_;
     std::atomic<bool>* joinDeniedFlag_;
     std::atomic<bool>* joinAcceptedFlag_;
+    ThreadSafeQueue<std::string>* disconnectQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
 };

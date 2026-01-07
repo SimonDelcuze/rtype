@@ -23,6 +23,7 @@ struct NetPipelines
     ThreadSafeQueue<LevelEventData> levelEvents;
     ThreadSafeQueue<EntitySpawnPacket> spawns;
     ThreadSafeQueue<EntityDestroyedPacket> destroys;
+    ThreadSafeQueue<std::string> disconnectEvents;
     std::shared_ptr<UdpSocket> socket;
     std::unique_ptr<NetworkReceiver> receiver;
     std::unique_ptr<NetworkMessageHandler> handler;
