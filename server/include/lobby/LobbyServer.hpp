@@ -1,11 +1,11 @@
 #pragma once
 
+#include "console/ServerConsole.hpp"
+#include "core/Session.hpp"
 #include "game/GameInstanceManager.hpp"
 #include "lobby/LobbyManager.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
-#include "server/Session.hpp"
-#include "console/ServerConsole.hpp"
 
 #include <atomic>
 #include <cstdint>

@@ -27,7 +27,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     }
 
     stopLauncherMusic();
-    auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager, errorMessage);
+    auto gameResult =
+        runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager, errorMessage);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     if (gameResult.retry) {

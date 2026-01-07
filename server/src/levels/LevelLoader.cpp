@@ -1,9 +1,9 @@
-#include "server/LevelLoader.hpp"
+#include "levels/LevelLoader.hpp"
 
 #include "components/HitboxComponent.hpp"
 #include "components/MovementComponent.hpp"
 #include "components/ScoreComponent.hpp"
-#include "server/LevelData.hpp"
+#include "levels/LevelData.hpp"
 
 #include "json/Json.hpp"
 #include <algorithm>

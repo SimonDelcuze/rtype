@@ -1,5 +1,5 @@
 #include "levels/LevelFactory.hpp"
-#include "server/SpawnConfig.hpp"
+#include "levels/SpawnConfig.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>

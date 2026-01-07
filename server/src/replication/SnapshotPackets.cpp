@@ -1,11 +1,11 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/ScoreComponent.hpp"
+#include "core/EntityTypeResolver.hpp"
 #include "network/NetworkCompression.hpp"
+#include "network/Packets.hpp"
 #include "network/Packing.hpp"
-#include "server/EntityStateCache.hpp"
-#include "server/EntityTypeResolver.hpp"
-#include "server/Packets.hpp"
+#include "replication/EntityStateCache.hpp"
 
 #include <algorithm>
 #include <bit>

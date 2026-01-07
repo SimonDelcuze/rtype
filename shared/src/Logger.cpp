@@ -206,3 +206,49 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
         _postLogCallback(line);
     }
 }
+
+void Logger::addTag(const std::string& tag)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::string formattedTag = tag;
+    if (!tag.empty() && tag[0] != '[') {
+        formattedTag = "[" + tag + "]";
+    }
+    _enabledTags.insert(formattedTag);
+    _tagFilterActive = !_enabledTags.empty();
+}
+
+void Logger::removeTag(const std::string& tag)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::string formattedTag = tag;
+    if (!tag.empty() && tag[0] != '[') {
+        formattedTag = "[" + tag + "]";
+    }
+    _enabledTags.erase(formattedTag);
+    _tagFilterActive = !_enabledTags.empty();
+}
+
+std::vector<std::string> Logger::getEnabledTags() const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    return std::vector<std::string>(_enabledTags.begin(), _enabledTags.end());
+}
+
+std::vector<std::string> Logger::getAllKnownTags() const
+{
+    // Return common tags used in the codebase
+    return {"[Net]",     "[Packets]",     "[Game]",    "[Collision]",   "[Spawn]",
+            "[Level]",   "[Replication]", "[Network]", "[Player]",      "[Death]",
+            "[Respawn]", "[Snapshot]",    "[Input]",   "[LobbyServer]", "[InstanceManager]"};
+}
+
+bool Logger::hasTag(const std::string& tag) const
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::string formattedTag = tag;
+    if (!tag.empty() && tag[0] != '[') {
+        formattedTag = "[" + tag + "]";
+    }
+    return _enabledTags.contains(formattedTag);
+}

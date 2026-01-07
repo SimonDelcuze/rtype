@@ -1,4 +1,4 @@
-#include "server/LevelSpawnSystem.hpp"
+#include "levels/LevelSpawnSystem.hpp"
 
 #include "components/RenderTypeComponent.hpp"
 #include "components/ScoreValueComponent.hpp"

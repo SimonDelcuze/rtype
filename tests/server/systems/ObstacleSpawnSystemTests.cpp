@@ -1,4 +1,4 @@
-#include "server/ObstacleLibrary.hpp"
+#include "levels/ObstacleLibrary.hpp"
 #include "systems/ObstacleSpawnSystem.hpp"
 
 #include <cmath>

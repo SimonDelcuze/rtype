@@ -1,8 +1,8 @@
 #include "lobby/LobbyServer.hpp"
 
 #include "Logger.hpp"
+#include "core/Session.hpp"
 #include "lobby/LobbyPackets.hpp"
-#include "server/Session.hpp"
 
 #include <array>
 #include <chrono>
@@ -95,7 +95,7 @@ ServerStats LobbyServer::aggregateStats()
     stats.packetsLost = Logger::instance().getTotalPacketsDropped();
     stats.roomCount   = instanceManager_.getInstanceCount();
 
-    auto roomIds = instanceManager_.getAllRoomIds();
+    auto roomIds             = instanceManager_.getAllRoomIds();
     std::size_t totalClients = 0;
     for (auto roomId : roomIds) {
         auto* instance = instanceManager_.getInstance(roomId);
@@ -139,7 +139,7 @@ void LobbyServer::cleanupThread()
         instanceManager_.cleanupEmptyInstances();
 
         auto activeRoomIds = instanceManager_.getAllRoomIds();
-        auto lobbyRooms     = lobbyManager_.listRooms();
+        auto lobbyRooms    = lobbyManager_.listRooms();
 
         for (const auto& room : lobbyRooms) {
             bool stillExists = false;
@@ -151,7 +151,8 @@ void LobbyServer::cleanupThread()
             }
             if (!stillExists) {
                 lobbyManager_.removeRoom(room.roomId);
-                Logger::instance().info("[LobbyServer] Removed room " + std::to_string(room.roomId) + " from lobby list");
+                Logger::instance().info("[LobbyServer] Removed room " + std::to_string(room.roomId) +
+                                        " from lobby list");
             }
         }
 

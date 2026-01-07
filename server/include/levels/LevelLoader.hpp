@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/LevelData.hpp"
+#include "levels/LevelData.hpp"
 
 #include <string>
 #include <vector>

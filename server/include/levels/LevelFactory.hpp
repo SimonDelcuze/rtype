@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/ILevel.hpp"
+#include "levels/ILevel.hpp"
 
 #include <memory>
 

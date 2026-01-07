@@ -1,4 +1,4 @@
-#include "server/IntroCinematic.hpp"
+#include "levels/IntroCinematic.hpp"
 
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"

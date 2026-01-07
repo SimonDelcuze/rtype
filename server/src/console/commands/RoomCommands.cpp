@@ -1,4 +1,4 @@
-    #include "console/commands/RoomCommands.hpp"
+#include "console/commands/RoomCommands.hpp"
 
 #include "console/ServerConsole.hpp"
 #include "console/commands/CommandUtils.hpp"
@@ -30,9 +30,9 @@ void RoomCommands::handleList(ServerConsole* console, GameInstanceManager* insta
     for (auto roomId : roomIds) {
         auto* instance = instanceManager->getInstance(roomId);
         if (instance != nullptr) {
-            console->addAdminLog("  Room " + std::to_string(roomId) + " | Port: " +
-                                 std::to_string(instance->getPort()) + " | Players: " +
-                                 std::to_string(instance->getPlayerCount()) +
+            console->addAdminLog("  Room " + std::to_string(roomId) +
+                                 " | Port: " + std::to_string(instance->getPort()) +
+                                 " | Players: " + std::to_string(instance->getPlayerCount()) +
                                  (instance->isGameStarted() ? " | PLAYING" : " | WAITING"));
         }
     }

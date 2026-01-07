@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/LevelScript.hpp"
+#include "levels/LevelScript.hpp"
 
 class ILevel
 {

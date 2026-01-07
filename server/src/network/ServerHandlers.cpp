@@ -1,5 +1,5 @@
 #include "Logger.hpp"
-#include "server/ServerRunner.hpp"
+#include "network/ServerRunner.hpp"
 
 #include <random>
 

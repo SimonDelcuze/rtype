@@ -28,12 +28,12 @@ struct ServerDisconnectPacket
         for (std::size_t i = 0; i < hdr.size(); ++i)
             out[i] = hdr[i];
         std::memcpy(out.data() + PacketHeader::kSize, reason.data(), kPayloadSize);
-        auto crc   = PacketHeader::crc32(out.data(), PacketHeader::kSize + kPayloadSize);
+        auto crc      = PacketHeader::crc32(out.data(), PacketHeader::kSize + kPayloadSize);
         std::size_t o = PacketHeader::kSize + kPayloadSize;
-        out[o]     = static_cast<std::uint8_t>((crc >> 24) & 0xFF);
-        out[o + 1] = static_cast<std::uint8_t>((crc >> 16) & 0xFF);
-        out[o + 2] = static_cast<std::uint8_t>((crc >> 8) & 0xFF);
-        out[o + 3] = static_cast<std::uint8_t>(crc & 0xFF);
+        out[o]        = static_cast<std::uint8_t>((crc >> 24) & 0xFF);
+        out[o + 1]    = static_cast<std::uint8_t>((crc >> 16) & 0xFF);
+        out[o + 2]    = static_cast<std::uint8_t>((crc >> 8) & 0xFF);
+        out[o + 3]    = static_cast<std::uint8_t>(crc & 0xFF);
         return out;
     }
 
@@ -74,7 +74,7 @@ struct ServerDisconnectPacket
     {
         ServerDisconnectPacket p{};
         p.header.messageType = static_cast<std::uint8_t>(type);
-        std::size_t len = std::min(reasonMsg.size(), kPayloadSize - 1);
+        std::size_t len      = std::min(reasonMsg.size(), kPayloadSize - 1);
         std::memcpy(p.reason.data(), reasonMsg.c_str(), len);
         p.reason[len] = '\0';
         return p;

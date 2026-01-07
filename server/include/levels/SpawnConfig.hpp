@@ -1,7 +1,7 @@
 #pragma once
 
 #include "components/Components.hpp"
-#include "server/LevelScript.hpp"
+#include "levels/LevelScript.hpp"
 #include "systems/MonsterSpawnSystem.hpp"
 
 #include <utility>

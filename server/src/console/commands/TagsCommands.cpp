@@ -44,8 +44,8 @@ void TagsCommands::handleList(ServerConsole* console)
 void TagsCommands::handleAdd(ServerConsole* console, const std::string& tagArg)
 {
     std::string targetTag = tagArg;
-    auto knownTags = Logger::instance().getAllKnownTags();
-    std::string lowerArg = CommandUtils::toLower(tagArg);
+    auto knownTags        = Logger::instance().getAllKnownTags();
+    std::string lowerArg  = CommandUtils::toLower(tagArg);
 
     std::string cleanArg = lowerArg;
     if (cleanArg.size() >= 2 && cleanArg.front() == '[' && cleanArg.back() == ']') {
@@ -71,8 +71,8 @@ void TagsCommands::handleAdd(ServerConsole* console, const std::string& tagArg)
 void TagsCommands::handleRemove(ServerConsole* console, const std::string& tagArg)
 {
     std::string targetTag = tagArg;
-    auto knownTags = Logger::instance().getAllKnownTags();
-    std::string lowerArg = CommandUtils::toLower(tagArg);
+    auto knownTags        = Logger::instance().getAllKnownTags();
+    std::string lowerArg  = CommandUtils::toLower(tagArg);
 
     std::string cleanArg = lowerArg;
     if (cleanArg.size() >= 2 && cleanArg.front() == '[' && cleanArg.back() == ']') {

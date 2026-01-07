@@ -1,4 +1,4 @@
-#include "server/Packets.hpp"
+#include "network/Packets.hpp"
 
 #include <bit>
 
