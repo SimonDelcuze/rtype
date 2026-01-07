@@ -188,6 +188,26 @@ namespace
         return true;
     }
 
+    bool parseVec2ObjectOrArray(const Json& j, Vec2f& out, const std::string& path, LevelLoadError& error)
+    {
+        if (j.isArray()) {
+            return parseVec2(j, out, path, error);
+        }
+        if (!j.isObject()) {
+            setError(error, LevelLoadErrorCode::SchemaError, "Expected {x,y} object", "", path);
+            return false;
+        }
+        double x = 0.0;
+        double y = 0.0;
+        if (!readNumber(j, "x", x, path, error, true))
+            return false;
+        if (!readNumber(j, "y", y, path, error, true))
+            return false;
+        out.x = static_cast<float>(x);
+        out.y = static_cast<float>(y);
+        return true;
+    }
+
     bool finiteVec(const Vec2f& v)
     {
         return std::isfinite(v.x) && std::isfinite(v.y);
@@ -709,13 +729,20 @@ namespace
         if (out.type == EventType::SetBackground && j.contains("backgroundId")) {
             readString(j, "backgroundId", out.backgroundId.emplace(), path, error, true);
         }
+        if (out.type == EventType::SetMusic && j.contains("musicId")) {
+            readString(j, "musicId", out.musicId.emplace(), path, error, true);
+        }
+        if ((out.type == EventType::GateOpen || out.type == EventType::GateClose) && j.contains("gateId")) {
+            readString(j, "gateId", out.gateId.emplace(), path, error, true);
+        }
 
         if (out.type == EventType::Checkpoint) {
             CheckpointDefinition cp;
             if (!readString(j, "checkpointId", cp.checkpointId, path, error, true))
                 return false;
             if (j.contains("respawn")) {
-                parseVec2(j["respawn"], cp.respawn, joinPath(path, "respawn"), error);
+                if (!parseVec2ObjectOrArray(j["respawn"], cp.respawn, joinPath(path, "respawn"), error))
+                    return false;
             }
             out.checkpoint = cp;
         }
@@ -774,6 +801,23 @@ namespace
             }
 
             out.obstacle = obs;
+        }
+        if (out.type == EventType::SpawnBoss) {
+            SpawnBossSettings boss;
+            if (!readString(j, "bossId", boss.bossId, path, error, true))
+                return false;
+            if (j.contains("spawnId")) {
+                readString(j, "spawnId", boss.spawnId, path, error, false);
+            } else {
+                boss.spawnId = out.id;
+            }
+            if (!j.contains("spawn")) {
+                setError(error, LevelLoadErrorCode::SchemaError, "Missing spawn", "", joinPath(path, "spawn"));
+                return false;
+            }
+            if (!parseVec2ObjectOrArray(j["spawn"], boss.spawn, joinPath(path, "spawn"), error))
+                return false;
+            out.boss = boss;
         }
         return true;
     }
