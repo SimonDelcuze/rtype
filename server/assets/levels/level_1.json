@@ -142,7 +142,7 @@
         "collider": "ob_top",
         "health": 20,
         "anchor": "top",
-        "margin": 20,
+        "margin": 0,
         "speedX": -60,
         "speedY": 0,
         "scale": [1.4, 1.4]
