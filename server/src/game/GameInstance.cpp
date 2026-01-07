@@ -185,6 +185,44 @@ std::size_t GameInstance::getPlayerCount() const
     return sessions_.size();
 }
 
+std::vector<ClientSession> GameInstance::getSessions() const
+{
+    std::vector<ClientSession> sessions;
+    sessions.reserve(sessions_.size());
+    for (const auto& [key, session] : sessions_) {
+        sessions.push_back(session);
+    }
+    return sessions;
+}
+
+void GameInstance::kickPlayer(std::uint32_t playerId)
+{
+    std::string keyToRemove;
+    bool found = false;
+    IpEndpoint endpoint;
+
+    for (const auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            keyToRemove = key;
+            endpoint    = session.endpoint;
+            found       = true;
+            break;
+        }
+    }
+
+    if (found) {
+        auto pkt   = ServerDisconnectPacket::create("You were kicked from the room");
+        auto bytes = pkt.encode();
+        std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+        sendThread_.sendTo(vec, endpoint);
+
+        logInfo("[Admin] Kicked player " + std::to_string(playerId) + " (" + endpointKey(endpoint) + ")");
+        onDisconnect(endpoint);
+    } else {
+        logWarn("[Admin] Kick failed: player " + std::to_string(playerId) + " not found");
+    }
+}
+
 bool GameInstance::isEmpty() const
 {
     return sessions_.empty();
