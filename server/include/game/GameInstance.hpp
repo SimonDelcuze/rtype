@@ -118,6 +118,10 @@ class GameInstance
         Vec2f respawn;
     };
 
+    void logInfo(const std::string& msg) const;
+    void logWarn(const std::string& msg) const;
+    void logError(const std::string& msg) const;
+
     std::uint32_t roomId_;
     std::uint16_t port_;
     GameWorld world_;

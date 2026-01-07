@@ -25,14 +25,23 @@ Logger::Logger() : _verbose(false), _tagFilterActive(false)
     }
 
     _file.open(filePath, std::ios::app);
+    _file.open(filePath, std::ios::app);
 }
 
 Logger::~Logger()
 {
+    std::lock_guard<std::mutex> lock(_mutex);
     if (_file.is_open()) {
         _file.flush();
         _file.close();
     }
+    for (auto& [id, file] : _roomFiles) {
+        if (file && file->is_open()) {
+            file->flush();
+            file->close();
+        }
+    }
+    _roomFiles.clear();
 }
 
 void Logger::setVerbose(bool enabled)
@@ -100,22 +109,27 @@ bool Logger::isTagEnabled(const std::string& message) const
 
 void Logger::info(const std::string& message)
 {
-    log("INFO", message, false);
+    log(-1, "INFO", message, false);
 }
 
 void Logger::warn(const std::string& message)
 {
-    log("WARN", message, true);
+    log(-1, "WARN", message, true);
 }
 
 void Logger::error(const std::string& message)
 {
-    log("ERROR", message, true);
+    log(-1, "ERROR", message, true);
 }
 
 void Logger::verbose(const std::string& message)
 {
-    log("VERBOSE", message, false);
+    log(-1, "VERBOSE", message, false);
+}
+
+void Logger::logToRoom(int roomId, const std::string& level, const std::string& message)
+{
+    log(roomId, level, message, false);
 }
 
 void Logger::addBytesSent(std::size_t bytes)
@@ -165,7 +179,7 @@ void Logger::logNetworkStats()
          " bytes, Received=" + std::to_string(received) + " bytes, Dropped=" + std::to_string(dropped) + " packets");
 }
 
-void Logger::log(const std::string& level, const std::string& message, bool alwaysConsole)
+void Logger::log(int roomId, const std::string& level, const std::string& message, bool alwaysConsole)
 {
     const auto now         = std::chrono::system_clock::now();
     const std::time_t time = std::chrono::system_clock::to_time_t(now);
@@ -181,11 +195,38 @@ void Logger::log(const std::string& level, const std::string& message, bool alwa
     std::ostringstream stream;
     stream << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S");
     const std::string timestamp = stream.str();
-    const std::string line      = "[" + timestamp + "][" + level + "] " + message + '\n';
+
+    std::string roomTag;
+    if (roomId >= 0) {
+        roomTag = "[Room " + std::to_string(roomId) + "]";
+    } else {
+        roomTag = "[System]";
+    }
+
+    const std::string line = "[" + timestamp + "]" + roomTag + "[" + level + "] " + message + '\n';
 
     if (_file.is_open()) {
         _file << line;
         _file.flush();
+    }
+
+    if (roomId >= 0) {
+        auto it = _roomFiles.find(roomId);
+        if (it == _roomFiles.end()) {
+            std::filesystem::path directory("logs");
+            std::filesystem::path filePath = directory / ("room_" + std::to_string(roomId) + ".log");
+            auto newFile                   = std::make_unique<std::ofstream>(filePath, std::ios::app);
+            if (newFile->is_open()) {
+                auto res = _roomFiles.emplace(roomId, std::move(newFile));
+                it       = res.first;
+            }
+        }
+
+        if (it != _roomFiles.end() && it->second && it->second->is_open()) {
+            const std::string roomLine = "[" + timestamp + "][" + level + "] " + message + '\n';
+            *(it->second) << roomLine;
+            it->second->flush();
+        }
     }
 
     bool tagAllowed = isTagEnabled(message);

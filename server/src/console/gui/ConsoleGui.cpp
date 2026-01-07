@@ -65,6 +65,12 @@ namespace
         ss << std::fixed << std::setprecision(1) << (bytes / (1024.0 * 1024.0)) << " MB";
         return ss.str();
     }
+
+    const char* getRoomColor(int roomId)
+    {
+        static const char* colors[] = {FG_CYAN, FG_GREEN, FG_BLUE, FG_MAGENTA, FG_YELLOW};
+        return colors[roomId % 5];
+    }
 } // namespace
 
 ConsoleGui::ConsoleGui()
@@ -217,12 +223,27 @@ void ConsoleGui::drawLogs(std::ostringstream& frame, const std::deque<std::strin
                 line = line.substr(0, width_ - 7) + "...";
             if (!line.empty() && line.back() == '\n')
                 line.pop_back();
-            std::string color = RESET;
+            std::string color          = RESET;
+            std::string separatorColor = RESET;
+
+            size_t roomTagStart = line.find("[Room ");
+            if (roomTagStart != std::string::npos) {
+                size_t roomTagEnd = line.find(']', roomTagStart);
+                if (roomTagEnd != std::string::npos) {
+                    try {
+                        std::string idStr = line.substr(roomTagStart + 6, roomTagEnd - (roomTagStart + 6));
+                        int id            = std::stoi(idStr);
+                        separatorColor    = getRoomColor(id);
+                    } catch (...) {
+                    }
+                }
+            }
+
             if (line.find("[ERROR]") != std::string::npos)
                 color = FG_RED;
             else if (line.find("[WARN]") != std::string::npos)
                 color = FG_YELLOW;
-            frame << " " << color << "│ " << RESET << DIM << line << RESET;
+            frame << " " << separatorColor << "│ " << RESET << DIM << color << line << RESET;
         }
         frame << clr() << (i == static_cast<std::size_t>(logLines) - 1 ? "" : "\n");
     }

@@ -6,8 +6,8 @@
 #include <chrono>
 #include <thread>
 
-SendThread::SendThread(const IpEndpoint& bindTo, std::vector<IpEndpoint> clients, double hz)
-    : bind_(bindTo), clients_(std::move(clients)), hz_(hz)
+SendThread::SendThread(const IpEndpoint& bindTo, std::vector<IpEndpoint> clients, double hz, int roomId)
+    : bind_(bindTo), clients_(std::move(clients)), hz_(hz), roomId_(roomId)
 {}
 
 SendThread::~SendThread()
@@ -65,7 +65,8 @@ void SendThread::sendTo(const std::vector<std::uint8_t>& payload, const IpEndpoi
     socket_.sendTo(payload.data(), payload.size(), dst);
     Logger::instance().addBytesSent(payload.size());
     Logger::instance().addPacketSent();
-    Logger::instance().info("[Packets] Sent " + std::to_string(payload.size()) + " bytes to " + endpointKey(dst));
+    Logger::instance().logToRoom(roomId_, "INFO",
+                                 "[Packets] Sent " + std::to_string(payload.size()) + " bytes to " + endpointKey(dst));
 }
 
 void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
@@ -77,8 +78,8 @@ void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
         socket_.sendTo(payload.data(), payload.size(), c);
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
-        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " +
-                                endpointKey(c));
+        Logger::instance().logToRoom(
+            roomId_, "INFO", "[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
 
@@ -91,8 +92,8 @@ void SendThread::broadcast(const EntitySpawnPacket& packet)
         socket_.sendTo(payload.data(), payload.size(), c);
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
-        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " +
-                                endpointKey(c));
+        Logger::instance().logToRoom(
+            roomId_, "INFO", "[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
 
@@ -105,8 +106,8 @@ void SendThread::broadcast(const EntityDestroyedPacket& packet)
         socket_.sendTo(payload.data(), payload.size(), c);
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
-        Logger::instance().info("[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " +
-                                endpointKey(c));
+        Logger::instance().logToRoom(
+            roomId_, "INFO", "[Packets] Broadcasted " + std::to_string(payload.size()) + " bytes to " + endpointKey(c));
     }
 }
 
@@ -137,8 +138,9 @@ void SendThread::run()
                 socket_.sendTo(payload.data(), payload.size(), c);
                 Logger::instance().addBytesSent(payload.size());
                 Logger::instance().addPacketSent();
-                Logger::instance().info("[Packets] Sent " + std::to_string(payload.size()) + " bytes to " +
-                                        endpointKey(c));
+                Logger::instance().logToRoom(roomId_, "INFO",
+                                             "[Packets] Sent " + std::to_string(payload.size()) + " bytes to " +
+                                                 endpointKey(c));
             }
         }
         auto now = steady_clock::now();
