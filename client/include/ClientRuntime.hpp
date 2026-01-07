@@ -61,7 +61,7 @@ bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint&
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);
 JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutSeconds = 5.0F);
-bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp);
+bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage);
 void showErrorMessage(Window& window, const std::string& message, float displayTime = 3.0F);
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage);
@@ -74,7 +74,7 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
                                      std::string& errorMessage);
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager);
+                                 FontManager& fontManager, std::string& errorMessage);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage);
 int runClient(const ClientOptions& options);
