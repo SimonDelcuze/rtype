@@ -139,12 +139,11 @@ void HUDSystem::update(Registry& registry, float)
             if (safeZoneText) {
                 safeZoneText->setFont(*font);
                 safeZoneText->setCharacterSize(22);
-                safeZoneText->setString("SAFE ZONE, MOVE FORWARD TO CONTINUE");
+                safeZoneText->setString("SAFE ZONE, PRESS FIRE TO CONTINUE");
                 safeZoneText->setFillColor(Color{240, 240, 240});
-                const auto size = window_.getSize();
+                const auto size  = window_.getSize();
                 FloatRect bounds = safeZoneText->getLocalBounds();
-                safeZoneText->setOrigin(Vector2f{bounds.left + bounds.width / 2.0F,
-                                                 bounds.top + bounds.height / 2.0F});
+                safeZoneText->setOrigin(Vector2f{bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
                 float y = bossActive ? 48.0F : 24.0F;
                 safeZoneText->setPosition(Vector2f{static_cast<float>(size.x) / 2.0F, y});
                 safeZoneText->setScale(Vector2f{1.0F, 1.0F});

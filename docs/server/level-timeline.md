@@ -60,6 +60,10 @@ This is primarily for sequencing post-checkpoint events.
 `player_in_zone`: fires when a player is inside the provided bounds.
 Use `requireAll` to require all alive players to be inside.
 
+### Player Ready
+
+`players_ready`: fires when all alive players have pressed the confirm input.
+
 ### Composite
 
 `all_of`: fires when all child triggers are true.

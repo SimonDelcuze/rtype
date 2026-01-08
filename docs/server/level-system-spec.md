@@ -56,6 +56,7 @@ Supported trigger types (initial spec):
 - `hp_below`: boss hp below threshold.
 - `checkpoint`: explicit event in timeline.
 - `player_in_zone`: player inside bounds (safe zones / exits).
+- `players_ready`: all active players pressed the confirm input.
 
 Triggers must be evaluated in a stable order every tick.
 

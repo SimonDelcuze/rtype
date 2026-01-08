@@ -106,6 +106,7 @@ Supported triggers in v1:
 - `checkpoint_reached`
 - `hp_below` (boss hp threshold)
 - `player_in_zone` (player inside bounds)
+- `players_ready` (all active players pressed the confirm input)
 - `all_of` / `any_of` composite triggers
 
 See `docs/server/level-timeline.md` for trigger semantics and evaluation order.

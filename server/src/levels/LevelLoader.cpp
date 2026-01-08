@@ -480,6 +480,10 @@ namespace
             }
             return true;
         }
+        if (type == "players_ready") {
+            out.type = TriggerType::PlayersReady;
+            return true;
+        }
         if (type == "and" || type == "all_of") {
             out.type = TriggerType::AllOf;
             Json triggers;

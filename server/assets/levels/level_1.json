@@ -552,13 +552,7 @@
         }
       ],
       "exit": {
-        "type": "player_in_zone",
-        "bounds": {
-          "minX": 900.0,
-          "maxX": 1246.0,
-          "minY": 0.0,
-          "maxY": 702.0
-        }
+        "type": "players_ready"
       }
     },
     {
