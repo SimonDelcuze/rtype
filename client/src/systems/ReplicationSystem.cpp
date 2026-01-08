@@ -228,11 +228,11 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             stats->packetsReceived++;
 
             if (snapshot.header.tickId > lastSnapshotTick) {
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotTime).count();
+                auto elapsed   = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotTime).count();
                 float tickDiff = static_cast<float>(snapshot.header.tickId - lastSnapshotTick);
                 float expectedTime = tickDiff * (1000.0F / 60.0F);
-                float actualTime = static_cast<float>(elapsed);
-                float ping = std::max(0.0F, actualTime - expectedTime);
+                float actualTime   = static_cast<float>(elapsed);
+                float ping         = std::max(0.0F, actualTime - expectedTime);
                 stats->addPingSample(ping);
             }
 

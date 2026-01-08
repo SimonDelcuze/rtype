@@ -150,18 +150,19 @@ void SettingsMenu::create(Registry& registry)
 
     float networkDebugY = sliderRowY + spacing;
     createLabel(registry, 360.0F, networkDebugY + 12.0F, "Network Debug");
-    networkDebugButton_ = createCenteredButton(registry, networkDebugY, g_networkDebugEnabled ? "ON" : "OFF", [this, &registry]() {
-        g_networkDebugEnabled = !g_networkDebugEnabled;
-        if (registry.isAlive(networkDebugButton_) && registry.has<ButtonComponent>(networkDebugButton_)) {
-            registry.get<ButtonComponent>(networkDebugButton_).label = g_networkDebugEnabled ? "ON" : "OFF";
-        }
-    });
+    networkDebugButton_ =
+        createCenteredButton(registry, networkDebugY, g_networkDebugEnabled ? "ON" : "OFF", [this, &registry]() {
+            g_networkDebugEnabled = !g_networkDebugEnabled;
+            if (registry.isAlive(networkDebugButton_) && registry.has<ButtonComponent>(networkDebugButton_)) {
+                registry.get<ButtonComponent>(networkDebugButton_).label = g_networkDebugEnabled ? "ON" : "OFF";
+            }
+        });
 
     float backButtonY = networkDebugY + spacing + 40.0F;
     createCenteredButton(registry, backButtonY, "Back", [this]() { done_ = true; });
 
     contentHeight_ = backButtonY + 60.0F;
-    scrollOffset_ = 0.0F;
+    scrollOffset_  = 0.0F;
     applyScrollOffset(registry);
 }
 
@@ -194,8 +195,8 @@ void SettingsMenu::handleEvent(Registry& registry, const Event& event)
 
     if (event.type == EventType::MouseWheelScrolled) {
         constexpr float scrollSpeed = 30.0F;
-        float windowHeight = 720.0F;
-        float maxScroll = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
+        float windowHeight          = 720.0F;
+        float maxScroll             = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
 
         scrollOffset_ -= event.mouseWheelScroll.delta * scrollSpeed;
         scrollOffset_ = std::clamp(scrollOffset_, 0.0F, maxScroll);
@@ -211,8 +212,8 @@ void SettingsMenu::handleEvent(Registry& registry, const Event& event)
             done_ = true;
 
         constexpr float scrollSpeed = 30.0F;
-        float windowHeight = 720.0F;
-        float maxScroll = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
+        float windowHeight          = 720.0F;
+        float maxScroll             = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
 
         if (event.key.code == KeyCode::Up) {
             scrollOffset_ = std::max(0.0F, scrollOffset_ - scrollSpeed);

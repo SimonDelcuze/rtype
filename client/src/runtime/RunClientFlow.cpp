@@ -41,7 +41,6 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         if (gameEp.has_value()) {
             return gameEp;
         }
-
     }
 
     return std::nullopt;
