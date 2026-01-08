@@ -65,7 +65,7 @@ Player bounds reset on segment transitions.
 ## Safe Zone Pattern
 
 Use a segment with `scroll` set to `stopped`, a `set_player_bounds` event at time 0, and an exit trigger of
-`player_in_zone` (typically a wide band on the right side).
+`players_ready` so all active players confirm before moving on.
 
 ## Checkpoint Event
 

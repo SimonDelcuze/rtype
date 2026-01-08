@@ -74,6 +74,7 @@ class LevelDirector
     void registerBoss(const std::string& bossId, EntityId entityId);
     void unregisterBoss(const std::string& bossId);
     void markCheckpointReached(const std::string& checkpointId);
+    void registerPlayerInput(EntityId playerId, std::uint16_t flags);
 
     const LevelSegment* currentSegment() const;
     std::int32_t currentSegmentIndex() const;
@@ -122,6 +123,7 @@ class LevelDirector
     bool isBossDead(const std::string& bossId, Registry& registry) const;
     bool isBossHpBelow(const std::string& bossId, std::int32_t value, Registry& registry) const;
     bool isPlayerInZone(const Trigger& trigger, Registry& registry) const;
+    bool arePlayersReady(Registry& registry) const;
     std::int32_t countEnemies(Registry& registry) const;
 
     void fireEvent(const LevelEvent& event, const std::string& segmentId, const std::string& bossId, bool fromBoss);
@@ -150,5 +152,7 @@ class LevelDirector
     std::unordered_map<std::string, SpawnGroup> spawnEntities_;
     std::unordered_map<std::string, BossRuntime> bossStates_;
     std::unordered_set<std::string> checkpoints_;
+    std::unordered_set<EntityId> readyPlayers_;
+    std::unordered_map<EntityId, bool> readyInputHeld_;
     bool finished_ = false;
 };

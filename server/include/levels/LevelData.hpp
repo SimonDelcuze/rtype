@@ -102,7 +102,8 @@ enum class TriggerType : std::uint8_t
     HpBelow,
     AllOf,
     AnyOf,
-    PlayerInZone
+    PlayerInZone,
+    PlayersReady
 };
 
 struct Trigger

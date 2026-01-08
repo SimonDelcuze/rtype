@@ -354,6 +354,7 @@ json makeDefaultTrigger(const std::string& type)
         trigger["value"]  = 0;
     } else if (type == "player_in_zone") {
         trigger["bounds"] = json::object({{"minX", 0.0}, {"maxX", 0.0}, {"minY", 0.0}, {"maxY", 0.0}});
+    } else if (type == "players_ready") {
     } else if (type == "all_of" || type == "any_of") {
         trigger["triggers"] = json::array();
     }
@@ -645,7 +646,8 @@ void drawTrigger(json& trigger, const IdCache& ids, bool& changed)
 
     std::string type = trigger.value("type", "time");
     const std::vector<std::string> types = {"time", "distance", "spawn_dead", "boss_dead", "enemy_count_at_most",
-                                            "checkpoint_reached", "hp_below", "player_in_zone", "all_of", "any_of"};
+                                            "checkpoint_reached", "hp_below", "player_in_zone", "players_ready",
+                                            "all_of", "any_of"};
 
     if (comboString("Type", type, types)) {
         trigger = makeDefaultTrigger(type);
@@ -744,6 +746,7 @@ void drawTrigger(json& trigger, const IdCache& ids, bool& changed)
             trigger["requireAll"] = requireAll;
             changed                = true;
         }
+    } else if (type == "players_ready") {
     } else if (type == "all_of" || type == "any_of") {
         json& children = ensureArray(trigger, "triggers");
         if (ImGui::Button("Add trigger")) {
