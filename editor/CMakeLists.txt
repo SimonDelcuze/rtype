@@ -5,18 +5,20 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
-if(imgui_ADDED)
-    find_package(OpenGL REQUIRED)
-    add_library(imgui STATIC
-        ${imgui_SOURCE_DIR}/imgui.cpp
-        ${imgui_SOURCE_DIR}/imgui_draw.cpp
-        ${imgui_SOURCE_DIR}/imgui_tables.cpp
-        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
-    )
-    target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
-    target_link_libraries(imgui PUBLIC OpenGL::GL)
+if(NOT imgui_ADDED)
+    message(FATAL_ERROR "imgui dependency could not be added. It is required to build the rtype_level_editor target.")
 endif()
+
+find_package(OpenGL REQUIRED)
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
+)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_link_libraries(imgui PUBLIC OpenGL::GL)
 
 file(GLOB_RECURSE RTYPE_EDITOR_SOURCES
     CONFIGURE_DEPENDS

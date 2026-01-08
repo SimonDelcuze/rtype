@@ -77,6 +77,9 @@ CPMAddPackage(
     GIT_TAG v1.10.0
     GIT_SHALLOW TRUE
     SOURCE_SUBDIR build/cmake
+    OPTIONS
+        "LZ4_BUILD_CLI OFF"
+        "LZ4_BUILD_LEGACY_LZ4C OFF"
 )
 
 target_include_directories(rtype_shared
