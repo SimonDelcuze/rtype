@@ -79,6 +79,17 @@
       "minItems": 2,
       "maxItems": 2
     },
+    "bounds": {
+      "type": "object",
+      "required": ["minX", "maxX", "minY", "maxY"],
+      "additionalProperties": false,
+      "properties": {
+        "minX": { "type": "number" },
+        "maxX": { "type": "number" },
+        "minY": { "type": "number" },
+        "maxY": { "type": "number" }
+      }
+    },
     "archetype": {
       "type": "object",
       "required": ["typeId", "spriteId", "animId", "layer"],
@@ -318,6 +329,16 @@
         },
         {
           "type": "object",
+          "required": ["type", "bounds"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "player_in_zone" },
+            "bounds": { "$ref": "#/$defs/bounds" },
+            "requireAll": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "triggers"],
           "additionalProperties": false,
           "properties": {
@@ -551,17 +572,30 @@
             "type": { "const": "set_camera_bounds" },
             "id": { "$ref": "#/$defs/nonEmptyString" },
             "trigger": { "$ref": "#/$defs/trigger" },
-            "bounds": {
-              "type": "object",
-              "required": ["minX", "maxX", "minY", "maxY"],
-              "additionalProperties": false,
-              "properties": {
-                "minX": { "type": "number" },
-                "maxX": { "type": "number" },
-                "minY": { "type": "number" },
-                "maxY": { "type": "number" }
-              }
-            },
+            "bounds": { "$ref": "#/$defs/bounds" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger", "bounds"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "set_player_bounds" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
+            "bounds": { "$ref": "#/$defs/bounds" },
+            "notes": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "trigger"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "clear_player_bounds" },
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "trigger": { "$ref": "#/$defs/trigger" },
             "notes": { "type": "string" }
           }
         },
@@ -624,17 +658,7 @@
         },
         "exit": { "$ref": "#/$defs/trigger" },
         "bossRoom": { "type": "boolean" },
-        "cameraBounds": {
-          "type": "object",
-          "required": ["minX", "maxX", "minY", "maxY"],
-          "additionalProperties": false,
-          "properties": {
-            "minX": { "type": "number" },
-            "maxX": { "type": "number" },
-            "minY": { "type": "number" },
-            "maxY": { "type": "number" }
-          }
-        },
+        "cameraBounds": { "$ref": "#/$defs/bounds" },
         "notes": { "type": "string" }
       }
     },

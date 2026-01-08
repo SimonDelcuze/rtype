@@ -15,6 +15,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/PlayerBoundsSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 #include "systems/ScoreSystem.hpp"
 
@@ -103,6 +104,7 @@ class GameWorld
     ScoreSystem scoreSys_;
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
+    PlayerBoundsSystem playerBoundsSys_;
 
     IntroCinematic introCinematic_;
     std::unique_ptr<LevelDirector> levelDirector_;

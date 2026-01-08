@@ -55,6 +55,7 @@ Supported trigger types (initial spec):
 - `entity_count`: remaining enemies <= N.
 - `hp_below`: boss hp below threshold.
 - `checkpoint`: explicit event in timeline.
+- `player_in_zone`: player inside bounds (safe zones / exits).
 
 Triggers must be evaluated in a stable order every tick.
 
@@ -125,6 +126,8 @@ Minimum event list to cover R-Type behavior:
 - `set_background`: change background id.
 - `set_music`: change music id.
 - `set_camera_bounds`: override camera clamp.
+- `set_player_bounds`: override player movement bounds (safe zones).
+- `clear_player_bounds`: restore default player bounds.
 - `gate_open` / `gate_close`: control segment gates.
 - `checkpoint`: mark checkpoint at precise position.
 

@@ -1,7 +1,9 @@
 #include "levels/LevelDirector.hpp"
 
 #include "components/HealthComponent.hpp"
+#include "components/RespawnTimerComponent.hpp"
 #include "components/TagComponent.hpp"
+#include "components/TransformComponent.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -21,6 +23,7 @@ void LevelDirector::reset()
     spawnEntities_.clear();
     bossStates_.clear();
     checkpoints_.clear();
+    activePlayerBounds_.reset();
     finished_ = data_.segments.empty();
     if (!finished_) {
         enterSegment(0);
@@ -34,6 +37,7 @@ LevelDirector::CheckpointState LevelDirector::captureCheckpointState() const
     state.segmentTime     = segmentTime_;
     state.segmentDistance = segmentDistance_;
     state.activeScroll    = activeScroll_;
+    state.playerBounds    = activePlayerBounds_;
     state.finished        = finished_;
     state.checkpoints     = checkpoints_;
 
@@ -87,6 +91,7 @@ void LevelDirector::restoreCheckpointState(const CheckpointState& state)
     segmentTime_     = state.segmentTime;
     segmentDistance_ = state.segmentDistance;
     activeScroll_    = state.activeScroll;
+    activePlayerBounds_ = state.playerBounds;
     segmentEvents_   = makeEventRuntime(data_.segments[segmentIndex_].events);
 
     const std::size_t count = std::min(segmentEvents_.size(), state.segmentEvents.size());
@@ -126,6 +131,7 @@ void LevelDirector::enterSegment(std::size_t index)
     segmentTime_     = 0.0F;
     segmentDistance_ = 0.0F;
     activeScroll_    = data_.segments[index].scroll;
+    activePlayerBounds_.reset();
     segmentEvents_   = makeEventRuntime(data_.segments[index].events);
 }
 
@@ -196,6 +202,11 @@ float LevelDirector::segmentDistance() const
 bool LevelDirector::finished() const
 {
     return finished_;
+}
+
+const std::optional<CameraBounds>& LevelDirector::playerBounds() const
+{
+    return activePlayerBounds_;
 }
 
 float LevelDirector::currentScrollSpeed() const
@@ -302,6 +313,33 @@ std::int32_t LevelDirector::countEnemies(Registry& registry) const
     return count;
 }
 
+bool LevelDirector::isPlayerInZone(const Trigger& trigger, Registry& registry) const
+{
+    if (!trigger.zone.has_value())
+        return false;
+    const auto& bounds = *trigger.zone;
+    std::int32_t players = 0;
+    std::int32_t inside  = 0;
+    for (EntityId id : registry.view<TransformComponent, TagComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        const auto& tag = registry.get<TagComponent>(id);
+        if (!tag.hasTag(EntityTag::Player))
+            continue;
+        if (registry.has<RespawnTimerComponent>(id))
+            continue;
+        players++;
+        const auto& t = registry.get<TransformComponent>(id);
+        if (t.x >= bounds.minX && t.x <= bounds.maxX && t.y >= bounds.minY && t.y <= bounds.maxY)
+            inside++;
+    }
+    if (players <= 0)
+        return false;
+    if (trigger.requireAllPlayers)
+        return inside == players;
+    return inside > 0;
+}
+
 bool LevelDirector::isTriggerActive(const Trigger& trigger, const TriggerContext& ctx) const
 {
     switch (trigger.type) {
@@ -331,6 +369,8 @@ bool LevelDirector::isTriggerActive(const Trigger& trigger, const TriggerContext
                     return true;
             }
             return false;
+        case TriggerType::PlayerInZone:
+            return isPlayerInZone(trigger, *ctx.registry);
         default:
             return false;
     }
@@ -349,6 +389,10 @@ void LevelDirector::applyEventEffects(const LevelEvent& event)
         activeScroll_ = *event.scroll;
     } else if (event.type == EventType::Checkpoint && event.checkpoint) {
         checkpoints_.insert(event.checkpoint->checkpointId);
+    } else if (event.type == EventType::SetPlayerBounds && event.playerBounds) {
+        activePlayerBounds_ = *event.playerBounds;
+    } else if (event.type == EventType::ClearPlayerBounds) {
+        activePlayerBounds_.reset();
     }
 }
 

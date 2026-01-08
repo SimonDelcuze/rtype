@@ -83,6 +83,14 @@ struct ScrollSettings
     std::vector<ScrollKeyframe> curve;
 };
 
+struct CameraBounds
+{
+    float minX = 0.0F;
+    float maxX = 0.0F;
+    float minY = 0.0F;
+    float maxY = 0.0F;
+};
+
 enum class TriggerType : std::uint8_t
 {
     Time,
@@ -93,7 +101,8 @@ enum class TriggerType : std::uint8_t
     CheckpointReached,
     HpBelow,
     AllOf,
-    AnyOf
+    AnyOf,
+    PlayerInZone
 };
 
 struct Trigger
@@ -107,6 +116,8 @@ struct Trigger
     std::int32_t count = 0;
     std::int32_t value = 0;
     std::vector<Trigger> triggers;
+    std::optional<CameraBounds> zone;
+    bool requireAllPlayers = false;
 };
 
 struct RepeatSpec
@@ -151,14 +162,6 @@ struct WaveDefinition
     std::optional<bool> shootingEnabled;
 };
 
-struct CameraBounds
-{
-    float minX = 0.0F;
-    float maxX = 0.0F;
-    float minY = 0.0F;
-    float maxY = 0.0F;
-};
-
 struct SpawnObstacleSettings
 {
     std::string obstacle;
@@ -195,6 +198,8 @@ enum class EventType : std::uint8_t
     SetBackground,
     SetMusic,
     SetCameraBounds,
+    SetPlayerBounds,
+    ClearPlayerBounds,
     GateOpen,
     GateClose,
     Checkpoint
@@ -213,6 +218,7 @@ struct LevelEvent
     std::optional<std::string> backgroundId;
     std::optional<std::string> musicId;
     std::optional<CameraBounds> cameraBounds;
+    std::optional<CameraBounds> playerBounds;
     std::optional<std::string> gateId;
     std::optional<CheckpointDefinition> checkpoint;
 };

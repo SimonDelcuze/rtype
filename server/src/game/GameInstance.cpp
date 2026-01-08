@@ -273,6 +273,7 @@ void GameInstance::resetGame()
         levelDirector_->reset();
         levelSpawnSys_->reset();
     }
+    playerBoundsSys_.reset();
     checkpointState_.reset();
     lastSegmentIndex_ = -1;
 }
