@@ -147,15 +147,11 @@ void LobbyMenu::create(Registry& registry)
 
 void LobbyMenu::destroy(Registry& registry)
 {
-    for (EntityId id : roomButtonEntities_) {
-        if (registry.isAlive(id)) {
-            registry.destroyEntity(id);
-        }
-    }
-    roomButtonEntities_.clear();
+    registry.clear();
 
     if (lobbyConnection_) {
         lobbyConnection_->disconnect();
+        lobbyConnection_.reset();
     }
 }
 
