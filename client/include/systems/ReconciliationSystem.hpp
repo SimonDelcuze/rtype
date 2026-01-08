@@ -19,7 +19,10 @@ class ReconciliationSystem : public ISystem
     void reconcile(Registry& registry, EntityId entityId, float authoritativeX, float authoritativeY,
                    std::uint32_t acknowledgedSequence);
     void updateLatencyEstimate(float latencyMs);
-    float getReconciliationThreshold() const { return reconciliationThreshold_; }
+    float getReconciliationThreshold() const
+    {
+        return reconciliationThreshold_;
+    }
 
   private:
     bool simulateInput(TransformComponent& transform, const InputHistoryEntry& input, float moveSpeed);

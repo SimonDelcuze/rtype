@@ -36,8 +36,7 @@ class StateHistory
         snapshots_.resize(HISTORY_SIZE);
     }
 
-    void addSnapshot(std::uint64_t tick,
-                     const std::unordered_map<EntityId, CachedEntityState>& entities,
+    void addSnapshot(std::uint64_t tick, const std::unordered_map<EntityId, CachedEntityState>& entities,
                      std::uint32_t checksum)
     {
         StateSnapshot& snapshot = snapshots_[head_];
@@ -47,19 +46,16 @@ class StateHistory
         snapshot.valid          = true;
 
         head_ = (head_ + 1) % HISTORY_SIZE;
-        if (count_ < HISTORY_SIZE)
-        {
+        if (count_ < HISTORY_SIZE) {
             count_++;
         }
     }
 
     std::optional<std::reference_wrapper<const StateSnapshot>> getSnapshot(std::uint64_t tick) const
     {
-        for (std::size_t i = 0; i < count_; i++)
-        {
+        for (std::size_t i = 0; i < count_; i++) {
             std::size_t idx = (head_ + HISTORY_SIZE - 1 - i) % HISTORY_SIZE;
-            if (snapshots_[idx].valid && snapshots_[idx].tick == tick)
-            {
+            if (snapshots_[idx].valid && snapshots_[idx].tick == tick) {
                 return std::cref(snapshots_[idx]);
             }
         }
@@ -68,14 +64,12 @@ class StateHistory
 
     std::optional<std::reference_wrapper<const StateSnapshot>> getLatest() const
     {
-        if (count_ == 0)
-        {
+        if (count_ == 0) {
             return std::nullopt;
         }
 
         std::size_t latestIdx = (head_ + HISTORY_SIZE - 1) % HISTORY_SIZE;
-        if (snapshots_[latestIdx].valid)
-        {
+        if (snapshots_[latestIdx].valid) {
             return std::cref(snapshots_[latestIdx]);
         }
         return std::nullopt;
@@ -83,14 +77,12 @@ class StateHistory
 
     std::optional<std::reference_wrapper<const StateSnapshot>> getOldest() const
     {
-        if (count_ == 0)
-        {
+        if (count_ == 0) {
             return std::nullopt;
         }
 
         std::size_t oldestIdx = (count_ < HISTORY_SIZE) ? 0 : head_;
-        if (snapshots_[oldestIdx].valid)
-        {
+        if (snapshots_[oldestIdx].valid) {
             return std::cref(snapshots_[oldestIdx]);
         }
         return std::nullopt;
@@ -101,8 +93,7 @@ class StateHistory
         auto oldest = getOldest();
         auto latest = getLatest();
 
-        if (oldest && latest)
-        {
+        if (oldest && latest) {
             return std::make_pair(oldest->get().tick, latest->get().tick);
         }
         return std::nullopt;
@@ -115,8 +106,7 @@ class StateHistory
 
     void clear()
     {
-        for (auto& snapshot : snapshots_)
-        {
+        for (auto& snapshot : snapshots_) {
             snapshot.valid = false;
             snapshot.entities.clear();
         }

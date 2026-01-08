@@ -14,8 +14,7 @@ class StateChecksum
   public:
     static std::uint32_t compute(const std::unordered_map<EntityId, CachedEntityState>& entities);
 
-    static std::uint32_t computeCritical(
-        const std::unordered_map<EntityId, CachedEntityState>& entities);
+    static std::uint32_t computeCritical(const std::unordered_map<EntityId, CachedEntityState>& entities);
 
     static bool verify(std::uint32_t checksum1, std::uint32_t checksum2)
     {

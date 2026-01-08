@@ -64,8 +64,8 @@ class ReplicationSystem : public ISystem
     bool laserLoadAttempted_ = false;
     std::vector<std::shared_ptr<ISound>> laserSounds_;
 
-    float estimatedLatency_      = 0.1F;
-    float minInterpolationTime_  = 0.033F;
-    float maxInterpolationTime_  = 0.3F;
+    float estimatedLatency_         = 0.1F;
+    float minInterpolationTime_     = 0.033F;
+    float maxInterpolationTime_     = 0.3F;
     std::uint32_t lastTickReceived_ = 0;
 };

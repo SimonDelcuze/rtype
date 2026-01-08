@@ -16,8 +16,7 @@ class ClientRollbackHandler
 
     std::uint32_t captureState(std::uint64_t tick, const Registry& registry);
 
-    bool handleRollbackRequest(std::uint64_t rollbackToTick, std::uint64_t currentTick,
-                               Registry& registry);
+    bool handleRollbackRequest(std::uint64_t rollbackToTick, std::uint64_t currentTick, Registry& registry);
 
     std::optional<std::uint32_t> getChecksum(std::uint64_t tick) const;
 
@@ -30,14 +29,11 @@ class ClientRollbackHandler
     void setRollbackCallback(std::function<void(std::uint64_t, std::uint64_t)> callback);
 
   private:
-    std::unordered_map<EntityId, ClientEntityState> extractEntityStates(
-        const Registry& registry) const;
+    std::unordered_map<EntityId, ClientEntityState> extractEntityStates(const Registry& registry) const;
 
-    void restoreEntityStates(Registry& registry,
-                             const std::unordered_map<EntityId, ClientEntityState>& states) const;
+    void restoreEntityStates(Registry& registry, const std::unordered_map<EntityId, ClientEntityState>& states) const;
 
-    std::uint32_t computeChecksum(
-        const std::unordered_map<EntityId, ClientEntityState>& states) const;
+    std::uint32_t computeChecksum(const std::unordered_map<EntityId, ClientEntityState>& states) const;
 
     ClientStateHistory stateHistory_;
     mutable std::mutex historyMutex_;

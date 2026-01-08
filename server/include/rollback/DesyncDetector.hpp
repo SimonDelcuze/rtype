@@ -11,7 +11,7 @@ using EntityId = std::uint32_t;
 
 enum class DesyncType
 {
-    CHECKSUM_MISMATCH,   
+    CHECKSUM_MISMATCH,
     ENTITY_COUNT_MISMATCH,
     CRITICAL_FIELD_MISMATCH,
     TIMEOUT
@@ -31,10 +31,10 @@ using DesyncCallback = std::function<void(const DesyncInfo&)>;
 
 struct ClientChecksumInfo
 {
-    std::uint64_t lastTick = 0;
-    std::uint32_t lastChecksum = 0;
+    std::uint64_t lastTick       = 0;
+    std::uint32_t lastChecksum   = 0;
     std::uint64_t lastUpdateTime = 0;
-    std::uint32_t desyncCount = 0;
+    std::uint32_t desyncCount    = 0;
 };
 
 class DesyncDetector
@@ -44,8 +44,8 @@ class DesyncDetector
 
     void setDesyncCallback(DesyncCallback callback);
 
-    void reportClientChecksum(EntityId playerId, std::uint64_t tick,
-                              std::uint32_t clientChecksum, std::uint64_t currentTick);
+    void reportClientChecksum(EntityId playerId, std::uint64_t tick, std::uint32_t clientChecksum,
+                              std::uint64_t currentTick);
 
     bool verifyChecksum(EntityId playerId, std::uint64_t tick, std::uint32_t clientChecksum,
                         std::uint32_t serverChecksum);

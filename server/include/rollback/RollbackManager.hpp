@@ -2,6 +2,7 @@
 
 #include "rollback/StateChecksum.hpp"
 #include "rollback/StateHistory.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -34,11 +35,9 @@ class RollbackManager
     std::size_t getHistorySize() const;
 
   private:
-    std::unordered_map<EntityId, CachedEntityState> extractEntityStates(const Registry& registry)
-        const;
+    std::unordered_map<EntityId, CachedEntityState> extractEntityStates(const Registry& registry) const;
 
-    void restoreEntityStates(Registry& registry,
-                             const std::unordered_map<EntityId, CachedEntityState>& states) const;
+    void restoreEntityStates(Registry& registry, const std::unordered_map<EntityId, CachedEntityState>& states) const;
 
     StateHistory stateHistory_;
     mutable std::mutex historyMutex_;

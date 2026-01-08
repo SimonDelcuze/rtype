@@ -554,7 +554,8 @@ void ReplicationSystem::applyDead(Registry& registry, EntityId id, const Snapsho
     }
 }
 
-void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t tickId)
+void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, const SnapshotEntity& entity,
+                                           std::uint32_t tickId)
 {
     if (!entity.posX.has_value() && !entity.posY.has_value()) {
         return;
@@ -575,13 +576,13 @@ void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, cons
     auto* interp = registry.has<InterpolationComponent>(id) ? &registry.get<InterpolationComponent>(id) : nullptr;
     if (interp == nullptr) {
         InterpolationComponent ic{};
-        ic.previousX          = entity.posX.value_or(0.0F);
-        ic.previousY          = entity.posY.value_or(0.0F);
-        ic.targetX            = entity.posX.value_or(ic.previousX);
-        ic.targetY            = entity.posY.value_or(ic.previousY);
-        ic.velocityX          = entity.velX.value_or(0.0F);
-        ic.velocityY          = entity.velY.value_or(0.0F);
-        ic.interpolationTime  = estimatedLatency_;
+        ic.previousX            = entity.posX.value_or(0.0F);
+        ic.previousY            = entity.posY.value_or(0.0F);
+        ic.targetX              = entity.posX.value_or(ic.previousX);
+        ic.targetY              = entity.posY.value_or(ic.previousY);
+        ic.velocityX            = entity.velX.value_or(0.0F);
+        ic.velocityY            = entity.velY.value_or(0.0F);
+        ic.interpolationTime    = estimatedLatency_;
         ic.maxExtrapolationTime = std::min(0.2F, estimatedLatency_ * 0.5F);
         registry.emplace<InterpolationComponent>(id, ic);
         return;
@@ -601,10 +602,10 @@ void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, cons
         interp->previousY = prevY;
     }
 
-    interp->targetX     = newX;
-    interp->targetY     = newY;
-    interp->elapsedTime = 0.0F;
-    interp->interpolationTime = estimatedLatency_;
+    interp->targetX              = newX;
+    interp->targetY              = newY;
+    interp->elapsedTime          = 0.0F;
+    interp->interpolationTime    = estimatedLatency_;
     interp->maxExtrapolationTime = std::min(0.2F, estimatedLatency_ * 0.5F);
     if (entity.velX.has_value())
         interp->velocityX = *entity.velX;

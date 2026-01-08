@@ -2,8 +2,7 @@
 
 DesyncDetector::DesyncDetector(std::uint32_t checksumInterval, std::uint32_t timeoutThreshold)
     : checksumInterval_(checksumInterval), timeoutThreshold_(timeoutThreshold)
-{
-}
+{}
 
 void DesyncDetector::setDesyncCallback(DesyncCallback callback)
 {
@@ -11,8 +10,7 @@ void DesyncDetector::setDesyncCallback(DesyncCallback callback)
     desyncCallback_ = std::move(callback);
 }
 
-void DesyncDetector::reportClientChecksum(EntityId playerId, std::uint64_t tick,
-                                          std::uint32_t clientChecksum,
+void DesyncDetector::reportClientChecksum(EntityId playerId, std::uint64_t tick, std::uint32_t clientChecksum,
                                           std::uint64_t currentTick)
 {
     std::lock_guard<std::mutex> lock(clientInfoMutex_);
@@ -23,19 +21,17 @@ void DesyncDetector::reportClientChecksum(EntityId playerId, std::uint64_t tick,
     info.lastUpdateTime = currentTick;
 }
 
-bool DesyncDetector::verifyChecksum(EntityId playerId, std::uint64_t tick,
-                                    std::uint32_t clientChecksum, std::uint32_t serverChecksum)
+bool DesyncDetector::verifyChecksum(EntityId playerId, std::uint64_t tick, std::uint32_t clientChecksum,
+                                    std::uint32_t serverChecksum)
 {
-    if (clientChecksum == serverChecksum)
-    {
+    if (clientChecksum == serverChecksum) {
         return true;
     }
 
     {
         std::lock_guard<std::mutex> lock(clientInfoMutex_);
         auto it = clientInfo_.find(playerId);
-        if (it != clientInfo_.end())
-        {
+        if (it != clientInfo_.end()) {
             it->second.desyncCount++;
         }
     }
@@ -56,18 +52,16 @@ void DesyncDetector::checkTimeouts(std::uint64_t currentTick)
 {
     std::lock_guard<std::mutex> lock(clientInfoMutex_);
 
-    for (const auto& [playerId, info] : clientInfo_)
-    {
-        if (currentTick - info.lastUpdateTime > timeoutThreshold_)
-        {
+    for (const auto& [playerId, info] : clientInfo_) {
+        if (currentTick - info.lastUpdateTime > timeoutThreshold_) {
             DesyncInfo desyncInfo;
             desyncInfo.playerId       = playerId;
             desyncInfo.tick           = currentTick;
             desyncInfo.type           = DesyncType::TIMEOUT;
             desyncInfo.serverChecksum = 0;
             desyncInfo.clientChecksum = info.lastChecksum;
-            desyncInfo.description    = "Client checksum timeout (last update: tick " +
-                                     std::to_string(info.lastUpdateTime) + ")";
+            desyncInfo.description =
+                "Client checksum timeout (last update: tick " + std::to_string(info.lastUpdateTime) + ")";
 
             triggerDesync(desyncInfo);
         }
@@ -84,8 +78,7 @@ std::uint32_t DesyncDetector::getDesyncCount(EntityId playerId) const
 {
     std::lock_guard<std::mutex> lock(clientInfoMutex_);
     auto it = clientInfo_.find(playerId);
-    if (it != clientInfo_.end())
-    {
+    if (it != clientInfo_.end()) {
         return it->second.desyncCount;
     }
     return 0;
@@ -95,8 +88,7 @@ void DesyncDetector::resetDesyncCount(EntityId playerId)
 {
     std::lock_guard<std::mutex> lock(clientInfoMutex_);
     auto it = clientInfo_.find(playerId);
-    if (it != clientInfo_.end())
-    {
+    if (it != clientInfo_.end()) {
         it->second.desyncCount = 0;
     }
 }
@@ -110,8 +102,7 @@ void DesyncDetector::clear()
 void DesyncDetector::triggerDesync(const DesyncInfo& info)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
-    if (desyncCallback_)
-    {
+    if (desyncCallback_) {
         desyncCallback_(info);
     }
 }
