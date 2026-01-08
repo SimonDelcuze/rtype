@@ -325,14 +325,6 @@ TEST(InputReceiveThread, StaleDoesNotUpdateState)
     rt.stop();
 }
 
-
-
-
-
-
-
-
-
 TEST(InputReceiveThread, TimeoutEventEmittedAfterSilence)
 {
     ThreadSafeQueue<ReceivedInput> queue;
@@ -388,8 +380,6 @@ TEST(InputReceiveThread, TimeoutNotEmittedBeforeThreshold)
     rt.stop();
 }
 
-
-
 TEST(InputReceiveThread, TimeoutNotRepeatedAfterEvent)
 {
     ThreadSafeQueue<ReceivedInput> queue;
@@ -415,5 +405,3 @@ TEST(InputReceiveThread, TimeoutNotRepeatedAfterEvent)
 
     rt.stop();
 }
-
-
