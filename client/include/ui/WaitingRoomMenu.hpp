@@ -63,8 +63,9 @@ class WaitingRoomMenu : public IMenu
     EntityId waitingText_   = 0;
     EntityId countdownText_ = 0;
 
-    float dotTimer_       = 0.0F;
-    int dotCount_         = 1;
-    int lastCountdownVal_ = -1;
-    bool buttonClicked_   = false;
+    float dotTimer_        = 0.0F;
+    int dotCount_          = 1;
+    int lastCountdownVal_  = -1;
+    bool buttonClicked_    = false;
+    float readyRetryTimer_ = 0.0F;
 };

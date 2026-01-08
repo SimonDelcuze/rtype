@@ -18,6 +18,11 @@ class ReconciliationSystem : public ISystem
     void cleanup() override;
     void reconcile(Registry& registry, EntityId entityId, float authoritativeX, float authoritativeY,
                    std::uint32_t acknowledgedSequence);
+    void updateLatencyEstimate(float latencyMs);
+    float getReconciliationThreshold() const
+    {
+        return reconciliationThreshold_;
+    }
 
   private:
     bool simulateInput(TransformComponent& transform, const InputHistoryEntry& input, float moveSpeed);
@@ -25,4 +30,6 @@ class ReconciliationSystem : public ISystem
 
     float playerMoveSpeed_         = 200.0F;
     float reconciliationThreshold_ = 0.5F;
+    float baseThreshold_           = 0.5F;
+    float latencyFactor_           = 0.01F;
 };
