@@ -11,6 +11,7 @@
 #include "systems/InvincibilitySystem.hpp"
 #include "systems/LevelEventSystem.hpp"
 #include "systems/LevelInitSystem.hpp"
+#include "systems/NetworkDebugOverlay.hpp"
 #include "systems/NetworkMessageSystem.hpp"
 #include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
@@ -48,6 +49,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures));
+    gameLoop.addSystem(std::make_shared<NetworkDebugOverlay>(window, fontManager));
     gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
     gameLoop.addSystem(std::make_shared<NotificationSystem>(window, fontManager, broadcastQueue));
 }

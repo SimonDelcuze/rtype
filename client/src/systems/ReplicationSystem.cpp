@@ -12,6 +12,7 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/NetworkStatsComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
@@ -73,6 +74,15 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
     static std::uint32_t lastSnapshotTick = 0;
     static auto lastSnapshotTime          = std::chrono::steady_clock::now();
     static auto nextStaleLog              = std::chrono::steady_clock::now();
+
+    NetworkStatsComponent* stats = nullptr;
+    for (EntityId id = 0; id < registry.entityCount(); ++id) {
+        if (registry.isAlive(id) && registry.has<NetworkStatsComponent>(id)) {
+            stats = &registry.get<NetworkStatsComponent>(id);
+            stats->timeSinceUpdate += deltaTime;
+            break;
+        }
+    }
 
     for (auto it = respawnCooldown_.begin(); it != respawnCooldown_.end();) {
         it->second -= deltaTime;
@@ -207,8 +217,33 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
 
     SnapshotParseResult snapshot;
     while (snapshots_->tryPop(snapshot)) {
+        auto now = std::chrono::steady_clock::now();
+
+        // Create NetworkStatsComponent on first snapshot if it doesn't exist
+        if (stats == nullptr) {
+            EntityId statsEntity = registry.createEntity();
+            registry.emplace<NetworkStatsComponent>(statsEntity, NetworkStatsComponent::create());
+            stats = &registry.get<NetworkStatsComponent>(statsEntity);
+        }
+
+        if (stats) {
+            stats->packetsReceived++;
+
+            if (snapshot.header.tickId > lastSnapshotTick) {
+                auto elapsed   = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotTime).count();
+                float tickDiff = static_cast<float>(snapshot.header.tickId - lastSnapshotTick);
+                float expectedTime = tickDiff * (1000.0F / 60.0F);
+                float actualTime   = static_cast<float>(elapsed);
+                float ping         = std::max(0.0F, actualTime - expectedTime);
+                stats->addPingSample(ping);
+            }
+
+            std::uint32_t estimatedSize = sizeof(PacketHeader) + snapshot.entities.size() * sizeof(SnapshotEntity);
+            stats->addBandwidthSample(estimatedSize, 0);
+        }
+
         lastSnapshotTick = snapshot.header.tickId;
-        lastSnapshotTime = std::chrono::steady_clock::now();
+        lastSnapshotTime = now;
 
         for (const auto& entity : snapshot.entities) {
             auto localId = ensureEntity(registry, entity);
