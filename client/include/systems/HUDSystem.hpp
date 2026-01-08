@@ -7,6 +7,7 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
+#include "level/LevelState.hpp"
 #include "systems/ISystem.hpp"
 
 #include <string>
@@ -15,6 +16,7 @@ class HUDSystem : public ISystem
 {
   public:
     HUDSystem(Window& window, FontManager& fonts, TextureManager& textures);
+    HUDSystem(Window& window, FontManager& fonts, TextureManager& textures, LevelState& state);
 
     void update(Registry& registry, float deltaTime) override;
 
@@ -26,5 +28,6 @@ class HUDSystem : public ISystem
     Window& window_;
     FontManager& fonts_;
     TextureManager& textures_;
+    LevelState* state_ = nullptr;
 };
 #include "components/ChargeMeterComponent.hpp"
