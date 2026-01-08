@@ -1,5 +1,6 @@
 #include "ui/SettingsMenu.hpp"
 
+#include "ClientRuntime.hpp"
 #include "audio/SoundManager.hpp"
 #include "components/BoxComponent.hpp"
 #include "components/ButtonComponent.hpp"
@@ -90,6 +91,7 @@ void SettingsMenu::create(Registry& registry)
 
     awaitingAction_.reset();
     actionButtons_.clear();
+    originalPositions_.clear();
 
     createBackground(registry, textures_);
     createCenteredText(registry, 40.0F, "SETTINGS");
@@ -146,7 +148,22 @@ void SettingsMenu::create(Registry& registry)
     volumeValueLabel_ = createLabel(registry, sliderX_ + sliderWidth_ + 24.0F, sliderRowY, "");
     refreshVolumeLabel(registry);
 
-    createCenteredButton(registry, 560.0F + spacing, "Back", [this]() { done_ = true; });
+    float networkDebugY = sliderRowY + spacing;
+    createLabel(registry, 360.0F, networkDebugY + 12.0F, "Network Debug");
+    networkDebugButton_ =
+        createCenteredButton(registry, networkDebugY, g_networkDebugEnabled ? "ON" : "OFF", [this, &registry]() {
+            g_networkDebugEnabled = !g_networkDebugEnabled;
+            if (registry.isAlive(networkDebugButton_) && registry.has<ButtonComponent>(networkDebugButton_)) {
+                registry.get<ButtonComponent>(networkDebugButton_).label = g_networkDebugEnabled ? "ON" : "OFF";
+            }
+        });
+
+    float backButtonY = networkDebugY + spacing + 40.0F;
+    createCenteredButton(registry, backButtonY, "Back", [this]() { done_ = true; });
+
+    contentHeight_ = backButtonY + 60.0F;
+    scrollOffset_  = 0.0F;
+    applyScrollOffset(registry);
 }
 
 void SettingsMenu::destroy(Registry& registry)
@@ -176,6 +193,16 @@ void SettingsMenu::handleEvent(Registry& registry, const Event& event)
             handleVolumeMouseEvent(registry, Vector2i{event.mouseMove.x, event.mouseMove.y}, false);
     }
 
+    if (event.type == EventType::MouseWheelScrolled) {
+        constexpr float scrollSpeed = 30.0F;
+        float windowHeight          = 720.0F;
+        float maxScroll             = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
+
+        scrollOffset_ -= event.mouseWheelScroll.delta * scrollSpeed;
+        scrollOffset_ = std::clamp(scrollOffset_, 0.0F, maxScroll);
+        applyScrollOffset(registry);
+    }
+
     if (event.type == EventType::KeyPressed) {
         if (awaitingAction_.has_value()) {
             applyBinding(registry, *awaitingAction_, event.key.code);
@@ -183,6 +210,18 @@ void SettingsMenu::handleEvent(Registry& registry, const Event& event)
 
         if (event.key.code == KeyCode::Escape)
             done_ = true;
+
+        constexpr float scrollSpeed = 30.0F;
+        float windowHeight          = 720.0F;
+        float maxScroll             = std::max(0.0F, contentHeight_ - windowHeight + 100.0F);
+
+        if (event.key.code == KeyCode::Up) {
+            scrollOffset_ = std::max(0.0F, scrollOffset_ - scrollSpeed);
+            applyScrollOffset(registry);
+        } else if (event.key.code == KeyCode::Down) {
+            scrollOffset_ = std::min(maxScroll, scrollOffset_ + scrollSpeed);
+            applyScrollOffset(registry);
+        }
     }
 }
 
@@ -332,6 +371,29 @@ bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const Vector2i& mo
     ratio       = std::clamp(ratio, 0.0F, 1.0F);
     setMusicVolume(registry, ratio * 100.0F);
     return true;
+}
+
+void SettingsMenu::applyScrollOffset(Registry& registry)
+{
+    if (originalPositions_.empty()) {
+        for (EntityId id = 0; id < registry.entityCount(); ++id) {
+            if (registry.isAlive(id) && registry.has<TransformComponent>(id)) {
+                originalPositions_[id] = registry.get<TransformComponent>(id).y;
+            }
+        }
+        baseSliderY_ = sliderY_;
+    }
+
+    for (const auto& [id, originalY] : originalPositions_) {
+        if (id == 0) {
+            continue;
+        }
+        if (registry.isAlive(id) && registry.has<TransformComponent>(id)) {
+            registry.get<TransformComponent>(id).y = originalY - scrollOffset_;
+        }
+    }
+
+    sliderY_ = baseSliderY_ - scrollOffset_;
 }
 
 std::string SettingsMenu::keyToString(KeyCode code)

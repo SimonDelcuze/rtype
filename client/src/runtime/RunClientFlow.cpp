@@ -32,12 +32,19 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue);
     }
 
-    auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
-    if (!lobbyEp.has_value()) {
-        return std::nullopt;
+    while (window.isOpen()) {
+        auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
+        if (!lobbyEp.has_value()) {
+            return std::nullopt;
+        }
+
+        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
+        if (gameEp.has_value()) {
+            return gameEp;
+        }
     }
 
-    return showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
+    return std::nullopt;
 }
 
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
