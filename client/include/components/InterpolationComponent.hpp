@@ -26,6 +26,8 @@ struct InterpolationComponent
     float velocityX = 0.0F;
     float velocityY = 0.0F;
 
+    float maxExtrapolationTime = 0.2F;
+
     void setTarget(float x, float y);
     void setTargetWithVelocity(float x, float y, float vx, float vy);
 };

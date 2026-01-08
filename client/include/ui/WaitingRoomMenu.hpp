@@ -67,4 +67,5 @@ class WaitingRoomMenu : public IMenu
     int dotCount_         = 1;
     int lastCountdownVal_ = -1;
     bool buttonClicked_   = false;
+    float readyRetryTimer_ = 0.0F;
 };

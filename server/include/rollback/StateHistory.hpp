@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/EntityStateCache.hpp"
+#include "replication/EntityStateCache.hpp"
 
 #include <array>
 #include <cstdint>

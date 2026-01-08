@@ -1,6 +1,6 @@
 #include "rollback/StateChecksum.hpp"
 
-#include "server/EntityStateCache.hpp"
+#include "replication/EntityStateCache.hpp"
 #include <algorithm>
 #include <cstring>
 

@@ -7,8 +7,8 @@
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"
 #include "ecs/Registry.hpp"
-#include "server/EntityStateCache.hpp"
-#include "server/EntityTypeResolver.hpp"
+#include "replication/EntityStateCache.hpp"
+#include "core/EntityTypeResolver.hpp"
 
 #include <algorithm>
 

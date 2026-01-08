@@ -106,19 +106,6 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
       running_(&runningFlag), networkBridge_(sendThread_)
 {
-<<<<<<< HEAD:server/src/GameInstance.cpp
-    if (interactive_) {
-        tui_ = std::make_unique<NetworkTui>(showNetwork_, showAdmin_);
-        Logger::instance().setConsoleOutputEnabled(false);
-        Logger::instance().setPostLogCallback([this](const std::string& msg) {
-            if (tui_)
-                tui_->addLog(msg);
-        });
-    }
-    desyncDetector_.setDesyncCallback([this](const DesyncInfo& info) { handleDesync(info); });
-
-=======
->>>>>>> main:server/src/game/GameInstance.cpp
     LevelLoadError error;
     if (LevelLoader::load(1, levelData_, error)) {
         levelLoaded_   = true;
