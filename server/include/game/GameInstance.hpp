@@ -14,6 +14,8 @@
 #include "network/Packets.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
+#include "rollback/DesyncDetector.hpp"
+#include "rollback/RollbackManager.hpp"
 #include "simulation/GameWorld.hpp"
 #include "simulation/PlayerCommand.hpp"
 #include "systems/BoundarySystem.hpp"
@@ -164,4 +166,9 @@ class GameInstance
     std::atomic<bool>* running_{nullptr};
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
+    RollbackManager rollbackManager_;
+    DesyncDetector desyncDetector_;
+
+    void captureStateSnapshot();
+    void handleDesync(const DesyncInfo& desyncInfo);
 };

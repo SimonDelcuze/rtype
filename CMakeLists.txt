@@ -36,6 +36,7 @@ else()
 endif()
 
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_CLIENT "Build client" ON)
 
 file(GLOB_RECURSE RTYPE_SHARED_SOURCES
     CONFIGURE_DEPENDS
@@ -47,17 +48,6 @@ add_library(rtype_shared OBJECT
 )
 
 target_compile_options(rtype_shared PRIVATE ${RTYPE_COMPILE_OPTIONS})
-
-set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
-set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
-set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-CPMAddPackage(
-    NAME SFML
-    GITHUB_REPOSITORY SFML/SFML
-    GIT_TAG 3.0.2
-    GIT_SHALLOW TRUE
-)
 
 CPMAddPackage(
     NAME nlohmann_json
@@ -130,7 +120,9 @@ target_link_libraries(rtype_shared
         lz4_static
 )
 
-add_subdirectory(client)
+if(BUILD_CLIENT)
+    add_subdirectory(client)
+endif()
 add_subdirectory(server)
 add_subdirectory(editor)
 

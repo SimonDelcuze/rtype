@@ -47,6 +47,7 @@ void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSo
 void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
 void sendClientReady(const IpEndpoint& server, UdpSocket& socket);
+void sendClientReadyLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
                    ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
 bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clientId, const IpEndpoint& server);

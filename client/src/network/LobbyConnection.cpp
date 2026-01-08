@@ -111,8 +111,8 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
                                                                   MessageType expectedResponse,
                                                                   std::chrono::milliseconds timeout)
 {
-    constexpr int maxRetries = 3;
-    const auto retryDelay    = std::chrono::milliseconds(200);
+    constexpr int maxRetries = 5;
+    const auto retryDelay    = std::chrono::milliseconds(300);
 
     for (int retry = 0; retry < maxRetries; ++retry) {
         if (!runningFlag_.load()) {
