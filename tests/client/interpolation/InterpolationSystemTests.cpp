@@ -94,9 +94,9 @@ TEST_F(InterpolationSystemTests, ExtrapolationBeyondWindow)
     auto& interp    = registry.emplace<InterpolationComponent>(entity);
 
     interp.setTargetWithVelocity(100.0F, 100.0F, 50.0F, 50.0F);
-    interp.interpolationTime = 1.0F;
+    interp.interpolationTime    = 1.0F;
     interp.maxExtrapolationTime = 0.2F;
-    interp.mode              = InterpolationMode::Extrapolate;
+    interp.mode                 = InterpolationMode::Extrapolate;
 
     system.update(registry, 1.5F);
 
