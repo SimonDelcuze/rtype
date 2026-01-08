@@ -123,3 +123,13 @@ void GameInstanceManager::broadcast(const std::string& message)
         instance->broadcast(message);
     }
 }
+
+void GameInstanceManager::stopAll()
+{
+    std::lock_guard<std::mutex> lock(instancesMutex_);
+    Logger::instance().info("[InstanceManager] Stopping all instances...");
+    for (auto& [roomId, instance] : instances_) {
+        instance->stop();
+    }
+    instances_.clear();
+}

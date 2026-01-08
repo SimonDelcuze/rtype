@@ -105,7 +105,7 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running);
 
     if (!window.isOpen())
         return std::nullopt;

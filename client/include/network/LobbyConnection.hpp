@@ -16,7 +16,7 @@
 class LobbyConnection
 {
   public:
-    LobbyConnection(const IpEndpoint& lobbyEndpoint);
+    LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::atomic<bool>& runningFlag);
     ~LobbyConnection();
 
     bool connect();
@@ -32,9 +32,10 @@ class LobbyConnection
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
                                                      MessageType expectedResponse,
-                                                     std::chrono::milliseconds timeout = std::chrono::seconds(5));
+                                                     std::chrono::milliseconds timeout = std::chrono::seconds(1));
 
     IpEndpoint lobbyEndpoint_;
     UdpSocket socket_;
+    const std::atomic<bool>& runningFlag_;
     std::uint16_t nextSequence_{0};
 };

@@ -77,7 +77,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                                                 ThreadSafeQueue<std::string>& broadcastQueue);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
-                                     std::string& errorMessage);
+                                     std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue);
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
                                  FontManager& fontManager, std::string& errorMessage,

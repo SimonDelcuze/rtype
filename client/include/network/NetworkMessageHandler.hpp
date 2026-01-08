@@ -32,6 +32,8 @@ class NetworkMessageHandler
 
     void poll();
 
+    [[nodiscard]] float getLastPacketAge() const;
+
   private:
     std::optional<PacketHeader> decodeHeader(const std::vector<std::uint8_t>& data) const;
     void handleSnapshot(const std::vector<std::uint8_t>& data);
@@ -70,4 +72,5 @@ class NetworkMessageHandler
     ThreadSafeQueue<std::string>* disconnectQueue_;
     ThreadSafeQueue<std::string>* broadcastQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
+    std::chrono::steady_clock::time_point lastPacketTime_;
 };

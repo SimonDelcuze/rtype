@@ -17,7 +17,8 @@ NetworkMessageHandler::NetworkMessageHandler(
       levelEventQueue_(levelEventQueue), spawnQueue_(spawnQueue), destroyQueue_(destroyQueue),
       handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag), countdownValueFlag_(countdownValueFlag),
       gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag), joinAcceptedFlag_(joinAcceptedFlag),
-      disconnectQueue_(disconnectQueue), broadcastQueue_(broadcastQueue)
+      disconnectQueue_(disconnectQueue), broadcastQueue_(broadcastQueue),
+      lastPacketTime_(std::chrono::steady_clock::now())
 {}
 
 namespace
@@ -220,6 +221,7 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     if (!hdr.has_value()) {
         return;
     }
+    lastPacketTime_ = std::chrono::steady_clock::now();
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinAccept)) {
         Logger::instance().info("Received ServerJoinAccept - connection accepted!");
         if (joinAcceptedFlag_ != nullptr) {
@@ -309,4 +311,11 @@ void NetworkMessageHandler::handleServerBroadcast(const std::vector<std::uint8_t
     if (pkt.has_value() && broadcastQueue_ != nullptr) {
         broadcastQueue_->push(pkt->getMessage());
     }
+}
+
+float NetworkMessageHandler::getLastPacketAge() const
+{
+    auto now     = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPacketTime_).count();
+    return static_cast<float>(elapsed) / 1000.0F;
 }

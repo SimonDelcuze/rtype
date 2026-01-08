@@ -72,6 +72,10 @@ void LobbyServer::run()
 void LobbyServer::stop()
 {
     Logger::instance().info("[LobbyServer] Stopping...");
+
+    broadcast("Server is shutting down");
+    instanceManager_.stopAll();
+
     receiveRunning_ = false;
 
     if (receiveWorker_.joinable()) {

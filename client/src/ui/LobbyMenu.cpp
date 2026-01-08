@@ -105,8 +105,9 @@ namespace
 } // namespace
 
 LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-                     ThreadSafeQueue<std::string>& broadcastQueue)
-    : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue)
+                     ThreadSafeQueue<std::string>& broadcastQueue, const std::atomic<bool>& runningFlag)
+    : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue),
+      runningFlag_(runningFlag)
 {}
 
 void LobbyMenu::create(Registry& registry)
@@ -130,7 +131,7 @@ void LobbyMenu::create(Registry& registry)
     backButtonEntity_ = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
                                      [this]() { onBackClicked(); });
 
-    lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_);
+    lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_, runningFlag_);
 
     if (!lobbyConnection_->connect()) {
         Logger::instance().error("[LobbyMenu] Failed to connect to lobby server");

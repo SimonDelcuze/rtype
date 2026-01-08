@@ -6,7 +6,9 @@
 #include <chrono>
 #include <thread>
 
-LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint) : lobbyEndpoint_(lobbyEndpoint) {}
+LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::atomic<bool>& runningFlag)
+    : lobbyEndpoint_(lobbyEndpoint), runningFlag_(runningFlag)
+{}
 
 LobbyConnection::~LobbyConnection()
 {
@@ -97,6 +99,10 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
     const auto retryDelay    = std::chrono::milliseconds(200);
 
     for (int retry = 0; retry < maxRetries; ++retry) {
+        if (!runningFlag_.load()) {
+            return {};
+        }
+
         auto sendResult = socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
 
         if (!sendResult.ok()) {
@@ -107,6 +113,9 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
         auto deadline = std::chrono::steady_clock::now() + timeout;
 
         while (std::chrono::steady_clock::now() < deadline) {
+            if (!runningFlag_.load()) {
+                return {};
+            }
             std::array<std::uint8_t, 2048> buffer{};
             IpEndpoint from{};
 

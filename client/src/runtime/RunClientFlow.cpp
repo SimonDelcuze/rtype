@@ -49,16 +49,17 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
 
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
-                                     std::string& errorMessage)
+                                     std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
 {
+    (void) errorMessage;
     if (joinResult == JoinResult::Denied) {
         Logger::instance().error("Connection rejected - game already in progress!");
         stopNetwork(net, welcomeThread, handshakeDone);
-        errorMessage = "Connection rejected - game in progress!";
+        broadcastQueue.push("Connection rejected - game in progress!");
         net.joinDenied.store(false);
         net.joinAccepted.store(false);
         if (options.useDefault) {
-            showErrorMessage(window, errorMessage);
+            showErrorMessage(window, "Connection rejected - game in progress!");
             return 1;
         }
         return std::nullopt;
@@ -67,9 +68,9 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
     if (joinResult == JoinResult::Timeout) {
         Logger::instance().error("Server did not respond - connection timeout");
         stopNetwork(net, welcomeThread, handshakeDone);
-        errorMessage = "Server did not respond - timeout";
+        broadcastQueue.push("Server did not respond - timeout");
         if (options.useDefault) {
-            showErrorMessage(window, errorMessage);
+            showErrorMessage(window, "Server did not respond - timeout");
             return 1;
         }
         return std::nullopt;
@@ -121,8 +122,15 @@ namespace
                 }
             });
 
-            if (net.handler)
+            if (net.handler) {
                 net.handler->poll();
+                if (net.handler->getLastPacketAge() > 5.0F) {
+                    Logger::instance().warn("[Net] Server timeout detected (5s)");
+                    disconnected   = true;
+                    sessionRunning = false;
+                    net.disconnectEvents.push("Server timeout");
+                }
+            }
 
             std::string disconnectMsg;
             if (net.disconnectEvents.tryPop(disconnectMsg)) {

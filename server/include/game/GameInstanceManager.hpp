@@ -33,6 +33,8 @@ class GameInstanceManager
 
     void cleanupEmptyInstances();
 
+    void stopAll();
+
     void broadcast(const std::string& message);
 
   private:

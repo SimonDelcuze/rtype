@@ -18,13 +18,14 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     std::thread welcomeThread;
 
     if (!setupNetwork(net, inputBuffer, *serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
-        errorMessage = "Failed to setup network";
+        broadcastQueue.push("Failed to setup network");
         return ClientLoopResult{true, std::nullopt};
     }
 
     auto joinResult = waitForJoinResponse(window, net);
     if (joinResult != JoinResult::Accepted) {
-        auto exitCode = handleJoinFailure(joinResult, window, options, net, welcomeThread, handshakeDone, errorMessage);
+        auto exitCode = handleJoinFailure(joinResult, window, options, net, welcomeThread, handshakeDone, errorMessage,
+                                          broadcastQueue);
         return ClientLoopResult{exitCode.has_value() ? false : true, exitCode};
     }
 
