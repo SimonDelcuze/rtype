@@ -152,9 +152,9 @@ void GameInstance::run()
     }
 }
 
-void GameInstance::stop()
+void GameInstance::stop(const std::string& reason)
 {
-    notifyDisconnection("Room closed");
+    notifyDisconnection(reason);
     gameLoop_.stop();
     sendThread_.stop();
     receiveThread_.stop();

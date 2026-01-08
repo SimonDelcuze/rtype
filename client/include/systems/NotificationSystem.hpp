@@ -4,27 +4,23 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/Window.hpp"
 #include "systems/ISystem.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <deque>
-#include <string>
 
 class NotificationSystem : public ISystem
 {
   public:
-    NotificationSystem(Window& window, FontManager& fonts, ThreadSafeQueue<std::string>& broadcastQueue);
-    virtual ~NotificationSystem();
+    NotificationSystem(Window& window, FontManager& fontManager, ThreadSafeQueue<NotificationData>& broadcastQueue);
+    ~NotificationSystem() override;
 
-    void update(Registry& registry, float deltaTime) override;
+    void update(Registry& registry, float dt) override;
 
   private:
-    struct Notification
-    {
-        std::string message;
-        float timer;
-    };
+    void render(const NotificationData& notif, float alpha, float scale, float yOffset);
 
     Window& window_;
-    FontManager& fonts_;
-    ThreadSafeQueue<std::string>& broadcastQueue_;
-    std::deque<Notification> notifications_;
+    FontManager& fontManager_;
+    ThreadSafeQueue<NotificationData>& broadcastQueue_;
+    std::deque<NotificationData> activeNotifications_;
 };

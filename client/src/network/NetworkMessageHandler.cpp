@@ -10,7 +10,7 @@ NetworkMessageHandler::NetworkMessageHandler(
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
     ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
     ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
-    ThreadSafeQueue<std::string>* disconnectQueue, ThreadSafeQueue<std::string>* broadcastQueue,
+    ThreadSafeQueue<std::string>* disconnectQueue, ThreadSafeQueue<NotificationData>* broadcastQueue,
     std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag, std::atomic<int>* countdownValueFlag,
     std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
     : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
@@ -44,7 +44,7 @@ NetworkMessageHandler::NetworkMessageHandler(ThreadSafeQueue<std::vector<std::ui
                                              ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                                              ThreadSafeQueue<LevelInitData>& levelInitQueue)
     : NetworkMessageHandler(rawQueue, snapshotQueue, levelInitQueue, dummyLevelEventQueue(), dummySpawnQueue(),
-                            dummyDestroyQueue())
+                            dummyDestroyQueue(), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {}
 
 void NetworkMessageHandler::poll()
@@ -56,7 +56,6 @@ void NetworkMessageHandler::poll()
     auto now = std::chrono::steady_clock::now();
     for (auto it = chunkAccumulators_.begin(); it != chunkAccumulators_.end();) {
         if (now - it->second.lastUpdate > std::chrono::seconds(2)) {
-            Logger::instance().warn("[Net] Dropping stale snapshot chunks for tick " + std::to_string(it->first));
             it = chunkAccumulators_.erase(it);
         } else {
             ++it;
@@ -76,10 +75,6 @@ std::optional<PacketHeader> NetworkMessageHandler::decodeHeader(const std::vecto
     if (hdr->packetType != static_cast<std::uint8_t>(PacketType::ServerToClient)) {
         return std::nullopt;
     }
-    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Snapshot) && hdr->payloadSize > 1400) {
-        Logger::instance().warn("[Net] Large snapshot payloadSize=" + std::to_string(hdr->payloadSize) +
-                                " packetSize=" + std::to_string(data.size()));
-    }
     return hdr;
 }
 
@@ -87,7 +82,6 @@ void NetworkMessageHandler::handleSnapshot(const std::vector<std::uint8_t>& data
 {
     auto parsed = SnapshotParser::parse(data);
     if (!parsed.has_value()) {
-        Logger::instance().warn("[Net] Failed to parse snapshot packet size=" + std::to_string(data.size()));
         return;
     }
     snapshotQueue_.push(std::move(*parsed));
@@ -123,7 +117,6 @@ void NetworkMessageHandler::handleCountdownTick(const std::vector<std::uint8_t>&
         return;
     }
     std::uint8_t value = data[PacketHeader::kSize];
-    Logger::instance().info("Countdown tick received: " + std::to_string(value));
     if (countdownValueFlag_ != nullptr) {
         countdownValueFlag_->store(static_cast<int>(value));
     }
@@ -211,10 +204,11 @@ void NetworkMessageHandler::handleServerDisconnect(const std::vector<std::uint8_
             disconnectQueue_->push(pkt->getReason());
         }
         if (broadcastQueue_ != nullptr) {
-            broadcastQueue_->push(pkt->getReason());
+            broadcastQueue_->push(NotificationData{pkt->getReason(), 5.0F});
         }
     }
 }
+
 void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
 {
     auto hdr = decodeHeader(data);
@@ -223,21 +217,18 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     lastPacketTime_ = std::chrono::steady_clock::now();
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinAccept)) {
-        Logger::instance().info("Received ServerJoinAccept - connection accepted!");
         if (joinAcceptedFlag_ != nullptr) {
             joinAcceptedFlag_->store(true);
         }
         return;
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinDeny)) {
-        Logger::instance().warn("Received ServerJoinDeny - connection rejected!");
         if (joinDeniedFlag_ != nullptr) {
             joinDeniedFlag_->store(true);
         }
         return;
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::GameStart)) {
-        Logger::instance().info("Received GameStart - exiting waiting room");
         if (gameStartFlag_ != nullptr) {
             gameStartFlag_->store(true);
         }
@@ -247,7 +238,6 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
         return;
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::AllReady)) {
-        Logger::instance().info("Received SERVER_ALL_READY - all players are ready");
         if (allReadyFlag_ != nullptr) {
             allReadyFlag_->store(true);
         }
@@ -258,20 +248,7 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
         return;
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Snapshot)) {
-        static std::uint32_t lastTick = 0;
-        static auto lastTime          = std::chrono::steady_clock::now();
         handleSnapshot(data);
-        if (handshakeFlag_ != nullptr) {
-            handshakeFlag_->store(true);
-        }
-        if (data.size() >= PacketHeader::kSize) {
-            std::uint32_t tick = hdr->tickId;
-            auto now           = std::chrono::steady_clock::now();
-            if (tick != lastTick || now - lastTime > std::chrono::seconds(1)) {
-                lastTick = tick;
-                lastTime = now;
-            }
-        }
         return;
     }
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::SnapshotChunk)) {
@@ -305,11 +282,12 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
         return;
     }
 }
+
 void NetworkMessageHandler::handleServerBroadcast(const std::vector<std::uint8_t>& data)
 {
     auto pkt = ServerBroadcastPacket::decode(data.data(), data.size());
     if (pkt.has_value() && broadcastQueue_ != nullptr) {
-        broadcastQueue_->push(pkt->getMessage());
+        broadcastQueue_->push(NotificationData{pkt->getMessage(), 5.0F});
     }
 }
 

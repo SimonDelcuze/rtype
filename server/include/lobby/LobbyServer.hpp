@@ -28,6 +28,7 @@ class LobbyServer
     void stop();
 
     void broadcast(const std::string& message);
+    void notifyDisconnection(const std::string& reason);
 
   private:
     void receiveThread();

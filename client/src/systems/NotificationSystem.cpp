@@ -5,43 +5,46 @@
 
 #include <algorithm>
 
-NotificationSystem::NotificationSystem(Window& window, FontManager& fonts, ThreadSafeQueue<std::string>& broadcastQueue)
-    : window_(window), fonts_(fonts), broadcastQueue_(broadcastQueue)
+NotificationSystem::NotificationSystem(Window& window, FontManager& fontManager,
+                                       ThreadSafeQueue<NotificationData>& broadcastQueue)
+    : window_(window), fontManager_(fontManager), broadcastQueue_(broadcastQueue)
 {}
 
 NotificationSystem::~NotificationSystem()
 {
-    for (const auto& notif : notifications_) {
-        broadcastQueue_.push(notif.message);
+    while (!activeNotifications_.empty()) {
+        broadcastQueue_.push(activeNotifications_.front());
+        activeNotifications_.pop_front();
     }
 }
 
-void NotificationSystem::update(Registry&, float deltaTime)
+void NotificationSystem::update(Registry& registry, float deltaTime)
 {
-    std::string newMsg;
-    while (broadcastQueue_.tryPop(newMsg)) {
-        Logger::instance().info("[NotificationSystem] Received message: " + newMsg);
-        notifications_.push_back({newMsg, 5.0F});
+    (void) registry;
+
+    NotificationData next;
+    while (broadcastQueue_.tryPop(next)) {
+        activeNotifications_.push_back(next);
     }
 
-    for (auto it = notifications_.begin(); it != notifications_.end();) {
+    for (auto it = activeNotifications_.begin(); it != activeNotifications_.end();) {
         it->timer -= deltaTime;
         if (it->timer <= 0.0F) {
-            it = notifications_.erase(it);
+            it = activeNotifications_.erase(it);
         } else {
             ++it;
         }
     }
 
-    if (notifications_.empty()) {
+    if (activeNotifications_.empty()) {
         return;
     }
-    auto font = fonts_.get("ui");
+
+    auto font = fontManager_.get("ui");
     if (!font) {
-        font = fonts_.get("score_font");
+        font = fontManager_.get("score_font");
     }
     if (!font) {
-        Logger::instance().error("[NotificationSystem] Font 'ui' or 'score_font' not found!");
         return;
     }
 
@@ -55,7 +58,7 @@ void NotificationSystem::update(Registry&, float deltaTime)
     const float animDuration  = 0.4F;
     const float totalDuration = 5.0F;
 
-    for (const auto& notif : notifications_) {
+    for (const auto& notif : activeNotifications_) {
         float alpha   = 255.0F;
         float scale   = 1.0F;
         float yOffset = 0.0F;

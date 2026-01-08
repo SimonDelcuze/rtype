@@ -10,6 +10,7 @@
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include <cmath>
 #include <utility>
 
 namespace
@@ -114,6 +115,7 @@ void ConnectionMenu::create(Registry& registry)
     done_         = false;
     useDefault_   = false;
     openSettings_ = false;
+    connecting_   = false;
 
     if (!fonts_.has("ui"))
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
@@ -127,14 +129,13 @@ void ConnectionMenu::create(Registry& registry)
 
     createButton(registry, 440.0F, 550.0F, "Connect", Color(0, 120, 200), [this]() {
         Logger::instance().info("Connect clicked");
-        done_       = true;
-        useDefault_ = false;
+        connecting_ = true;
     });
 
     createButton(registry, 660.0F, 550.0F, "Use Default", Color(80, 80, 80), [this]() {
         Logger::instance().info("Use Default clicked");
-        done_       = true;
         useDefault_ = true;
+        connecting_ = true;
     });
 
     createButton(registry, 550.0F, 620.0F, "Settings", Color(70, 70, 70), [this]() {
@@ -150,7 +151,6 @@ void ConnectionMenu::create(Registry& registry)
     });
 
     if (!initialError_.empty()) {
-        setError(registry, initialError_);
         initialError_.clear();
     }
 }
@@ -167,7 +167,64 @@ bool ConnectionMenu::isDone() const
 
 void ConnectionMenu::handleEvent(Registry&, const Event&) {}
 
-void ConnectionMenu::render(Registry&, Window&) {}
+void ConnectionMenu::render(Registry& registry, Window&)
+{
+    if (connecting_) {
+        if (connectingText_ == 0 || !registry.isAlive(connectingText_)) {
+            showConnectingText(registry);
+        }
+
+        constexpr float dotInterval = 0.33F;
+        constexpr float exitDelay   = 1.5F;
+
+        auto now      = std::chrono::steady_clock::now();
+        float elapsed = std::chrono::duration<float>(now - connectingStartTime_).count();
+
+        float cycleTime = dotInterval * 3.0F;
+        float phase     = std::fmod(elapsed, cycleTime);
+        dotCount_       = (static_cast<int>(phase / dotInterval) % 3) + 1;
+        updateConnectingText(registry);
+
+        if (elapsed >= exitDelay) {
+            done_ = true;
+        }
+    }
+}
+
+void ConnectionMenu::showConnectingText(Registry& registry)
+{
+    if (connectingText_ != 0 && registry.isAlive(connectingText_)) {
+        return;
+    }
+
+    EntityId entity = registry.createEntity();
+    auto& transform = registry.emplace<TransformComponent>(entity);
+    transform.x     = 550.0F;
+    transform.y     = 500.0F;
+
+    auto text     = TextComponent::create("ui", 32, Color(180, 180, 180, 200));
+    text.content  = "Connecting to server.";
+    text.centered = true;
+    registry.emplace<TextComponent>(entity, text);
+    registry.emplace<LayerComponent>(entity, 100);
+
+    connectingText_      = entity;
+    connectingStartTime_ = std::chrono::steady_clock::now();
+    dotCount_            = 1;
+}
+
+void ConnectionMenu::updateConnectingText(Registry& registry)
+{
+    if (connectingText_ == 0 || !registry.isAlive(connectingText_)) {
+        return;
+    }
+    if (!registry.has<TextComponent>(connectingText_)) {
+        return;
+    }
+
+    std::string dots(static_cast<std::size_t>(dotCount_), '.');
+    registry.get<TextComponent>(connectingText_).content = "Connecting to server" + dots;
+}
 
 ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
 {
@@ -189,22 +246,7 @@ ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
     return result;
 }
 
-void ConnectionMenu::setError(Registry& registry, const std::string& message)
-{
-    if (errorText_ != 0 && registry.isAlive(errorText_)) {
-        registry.destroyEntity(errorText_);
-    }
-
-    EntityId entity = registry.createEntity();
-    registry.emplace<TransformComponent>(entity);
-
-    auto text     = TextComponent::create("ui", 40, Color::Red);
-    text.content  = message;
-    text.centered = true;
-    registry.emplace<TextComponent>(entity, text);
-    registry.emplace<LayerComponent>(entity, 1000);
-    errorText_ = entity;
-}
+void ConnectionMenu::setError(Registry&, const std::string&) {}
 
 void ConnectionMenu::reset()
 {

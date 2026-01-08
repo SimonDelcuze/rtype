@@ -4,6 +4,7 @@
 #include "core/Session.hpp"
 #include "lobby/LobbyPackets.hpp"
 #include "network/ServerBroadcastPacket.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 
 #include <array>
 #include <chrono>
@@ -73,8 +74,8 @@ void LobbyServer::stop()
 {
     Logger::instance().info("[LobbyServer] Stopping...");
 
-    broadcast("Server is shutting down");
-    instanceManager_.stopAll();
+    notifyDisconnection("Server disconnected");
+    instanceManager_.stopAll("Server disconnected");
 
     receiveRunning_ = false;
 
@@ -107,6 +108,22 @@ void LobbyServer::broadcast(const std::string& message)
     }
 
     instanceManager_.broadcast(message);
+}
+
+void LobbyServer::notifyDisconnection(const std::string& reason)
+{
+    Logger::instance().info("[LobbyServer] Notify disconnect: " + reason);
+
+    auto pkt   = ServerDisconnectPacket::create(reason);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        for (const auto& [key, session] : lobbySessions_) {
+            sendPacket(vec, session.endpoint);
+        }
+    }
 }
 
 ServerStats LobbyServer::aggregateStats()

@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "network/ServerBroadcastPacket.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 
 #include <chrono>
 #include <thread>
@@ -33,7 +34,7 @@ void LobbyConnection::disconnect()
     socket_.close();
 }
 
-void LobbyConnection::poll(ThreadSafeQueue<std::string>& broadcastQueue)
+void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     std::array<std::uint8_t, 2048> buffer{};
     IpEndpoint from{};
@@ -49,10 +50,25 @@ void LobbyConnection::poll(ThreadSafeQueue<std::string>& broadcastQueue)
             auto pkt = ServerBroadcastPacket::decode(buffer.data(), recvResult.size);
             if (pkt.has_value()) {
                 Logger::instance().info("[LobbyConnection] Received broadcast: " + pkt->getMessage());
-                broadcastQueue.push(pkt->getMessage());
+                broadcastQueue.push(NotificationData{pkt->getMessage(), 5.0F});
+            }
+        }
+
+        if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerDisconnect)) {
+            auto pkt = ServerDisconnectPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value() && pkt->getReason() == "Server disconnected") {
+                Logger::instance().warn("[LobbyConnection] Server disconnected");
+                serverLost_ = true;
             }
         }
     }
+}
+
+bool LobbyConnection::ping()
+{
+    auto packet   = buildListRoomsPacket(nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::LobbyRoomList, std::chrono::milliseconds(500));
+    return !response.empty();
 }
 
 std::optional<RoomListResult> LobbyConnection::requestRoomList()
@@ -130,6 +146,15 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
 
                 if (hdr.has_value() && static_cast<MessageType>(hdr->messageType) == MessageType::LobbyJoinFailed) {
                     return {};
+                }
+
+                if (hdr.has_value() && static_cast<MessageType>(hdr->messageType) == MessageType::ServerDisconnect) {
+                    auto discPkt = ServerDisconnectPacket::decode(buffer.data(), recvResult.size);
+                    if (discPkt.has_value() && discPkt->getReason() == "Server disconnected") {
+                        Logger::instance().warn("[LobbyConnection] Server disconnected while waiting for response");
+                        serverLost_ = true;
+                        return {};
+                    }
                 }
             }
 

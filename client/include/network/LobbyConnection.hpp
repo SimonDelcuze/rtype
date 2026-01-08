@@ -4,6 +4,7 @@
 #include "network/LobbyPackets.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <array>
 #include <atomic>
@@ -27,7 +28,12 @@ class LobbyConnection
     std::optional<RoomCreatedResult> createRoom();
 
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId);
-    void poll(ThreadSafeQueue<std::string>& broadcastQueue);
+    void poll(ThreadSafeQueue<NotificationData>& broadcastQueue);
+    bool ping();
+    bool isServerLost() const
+    {
+        return serverLost_;
+    }
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
@@ -38,4 +44,5 @@ class LobbyConnection
     UdpSocket socket_;
     const std::atomic<bool>& runningFlag_;
     std::uint16_t nextSequence_{0};
+    bool serverLost_{false};
 };

@@ -16,46 +16,22 @@
 #include "scheduler/ClientScheduler.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/ButtonSystem.hpp"
+#include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
 
 #include <chrono>
 
-std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage,
-                                                ThreadSafeQueue<std::string>& broadcastQueue)
-{
-    if (options.useDefault) {
-        Logger::instance().info("Using default lobby: 127.0.0.1:50010");
-        auto lobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
-        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue);
-    }
-
-    while (window.isOpen()) {
-        auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
-        if (!lobbyEp.has_value()) {
-            return std::nullopt;
-        }
-
-        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
-        if (gameEp.has_value()) {
-            return gameEp;
-        }
-    }
-
-    return std::nullopt;
-}
-
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
-                                     std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
+                                     std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     (void) errorMessage;
     if (joinResult == JoinResult::Denied) {
         Logger::instance().error("Connection rejected - game already in progress!");
         stopNetwork(net, welcomeThread, handshakeDone);
-        broadcastQueue.push("Connection rejected - game in progress!");
+        broadcastQueue.push(NotificationData{"Connection rejected - game in progress!", 5.0F});
         net.joinDenied.store(false);
         net.joinAccepted.store(false);
         if (options.useDefault) {
@@ -68,7 +44,7 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
     if (joinResult == JoinResult::Timeout) {
         Logger::instance().error("Server did not respond - connection timeout");
         stopNetwork(net, welcomeThread, handshakeDone);
-        broadcastQueue.push("Server did not respond - timeout");
+        broadcastQueue.push(NotificationData{"Server did not respond - timeout", 5.0F});
         if (options.useDefault) {
             showErrorMessage(window, "Server did not respond - timeout");
             return 1;
@@ -103,13 +79,14 @@ namespace
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
-                         bool& disconnected)
+                         bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue)
     {
         auto onEvent = [&](const Event& event) {
             mapper.handleEvent(event);
             buttonSystem.handleEvent(registry, event);
         };
         (void) errorMessage;
+        (void) broadcastQueue;
 
         bool sessionRunning = true;
         auto lastTime       = std::chrono::steady_clock::now();
@@ -137,6 +114,11 @@ namespace
                 Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
                 disconnected   = true;
                 sessionRunning = false;
+
+                if (disconnectMsg == "Server disconnected" || disconnectMsg == "Server timeout") {
+                    serverLost = true;
+                }
+
                 Logger::instance().info("[Redirection] Session termination triggered. Reason: " + disconnectMsg);
             }
 
@@ -193,7 +175,7 @@ namespace
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
                                  FontManager& fontManager, std::string& errorMessage,
-                                 ThreadSafeQueue<std::string>& broadcastQueue)
+                                 ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     GraphicsFactory graphicsFactory;
     SoundManager soundManager;
@@ -213,14 +195,15 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         fontManager.load("score_font", "client/assets/fonts/ui.ttf");
     }
 
+    bool serverLost = false;
     if (options.useDefault) {
         sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage, broadcastQueue)) {
-        return GameSessionResult{true, std::nullopt};
+    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage, broadcastQueue, serverLost)) {
+        return GameSessionResult{true, serverLost, std::nullopt};
     }
 
     if (!window.isOpen()) {
-        return GameSessionResult{false, std::nullopt};
+        return GameSessionResult{false, false, std::nullopt};
     }
 
     registerEntityTypes(typeRegistry, textureManager, manifest);
@@ -247,7 +230,8 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     ButtonSystem buttonSystem(window, fontManager);
 
     bool disconnected = false;
-    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected);
+    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
+                    serverLost, broadcastQueue);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
@@ -256,10 +240,10 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         auto result =
             runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.finalScore, gameState.victory);
         if (result == GameOverMenu::Result::Retry) {
-            return GameSessionResult{true, std::nullopt};
+            return GameSessionResult{true, serverLost, std::nullopt};
         }
     }
 
     bool retry = disconnected || !errorMessage.empty();
-    return GameSessionResult{retry, (retry ? std::nullopt : std::make_optional(0))};
+    return GameSessionResult{retry, serverLost, (retry ? std::nullopt : std::make_optional(0))};
 }

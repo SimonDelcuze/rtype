@@ -83,7 +83,7 @@ void sendClientReady(const IpEndpoint& server, UdpSocket& socket)
 }
 
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
-                   ThreadSafeQueue<std::string>* broadcastQueue)
+                   ThreadSafeQueue<NotificationData>* broadcastQueue)
 {
     if (net.socket == nullptr) {
         net.socket = std::make_shared<UdpSocket>();

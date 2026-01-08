@@ -8,6 +8,7 @@
 #include "network/LobbyConnection.hpp"
 #include "network/LobbyPackets.hpp"
 #include "ui/IMenu.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <memory>
 #include <optional>
@@ -27,7 +28,7 @@ class LobbyMenu : public IMenu
     };
 
     LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-              ThreadSafeQueue<std::string>& broadcastQueue, const std::atomic<bool>& runningFlag);
+              ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -62,7 +63,7 @@ class LobbyMenu : public IMenu
     FontManager& fonts_;
     TextureManager& textures_;
     IpEndpoint lobbyEndpoint_;
-    ThreadSafeQueue<std::string>& broadcastQueue_;
+    ThreadSafeQueue<NotificationData>& broadcastQueue_;
     const std::atomic<bool>& runningFlag_;
     std::unique_ptr<LobbyConnection> lobbyConnection_;
     Result result_;
@@ -80,5 +81,6 @@ class LobbyMenu : public IMenu
     EntityId backButtonEntity_{0};
 
     float refreshTimer_{0.0F};
+    int consecutiveFailures_{0};
     constexpr static float kRefreshInterval = 2.0F;
 };
