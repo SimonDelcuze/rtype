@@ -44,6 +44,7 @@ class SettingsMenu : public IMenu
     void setMusicVolume(Registry& registry, float volume);
     void refreshVolumeLabel(Registry& registry);
     bool handleVolumeMouseEvent(Registry& registry, const Vector2i& mousePos, bool isClick);
+    void applyScrollOffset(Registry& registry);
     static std::string keyToString(KeyCode key);
 
     FontManager& fonts_;
@@ -52,11 +53,16 @@ class SettingsMenu : public IMenu
     bool done_ = false;
     std::optional<BindingAction> awaitingAction_;
     std::unordered_map<BindingAction, EntityId> actionButtons_;
-    float musicVolume_         = 100.0F;
-    EntityId volumeValueLabel_ = 0;
-    bool draggingVolume_       = false;
-    float sliderX_             = 520.0F;
-    float sliderY_             = 0.0F;
-    float sliderWidth_         = 320.0F;
-    float sliderHeight_        = 10.0F;
+    std::unordered_map<EntityId, float> originalPositions_;
+    float musicVolume_            = 100.0F;
+    EntityId volumeValueLabel_    = 0;
+    EntityId networkDebugButton_  = 0;
+    bool draggingVolume_          = false;
+    float scrollOffset_           = 0.0F;
+    float contentHeight_          = 0.0F;
+    float baseSliderY_            = 0.0F;
+    float sliderX_                = 520.0F;
+    float sliderY_                = 0.0F;
+    float sliderWidth_            = 320.0F;
+    float sliderHeight_           = 10.0F;
 };
