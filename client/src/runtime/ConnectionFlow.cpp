@@ -20,10 +20,10 @@
 #include <chrono>
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
-                                             std::string& errorMessage)
+                                             std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
 {
     startLauncherMusic(g_musicVolume);
-    MenuRunner runner(window, fontManager, textureManager, g_running);
+    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     while (window.isOpen()) {
         auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
@@ -56,7 +56,8 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
     return std::nullopt;
 }
 
-std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
+std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
+                                               ThreadSafeQueue<std::string>& broadcastQueue)
 {
     if (useDefault) {
         Logger::instance().info("Using default server: 127.0.0.1:50010");
@@ -65,7 +66,7 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
 
     FontManager fontManager;
     TextureManager textureManager;
-    MenuRunner runner(window, fontManager, textureManager, g_running);
+    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     while (window.isOpen()) {
         startLauncherMusic(g_musicVolume);
@@ -99,11 +100,12 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault)
 }
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          FontManager& fontManager, TextureManager& textureManager)
+                                                          FontManager& fontManager, TextureManager& textureManager,
+                                                          ThreadSafeQueue<std::string>& broadcastQueue)
 {
-    MenuRunner runner(window, fontManager, textureManager, g_running);
+    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue);
 
     if (!window.isOpen())
         return std::nullopt;
@@ -156,11 +158,13 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
     return JoinResult::Timeout;
 }
 
-bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp)
+bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage,
+                    ThreadSafeQueue<std::string>& broadcastQueue)
 {
     FontManager fontManager;
     TextureManager textureManager;
     Registry registry;
+    (void) errorMessage;
 
     if (!fontManager.has("ui"))
         fontManager.load("ui", "client/assets/fonts/ui.ttf");
@@ -172,10 +176,20 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
     ButtonSystem buttonSystem(window, fontManager);
     HUDSystem hudSystem(window, fontManager, textureManager);
     RenderSystem renderSystem(window);
+    NotificationSystem notificationSystem(window, fontManager, broadcastQueue);
 
     auto lastTime = std::chrono::steady_clock::now();
 
     while (window.isOpen() && !menu.isDone() && g_running) {
+        if (net.handler)
+            net.handler->poll();
+
+        std::string disconnectMsg;
+        if (net.disconnectEvents.tryPop(disconnectMsg)) {
+            Logger::instance().warn("[Net] Disconnected from waiting room: " + disconnectMsg);
+            return false;
+        }
+
         auto currentTime                     = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsed = currentTime - lastTime;
         lastTime                             = currentTime;
@@ -190,9 +204,6 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
             menu.handleEvent(registry, event);
         });
 
-        if (net.handler)
-            net.handler->poll();
-
         menu.update(registry, dt);
 
         window.clear(Color{30, 30, 40});
@@ -202,6 +213,7 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         buttonSystem.update(registry, dt);
         hudSystem.update(registry, dt);
         menu.render(registry, window);
+        notificationSystem.update(registry, dt);
         window.display();
     }
 

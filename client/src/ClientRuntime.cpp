@@ -20,8 +20,11 @@ int runClient(const ClientOptions& options)
     FontManager fontManager;
     TextureManager textureManager;
     std::string errorMessage;
+    ThreadSafeQueue<std::string> broadcastQueue;
     while (window.isOpen() && g_running) {
-        ClientLoopResult result = runClientIteration(options, window, fontManager, textureManager, errorMessage);
+        Logger::instance().info("[Client] Starting new iteration...");
+        ClientLoopResult result =
+            runClientIteration(options, window, fontManager, textureManager, errorMessage, broadcastQueue);
         if (result.exitCode.has_value())
             return *result.exitCode;
         if (!result.continueLoop)

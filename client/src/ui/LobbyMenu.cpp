@@ -104,8 +104,9 @@ namespace
     }
 } // namespace
 
-LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint)
-    : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint)
+LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
+                     ThreadSafeQueue<std::string>& broadcastQueue)
+    : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue)
 {}
 
 void LobbyMenu::create(Registry& registry)
@@ -173,6 +174,10 @@ void LobbyMenu::handleEvent(Registry& registry, const Event& event)
 void LobbyMenu::render(Registry& registry, Window& window)
 {
     (void) window;
+
+    if (lobbyConnection_) {
+        lobbyConnection_->poll(broadcastQueue_);
+    }
 
     if (state_ == State::Loading || state_ == State::ShowingRooms) {
         refreshTimer_ += 0.016F;

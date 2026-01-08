@@ -3,7 +3,9 @@
 #include <chrono>
 #include <deque>
 #include <string>
+#ifndef _WIN32
 #include <termios.h>
+#endif
 #include <vector>
 
 struct NetworkStats
@@ -55,5 +57,7 @@ class NetworkTui
     bool _showNetwork{false};
     bool _adminMode{false};
     std::string _inputBuffer;
+#ifndef _WIN32
     struct termios _origTermios;
+#endif
 };

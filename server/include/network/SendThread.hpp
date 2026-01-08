@@ -14,7 +14,7 @@
 class SendThread
 {
   public:
-    SendThread(const IpEndpoint& bindTo, std::vector<IpEndpoint> clients, double hz = 60.0);
+    SendThread(const IpEndpoint& bindTo, std::vector<IpEndpoint> clients, double hz = 60.0, int roomId = -1);
     ~SendThread();
 
     bool start();
@@ -41,4 +41,5 @@ class SendThread
     double hz_;
     std::mutex payloadMutex_;
     std::vector<std::uint8_t> latest_;
+    int roomId_;
 };

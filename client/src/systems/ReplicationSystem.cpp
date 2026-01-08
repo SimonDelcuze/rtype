@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "animation/AnimationRegistry.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/AudioComponent.hpp"
 #include "components/BossComponent.hpp"
 #include "components/ColliderComponent.hpp"
 #include "components/DirectionalAnimationComponent.hpp"
@@ -101,6 +102,9 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         EntityId id                       = registry.createEntity();
         remoteToLocal_[spawnPkt.entityId] = id;
         remoteToType_[spawnPkt.entityId]  = spawnPkt.entityType;
+        if (spawnPkt.entityType == 16) {
+            playExplosionSound(registry);
+        }
         applyArchetype(registry, id, spawnPkt.entityType);
         TransformComponent t{};
         auto [sx, sy] = defaultScaleForType(*types_, spawnPkt.entityType);
@@ -190,6 +194,9 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         auto it = remoteToLocal_.find(destroyPkt.entityId);
         if (it != remoteToLocal_.end()) {
             if (registry.isAlive(it->second)) {
+                if (isPlayerEntity(registry, it->second)) {
+                    playExplosionSound(registry);
+                }
                 registry.destroyEntity(it->second);
             }
             remoteToLocal_.erase(it);
@@ -533,6 +540,9 @@ void ReplicationSystem::applyDead(Registry& registry, EntityId id, const Snapsho
         return;
     }
     if (*entity.dead && registry.isAlive(id)) {
+        if (isPlayerEntity(registry, id)) {
+            playExplosionSound(registry);
+        }
         registry.destroyEntity(id);
         for (auto it = remoteToLocal_.begin(); it != remoteToLocal_.end(); ++it) {
             if (it->second == id) {
@@ -540,6 +550,7 @@ void ReplicationSystem::applyDead(Registry& registry, EntityId id, const Snapsho
                 break;
             }
         }
+        remoteToType_.erase(entity.entityId);
     }
 }
 
@@ -582,4 +593,90 @@ void ReplicationSystem::applyInterpolation(Registry& registry, EntityId id, cons
         interp->velocityX = *entity.velX;
     if (entity.velY.has_value())
         interp->velocityY = *entity.velY;
+}
+
+void ReplicationSystem::playExplosionSound(Registry&)
+{
+    if (explosionCooldown_ > 0.0F) {
+        return;
+    }
+
+    if (!explosionBuffer_) {
+        GraphicsFactory factory;
+        explosionBuffer_ = factory.createSoundBuffer();
+        if (explosionBuffer_->loadFromFile("client/assets/sounds/explosion.wav") ||
+            explosionBuffer_->loadFromFile("sounds/explosion.wav")) {
+            explosionLoaded_ = true;
+        } else {
+            explosionBuffer_.reset();
+        }
+    }
+    if (!explosionLoaded_ || !explosionBuffer_) {
+        return;
+    }
+
+    if (explosionVoices_.empty()) {
+        GraphicsFactory factory;
+        explosionVoices_.push_back(factory.createSound());
+    }
+
+    auto& voice = explosionVoices_.front();
+    voice->stop();
+    voice->setBuffer(*explosionBuffer_);
+    const float explosionVolume = std::clamp(std::max(80.0F, g_musicVolume * 2.5F), 0.0F, 100.0F);
+    voice->setVolume(explosionVolume);
+    voice->setLoop(false);
+    voice->setPitch(1.25F);
+    voice->play();
+
+    explosionCooldown_ = 0.05F;
+}
+
+bool ReplicationSystem::isEnemyEntity(const Registry& registry, EntityId id) const
+{
+    std::optional<std::uint16_t> typeValue;
+    for (const auto& kv : remoteToLocal_) {
+        if (kv.second == id) {
+            auto typeIt = remoteToType_.find(kv.first);
+            if (typeIt != remoteToType_.end()) {
+                typeValue = typeIt->second;
+            }
+            break;
+        }
+    }
+
+    if (typeValue.has_value()) {
+        const std::uint16_t t       = *typeValue;
+        const bool isProjectileType = (t >= 3 && t <= 8) || t == 15 || t == 22;
+        const bool isPlayerOrFriend = t == 1 || t == 12 || t == 13 || t == 14;
+        const bool isObstacle       = t == 9 || t == 10 || t == 11;
+        const bool isBackground     = t == 16;
+        if (isProjectileType || isPlayerOrFriend || isObstacle || isBackground) {
+            return false;
+        }
+        return true;
+    }
+
+    return registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Enemy);
+}
+
+bool ReplicationSystem::isPlayerEntity(const Registry& registry, EntityId id) const
+{
+    std::optional<std::uint16_t> typeValue;
+    for (const auto& kv : remoteToLocal_) {
+        if (kv.second == id) {
+            auto typeIt = remoteToType_.find(kv.first);
+            if (typeIt != remoteToType_.end()) {
+                typeValue = typeIt->second;
+            }
+            break;
+        }
+    }
+
+    if (typeValue.has_value()) {
+        const std::uint16_t t = *typeValue;
+        return t == 1 || t == 12 || t == 13 || t == 14;
+    }
+
+    return registry.has<TagComponent>(id) && registry.get<TagComponent>(id).hasTag(EntityTag::Player);
 }

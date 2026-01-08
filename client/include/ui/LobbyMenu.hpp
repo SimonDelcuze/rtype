@@ -1,5 +1,6 @@
 #pragma once
 
+#include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
@@ -25,7 +26,8 @@ class LobbyMenu : public IMenu
         std::uint16_t gamePort{0};
     };
 
-    LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint);
+    LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
+              ThreadSafeQueue<std::string>& broadcastQueue);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -60,6 +62,7 @@ class LobbyMenu : public IMenu
     FontManager& fonts_;
     TextureManager& textures_;
     IpEndpoint lobbyEndpoint_;
+    ThreadSafeQueue<std::string>& broadcastQueue_;
     std::unique_ptr<LobbyConnection> lobbyConnection_;
     Result result_;
     State state_{State::Loading};

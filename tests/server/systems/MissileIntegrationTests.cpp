@@ -1,7 +1,9 @@
+#define _USE_MATH_DEFINES
 #include "simulation/PlayerCommand.hpp"
 #include "systems/MovementSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 
+#include <cmath>
 #include <gtest/gtest.h>
 
 static PlayerCommand inputWithFlags(std::uint32_t playerId, std::uint16_t seq, std::uint16_t flags, float x, float y,

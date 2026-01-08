@@ -3,17 +3,21 @@
 #include "Logger.hpp"
 #include "network/LevelEventParser.hpp"
 #include "network/LevelInitParser.hpp"
+#include "network/ServerBroadcastPacket.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 
 NetworkMessageHandler::NetworkMessageHandler(
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
     ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
     ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+    ThreadSafeQueue<std::string>* disconnectQueue, ThreadSafeQueue<std::string>* broadcastQueue,
     std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag, std::atomic<int>* countdownValueFlag,
     std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
     : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
       levelEventQueue_(levelEventQueue), spawnQueue_(spawnQueue), destroyQueue_(destroyQueue),
       handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag), countdownValueFlag_(countdownValueFlag),
-      gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag), joinAcceptedFlag_(joinAcceptedFlag)
+      gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag), joinAcceptedFlag_(joinAcceptedFlag),
+      disconnectQueue_(disconnectQueue), broadcastQueue_(broadcastQueue)
 {}
 
 namespace
@@ -197,6 +201,19 @@ void NetworkMessageHandler::handleEntityDestroyed(const std::vector<std::uint8_t
         destroyQueue_.push(*pkt);
     }
 }
+
+void NetworkMessageHandler::handleServerDisconnect(const std::vector<std::uint8_t>& data)
+{
+    auto pkt = ServerDisconnectPacket::decode(data.data(), data.size());
+    if (pkt.has_value()) {
+        if (disconnectQueue_ != nullptr) {
+            disconnectQueue_->push(pkt->getReason());
+        }
+        if (broadcastQueue_ != nullptr) {
+            broadcastQueue_->push(pkt->getReason());
+        }
+    }
+}
 void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
 {
     auto hdr = decodeHeader(data);
@@ -274,5 +291,22 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::LevelEvent)) {
         handleLevelEvent(data);
         return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerDisconnect) ||
+        hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerKick) ||
+        hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerBan)) {
+        handleServerDisconnect(data);
+        return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerBroadcast)) {
+        handleServerBroadcast(data);
+        return;
+    }
+}
+void NetworkMessageHandler::handleServerBroadcast(const std::vector<std::uint8_t>& data)
+{
+    auto pkt = ServerBroadcastPacket::decode(data.data(), data.size());
+    if (pkt.has_value() && broadcastQueue_ != nullptr) {
+        broadcastQueue_->push(pkt->getMessage());
     }
 }

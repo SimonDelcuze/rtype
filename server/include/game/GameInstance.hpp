@@ -1,11 +1,17 @@
 #pragma once
 
 #include "components/Components.hpp"
+#include "core/Session.hpp"
 #include "ecs/Registry.hpp"
 #include "game/GameLoopThread.hpp"
+#include "levels/IntroCinematic.hpp"
+#include "levels/LevelData.hpp"
+#include "levels/LevelDirector.hpp"
+#include "levels/LevelLoader.hpp"
+#include "levels/LevelSpawnSystem.hpp"
 #include "network/InputReceiveThread.hpp"
 #include "network/NetworkBridge.hpp"
-#include "network/NetworkTui.hpp"
+#include "network/Packets.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
 #include "rollback/DesyncDetector.hpp"
@@ -43,11 +49,12 @@
 class GameInstance
 {
   public:
-    GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag, bool enableTui = false,
-                 bool enableAdmin = false);
+    GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag);
     bool start();
     void run();
     void stop();
+    void notifyDisconnection(const std::string& reason);
+    void broadcast(const std::string& message);
 
     std::uint32_t getRoomId() const
     {
@@ -58,6 +65,8 @@ class GameInstance
         return port_;
     }
     std::size_t getPlayerCount() const;
+    std::vector<ClientSession> getSessions() const;
+    void kickPlayer(std::uint32_t playerId);
     bool isGameStarted() const
     {
         return gameStarted_;
@@ -120,6 +129,10 @@ class GameInstance
         Vec2f respawn;
     };
 
+    void logInfo(const std::string& msg) const;
+    void logWarn(const std::string& msg) const;
+    void logError(const std::string& msg) const;
+
     std::uint32_t roomId_;
     std::uint16_t port_;
     GameWorld world_;
@@ -158,10 +171,6 @@ class GameInstance
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
     std::atomic<bool>* running_{nullptr};
-    bool showNetwork_{false};
-    bool showAdmin_{false};
-    bool interactive_{false};
-    std::unique_ptr<NetworkTui> tui_;
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
     RollbackManager rollbackManager_;

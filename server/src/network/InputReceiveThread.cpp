@@ -1,7 +1,7 @@
 #include "network/InputReceiveThread.hpp"
 
 #include "Logger.hpp"
-#include "server/Session.hpp"
+#include "core/Session.hpp"
 
 #include <array>
 #include <chrono>

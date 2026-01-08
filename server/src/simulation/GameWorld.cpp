@@ -1,6 +1,6 @@
 #include "simulation/GameWorld.hpp"
 
-#include "server/EntityTypeResolver.hpp"
+#include "core/EntityTypeResolver.hpp"
 
 GameWorld::GameWorld()
     : playerInputSys_(250.0F, 400.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),

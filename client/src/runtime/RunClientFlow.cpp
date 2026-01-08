@@ -23,20 +23,21 @@
 #include <chrono>
 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage)
+                                                TextureManager& textureManager, std::string& errorMessage,
+                                                ThreadSafeQueue<std::string>& broadcastQueue)
 {
     if (options.useDefault) {
         Logger::instance().info("Using default lobby: 127.0.0.1:50010");
         auto lobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
-        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager);
+        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue);
     }
 
-    auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage);
+    auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
     if (!lobbyEp.has_value()) {
         return std::nullopt;
     }
 
-    return showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager);
+    return showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
 }
 
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
@@ -93,15 +94,18 @@ namespace
     }
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
-                         InputMapper& mapper, ButtonSystem& buttonSystem)
+                         InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
+                         bool& disconnected)
     {
         auto onEvent = [&](const Event& event) {
             mapper.handleEvent(event);
             buttonSystem.handleEvent(registry, event);
         };
+        (void) errorMessage;
 
-        auto lastTime = std::chrono::steady_clock::now();
-        while (window.isOpen() && g_running) {
+        bool sessionRunning = true;
+        auto lastTime       = std::chrono::steady_clock::now();
+        while (window.isOpen() && g_running && sessionRunning) {
             window.pollEvents([&](const Event& event) {
                 onEvent(event);
                 if (event.type == EventType::Closed) {
@@ -109,6 +113,17 @@ namespace
                     window.close();
                 }
             });
+
+            if (net.handler)
+                net.handler->poll();
+
+            std::string disconnectMsg;
+            if (net.disconnectEvents.tryPop(disconnectMsg)) {
+                Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
+                disconnected   = true;
+                sessionRunning = false;
+                Logger::instance().info("[Redirection] Session termination triggered. Reason: " + disconnectMsg);
+            }
 
             auto currentTime                     = std::chrono::steady_clock::now();
             std::chrono::duration<float> elapsed = currentTime - lastTime;
@@ -162,7 +177,8 @@ namespace
 
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager)
+                                 FontManager& fontManager, std::string& errorMessage,
+                                 ThreadSafeQueue<std::string>& broadcastQueue)
 {
     GraphicsFactory graphicsFactory;
     SoundManager soundManager;
@@ -184,8 +200,8 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
 
     if (options.useDefault) {
         sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint)) {
-        return GameSessionResult{false, std::nullopt};
+    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage, broadcastQueue)) {
+        return GameSessionResult{true, std::nullopt};
     }
 
     if (!window.isOpen()) {
@@ -211,11 +227,12 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
 
     configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
                      inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     graphicsFactory, soundManager);
+                     graphicsFactory, soundManager, broadcastQueue);
 
     ButtonSystem buttonSystem(window, fontManager);
 
-    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem);
+    bool disconnected = false;
+    runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
@@ -228,5 +245,6 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         }
     }
 
-    return GameSessionResult{false, 0};
+    bool retry = disconnected || !errorMessage.empty();
+    return GameSessionResult{retry, (retry ? std::nullopt : std::make_optional(0))};
 }
