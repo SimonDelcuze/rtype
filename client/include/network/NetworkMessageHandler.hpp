@@ -7,6 +7,7 @@
 #include "network/LevelInitData.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/SnapshotParser.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -18,19 +19,24 @@
 class NetworkMessageHandler
 {
   public:
-    NetworkMessageHandler(
-        ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-        ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
-        ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
-        ThreadSafeQueue<std::string>* disconnectQueue = nullptr, ThreadSafeQueue<std::string>* broadcastQueue = nullptr,
-        std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
-        std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
-        std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
+    NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
+                          ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
+                          ThreadSafeQueue<LevelInitData>& levelInitQueue,
+                          ThreadSafeQueue<LevelEventData>& levelEventQueue,
+                          ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
+                          ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+                          ThreadSafeQueue<std::string>* disconnectQueue     = nullptr,
+                          ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr,
+                          std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
+                          std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
+                          std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                           ThreadSafeQueue<LevelInitData>& levelInitQueue);
 
     void poll();
+
+    [[nodiscard]] float getLastPacketAge() const;
 
   private:
     std::optional<PacketHeader> decodeHeader(const std::vector<std::uint8_t>& data) const;
@@ -68,6 +74,7 @@ class NetworkMessageHandler
     std::atomic<bool>* joinDeniedFlag_;
     std::atomic<bool>* joinAcceptedFlag_;
     ThreadSafeQueue<std::string>* disconnectQueue_;
-    ThreadSafeQueue<std::string>* broadcastQueue_;
+    ThreadSafeQueue<NotificationData>* broadcastQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
+    std::chrono::steady_clock::time_point lastPacketTime_;
 };

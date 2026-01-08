@@ -1,3 +1,5 @@
+#pragma once
+
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/FontManager.hpp"
@@ -9,6 +11,7 @@
 #include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/IMenu.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <atomic>
 #include <memory>
@@ -17,7 +20,7 @@ class MenuRunner
 {
   public:
     MenuRunner(Window& window, FontManager& fonts, TextureManager& textures, std::atomic<bool>& running,
-               ThreadSafeQueue<std::string>& broadcastQueue);
+               ThreadSafeQueue<NotificationData>& broadcastQueue);
 
     template <typename MenuType, typename... Args> void run(Args&&... args);
 
@@ -31,7 +34,8 @@ class MenuRunner
     Window& window_;
     FontManager& fonts_;
     TextureManager& textures_;
-    std::atomic<bool>& running_;
+    std::atomic<bool>& runningFlag_;
+    ThreadSafeQueue<NotificationData>& broadcastQueue_;
     Registry registry_;
 
     RenderSystem renderSystem_;

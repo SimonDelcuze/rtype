@@ -45,7 +45,7 @@ class GameInstance
     GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag);
     bool start();
     void run();
-    void stop();
+    void stop(const std::string& reason = "Room closed");
     void notifyDisconnection(const std::string& reason);
     void broadcast(const std::string& message);
 

@@ -87,7 +87,7 @@ TEST_F(ReplicationSystemTests, SpawnsEntityWithTexture)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 2u); // 1 NetworkStatsComponent + 1 spawned entity
+    EXPECT_EQ(registry.entityCount(), 2u);
     auto id = registry.view<SpriteComponent>().begin().operator*();
     auto& s = registry.get<SpriteComponent>(id);
     EXPECT_TRUE(s.hasSprite());
@@ -161,7 +161,7 @@ TEST_F(ReplicationSystemTests, DestroysWhenDeadFlag)
             ++aliveCount;
         }
     }
-    EXPECT_EQ(aliveCount, 1); // 1 NetworkStatsComponent (dead entity was destroyed)
+    EXPECT_EQ(aliveCount, 1);
 }
 
 TEST_F(ReplicationSystemTests, MultipleEntitiesCreated)
@@ -188,7 +188,7 @@ TEST_F(ReplicationSystemTests, MultipleEntitiesCreated)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 3u); // 1 NetworkStatsComponent + 2 spawned entities
+    EXPECT_EQ(registry.entityCount(), 3u);
     EXPECT_EQ(countView<TransformComponent>(registry), 1u);
     EXPECT_EQ(countView<VelocityComponent>(registry), 1u);
 }
@@ -437,7 +437,7 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeMissing)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 1u); // 1 NetworkStatsComponent (entity creation skipped)
+    EXPECT_EQ(registry.entityCount(), 1u);
 }
 
 TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeUnknown)
@@ -456,5 +456,5 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeUnknown)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 1u); // 1 NetworkStatsComponent (entity creation skipped)
+    EXPECT_EQ(registry.entityCount(), 1u);
 }

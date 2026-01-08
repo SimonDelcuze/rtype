@@ -2,16 +2,17 @@
 #include "network/ClientInit.hpp"
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread,
-                  ThreadSafeQueue<std::string>* broadcastQueue)
+                  ThreadSafeQueue<NotificationData>* broadcastQueue)
 {
     if (!startReceiver(net, 0, handshakeDone, broadcastQueue))
         return false;
     if (!startSender(net, inputBuffer, 1, serverEp))
         return false;
 
-    welcomeThread = std::thread([&] {
-        if (net.socket)
-            sendWelcomeLoop(serverEp, handshakeDone, *net.socket);
+    auto socketPtr = net.socket;
+    welcomeThread  = std::thread([serverEp, &handshakeDone, socketPtr] {
+        if (socketPtr)
+            sendWelcomeLoop(serverEp, handshakeDone, *socketPtr);
     });
     return true;
 }

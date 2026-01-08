@@ -33,6 +33,8 @@ class GameInstanceManager
 
     void cleanupEmptyInstances();
 
+    void stopAll(const std::string& reason = "Server disconnect");
+
     void broadcast(const std::string& message);
 
   private:

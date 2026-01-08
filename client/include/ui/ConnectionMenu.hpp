@@ -4,6 +4,7 @@
 #include "graphics/TextureManager.hpp"
 #include "ui/IMenu.hpp"
 
+#include <chrono>
 #include <string>
 
 class ConnectionMenu : public IMenu
@@ -32,12 +33,19 @@ class ConnectionMenu : public IMenu
     void reset();
 
   private:
+    void showConnectingText(Registry& registry);
+    void updateConnectingText(Registry& registry);
+
     FontManager& fonts_;
     TextureManager& textures_;
     std::string initialError_;
-    bool done_          = false;
-    bool useDefault_    = false;
-    bool openSettings_  = false;
-    bool exitRequested_ = false;
-    EntityId errorText_ = 0;
+    bool done_               = false;
+    bool useDefault_         = false;
+    bool openSettings_       = false;
+    bool exitRequested_      = false;
+    bool connecting_         = false;
+    EntityId errorText_      = 0;
+    EntityId connectingText_ = 0;
+    std::chrono::steady_clock::time_point connectingStartTime_;
+    int dotCount_ = 1;
 };

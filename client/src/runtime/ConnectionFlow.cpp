@@ -20,13 +20,17 @@
 #include <chrono>
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
-                                             std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
+                                             std::string& errorMessage,
+                                             ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     startLauncherMusic(g_musicVolume);
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     while (window.isOpen()) {
         auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
+        if (!errorMessage.empty()) {
+            broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        }
         errorMessage.clear();
 
         if (!window.isOpen())
@@ -56,56 +60,30 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
     return std::nullopt;
 }
 
-std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
-                                               ThreadSafeQueue<std::string>& broadcastQueue)
+bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMessage,
+                           const std::atomic<bool>& runningFlag, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
-    if (useDefault) {
-        Logger::instance().info("Using default server: 127.0.0.1:50010");
-        return IpEndpoint::v4(127, 0, 0, 1, 50010);
+    LobbyConnection conn(lobbyEndpoint, runningFlag);
+    if (!conn.connect()) {
+        errorMessage = "Failed to open socket";
+        broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        return false;
     }
-
-    FontManager fontManager;
-    TextureManager textureManager;
-    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
-
-    while (window.isOpen()) {
-        startLauncherMusic(g_musicVolume);
-        auto result = runner.runAndGetResult<ConnectionMenu>();
-
-        if (!window.isOpen())
-            return std::nullopt;
-
-        if (result.openSettings) {
-            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume);
-            g_keyBindings       = settingsResult.bindings;
-            g_musicVolume       = settingsResult.musicVolume;
-            setLauncherMusicVolume(g_musicVolume);
-            if (!window.isOpen())
-                return std::nullopt;
-            continue;
-        }
-
-        if (result.exitRequested) {
-            window.close();
-            return std::nullopt;
-        }
-
-        if (result.useDefault)
-            return IpEndpoint::v4(127, 0, 0, 1, 50010);
-
-        return parseEndpoint(result.ip, result.port);
+    if (!conn.ping()) {
+        errorMessage = "Server not responding";
+        broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        return false;
     }
-
-    return std::nullopt;
+    return true;
 }
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
-                                                          ThreadSafeQueue<std::string>& broadcastQueue)
+                                                          ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running);
 
     if (!window.isOpen())
         return std::nullopt;
@@ -119,6 +97,58 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
                                 std::to_string(result.gamePort));
         return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
                               lobbyEndpoint.addr[3], result.gamePort);
+    }
+
+    return std::nullopt;
+}
+
+std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
+                                                TextureManager& textureManager, std::string& errorMessage,
+                                                ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint)
+{
+    if (options.useDefault) {
+        Logger::instance().info("Using default lobby: 127.0.0.1:50010");
+        auto lobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue);
+    }
+
+    if (options.serverIp.has_value() && options.serverPort.has_value()) {
+        return parseEndpoint(*options.serverIp, std::to_string(*options.serverPort));
+    }
+
+    if (lastLobbyEndpoint.has_value()) {
+        Logger::instance().info(
+            "[Redirection] Returning to last lobby: " + std::to_string(lastLobbyEndpoint->addr[0]) + "." +
+            std::to_string(lastLobbyEndpoint->addr[1]) + "." + std::to_string(lastLobbyEndpoint->addr[2]) + "." +
+            std::to_string(lastLobbyEndpoint->addr[3]) + ":" + std::to_string(lastLobbyEndpoint->port));
+        if (verifyLobbyConnection(*lastLobbyEndpoint, errorMessage, g_running, broadcastQueue)) {
+            auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lastLobbyEndpoint, fontManager, textureManager,
+                                                          broadcastQueue);
+            if (gameEp.has_value()) {
+                return gameEp;
+            }
+        } else {
+            errorMessage.clear();
+        }
+        lastLobbyEndpoint.reset();
+    }
+
+    while (window.isOpen()) {
+        auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
+        if (!lobbyEp.has_value()) {
+            return std::nullopt;
+        }
+
+        if (!verifyLobbyConnection(*lobbyEp, errorMessage, g_running, broadcastQueue)) {
+            continue;
+        }
+
+        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
+        if (gameEp.has_value()) {
+            lastLobbyEndpoint = *lobbyEp;
+            return gameEp;
+        }
     }
 
     return std::nullopt;
@@ -159,7 +189,7 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
 }
 
 bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage,
-                    ThreadSafeQueue<std::string>& broadcastQueue)
+                    ThreadSafeQueue<NotificationData>& broadcastQueue, bool& serverLost)
 {
     FontManager fontManager;
     TextureManager textureManager;
@@ -187,6 +217,9 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         std::string disconnectMsg;
         if (net.disconnectEvents.tryPop(disconnectMsg)) {
             Logger::instance().warn("[Net] Disconnected from waiting room: " + disconnectMsg);
+            if (disconnectMsg == "Server disconnected" || disconnectMsg == "Server timeout") {
+                serverLost = true;
+            }
             return false;
         }
 

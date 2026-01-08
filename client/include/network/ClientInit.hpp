@@ -10,9 +10,13 @@
 #include "network/NetworkReceiver.hpp"
 #include "network/NetworkSender.hpp"
 #include "network/PacketHeader.hpp"
+#include "ui/NotificationData.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <thread>
 #include <vector>
 
 struct NetPipelines
@@ -24,7 +28,7 @@ struct NetPipelines
     ThreadSafeQueue<EntitySpawnPacket> spawns;
     ThreadSafeQueue<EntityDestroyedPacket> destroys;
     ThreadSafeQueue<std::string> disconnectEvents;
-    ThreadSafeQueue<std::string> broadcastEvents;
+    ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr;
     std::shared_ptr<UdpSocket> socket;
     std::unique_ptr<NetworkReceiver> receiver;
     std::unique_ptr<NetworkMessageHandler> handler;
@@ -36,8 +40,6 @@ struct NetPipelines
     std::atomic<bool> joinAccepted{false};
 };
 
-#include <atomic>
-
 std::vector<std::uint8_t> buildClientHello(std::uint16_t sequence);
 void sendClientHelloOnce(const IpEndpoint& server, UdpSocket& socket);
 void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
@@ -47,5 +49,5 @@ void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpS
 void sendClientReady(const IpEndpoint& server, UdpSocket& socket);
 void sendClientReadyLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
-                   ThreadSafeQueue<std::string>* broadcastQueue = nullptr);
+                   ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
 bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clientId, const IpEndpoint& server);

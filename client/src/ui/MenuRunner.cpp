@@ -5,10 +5,10 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 
 MenuRunner::MenuRunner(Window& window, FontManager& fonts, TextureManager& textures, std::atomic<bool>& running,
-                       ThreadSafeQueue<std::string>& broadcastQueue)
-    : window_(window), fonts_(fonts), textures_(textures), running_(running), renderSystem_(window),
-      inputFieldSystem_(window, fonts), buttonSystem_(window, fonts), hudSystem_(window, fonts, textures),
-      notificationSystem_(window, fonts, broadcastQueue)
+                       ThreadSafeQueue<NotificationData>& broadcastQueue)
+    : window_(window), fonts_(fonts), textures_(textures), runningFlag_(running), broadcastQueue_(broadcastQueue),
+      renderSystem_(window), inputFieldSystem_(window, fonts), buttonSystem_(window, fonts),
+      hudSystem_(window, fonts, textures), notificationSystem_(window, fonts, broadcastQueue)
 {}
 
 Registry& MenuRunner::getRegistry()
@@ -22,7 +22,7 @@ void MenuRunner::runLoop(IMenu& menu)
 {
     auto lastTime = std::chrono::steady_clock::now();
 
-    while (window_.isOpen() && !menu.isDone() && running_) {
+    while (window_.isOpen() && !menu.isDone() && runningFlag_) {
         auto currentTime                     = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsed = currentTime - lastTime;
         lastTime                             = currentTime;

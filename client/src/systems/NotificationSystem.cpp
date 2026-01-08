@@ -5,90 +5,99 @@
 
 #include <algorithm>
 
-NotificationSystem::NotificationSystem(Window& window, FontManager& fonts, ThreadSafeQueue<std::string>& broadcastQueue)
-    : window_(window), fonts_(fonts), broadcastQueue_(broadcastQueue)
+NotificationSystem::NotificationSystem(Window& window, FontManager& fontManager,
+                                       ThreadSafeQueue<NotificationData>& broadcastQueue)
+    : window_(window), fontManager_(fontManager), broadcastQueue_(broadcastQueue)
 {}
 
 NotificationSystem::~NotificationSystem()
 {
-    for (const auto& notif : notifications_) {
-        broadcastQueue_.push(notif.message);
+    while (!activeNotifications_.empty()) {
+        broadcastQueue_.push(activeNotifications_.front());
+        activeNotifications_.pop_front();
     }
 }
 
-void NotificationSystem::update(Registry&, float deltaTime)
+void NotificationSystem::update(Registry& registry, float deltaTime)
 {
-    std::string newMsg;
-    while (broadcastQueue_.tryPop(newMsg)) {
-        Logger::instance().info("[NotificationSystem] Received message: " + newMsg);
-        notifications_.push_back({newMsg, 5.0F});
+    (void) registry;
+
+    NotificationData next;
+    while (broadcastQueue_.tryPop(next)) {
+        activeNotifications_.push_back(next);
     }
 
-    for (auto it = notifications_.begin(); it != notifications_.end();) {
+    for (auto it = activeNotifications_.begin(); it != activeNotifications_.end();) {
         it->timer -= deltaTime;
         if (it->timer <= 0.0F) {
-            it = notifications_.erase(it);
+            it = activeNotifications_.erase(it);
         } else {
             ++it;
         }
     }
 
-    if (notifications_.empty()) {
+    if (activeNotifications_.empty()) {
         return;
     }
-    auto font = fonts_.get("ui");
+
+    auto font = fontManager_.get("ui");
     if (!font) {
-        font = fonts_.get("score_font");
+        font = fontManager_.get("score_font");
     }
     if (!font) {
-        Logger::instance().error("[NotificationSystem] Font 'ui' or 'score_font' not found!");
         return;
     }
 
     GraphicsFactory factory;
     auto text = factory.createText();
     text->setFont(*font);
-    text->setCharacterSize(20);
 
     const auto windowSize     = window_.getSize();
-    float currentY            = 30.0F;
-    const float padding       = 15.0F;
-    const float animDuration  = 0.3F;
+    float currentY            = 50.0F;
+    const float padding       = 25.0F;
+    const float animDuration  = 0.4F;
     const float totalDuration = 5.0F;
 
-    for (const auto& notif : notifications_) {
+    for (const auto& notif : activeNotifications_) {
         float alpha   = 255.0F;
-        float xOffset = 0.0F;
+        float scale   = 1.0F;
+        float yOffset = 0.0F;
 
         if (notif.timer > totalDuration - animDuration) {
             float t = (totalDuration - notif.timer) / animDuration;
             alpha   = t * 255.0F;
-            xOffset = (1.0F - t) * 50.0F;
+            scale   = 0.8F + (t * 0.2F);
+            yOffset = (1.0F - t) * -20.0F;
         } else if (notif.timer < animDuration) {
             float t = notif.timer / animDuration;
             alpha   = t * 255.0F;
-            xOffset = (1.0F - t) * 50.0F;
+            scale   = 0.8F + (t * 0.2F);
+            yOffset = (1.0F - t) * -20.0F;
         }
 
         std::uint8_t uAlpha  = static_cast<std::uint8_t>(std::clamp(alpha, 0.0F, 255.0F));
-        std::uint8_t bgAlpha = static_cast<std::uint8_t>(std::clamp(alpha * 0.8F, 0.0F, 200.0F));
+        std::uint8_t bgAlpha = static_cast<std::uint8_t>(std::clamp(alpha * 0.85F, 0.0F, 220.0F));
 
         text->setString(notif.message);
-        text->setFillColor(Color(255, 80, 80, uAlpha));
-        text->setCharacterSize(24);
+        text->setCharacterSize(40);
+        text->setFillColor(Color(255, 100, 100, uAlpha));
+        text->setOutlineColor(Color(0, 0, 0, uAlpha));
+        text->setOutlineThickness(2.0F);
 
         FloatRect bounds = text->getLocalBounds();
-        float width      = std::max(250.0F, bounds.width + (padding * 2.0F));
-        float height     = 45.0F;
-        float x          = static_cast<float>(windowSize.x) - width - 20.0F + xOffset;
+        float width      = bounds.width + (padding * 2.0F);
+        float height     = bounds.height + (padding * 1.5F);
+        float x          = (static_cast<float>(windowSize.x) / 2.0F) - (width / 2.0F);
+        float y          = currentY + yOffset;
 
-        window_.drawRectangle({width, height}, {x, currentY}, 0.0F, {1.0F, 1.0F}, Color{20, 20, 25, bgAlpha},
-                              Color{100, 100, 100, static_cast<std::uint8_t>(bgAlpha * 0.75F)}, 1.0F);
+        window_.drawRectangle({width, height}, {x, y}, 0.0F, {scale, scale}, Color{30, 30, 35, bgAlpha},
+                              Color{150, 50, 50, static_cast<std::uint8_t>(bgAlpha * 0.8F)}, 2.0F);
 
-        text->setOrigin({0.0F, 0.0F});
-        text->setPosition({x + padding, currentY + (height / 2.0F) - (bounds.height / 2.0F) - bounds.top});
+        text->setOrigin({bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
+        text->setPosition({x + width / 2.0F, y + height / 2.0F});
+        text->setScale({scale, scale});
         window_.draw(*text);
 
-        currentY += height + 10.0F;
+        currentY += (height * scale) + 15.0F;
     }
 }
