@@ -43,6 +43,8 @@ enum class MessageType : std::uint8_t
     LobbyJoinRoom      = 0x44,
     LobbyJoinSuccess   = 0x45,
     LobbyJoinFailed    = 0x46,
+    LobbyPasswordRequired = 0x47,
+    LobbyPasswordIncorrect = 0x48,
     StateChecksum      = 0x50,
     RollbackRequest    = 0x51,
     DesyncDetected     = 0x52,

@@ -280,8 +280,10 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const IpEndpoin
 
     lobbyManager_.addRoom(*roomId, port, 4);
 
+    std::string inviteCode = lobbyManager_.generateAndSetInviteCode(*roomId);
+
     Logger::instance().info("[LobbyServer] Created room " + std::to_string(*roomId) + " on port " +
-                            std::to_string(port));
+                            std::to_string(port) + " with invite code: " + inviteCode);
 
     auto packet = buildRoomCreatedPacket(*roomId, port, hdr.sequenceId);
     sendPacket(packet, from);
@@ -306,6 +308,15 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
     if (!instanceManager_.hasInstance(roomId)) {
         Logger::instance().warn("[LobbyServer] Room " + std::to_string(roomId) + " does not exist");
+        auto packet = buildJoinFailedPacket(hdr.sequenceId);
+        sendPacket(packet, from);
+        return;
+    }
+
+    std::string clientIP = endpointToKey(from);
+    if (lobbyManager_.isPlayerBanned(roomId, 0, clientIP)) {
+        Logger::instance().warn("[LobbyServer] Banned client " + clientIP + " attempted to join room " +
+                                std::to_string(roomId));
         auto packet = buildJoinFailedPacket(hdr.sequenceId);
         sendPacket(packet, from);
         return;

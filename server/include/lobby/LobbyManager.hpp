@@ -15,6 +15,14 @@ enum class RoomState : std::uint8_t
     Finished  = 3
 };
 
+enum class RoomVisibility : std::uint8_t
+{
+    Public = 0,
+    Unlisted = 1,
+    FriendsOnly = 2,
+    InviteOnly = 3
+};
+
 struct RoomInfo
 {
     std::uint32_t roomId;
@@ -27,6 +35,10 @@ struct RoomInfo
     std::vector<std::uint32_t> bannedPlayerIds;
     std::vector<std::string> bannedIPs;
     std::string roomName{"New Room"};
+    bool passwordProtected{false};
+    std::string passwordHash;
+    RoomVisibility visibility{RoomVisibility::Public};
+    std::string inviteCode;
 };
 
 class LobbyManager
@@ -61,6 +73,14 @@ class LobbyManager
     bool isPlayerBanned(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress) const;
 
     void setRoomName(std::uint32_t roomId, const std::string& name);
+
+    void setRoomPassword(std::uint32_t roomId, const std::string& passwordHash);
+
+    void setRoomVisibility(std::uint32_t roomId, RoomVisibility visibility);
+
+    std::string generateAndSetInviteCode(std::uint32_t roomId);
+
+    bool verifyRoomPassword(std::uint32_t roomId, const std::string& passwordHash) const;
 
   private:
     mutable std::mutex roomsMutex_;

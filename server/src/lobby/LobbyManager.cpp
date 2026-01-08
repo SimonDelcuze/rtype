@@ -1,6 +1,7 @@
 #include "lobby/LobbyManager.hpp"
 
 #include "Logger.hpp"
+#include "lobby/PasswordUtils.hpp"
 
 #include <algorithm>
 
@@ -207,4 +208,69 @@ void LobbyManager::setRoomName(std::uint32_t roomId, const std::string& name)
 
     it->second.roomName = name;
     Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " name set to: " + name);
+}
+
+void LobbyManager::setRoomPassword(std::uint32_t roomId, const std::string& passwordHash)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    if (passwordHash.empty()) {
+        it->second.passwordProtected = false;
+        it->second.passwordHash.clear();
+        Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " password removed");
+    } else {
+        it->second.passwordProtected = true;
+        it->second.passwordHash      = passwordHash;
+        Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " password set");
+    }
+}
+
+void LobbyManager::setRoomVisibility(std::uint32_t roomId, RoomVisibility visibility)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    it->second.visibility = visibility;
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " visibility set to " +
+                            std::to_string(static_cast<int>(visibility)));
+}
+
+std::string LobbyManager::generateAndSetInviteCode(std::uint32_t roomId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return "";
+    }
+
+    std::string code     = PasswordUtils::generateInviteCode();
+    it->second.inviteCode = code;
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " invite code set to: " + code);
+    return code;
+}
+
+bool LobbyManager::verifyRoomPassword(std::uint32_t roomId, const std::string& passwordHash) const
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return false;
+    }
+
+    if (!it->second.passwordProtected) {
+        return true;
+    }
+
+    return it->second.passwordHash == passwordHash;
 }
