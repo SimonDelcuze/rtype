@@ -22,6 +22,11 @@ struct RoomInfo
     std::size_t maxPlayers;
     RoomState state;
     std::uint16_t port;
+    std::uint32_t ownerId{0};
+    std::vector<std::uint32_t> adminIds;
+    std::vector<std::uint32_t> bannedPlayerIds;
+    std::vector<std::string> bannedIPs;
+    std::string roomName{"New Room"};
 };
 
 class LobbyManager
@@ -42,6 +47,20 @@ class LobbyManager
     std::vector<RoomInfo> listRooms() const;
 
     bool roomExists(std::uint32_t roomId) const;
+
+    void setRoomOwner(std::uint32_t roomId, std::uint32_t ownerId);
+
+    void addRoomAdmin(std::uint32_t roomId, std::uint32_t playerId);
+
+    void removeRoomAdmin(std::uint32_t roomId, std::uint32_t playerId);
+
+    void addBannedPlayer(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress);
+
+    void removeBannedPlayer(std::uint32_t roomId, std::uint32_t playerId);
+
+    bool isPlayerBanned(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress) const;
+
+    void setRoomName(std::uint32_t roomId, const std::string& name);
 
   private:
     mutable std::mutex roomsMutex_;

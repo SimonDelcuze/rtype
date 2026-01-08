@@ -57,6 +57,11 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
         sess.playerId = nextPlayerId_++;
     }
 
+    if (playerEntities_.empty()) {
+        sess.role = PlayerRole::Owner;
+        Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " is the room owner");
+    }
+
     sess.join = true;
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
 

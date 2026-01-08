@@ -46,6 +46,14 @@ enum class MessageType : std::uint8_t
     StateChecksum      = 0x50,
     RollbackRequest    = 0x51,
     DesyncDetected     = 0x52,
+    RoomKickPlayer     = 0x60,
+    RoomBanPlayer      = 0x61,
+    RoomPromoteAdmin   = 0x62,
+    RoomDemoteAdmin    = 0x63,
+    RoomTransferOwner  = 0x64,
+    RoomPlayerKicked   = 0x65,
+    RoomPlayerBanned   = 0x66,
+    RoomRoleChanged    = 0x67,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
 };
@@ -54,6 +62,15 @@ enum class PacketType : std::uint8_t
 {
     ClientToServer = 0x01,
     ServerToClient = 0x02
+};
+
+enum class PlayerRole : std::uint8_t
+{
+    Owner = 0,
+    Admin = 1,
+    Player = 2,
+    Spectator = 3,
+    Banned = 4
 };
 
 struct PacketHeader

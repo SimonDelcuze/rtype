@@ -2,6 +2,8 @@
 
 #include "Logger.hpp"
 
+#include <algorithm>
+
 LobbyManager::LobbyManager()
 {
     Logger::instance().info("[LobbyManager] Initialized");
@@ -91,4 +93,118 @@ bool LobbyManager::roomExists(std::uint32_t roomId) const
 {
     std::lock_guard<std::mutex> lock(roomsMutex_);
     return rooms_.find(roomId) != rooms_.end();
+}
+
+void LobbyManager::setRoomOwner(std::uint32_t roomId, std::uint32_t ownerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    it->second.ownerId = ownerId;
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " owner set to " + std::to_string(ownerId));
+}
+
+void LobbyManager::addRoomAdmin(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    auto& admins = it->second.adminIds;
+    if (std::find(admins.begin(), admins.end(), playerId) == admins.end()) {
+        admins.push_back(playerId);
+        Logger::instance().info("[LobbyManager] Added admin " + std::to_string(playerId) + " to room " + std::to_string(roomId));
+    }
+}
+
+void LobbyManager::removeRoomAdmin(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    auto& admins = it->second.adminIds;
+    admins.erase(std::remove(admins.begin(), admins.end(), playerId), admins.end());
+    Logger::instance().info("[LobbyManager] Removed admin " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+}
+
+void LobbyManager::addBannedPlayer(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    auto& bannedIds = it->second.bannedPlayerIds;
+    if (std::find(bannedIds.begin(), bannedIds.end(), playerId) == bannedIds.end()) {
+        bannedIds.push_back(playerId);
+    }
+
+    auto& bannedIPs = it->second.bannedIPs;
+    if (std::find(bannedIPs.begin(), bannedIPs.end(), ipAddress) == bannedIPs.end()) {
+        bannedIPs.push_back(ipAddress);
+    }
+
+    Logger::instance().info("[LobbyManager] Banned player " + std::to_string(playerId) + " (" + ipAddress + ") from room " + std::to_string(roomId));
+}
+
+void LobbyManager::removeBannedPlayer(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    auto& bannedIds = it->second.bannedPlayerIds;
+    bannedIds.erase(std::remove(bannedIds.begin(), bannedIds.end(), playerId), bannedIds.end());
+    Logger::instance().info("[LobbyManager] Unbanned player " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+}
+
+bool LobbyManager::isPlayerBanned(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress) const
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return false;
+    }
+
+    const auto& bannedIds = it->second.bannedPlayerIds;
+    if (playerId != 0 && std::find(bannedIds.begin(), bannedIds.end(), playerId) != bannedIds.end()) {
+        return true;
+    }
+
+    const auto& bannedIPs = it->second.bannedIPs;
+    if (!ipAddress.empty() && std::find(bannedIPs.begin(), bannedIPs.end(), ipAddress) != bannedIPs.end()) {
+        return true;
+    }
+
+    return false;
+}
+
+void LobbyManager::setRoomName(std::uint32_t roomId, const std::string& name)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    it->second.roomName = name;
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " name set to: " + name);
 }

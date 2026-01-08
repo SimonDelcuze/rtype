@@ -60,6 +60,14 @@ class GameInstance
     std::size_t getPlayerCount() const;
     std::vector<ClientSession> getSessions() const;
     void kickPlayer(std::uint32_t playerId);
+    void kickPlayer(std::uint32_t playerId, const std::string& reason);
+    void banPlayer(std::uint32_t playerId, const std::string& reason);
+    void promoteToAdmin(std::uint32_t playerId);
+    void demoteFromAdmin(std::uint32_t playerId);
+    bool isOwner(std::uint32_t playerId) const;
+    bool isAdmin(std::uint32_t playerId) const;
+    bool canKick(std::uint32_t kickerId, std::uint32_t targetId) const;
+    bool canPromoteAdmin(std::uint32_t promoterId) const;
     bool isGameStarted() const
     {
         return gameStarted_;
