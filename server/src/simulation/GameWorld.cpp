@@ -27,6 +27,9 @@ void GameWorld::tick(float deltaTime, const std::vector<PlayerCommand>& commands
         levelDirector_->update(registry_, levelDelta);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, levelDelta, events);
+        playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
+    } else {
+        playerBoundsSys_.update(registry_, std::nullopt);
     }
 
     enemyShootingSys_.update(registry_, deltaTime);

@@ -25,6 +25,7 @@ Events are dispatched by `LevelDirector` and split into two buckets:
 - Spawn events (`spawn_wave`, `spawn_obstacle`, `spawn_boss`) go to `LevelSpawnSystem`.
 - State/visual events (`set_scroll`, `set_background`, `set_music`, `set_camera_bounds`, `gate_open`, `gate_close`)
   are forwarded to clients as `LevelEvent` messages.
+- Player bounds events (`set_player_bounds`, `clear_player_bounds`) apply server-side only.
 
 ## Checkpoints
 

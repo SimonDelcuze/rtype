@@ -49,6 +49,7 @@ Triggers are evaluated against a context:
 - `enemy_count_at_most`: current enemy count in registry
 - `checkpoint_reached`: checkpoint id already recorded
 - `hp_below`: boss health below threshold
+- `player_in_zone`: player inside bounds
 - `all_of` / `any_of`: recursive evaluation
 
 ## Boss Phases

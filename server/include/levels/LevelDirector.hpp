@@ -52,6 +52,7 @@ class LevelDirector
         float segmentTime        = 0.0F;
         float segmentDistance    = 0.0F;
         ScrollSettings activeScroll;
+        std::optional<CameraBounds> playerBounds;
         std::vector<EventRuntimeState> segmentEvents;
         std::unordered_set<std::string> checkpoints;
         std::vector<SpawnGroupState> spawnGroups;
@@ -79,6 +80,7 @@ class LevelDirector
     float segmentTime() const;
     float segmentDistance() const;
     bool finished() const;
+    const std::optional<CameraBounds>& playerBounds() const;
 
   private:
     struct EventRuntime
@@ -119,6 +121,7 @@ class LevelDirector
     bool isSpawnDead(const std::string& spawnId, Registry& registry) const;
     bool isBossDead(const std::string& bossId, Registry& registry) const;
     bool isBossHpBelow(const std::string& bossId, std::int32_t value, Registry& registry) const;
+    bool isPlayerInZone(const Trigger& trigger, Registry& registry) const;
     std::int32_t countEnemies(Registry& registry) const;
 
     void fireEvent(const LevelEvent& event, const std::string& segmentId, const std::string& bossId, bool fromBoss);
@@ -134,6 +137,7 @@ class LevelDirector
     float segmentTime_        = 0.0F;
     float segmentDistance_    = 0.0F;
     ScrollSettings activeScroll_;
+    std::optional<CameraBounds> activePlayerBounds_;
     std::vector<EventRuntime> segmentEvents_;
     std::vector<DispatchedEvent> firedEvents_;
 

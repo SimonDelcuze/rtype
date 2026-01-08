@@ -8,6 +8,7 @@ When a `checkpoint` event fires, the server stores:
 
 - segment index, segment time, segment distance
 - active scroll settings
+- active player bounds (if set)
 - segment event runtime state (fired flags, repeat counters)
 - reached checkpoint ids
 - spawn groups marked as spawned

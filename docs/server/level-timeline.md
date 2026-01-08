@@ -55,6 +55,11 @@ Entity state is evaluated on the authoritative server entity registry.
 
 This is primarily for sequencing post-checkpoint events.
 
+### Player Zone
+
+`player_in_zone`: fires when a player is inside the provided bounds.
+Use `requireAll` to require all alive players to be inside.
+
 ### Composite
 
 `all_of`: fires when all child triggers are true.
