@@ -50,32 +50,39 @@ struct ClientLoopResult
 };
 
 Window createMainWindow();
-std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault);
+std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
+                                               ThreadSafeQueue<std::string>& broadcastQueue);
 AssetManifest loadManifest();
 void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
                       TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
-                      SoundManager& soundManager);
+                      SoundManager& soundManager, ThreadSafeQueue<std::string>& broadcastQueue);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
-                  std::atomic<bool>& handshakeDone, std::thread& welcomeThread);
+                  std::atomic<bool>& handshakeDone, std::thread& welcomeThread,
+                  ThreadSafeQueue<std::string>* broadcastQueue = nullptr);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);
 JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutSeconds = 5.0F);
-bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp);
+bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage,
+                    ThreadSafeQueue<std::string>& broadcastQueue);
 void showErrorMessage(Window& window, const std::string& message, float displayTime = 3.0F);
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
-                                             std::string& errorMessage);
+                                             std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue);
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          FontManager& fontManager, TextureManager& textureManager);
+                                                          FontManager& fontManager, TextureManager& textureManager,
+                                                          ThreadSafeQueue<std::string>& broadcastQueue);
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage);
+                                                TextureManager& textureManager, std::string& errorMessage,
+                                                ThreadSafeQueue<std::string>& broadcastQueue);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage);
 GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
                                  NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager);
+                                 FontManager& fontManager, std::string& errorMessage,
+                                 ThreadSafeQueue<std::string>& broadcastQueue);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                    TextureManager& textureManager, std::string& errorMessage);
+                                    TextureManager& textureManager, std::string& errorMessage,
+                                    ThreadSafeQueue<std::string>& broadcastQueue);
 int runClient(const ClientOptions& options);

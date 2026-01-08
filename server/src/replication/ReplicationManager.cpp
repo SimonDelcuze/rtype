@@ -1,6 +1,6 @@
 #include "replication/ReplicationManager.hpp"
 
-#include "server/Packets.hpp"
+#include "network/Packets.hpp"
 
 ReplicationManager::ReplicationManager() = default;
 

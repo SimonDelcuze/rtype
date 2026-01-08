@@ -23,6 +23,8 @@ struct NetPipelines
     ThreadSafeQueue<LevelEventData> levelEvents;
     ThreadSafeQueue<EntitySpawnPacket> spawns;
     ThreadSafeQueue<EntityDestroyedPacket> destroys;
+    ThreadSafeQueue<std::string> disconnectEvents;
+    ThreadSafeQueue<std::string> broadcastEvents;
     std::shared_ptr<UdpSocket> socket;
     std::unique_ptr<NetworkReceiver> receiver;
     std::unique_ptr<NetworkMessageHandler> handler;
@@ -43,5 +45,6 @@ void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSo
 void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
 void sendClientReady(const IpEndpoint& server, UdpSocket& socket);
-bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag);
+bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
+                   ThreadSafeQueue<std::string>* broadcastQueue = nullptr);
 bool startSender(NetPipelines& net, InputBuffer& inputBuffer, std::uint16_t clientId, const IpEndpoint& server);

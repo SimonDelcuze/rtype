@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ecs/Registry.hpp"
-#include "server/EntityStateCache.hpp"
+#include "replication/EntityStateCache.hpp"
 
 #include <cstdint>
 #include <unordered_set>

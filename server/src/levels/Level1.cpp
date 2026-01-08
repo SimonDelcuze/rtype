@@ -1,7 +1,7 @@
 #include "levels/Level1.hpp"
 
-#include "server/ObstacleLibrary.hpp"
-#include "server/WaveLibrary.hpp"
+#include "levels/ObstacleLibrary.hpp"
+#include "levels/WaveLibrary.hpp"
 
 std::vector<MovementComponent> Level1::makePatterns() const
 {

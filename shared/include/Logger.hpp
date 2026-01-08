@@ -3,9 +3,12 @@
 #include <atomic>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 class Logger
 {
@@ -18,6 +21,8 @@ class Logger
     void warn(const std::string& message);
     void error(const std::string& message);
     void verbose(const std::string& message);
+
+    void logToRoom(int roomId, const std::string& level, const std::string& message);
 
     void addBytesSent(std::size_t bytes);
     void addBytesReceived(std::size_t bytes);
@@ -51,6 +56,12 @@ class Logger
 
     void logNetworkStats();
 
+    void addTag(const std::string& tag);
+    void removeTag(const std::string& tag);
+    std::vector<std::string> getEnabledTags() const;
+    std::vector<std::string> getAllKnownTags() const;
+    bool hasTag(const std::string& tag) const;
+
     Logger(const Logger&)            = delete;
     Logger& operator=(const Logger&) = delete;
 
@@ -58,11 +69,12 @@ class Logger
     Logger();
     ~Logger();
 
-    void log(const std::string& level, const std::string& message, bool alwaysConsole);
+    void log(int roomId, const std::string& level, const std::string& message, bool alwaysConsole);
     bool isTagEnabled(const std::string& message) const;
     static std::string extractTag(const std::string& message);
 
     std::ofstream _file;
+    std::unordered_map<int, std::unique_ptr<std::ofstream>> _roomFiles;
     mutable std::mutex _mutex;
     bool _verbose;
     bool _consoleEnabled{true};

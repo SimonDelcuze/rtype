@@ -82,7 +82,8 @@ void sendClientReady(const IpEndpoint& server, UdpSocket& socket)
     Logger::instance().info("CLIENT_READY sent to server");
 }
 
-bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag)
+bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
+                   ThreadSafeQueue<std::string>* broadcastQueue)
 {
     if (net.socket == nullptr) {
         net.socket = std::make_shared<UdpSocket>();
@@ -101,8 +102,9 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
         return false;
     }
     net.handler = std::make_unique<NetworkMessageHandler>(
-        net.raw, net.parsed, net.levelInit, net.levelEvents, net.spawns, net.destroys, &handshakeFlag, &net.allReady,
-        &net.countdownValue, &net.gameStartReceived, &net.joinDenied, &net.joinAccepted);
+        net.raw, net.parsed, net.levelInit, net.levelEvents, net.spawns, net.destroys, &net.disconnectEvents,
+        broadcastQueue, &handshakeFlag, &net.allReady, &net.countdownValue, &net.gameStartReceived, &net.joinDenied,
+        &net.joinAccepted);
     Logger::instance().info("Receiver started on port " + std::to_string(port));
     return true;
 }
