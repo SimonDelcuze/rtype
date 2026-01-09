@@ -27,6 +27,15 @@ namespace
                 return "unknown";
         }
     }
+
+    constexpr std::uint16_t kSeqHalfRange = 0x8000;
+
+    bool isNewerSequence(std::uint16_t current, std::uint16_t previous)
+    {
+        if (current == previous)
+            return false;
+        return static_cast<std::uint16_t>(current - previous) < kSeqHalfRange;
+    }
 } // namespace
 
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
@@ -129,7 +138,6 @@ void InputReceiveThread::processIncomingPacket(const std::uint8_t* data, std::si
 {
     Logger::instance().addBytesReceived(size);
     Logger::instance().addPacketReceived();
-    Logger::instance().info("[Packets] Received " + std::to_string(size) + " bytes from " + endpointKey(src));
 
     if (size < PacketHeader::kSize) {
         Logger::instance().addPacketDropped();
@@ -164,7 +172,8 @@ void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::u
     {
         std::lock_guard<std::mutex> lock(sessionMutex_);
         auto it = sessions_.find(key);
-        if (it != sessions_.end() && hdr.sequenceId <= it->second.lastSequenceId)
+        if (it != sessions_.end() && it->second.lastSequenceId != 0 &&
+            !isNewerSequence(hdr.sequenceId, it->second.lastSequenceId))
             stale = true;
     }
 
@@ -184,8 +193,10 @@ void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::u
 
     {
         std::lock_guard<std::mutex> lock(sessionMutex_);
-        auto& state          = sessions_[key];
-        state.lastSequenceId = parsed.input->sequenceId;
+        auto& state = sessions_[key];
+        if (state.lastSequenceId == 0 || isNewerSequence(parsed.input->sequenceId, state.lastSequenceId)) {
+            state.lastSequenceId = parsed.input->sequenceId;
+        }
         state.lastPacketTime = std::chrono::steady_clock::now();
         lastAccepted_        = key;
     }

@@ -55,9 +55,10 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     introCinematic_.update(registry_, playerEntities_, deltaTime);
     const bool introActive = introCinematic_.active();
 
+    std::vector<PlayerCommand> commands;
     if (!introActive) {
-        auto mapped   = mapInputs(inputs);
-        auto commands = convertInputsToCommands(mapped);
+        auto mapped = mapInputs(inputs);
+        commands    = convertInputsToCommands(mapped);
         playerInputSys_.update(registry_, commands);
     }
 
@@ -66,10 +67,22 @@ void ServerApp::updateSystems(float deltaTime, const std::vector<ReceivedInput>&
     monsterMovementSys_.update(registry_, deltaTime);
 
     if (levelLoaded_) {
+        const auto* segment = levelDirector_->currentSegment();
+        if (segment != nullptr && segment->exit.type == TriggerType::PlayersReady) {
+            for (const auto& cmd : commands) {
+                levelDirector_->registerPlayerInput(cmd.playerId, cmd.inputFlags);
+            }
+        }
         float levelDelta = introActive ? 0.0F : deltaTime;
         levelDirector_->update(registry_, levelDelta);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, levelDelta, events);
+        captureCheckpoint(events);
+        sendLevelEvents(events);
+        sendSegmentState();
+        playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
+    } else {
+        playerBoundsSys_.update(registry_, std::nullopt);
     }
 
     enemyShootingSys_.update(registry_, deltaTime);

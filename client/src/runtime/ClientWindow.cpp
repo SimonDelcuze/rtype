@@ -48,6 +48,8 @@ void showErrorMessage(Window& window, const std::string& message, float displayT
             }
         });
 
+        window.setColorFilter(g_colorFilterMode);
+
         window.clear(Color{30, 30, 40});
         window.draw(*errorText);
         window.display();

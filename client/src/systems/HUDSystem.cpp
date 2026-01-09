@@ -21,7 +21,11 @@ namespace
 } // namespace
 
 HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager)
-    : window_(window), fonts_(fonts), textures_(textureManager)
+    : window_(window), fonts_(fonts), textures_(textureManager), state_(nullptr)
+{}
+
+HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager, LevelState& state)
+    : window_(window), fonts_(fonts), textures_(textureManager), state_(&state)
 {}
 
 void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& textComp) const
@@ -83,7 +87,8 @@ void HUDSystem::update(Registry& registry, float)
         bossHealth = &health;
         break;
     }
-    if (boss != nullptr && bossHealth != nullptr) {
+    const bool bossActive = (boss != nullptr && bossHealth != nullptr);
+    if (bossActive) {
         const auto size       = window_.getSize();
         const float barWidth  = std::min(640.0F, static_cast<float>(size.x) * 0.7F);
         const float barHeight = 16.0F;
@@ -120,6 +125,30 @@ void HUDSystem::update(Registry& registry, float)
                 bossText->setScale(Vector2f{1.0F, 1.0F});
                 bossText->setRotation(0.0F);
                 window_.draw(*bossText);
+            }
+        }
+    }
+    if (state_ != nullptr && state_->safeZoneActive) {
+        auto font = fonts_.get("score_font");
+        if (font != nullptr) {
+            static std::shared_ptr<IText> safeZoneText = nullptr;
+            if (!safeZoneText) {
+                GraphicsFactory factory;
+                safeZoneText = factory.createText();
+            }
+            if (safeZoneText) {
+                safeZoneText->setFont(*font);
+                safeZoneText->setCharacterSize(22);
+                safeZoneText->setString("SAFE ZONE, PRESS FIRE TO CONTINUE");
+                safeZoneText->setFillColor(Color{240, 240, 240});
+                const auto size  = window_.getSize();
+                FloatRect bounds = safeZoneText->getLocalBounds();
+                safeZoneText->setOrigin(Vector2f{bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
+                float y = bossActive ? 48.0F : 24.0F;
+                safeZoneText->setPosition(Vector2f{static_cast<float>(size.x) / 2.0F, y});
+                safeZoneText->setScale(Vector2f{1.0F, 1.0F});
+                safeZoneText->setRotation(0.0F);
+                window_.draw(*safeZoneText);
             }
         }
     }

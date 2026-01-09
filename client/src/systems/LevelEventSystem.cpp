@@ -3,8 +3,8 @@
 #include "Logger.hpp"
 
 LevelEventSystem::LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest,
-                                   TextureManager& textures, float& musicVolume)
-    : queue_(&queue), manifest_(&manifest), textures_(&textures), musicVolume_(&musicVolume)
+                                   TextureManager& textures, float& musicVolume, LevelState& state)
+    : queue_(&queue), manifest_(&manifest), textures_(&textures), musicVolume_(&musicVolume), state_(&state)
 {
     activeScroll_.mode   = LevelScrollMode::Constant;
     activeScroll_.speedX = fallbackSpeed_;
@@ -121,6 +121,9 @@ void LevelEventSystem::applyScrollSettings(const LevelScrollSettings& settings)
     activeScroll_ = settings;
     scrollTime_   = 0.0F;
     scrollActive_ = true;
+    if (state_ != nullptr) {
+        state_->safeZoneActive = (activeScroll_.mode == LevelScrollMode::Stopped);
+    }
 }
 
 void LevelEventSystem::applyScrollSpeed(Registry& registry, float speedX)

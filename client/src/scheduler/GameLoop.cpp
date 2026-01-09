@@ -1,5 +1,6 @@
 #include "scheduler/GameLoop.hpp"
 
+#include "ClientRuntime.hpp"
 #include "Logger.hpp"
 #include "network/PacketHeader.hpp"
 
@@ -27,6 +28,8 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
         float deltaTime = std::chrono::duration<float>(now - lastCheck).count();
         lastCheck       = now;
         deltaTime       = std::min(deltaTime, 0.1F);
+
+        window.setColorFilter(g_colorFilterMode);
 
         window.clear();
         auto updateStart = std::chrono::steady_clock::now();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/Registry.hpp"
+#include "network/NetworkConstants.hpp"
 #include "replication/EntityStateCache.hpp"
 
 #include <cstdint>
@@ -23,9 +24,5 @@ class ReplicationManager
     void clear();
 
   private:
-    static constexpr std::uint32_t kFullStateInterval = 60;
-    static constexpr std::size_t kMaxPacketSize       = 1400;
-
     EntityStateCache entityStateCache_;
-    std::uint32_t lastFullStateTick_{0};
 };

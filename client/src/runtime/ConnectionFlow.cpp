@@ -37,9 +37,10 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
             return std::nullopt;
 
         if (result.openSettings) {
-            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume);
+            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume, g_colorFilterMode);
             g_keyBindings       = settingsResult.bindings;
             g_musicVolume       = settingsResult.musicVolume;
+            g_colorFilterMode   = settingsResult.colorFilterMode;
             setLauncherMusicVolume(g_musicVolume);
             if (!window.isOpen())
                 return std::nullopt;
@@ -230,6 +231,8 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         std::chrono::duration<float> elapsed = currentTime - lastTime;
         lastTime                             = currentTime;
         float dt                             = std::min(elapsed.count(), 0.1F);
+
+        window.setColorFilter(g_colorFilterMode);
 
         window.pollEvents([&](const Event& event) {
             if (event.type == EventType::Closed) {

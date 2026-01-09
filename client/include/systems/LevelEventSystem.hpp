@@ -8,6 +8,7 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/TextureManager.hpp"
+#include "level/LevelState.hpp"
 #include "network/LevelEventData.hpp"
 #include "systems/ISystem.hpp"
 
@@ -20,7 +21,7 @@ class LevelEventSystem : public ISystem
 {
   public:
     LevelEventSystem(ThreadSafeQueue<LevelEventData>& queue, const AssetManifest& manifest, TextureManager& textures,
-                     float& musicVolume);
+                     float& musicVolume, LevelState& state);
 
     void update(Registry& registry, float deltaTime) override;
 
@@ -36,6 +37,7 @@ class LevelEventSystem : public ISystem
     const AssetManifest* manifest_          = nullptr;
     TextureManager* textures_               = nullptr;
     float* musicVolume_                     = nullptr;
+    LevelState* state_                      = nullptr;
 
     LevelScrollSettings activeScroll_;
     float scrollTime_    = 0.0F;

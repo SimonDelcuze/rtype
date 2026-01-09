@@ -389,6 +389,7 @@ void GameInstance::resetGame()
         levelDirector_->reset();
         levelSpawnSys_->reset();
     }
+    playerBoundsSys_.reset();
     checkpointState_.reset();
     lastSegmentIndex_ = -1;
 }
@@ -615,6 +616,11 @@ void GameInstance::handleDeathAndRespawn()
                         registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
                         if (registry_.has<TransformComponent>(id)) {
                             registry_.get<TransformComponent>(id).y = kOffscreenRespawnPlaceholder;
+                        }
+                        if (registry_.has<VelocityComponent>(id)) {
+                            auto& v = registry_.get<VelocityComponent>(id);
+                            v.vx    = 0.0F;
+                            v.vy    = 0.0F;
                         }
                     }
                     continue;

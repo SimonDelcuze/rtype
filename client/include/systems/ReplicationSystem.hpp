@@ -9,6 +9,7 @@
 #include "network/EntitySpawnPacket.hpp"
 #include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
+#include "systems/ReconciliationSystem.hpp"
 
 #include <memory>
 #include <optional>
@@ -29,8 +30,8 @@ class ReplicationSystem : public ISystem
   private:
     std::optional<EntityId> ensureEntity(Registry& registry, const SnapshotEntity& entity);
     void applyArchetype(Registry& registry, EntityId id, std::uint16_t typeId);
-    void applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity);
-    void applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity);
+    void applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t sequenceId);
+    void applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity, std::uint32_t sequenceId);
     void applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyHealth(Registry& registry, EntityId id, const SnapshotEntity& entity);
     void applyLives(Registry& registry, EntityId id, const SnapshotEntity& entity);
@@ -68,4 +69,5 @@ class ReplicationSystem : public ISystem
     float minInterpolationTime_     = 0.033F;
     float maxInterpolationTime_     = 0.3F;
     std::uint32_t lastTickReceived_ = 0;
+    ReconciliationSystem reconciliation_;
 };

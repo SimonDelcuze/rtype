@@ -8,6 +8,7 @@
 #include "components/ColliderComponent.hpp"
 #include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
+#include "components/InputHistoryComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -251,7 +252,7 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             if (entity.entityType.has_value())
                 remoteToType_[entity.entityId] = *entity.entityType;
             lastSeenTick_[entity.entityId] = snapshot.header.tickId;
-            applyEntity(registry, *localId, entity);
+            applyEntity(registry, *localId, entity, snapshot.header.sequenceId);
             applyStatusEffects(registry, *localId, entity);
             if (!registry.isAlive(*localId)) {
                 continue;
@@ -438,9 +439,10 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     }
 }
 
-void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity)
+void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity,
+                                    std::uint32_t sequenceId)
 {
-    applyTransform(registry, id, entity);
+    applyTransform(registry, id, entity, sequenceId);
     applyVelocity(registry, id, entity);
     applyHealth(registry, id, entity);
     applyLives(registry, id, entity);
@@ -449,7 +451,8 @@ void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const Snaps
     applyDead(registry, id, entity);
 }
 
-void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity)
+void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity,
+                                       std::uint32_t sequenceId)
 {
     if (!entity.posX.has_value() && !entity.posY.has_value()) {
         return;
@@ -469,15 +472,35 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
         registry.emplace<TransformComponent>(id, t);
         return;
     }
-    if (entity.posX.has_value())
-        comp->x = *entity.posX;
-    if (entity.posY.has_value())
-        comp->y = *entity.posY;
+    const bool isPredictedPlayer = registry.has<TagComponent>(id) &&
+                                   registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
+                                   registry.has<InputHistoryComponent>(id);
+
+    if (isPredictedPlayer) {
+        if (entity.posX.has_value() || entity.posY.has_value()) {
+            float authX = entity.posX.value_or(comp->x);
+            float authY = entity.posY.value_or(comp->y);
+            reconciliation_.reconcile(registry, id, authX, authY, sequenceId);
+        }
+    } else {
+        if (entity.posX.has_value()) {
+            comp->x = *entity.posX;
+        }
+        if (entity.posY.has_value()) {
+            comp->y = *entity.posY;
+        }
+    }
 }
 
 void ReplicationSystem::applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity)
 {
     if (!entity.velX.has_value() && !entity.velY.has_value()) {
+        return;
+    }
+    const bool isPredictedPlayer = registry.has<TagComponent>(id) &&
+                                   registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
+                                   registry.has<InputHistoryComponent>(id);
+    if (isPredictedPlayer) {
         return;
     }
     auto* comp = registry.has<VelocityComponent>(id) ? &registry.get<VelocityComponent>(id) : nullptr;

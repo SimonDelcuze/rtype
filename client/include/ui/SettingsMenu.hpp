@@ -1,5 +1,6 @@
 #pragma once
 
+#include "graphics/ColorFilter.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "input/KeyBindings.hpp"
@@ -23,11 +24,12 @@ class SettingsMenu : public IMenu
     struct Result
     {
         KeyBindings bindings;
-        float musicVolume = 100.0F;
+        float musicVolume               = 100.0F;
+        ColorFilterMode colorFilterMode = ColorFilterMode::None;
     };
 
     SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings = KeyBindings::defaults(),
-                 float musicVolume = 100.0F);
+                 float musicVolume = 100.0F, ColorFilterMode colorFilterMode = ColorFilterMode::None);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -43,9 +45,12 @@ class SettingsMenu : public IMenu
     void refreshButtonLabel(Registry& registry, BindingAction action);
     void setMusicVolume(Registry& registry, float volume);
     void refreshVolumeLabel(Registry& registry);
+    void setColorFilterMode(Registry& registry, ColorFilterMode mode);
+    void refreshColorFilterLabel(Registry& registry);
     bool handleVolumeMouseEvent(Registry& registry, const Vector2i& mousePos, bool isClick);
     void applyScrollOffset(Registry& registry);
     static std::string keyToString(KeyCode key);
+    static std::string colorFilterToString(ColorFilterMode mode);
 
     FontManager& fonts_;
     TextureManager& textures_;
@@ -54,15 +59,17 @@ class SettingsMenu : public IMenu
     std::optional<BindingAction> awaitingAction_;
     std::unordered_map<BindingAction, EntityId> actionButtons_;
     std::unordered_map<EntityId, float> originalPositions_;
-    float musicVolume_           = 100.0F;
-    EntityId volumeValueLabel_   = 0;
-    EntityId networkDebugButton_ = 0;
-    bool draggingVolume_         = false;
-    float scrollOffset_          = 0.0F;
-    float contentHeight_         = 0.0F;
-    float baseSliderY_           = 0.0F;
-    float sliderX_               = 520.0F;
-    float sliderY_               = 0.0F;
-    float sliderWidth_           = 320.0F;
-    float sliderHeight_          = 10.0F;
+    float musicVolume_               = 100.0F;
+    EntityId volumeValueLabel_       = 0;
+    EntityId colorFilterButton_      = 0;
+    EntityId networkDebugButton_     = 0;
+    ColorFilterMode colorFilterMode_ = ColorFilterMode::None;
+    bool draggingVolume_             = false;
+    float scrollOffset_              = 0.0F;
+    float contentHeight_             = 0.0F;
+    float baseSliderY_               = 0.0F;
+    float sliderX_                   = 520.0F;
+    float sliderY_                   = 0.0F;
+    float sliderWidth_               = 320.0F;
+    float sliderHeight_              = 10.0F;
 };

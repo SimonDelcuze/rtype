@@ -105,6 +105,8 @@ Supported triggers in v1:
 - `enemy_count_at_most`
 - `checkpoint_reached`
 - `hp_below` (boss hp threshold)
+- `player_in_zone` (player inside bounds)
+- `players_ready` (all active players pressed the confirm input)
 - `all_of` / `any_of` composite triggers
 
 See `docs/server/level-timeline.md` for trigger semantics and evaluation order.
@@ -120,6 +122,8 @@ Supported event types in v1:
 - `set_background`
 - `set_music`
 - `set_camera_bounds`
+- `set_player_bounds`
+- `clear_player_bounds`
 - `gate_open`
 - `gate_close`
 - `checkpoint`

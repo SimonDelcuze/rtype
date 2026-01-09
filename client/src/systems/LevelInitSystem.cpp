@@ -48,6 +48,7 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
     state_->active               = true;
     state_->introCinematicActive = true;
     state_->introCinematicTime   = 0.0F;
+    state_->safeZoneActive       = false;
     applyBackground(registry, data);
     createHUDEntities(registry);
     for (const auto& entry : data.archetypes) {

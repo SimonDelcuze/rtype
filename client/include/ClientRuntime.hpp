@@ -31,6 +31,7 @@ extern float g_musicVolume;
 extern bool g_networkDebugEnabled;
 extern bool g_isRoomHost;
 extern std::uint8_t g_expectedPlayerCount;
+extern ColorFilterMode g_colorFilterMode;
 
 enum class JoinResult
 {

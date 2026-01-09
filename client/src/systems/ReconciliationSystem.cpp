@@ -1,5 +1,6 @@
 #include "systems/ReconciliationSystem.hpp"
 
+#include "Logger.hpp"
 #include "components/VelocityComponent.hpp"
 
 #include <cmath>
@@ -30,14 +31,23 @@ void ReconciliationSystem::reconcile(Registry& registry, EntityId entityId, floa
     auto& transform = registry.get<TransformComponent>(entityId);
     auto& history   = registry.get<InputHistoryComponent>(entityId);
 
-    float predictedX = transform.x;
-    float predictedY = transform.y;
-
-    float errorX         = predictedX - authoritativeX;
-    float errorY         = predictedY - authoritativeY;
+    float errorX         = transform.x - authoritativeX;
+    float errorY         = transform.y - authoritativeY;
     float errorMagnitude = std::sqrt(errorX * errorX + errorY * errorY);
 
-    if (errorMagnitude < reconciliationThreshold_) {
+    constexpr float kHardResetThreshold = 1000.0F;
+    constexpr float kReconcileThreshold = 1.5F;
+
+    if (errorMagnitude > kHardResetThreshold) {
+        Logger::instance().info("[Reconciliation] Teleport detected (error=" + std::to_string(errorMagnitude) +
+                                "), resetting history.");
+        history.clear();
+        transform.x = authoritativeX;
+        transform.y = authoritativeY;
+        return;
+    }
+
+    if (errorMagnitude < kReconcileThreshold) {
         history.acknowledgeUpTo(acknowledgedSequence);
         return;
     }
