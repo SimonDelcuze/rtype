@@ -56,7 +56,6 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
-# SFML is used by Client and Editor
 set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
 set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
@@ -70,6 +69,19 @@ if(BUILD_CLIENT OR BUILD_EDITOR)
         GIT_SHALLOW TRUE
     )
 endif()
+
+find_package(SQLite3 REQUIRED)
+
+CPMAddPackage(
+    NAME jwt-cpp
+    GITHUB_REPOSITORY Thalhammer/jwt-cpp
+    GIT_TAG v0.7.0
+    GIT_SHALLOW TRUE
+)
+
+find_package(OpenSSL REQUIRED)
+
+set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_cmake.cmake")
 
 CPMAddPackage(
     NAME lz4

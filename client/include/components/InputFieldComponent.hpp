@@ -11,6 +11,7 @@ struct InputFieldComponent
     std::string placeholder;
     std::size_t maxLength               = 32;
     bool focused                        = false;
+    bool passwordField                  = false;
     std::function<bool(char)> validator = nullptr;
 
     static InputFieldComponent create(const std::string& defaultValue, std::size_t maxLen)
@@ -18,6 +19,15 @@ struct InputFieldComponent
         InputFieldComponent c;
         c.value     = defaultValue;
         c.maxLength = maxLen;
+        return c;
+    }
+
+    static InputFieldComponent password(const std::string& defaultValue, std::size_t maxLen)
+    {
+        InputFieldComponent c;
+        c.value         = defaultValue;
+        c.maxLength     = maxLen;
+        c.passwordField = true;
         return c;
     }
 

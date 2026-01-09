@@ -1,5 +1,6 @@
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
+#include "auth/AuthResult.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
@@ -7,17 +8,87 @@
 #include "graphics/TextureManager.hpp"
 #include "graphics/abstraction/Event.hpp"
 #include "network/EndpointParser.hpp"
+#include "network/LobbyConnection.hpp"
 #include "runtime/MenuMusic.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/LobbyMenu.hpp"
+#include "ui/LoginMenu.hpp"
 #include "ui/MenuRunner.hpp"
+#include "ui/RegisterMenu.hpp"
 #include "ui/SettingsMenu.hpp"
 #include "ui/WaitingRoomMenu.hpp"
 
 #include <chrono>
+
+std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
+                                                 TextureManager& textureManager, LobbyConnection& lobbyConn,
+                                                 ThreadSafeQueue<NotificationData>& broadcastQueue)
+{
+    if (!lobbyConn.connect()) {
+        Logger::instance().error("[Auth] Failed to connect to lobby server for authentication");
+        return std::nullopt;
+    }
+
+    startLauncherMusic(g_musicVolume);
+    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
+
+    std::optional<AuthResult> result;
+
+    while (window.isOpen()) {
+        auto loginResult = runner.runAndGetResult<LoginMenu>(lobbyConn);
+
+        if (!window.isOpen())
+            break;
+
+        if (loginResult.backRequested) {
+            Logger::instance().info("[Auth] User wants to go back to server selection");
+            break;
+        }
+
+        if (loginResult.exitRequested) {
+            window.close();
+            break;
+        }
+
+        if (loginResult.openRegister) {
+            auto registerResult = runner.runAndGetResult<RegisterMenu>(lobbyConn);
+
+            if (!window.isOpen())
+                break;
+
+            if (registerResult.exitRequested) {
+                window.close();
+                break;
+            }
+
+            if (registerResult.backToLogin) {
+                continue;
+            }
+
+            if (registerResult.registered) {
+                Logger::instance().info("[Auth] Registration successful, please login");
+                continue;
+            }
+
+            continue;
+        }
+
+        if (loginResult.authenticated) {
+            AuthResult authResult;
+            authResult.authenticated = true;
+            authResult.username      = loginResult.username;
+            authResult.token         = loginResult.token;
+            authResult.userId        = loginResult.userId;
+            result                   = authResult;
+            break;
+        }
+    }
+
+    return result;
+}
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage,
@@ -80,11 +151,12 @@ bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMe
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
-                                                          ThreadSafeQueue<NotificationData>& broadcastQueue)
+                                                          ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                                          LobbyConnection* authenticatedConnection)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running, authenticatedConnection);
 
     if (!window.isOpen())
         return std::nullopt;
@@ -98,58 +170,6 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
                                 std::to_string(result.gamePort));
         return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
                               lobbyEndpoint.addr[3], result.gamePort);
-    }
-
-    return std::nullopt;
-}
-
-std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage,
-                                                ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint)
-{
-    if (options.useDefault) {
-        Logger::instance().info("Using default lobby: 127.0.0.1:50010");
-        auto lobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
-        return showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue);
-    }
-
-    if (options.serverIp.has_value() && options.serverPort.has_value()) {
-        return parseEndpoint(*options.serverIp, std::to_string(*options.serverPort));
-    }
-
-    if (lastLobbyEndpoint.has_value()) {
-        Logger::instance().info(
-            "[Redirection] Returning to last lobby: " + std::to_string(lastLobbyEndpoint->addr[0]) + "." +
-            std::to_string(lastLobbyEndpoint->addr[1]) + "." + std::to_string(lastLobbyEndpoint->addr[2]) + "." +
-            std::to_string(lastLobbyEndpoint->addr[3]) + ":" + std::to_string(lastLobbyEndpoint->port));
-        if (verifyLobbyConnection(*lastLobbyEndpoint, errorMessage, g_running, broadcastQueue)) {
-            auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lastLobbyEndpoint, fontManager, textureManager,
-                                                          broadcastQueue);
-            if (gameEp.has_value()) {
-                return gameEp;
-            }
-        } else {
-            errorMessage.clear();
-        }
-        lastLobbyEndpoint.reset();
-    }
-
-    while (window.isOpen()) {
-        auto lobbyEp = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
-        if (!lobbyEp.has_value()) {
-            return std::nullopt;
-        }
-
-        if (!verifyLobbyConnection(*lobbyEp, errorMessage, g_running, broadcastQueue)) {
-            continue;
-        }
-
-        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, *lobbyEp, fontManager, textureManager, broadcastQueue);
-        if (gameEp.has_value()) {
-            lastLobbyEndpoint = *lobbyEp;
-            return gameEp;
-        }
     }
 
     return std::nullopt;

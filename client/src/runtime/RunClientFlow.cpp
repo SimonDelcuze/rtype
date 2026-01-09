@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "animation/AnimationManifest.hpp"
 #include "audio/SoundManager.hpp"
+#include "auth/AuthResult.hpp"
 #include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
 #include "events/GameEvents.hpp"
@@ -12,6 +13,7 @@
 #include "input/InputMapper.hpp"
 #include "level/EntityTypeSetup.hpp"
 #include "level/LevelState.hpp"
+#include "network/LobbyConnection.hpp"
 #include "network/PacketHeader.hpp"
 #include "scheduler/ClientScheduler.hpp"
 #include "scheduler/GameLoop.hpp"
@@ -22,6 +24,93 @@
 #include "ui/GameOverMenu.hpp"
 
 #include <chrono>
+
+std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
+                                                 TextureManager& textureManager, LobbyConnection& lobbyConn,
+                                                 ThreadSafeQueue<NotificationData>& broadcastQueue);
+
+std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
+                                                TextureManager& textureManager, std::string& errorMessage,
+                                                ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint)
+{
+    (void) lastLobbyEndpoint;
+
+    static bool serverSelected = false;
+    static IpEndpoint savedLobbyEp;
+    static bool authenticated = false;
+    static std::string authenticatedUsername;
+    static std::unique_ptr<LobbyConnection> authenticatedConnection;
+
+    if (!serverSelected) {
+        Logger::instance().info("[Nav] Starting server selection flow");
+
+        if (options.useDefault) {
+            Logger::instance().info("Using default lobby: 127.0.0.1:50010");
+            savedLobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
+        } else {
+            auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
+            if (!ep.has_value()) {
+                return std::nullopt;
+            }
+            savedLobbyEp = *ep;
+        }
+        serverSelected = true;
+        Logger::instance().info("[Nav] Server selected");
+    }
+
+    while (window.isOpen() && !authenticated) {
+        Logger::instance().info("[Auth] Starting authentication flow");
+
+        authenticatedConnection = std::make_unique<LobbyConnection>(savedLobbyEp, g_running);
+
+        auto authResult =
+            showAuthenticationMenu(window, fontManager, textureManager, *authenticatedConnection, broadcastQueue);
+
+        if (!authResult.has_value()) {
+            Logger::instance().info("[Nav] Authentication cancelled, returning to server selection");
+            serverSelected = false;
+            authenticated  = false;
+            authenticatedConnection.reset();
+
+            if (options.useDefault) {
+                return std::nullopt;
+            }
+
+            auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
+            if (!ep.has_value()) {
+                return std::nullopt;
+            }
+            savedLobbyEp   = *ep;
+            serverSelected = true;
+            continue;
+        }
+
+        Logger::instance().info("[Auth] User authenticated: " + authResult->username);
+        authenticated         = true;
+        authenticatedUsername = authResult->username;
+    }
+
+    while (window.isOpen()) {
+        Logger::instance().info("[Nav] Showing lobby menu");
+
+        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, savedLobbyEp, fontManager, textureManager, broadcastQueue,
+                                                      authenticatedConnection.get());
+
+        if (gameEp.has_value()) {
+            return gameEp;
+        }
+
+        Logger::instance().info("[Nav] Back from lobby, returning to login");
+        authenticated = false;
+        authenticatedConnection.reset();
+
+        return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                     lastLobbyEndpoint);
+    }
+
+    return std::nullopt;
+}
 
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,

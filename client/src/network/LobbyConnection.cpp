@@ -164,3 +164,63 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
 
     return {};
 }
+
+std::optional<LoginResponseData> LobbyConnection::login(const std::string& username, const std::string& password)
+{
+    auto packet   = buildLoginRequestPacket(username, password, nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::AuthLoginResponse, std::chrono::seconds(5));
+
+    if (response.empty()) {
+        return std::nullopt;
+    }
+
+    return parseLoginResponsePacket(response.data(), response.size());
+}
+
+std::optional<RegisterResponseData> LobbyConnection::registerUser(const std::string& username,
+                                                                  const std::string& password)
+{
+    auto packet   = buildRegisterRequestPacket(username, password, nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::AuthRegisterResponse, std::chrono::seconds(5));
+
+    if (response.empty()) {
+        return std::nullopt;
+    }
+
+    return parseRegisterResponsePacket(response.data(), response.size());
+}
+
+std::optional<ChangePasswordResponseData> LobbyConnection::changePassword(const std::string& oldPassword,
+                                                                          const std::string& newPassword,
+                                                                          const std::string& token)
+{
+    auto packet   = buildChangePasswordRequestPacket(oldPassword, newPassword, token, nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::AuthChangePasswordResponse, std::chrono::seconds(5));
+
+    if (response.empty()) {
+        return std::nullopt;
+    }
+
+    return parseChangePasswordResponsePacket(response.data(), response.size());
+}
+
+std::optional<GetStatsResponseData> LobbyConnection::getStats()
+{
+    Logger::instance().info("[LobbyConnection] Requesting user stats...");
+    auto packet   = buildGetStatsRequestPacket(nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::AuthGetStatsResponse, std::chrono::seconds(5));
+
+    if (response.empty()) {
+        Logger::instance().warn("[LobbyConnection] No response received for stats request");
+        return std::nullopt;
+    }
+
+    auto parsed = parseGetStatsResponsePacket(response.data(), response.size());
+    if (parsed.has_value()) {
+        Logger::instance().info("[LobbyConnection] Stats response parsed successfully");
+    } else {
+        Logger::instance().warn("[LobbyConnection] Failed to parse stats response");
+    }
+
+    return parsed;
+}

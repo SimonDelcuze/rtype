@@ -1,5 +1,8 @@
 #pragma once
 
+#include "auth/AuthService.hpp"
+#include "auth/Database.hpp"
+#include "auth/UserRepository.hpp"
 #include "console/ServerConsole.hpp"
 #include "core/Session.hpp"
 #include "game/GameInstanceManager.hpp"
@@ -39,9 +42,19 @@ class LobbyServer
     void handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                              const IpEndpoint& from);
 
+    void handleLoginRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                            const IpEndpoint& from);
+    void handleRegisterRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                               const IpEndpoint& from);
+    void handleChangePasswordRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                                     const IpEndpoint& from);
+    void handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoint& from);
+
     void sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to);
+    void sendAuthRequired(const IpEndpoint& to);
 
     std::string endpointToKey(const IpEndpoint& ep) const;
+    bool isAuthenticated(const IpEndpoint& from) const;
 
     ServerStats aggregateStats();
 
@@ -61,6 +74,10 @@ class LobbyServer
     GameInstanceManager instanceManager_;
     LobbyManager lobbyManager_;
     std::unique_ptr<ServerConsole> tui_;
+
+    std::shared_ptr<Database> database_;
+    std::shared_ptr<UserRepository> userRepository_;
+    std::shared_ptr<AuthService> authService_;
 
     std::uint16_t nextSequence_{0};
 };
