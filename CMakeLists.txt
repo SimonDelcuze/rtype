@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(rtype
     VERSION 0.1.0
-    LANGUAGES CXX
+    LANGUAGES CXX C
 )
 
 if(POLICY CMP0169)
@@ -70,7 +70,30 @@ if(BUILD_CLIENT OR BUILD_EDITOR)
     )
 endif()
 
-find_package(SQLite3 REQUIRED)
+CPMAddPackage(
+    NAME SQLite3
+    GITHUB_REPOSITORY alex85k/sqlite3-cmake
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+    DOWNLOAD_ONLY YES
+)
+
+if(SQLite3_ADDED)
+    add_library(sqlite3 STATIC ${SQLite3_SOURCE_DIR}/src/sqlite3.c)
+    target_include_directories(sqlite3 PUBLIC ${SQLite3_SOURCE_DIR}/src)
+    target_compile_definitions(sqlite3 PUBLIC
+        SQLITE_ENABLE_RTREE
+        SQLITE_ENABLE_FTS4
+        SQLITE_ENABLE_FTS5
+        SQLITE_ENABLE_JSON1
+        SQLITE_ENABLE_RBU
+        SQLITE_ENABLE_STAT4
+    )
+    if(UNIX)
+        find_package(Threads REQUIRED)
+        target_link_libraries(sqlite3 PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
+    endif()
+endif()
 
 CPMAddPackage(
     NAME jwt-cpp

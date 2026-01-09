@@ -22,7 +22,7 @@ target_link_libraries(rtype_server_lib
     PRIVATE
         rtype_shared
         nlohmann_json::nlohmann_json
-        SQLite::SQLite3
+        sqlite3
         jwt-cpp::jwt-cpp
         OpenSSL::SSL
         OpenSSL::Crypto
