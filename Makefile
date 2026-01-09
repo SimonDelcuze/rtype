@@ -5,7 +5,6 @@ SHELL := /bin/bash
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
 
 all:
-	./scripts/build.sh
 	cmake -S . -B build -DBUILD_CLIENT=ON -DBUILD_EDITOR=OFF
 	cmake --build build --target rtype_server rtype_client -j $(NPROC)
 
