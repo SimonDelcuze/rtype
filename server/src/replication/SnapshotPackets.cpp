@@ -3,6 +3,7 @@
 #include "components/ScoreComponent.hpp"
 #include "core/EntityTypeResolver.hpp"
 #include "network/NetworkCompression.hpp"
+#include "network/NetworkConstants.hpp"
 #include "network/Packets.hpp"
 #include "network/Packing.hpp"
 #include "replication/EntityStateCache.hpp"
@@ -317,7 +318,7 @@ std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registr
 std::vector<std::uint8_t> buildDeltaSnapshotPacket(Registry& registry, uint32_t tick, EntityStateCache& cache,
                                                    bool forceFullState)
 {
-    auto results = buildSmartDeltaSnapshot(registry, tick, cache, forceFullState, 65535);
+    auto results = buildSmartDeltaSnapshot(registry, tick, cache, forceFullState, Network::kMaxSafePacketPayload);
     return results.empty() ? std::vector<std::uint8_t>{} : results[0];
 }
 

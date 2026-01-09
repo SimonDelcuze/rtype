@@ -1,6 +1,6 @@
 #include "systems/ReconciliationSystem.hpp"
-#include "Logger.hpp"
 
+#include "Logger.hpp"
 #include "components/VelocityComponent.hpp"
 
 #include <cmath>
@@ -39,7 +39,7 @@ void ReconciliationSystem::reconcile(Registry& registry, EntityId entityId, floa
     constexpr float kReconcileThreshold = 1.5F;
 
     if (errorMagnitude > kHardResetThreshold) {
-        Logger::instance().info("[Reconciliation] Teleport detected (error=" + std::to_string(errorMagnitude) + 
+        Logger::instance().info("[Reconciliation] Teleport detected (error=" + std::to_string(errorMagnitude) +
                                 "), resetting history.");
         history.clear();
         transform.x = authoritativeX;
