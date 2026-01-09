@@ -4,6 +4,7 @@
 #include "network/UdpSocket.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -19,6 +20,11 @@ struct ClientSession
     IpEndpoint endpoint{};
     PlayerRole role{PlayerRole::Player};
     std::string playerName;
+
+    bool authenticated = false;
+    std::optional<std::uint32_t> userId;
+    std::string username;
+    std::string jwtToken;
 };
 
 std::string endpointKey(const IpEndpoint& ep);

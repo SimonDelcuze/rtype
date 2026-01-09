@@ -115,10 +115,10 @@ void CreateRoomMenu::create(Registry& registry)
 
     titleEntity_ = createText(registry, 450.0F, 200.0F, "Create Room", 36, Color::White);
 
-    createText(registry, 400.0F, 270.0F, "Room Name:", 20, Color(200, 200, 200));
+    roomNameLabelEntity_ = createText(registry, 400.0F, 270.0F, "Room Name:", 20, Color(200, 200, 200));
     roomNameInputEntity_ = createInputField(registry, 400.0F, 300.0F, 400.0F, "My Room");
 
-    createText(registry, 400.0F, 360.0F, "Password (optional):", 20, Color(200, 200, 200));
+    passwordLabelEntity_ = createText(registry, 400.0F, 360.0F, "Password (optional):", 20, Color(200, 200, 200));
     passwordInputEntity_ = createInputField(registry, 400.0F, 390.0F, 300.0F, "");
 
     passwordToggleEntity_ = createButton(registry, 720.0F, 390.0F, 120.0F, 40.0F, "Disabled", Color(80, 80, 80),
@@ -133,7 +133,26 @@ void CreateRoomMenu::create(Registry& registry)
 
 void CreateRoomMenu::destroy(Registry& registry)
 {
-    registry.clear();
+    if (registry.isAlive(backgroundEntity_))
+        registry.destroyEntity(backgroundEntity_);
+    if (registry.isAlive(logoEntity_))
+        registry.destroyEntity(logoEntity_);
+    if (registry.isAlive(titleEntity_))
+        registry.destroyEntity(titleEntity_);
+    if (registry.isAlive(roomNameLabelEntity_))
+        registry.destroyEntity(roomNameLabelEntity_);
+    if (registry.isAlive(roomNameInputEntity_))
+        registry.destroyEntity(roomNameInputEntity_);
+    if (registry.isAlive(passwordLabelEntity_))
+        registry.destroyEntity(passwordLabelEntity_);
+    if (registry.isAlive(passwordInputEntity_))
+        registry.destroyEntity(passwordInputEntity_);
+    if (registry.isAlive(passwordToggleEntity_))
+        registry.destroyEntity(passwordToggleEntity_);
+    if (registry.isAlive(createButtonEntity_))
+        registry.destroyEntity(createButtonEntity_);
+    if (registry.isAlive(cancelButtonEntity_))
+        registry.destroyEntity(cancelButtonEntity_);
 }
 
 bool CreateRoomMenu::isDone() const

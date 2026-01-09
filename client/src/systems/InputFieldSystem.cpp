@@ -27,6 +27,11 @@ void InputFieldSystem::update(Registry& registry, float)
             continue;
 
         std::string displayText = input.value;
+
+        if (input.passwordField && !input.value.empty()) {
+            displayText = std::string(input.value.length(), '*');
+        }
+
         if (input.focused)
             displayText += "_";
         else if (input.value.empty() && !input.placeholder.empty())

@@ -274,10 +274,8 @@ void RoomWaitingMenu::onStartGameClicked()
 
     if (lobbyConnection_) {
         lobbyConnection_->notifyGameStarting(roomId_);
+        Logger::instance().info("[RoomWaitingMenu] Waiting for server confirmation...");
     }
-
-    result_.startGame = true;
-    done_             = true;
 }
 
 void RoomWaitingMenu::onLeaveRoomClicked()

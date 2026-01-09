@@ -10,6 +10,7 @@
 #include "graphics/TextureManager.hpp"
 #include "ui/NotificationData.hpp"
 
+#include <iomanip>
 #include <sstream>
 
 namespace
@@ -106,9 +107,10 @@ namespace
 } // namespace
 
 LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-                     ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag)
+                     ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag,
+                     LobbyConnection* sharedConnection)
     : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue),
-      runningFlag_(runningFlag)
+      runningFlag_(runningFlag), sharedConnection_(sharedConnection), ownsConnection_(sharedConnection == nullptr)
 {}
 
 void LobbyMenu::create(Registry& registry)
@@ -122,6 +124,20 @@ void LobbyMenu::create(Registry& registry)
 
     titleEntity_  = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
     statusEntity_ = createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
+
+    statsBoxEntity_         = registry.createEntity();
+    auto& statsBoxTransform = registry.emplace<TransformComponent>(statsBoxEntity_);
+    statsBoxTransform.x     = 20.0F;
+    statsBoxTransform.y     = 20.0F;
+    auto statsBox           = BoxComponent::create(280.0F, 180.0F, Color(30, 35, 45, 220), Color(50, 55, 65, 220));
+    registry.emplace<BoxComponent>(statsBoxEntity_, statsBox);
+
+    statsUsernameEntity_ = createText(registry, 30.0F, 30.0F, "", 18, Color(150, 200, 255));
+    statsGamesEntity_    = createText(registry, 30.0F, 60.0F, "", 14, Color(200, 200, 200));
+    statsWinsEntity_     = createText(registry, 30.0F, 85.0F, "", 14, Color(100, 255, 100));
+    statsLossesEntity_   = createText(registry, 30.0F, 110.0F, "", 14, Color(255, 100, 100));
+    statsWinRateEntity_  = createText(registry, 30.0F, 135.0F, "", 14, Color(255, 200, 100));
+    statsScoreEntity_    = createText(registry, 30.0F, 160.0F, "", 14, Color(255, 255, 100));
 
     createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
                                        [this]() { onCreateRoomClicked(); });
@@ -138,16 +154,20 @@ void LobbyMenu::create(Registry& registry)
     filterProtectedButtonEntity_ = createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected",
                                                 Color(60, 100, 60), [this]() { onToggleFilterProtected(); });
 
-    lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_, runningFlag_);
-
-    if (!lobbyConnection_->connect()) {
-        Logger::instance().error("[LobbyMenu] Failed to connect to lobby server");
-        if (registry.has<TextComponent>(statusEntity_)) {
-            registry.get<TextComponent>(statusEntity_).content = "Failed to connect!";
+    if (sharedConnection_) {
+        ownsConnection_ = false;
+    } else {
+        lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_, runningFlag_);
+        if (!lobbyConnection_->connect()) {
+            Logger::instance().error("[LobbyMenu] Failed to connect to lobby server");
+            if (registry.has<TextComponent>(statusEntity_)) {
+                registry.get<TextComponent>(statusEntity_).content = "Failed to connect!";
+            }
+            state_                = State::Done;
+            result_.exitRequested = true;
+            return;
         }
-        state_                = State::Done;
-        result_.exitRequested = true;
-        return;
+        ownsConnection_ = true;
     }
 
     createRoomMenu_    = std::make_unique<CreateRoomMenu>(fonts_, textures_);
@@ -161,7 +181,7 @@ void LobbyMenu::destroy(Registry& registry)
 {
     registry.clear();
 
-    if (lobbyConnection_) {
+    if (ownsConnection_ && lobbyConnection_) {
         lobbyConnection_->disconnect();
         lobbyConnection_.reset();
     }
@@ -243,14 +263,14 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     Logger::instance().info("[LobbyMenu] Creating room with configuration...");
                     state_ = State::Creating;
 
-                    if (!lobbyConnection_) {
+                    auto* conn = getConnection();
+                    if (!conn) {
                         state_                = State::Done;
                         result_.exitRequested = true;
                         return;
                     }
 
-                    auto createResult =
-                        lobbyConnection_->createRoom(result.roomName, result.password, result.visibility);
+                    auto createResult = conn->createRoom(result.roomName, result.password, result.visibility);
 
                     if (!createResult.has_value()) {
                         Logger::instance().error("[LobbyMenu] Failed to create room with configuration");
@@ -264,7 +284,7 @@ void LobbyMenu::render(Registry& registry, Window& window)
                                             " Port=" + std::to_string(createResult->port));
 
                     Logger::instance().info("[LobbyMenu] Joining own room...");
-                    auto joinResult = lobbyConnection_->joinRoom(createResult->roomId);
+                    auto joinResult = conn->joinRoom(createResult->roomId);
 
                     if (!joinResult.has_value()) {
                         Logger::instance().error("[LobbyMenu] Failed to join own room");
@@ -350,14 +370,15 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     Logger::instance().info("[LobbyMenu] Password submitted, joining room...");
                     state_ = State::Joining;
 
-                    if (!lobbyConnection_ || pendingJoinRoomIndex_ >= rooms_.size()) {
+                    auto* conn = getConnection();
+                    if (!conn || pendingJoinRoomIndex_ >= rooms_.size()) {
                         state_                = State::Done;
                         result_.exitRequested = true;
                         return;
                     }
 
                     const auto& room = rooms_[pendingJoinRoomIndex_];
-                    auto joinResult  = lobbyConnection_->joinRoom(room.roomId, result.password);
+                    auto joinResult  = conn->joinRoom(room.roomId, result.password);
 
                     if (!joinResult.has_value()) {
                         Logger::instance().error("[LobbyMenu] Failed to join room with password");
@@ -388,7 +409,7 @@ void LobbyMenu::render(Registry& registry, Window& window)
     if (state_ == State::InRoom) {
         if (!roomWaitingMenu_) {
             roomWaitingMenu_ = std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, result_.gamePort,
-                                                                 isRoomHost_, lobbyConnection_.get());
+                                                                 isRoomHost_, getConnection());
         }
 
         if (!roomWaitingMenuInitialized_) {
@@ -462,9 +483,10 @@ void LobbyMenu::render(Registry& registry, Window& window)
         return;
     }
 
-    if (lobbyConnection_) {
-        lobbyConnection_->poll(broadcastQueue_);
-        if (lobbyConnection_->isServerLost()) {
+    auto* conn = getConnection();
+    if (conn) {
+        conn->poll(broadcastQueue_);
+        if (conn->isServerLost()) {
             Logger::instance().warn("[LobbyMenu] Server lost - returning to connection menu");
             broadcastQueue_.push(NotificationData{"Lost connection to lobby server", 5.0F});
             state_                = State::Done;
@@ -476,6 +498,12 @@ void LobbyMenu::render(Registry& registry, Window& window)
     if (filterChanged_) {
         filterChanged_ = false;
         updateRoomListDisplay(registry);
+    }
+
+    if (!statsLoaded_ && sharedConnection_) {
+        Logger::instance().info("[LobbyMenu] Loading stats with authenticated connection");
+        loadAndDisplayStats(registry);
+        statsLoaded_ = true;
     }
 
     if (state_ == State::Loading || state_ == State::ShowingRooms) {
@@ -490,11 +518,12 @@ void LobbyMenu::render(Registry& registry, Window& window)
 
 void LobbyMenu::refreshRoomList()
 {
-    if (!lobbyConnection_) {
+    auto* conn = getConnection();
+    if (!conn) {
         return;
     }
 
-    auto result = lobbyConnection_->requestRoomList();
+    auto result = conn->requestRoomList();
 
     if (!result.has_value()) {
         Logger::instance().warn("[LobbyMenu] Failed to get room list");
@@ -544,13 +573,14 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
     Logger::instance().info("[LobbyMenu] Joining room " + std::to_string(room.roomId) + "...");
     state_ = State::Joining;
 
-    if (!lobbyConnection_) {
+    auto* conn = getConnection();
+    if (!conn) {
         state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
 
-    auto result = lobbyConnection_->joinRoom(room.roomId);
+    auto result = conn->joinRoom(room.roomId);
 
     if (!result.has_value()) {
         Logger::instance().error("[LobbyMenu] Failed to join room");
@@ -662,4 +692,66 @@ void LobbyMenu::createRoomButton(Registry& registry, const RoomInfo& room, std::
                                      [this, index]() { onJoinRoomClicked(index); });
 
     roomButtonEntities_.push_back(buttonEntity);
+}
+
+void LobbyMenu::loadAndDisplayStats(Registry& registry)
+{
+    auto* conn = getConnection();
+    if (!conn) {
+        Logger::instance().warn("[LobbyMenu] Cannot load stats: no lobby connection");
+        return;
+    }
+
+    Logger::instance().info("[LobbyMenu] Loading user stats...");
+
+    auto stats = conn->getStats();
+    if (!stats.has_value()) {
+        Logger::instance().warn("[LobbyMenu] Failed to load user stats");
+        if (registry.has<TextComponent>(statsUsernameEntity_)) {
+            registry.get<TextComponent>(statsUsernameEntity_).content = "Stats unavailable";
+        }
+        return;
+    }
+
+    Logger::instance().info("[LobbyMenu] Received stats - userId: " + std::to_string(stats->userId) +
+                            ", games: " + std::to_string(stats->gamesPlayed) +
+                            ", wins: " + std::to_string(stats->wins) + ", losses: " + std::to_string(stats->losses) +
+                            ", score: " + std::to_string(stats->totalScore));
+
+    float winRate = 0.0F;
+    if (stats->gamesPlayed > 0) {
+        winRate = (static_cast<float>(stats->wins) / static_cast<float>(stats->gamesPlayed)) * 100.0F;
+    }
+
+    Logger::instance().info("[LobbyMenu] Calculated win rate: " + std::to_string(winRate) + "%");
+
+    std::string username = "Player #" + std::to_string(stats->userId);
+
+    if (registry.has<TextComponent>(statsUsernameEntity_)) {
+        registry.get<TextComponent>(statsUsernameEntity_).content = username;
+    }
+
+    if (registry.has<TextComponent>(statsGamesEntity_)) {
+        registry.get<TextComponent>(statsGamesEntity_).content = "Games: " + std::to_string(stats->gamesPlayed);
+    }
+
+    if (registry.has<TextComponent>(statsWinsEntity_)) {
+        registry.get<TextComponent>(statsWinsEntity_).content = "Wins: " + std::to_string(stats->wins);
+    }
+
+    if (registry.has<TextComponent>(statsLossesEntity_)) {
+        registry.get<TextComponent>(statsLossesEntity_).content = "Losses: " + std::to_string(stats->losses);
+    }
+
+    if (registry.has<TextComponent>(statsWinRateEntity_)) {
+        std::ostringstream oss;
+        oss << "Win Rate: " << std::fixed << std::setprecision(1) << winRate << "%";
+        registry.get<TextComponent>(statsWinRateEntity_).content = oss.str();
+    }
+
+    if (registry.has<TextComponent>(statsScoreEntity_)) {
+        registry.get<TextComponent>(statsScoreEntity_).content = "Score: " + std::to_string(stats->totalScore);
+    }
+
+    Logger::instance().info("[LobbyMenu] Stats loaded and displayed in stats box");
 }

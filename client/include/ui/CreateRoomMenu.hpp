@@ -46,7 +46,9 @@ class CreateRoomMenu : public IMenu
     EntityId backgroundEntity_{0};
     EntityId logoEntity_{0};
     EntityId titleEntity_{0};
+    EntityId roomNameLabelEntity_{0};
     EntityId roomNameInputEntity_{0};
+    EntityId passwordLabelEntity_{0};
     EntityId passwordInputEntity_{0};
     EntityId passwordToggleEntity_{0};
     EntityId createButtonEntity_{0};

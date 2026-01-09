@@ -70,7 +70,7 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     }
 
     sess.join = true;
-    sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
+    sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId, sess.playerId), ctrl.from);
 
     bool alreadyExists = false;
     for (const auto& ep : clients_) {

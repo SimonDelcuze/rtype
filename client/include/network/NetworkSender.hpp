@@ -26,6 +26,10 @@ class NetworkSender
     void stop();
     bool running() const;
     IpEndpoint endpoint() const;
+    void setPlayerId(std::uint32_t playerId)
+    {
+        playerId_ = playerId;
+    }
 
   private:
     void loop();

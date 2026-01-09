@@ -24,6 +24,16 @@
 * [Level Messages & Entity Typing](protocol/level-messages.md)
 * [Lobby Protocol](protocol/lobby-protocol.md)
 
+## Authentication & User Management
+
+* [Overview](authentication/README.md)
+* [Network Protocol](authentication/protocol.md)
+* [Server Implementation](authentication/server-implementation.md)
+* [Client Implementation](authentication/client-implementation.md)
+* [User Statistics](authentication/user-statistics.md)
+* [Flow Diagrams](authentication/flow-diagrams.md)
+* [Testing Guide](authentication/testing.md)
+
 ## Server
 
 * [Introduction](server/introduction.md)

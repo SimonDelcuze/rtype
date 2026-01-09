@@ -33,7 +33,8 @@ class LobbyMenu : public IMenu
     };
 
     LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-              ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag);
+              ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag,
+              LobbyConnection* sharedConnection = nullptr);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -58,6 +59,12 @@ class LobbyMenu : public IMenu
     void updateRoomListDisplay(Registry& registry);
     void createRoomButton(Registry& registry, const RoomInfo& room, std::size_t index);
     bool shouldShowRoom(const RoomInfo& room) const;
+    void loadAndDisplayStats(Registry& registry);
+
+    LobbyConnection* getConnection()
+    {
+        return sharedConnection_ ? sharedConnection_ : lobbyConnection_.get();
+    }
 
     enum class State
     {
@@ -77,6 +84,8 @@ class LobbyMenu : public IMenu
     ThreadSafeQueue<NotificationData>& broadcastQueue_;
     const std::atomic<bool>& runningFlag_;
     std::unique_ptr<LobbyConnection> lobbyConnection_;
+    LobbyConnection* sharedConnection_{nullptr};
+    bool ownsConnection_{true};
     Result result_;
     State state_{State::Loading};
 
@@ -87,6 +96,15 @@ class LobbyMenu : public IMenu
     EntityId logoEntity_{0};
     EntityId titleEntity_{0};
     EntityId statusEntity_{0};
+
+    EntityId statsBoxEntity_{0};
+    EntityId statsUsernameEntity_{0};
+    EntityId statsGamesEntity_{0};
+    EntityId statsWinsEntity_{0};
+    EntityId statsLossesEntity_{0};
+    EntityId statsWinRateEntity_{0};
+    EntityId statsScoreEntity_{0};
+
     EntityId createButtonEntity_{0};
     EntityId refreshButtonEntity_{0};
     EntityId backButtonEntity_{0};
@@ -94,6 +112,7 @@ class LobbyMenu : public IMenu
     EntityId filterProtectedButtonEntity_{0};
 
     float refreshTimer_{0.0F};
+    bool statsLoaded_{false};
     int consecutiveFailures_{0};
     bool filterShowFull_{true};
     bool filterShowProtected_{true};

@@ -64,7 +64,7 @@ std::vector<std::vector<std::uint8_t>> buildSmartDeltaSnapshot(Registry& registr
 
 std::vector<std::uint8_t> buildPong(const PacketHeader& req);
 std::vector<std::uint8_t> buildServerHello(std::uint16_t sequence);
-std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence);
+std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence, std::uint32_t playerId);
 std::vector<std::uint8_t> buildJoinDeny(std::uint16_t sequence);
 std::vector<std::uint8_t> buildGameStart(std::uint16_t sequence);
 std::vector<std::uint8_t> buildAllReady(std::uint16_t sequence);

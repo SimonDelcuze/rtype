@@ -76,7 +76,8 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
                                              ThreadSafeQueue<NotificationData>& broadcastQueue);
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
-                                                          ThreadSafeQueue<NotificationData>& broadcastQueue);
+                                                          ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                                          class LobbyConnection* authenticatedConnection = nullptr);
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
