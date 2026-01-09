@@ -28,8 +28,9 @@ class ReconciliationSystem : public ISystem
     bool simulateInput(TransformComponent& transform, const InputHistoryEntry& input, float moveSpeed);
     void applyMovement(TransformComponent& transform, std::uint16_t flags, float deltaTime, float moveSpeed);
 
-    float playerMoveSpeed_         = 200.0F;
-    float reconciliationThreshold_ = 0.5F;
-    float baseThreshold_           = 0.5F;
-    float latencyFactor_           = 0.01F;
+    float playerMoveSpeed_         = 250.0F;
+    float reconciliationThreshold_ = 1.5F;
+    float baseThreshold_           = 1.0F;
+    float latencyFactor_           = 0.02F;
+    float timeSinceLastReconcile_  = 0.0F;
 };

@@ -88,7 +88,7 @@ TEST_F(ReconciliationSystemTests, ReplayUnacknowledgedInputs)
 
     system->reconcile(registry, entity, 100.0F, 100.0F, 1);
 
-    EXPECT_NEAR(transform.x, 106.4F, 0.01F);
+    EXPECT_NEAR(transform.x, 108.0F, 0.01F);
     EXPECT_FLOAT_EQ(transform.y, 100.0F);
 
     EXPECT_EQ(history.size(), 2u);
@@ -107,7 +107,7 @@ TEST_F(ReconciliationSystemTests, ReplayMovementUp)
     system->reconcile(registry, entity, 100.0F, 100.0F, 0);
 
     EXPECT_FLOAT_EQ(transform.x, 100.0F);
-    EXPECT_NEAR(transform.y, 96.8F, 0.01F);
+    EXPECT_NEAR(transform.y, 96.0F, 0.01F);
 }
 
 TEST_F(ReconciliationSystemTests, ReplayMovementDown)
@@ -123,7 +123,7 @@ TEST_F(ReconciliationSystemTests, ReplayMovementDown)
     system->reconcile(registry, entity, 100.0F, 100.0F, 0);
 
     EXPECT_FLOAT_EQ(transform.x, 100.0F);
-    EXPECT_NEAR(transform.y, 103.2F, 0.01F);
+    EXPECT_NEAR(transform.y, 104.0F, 0.01F);
 }
 
 TEST_F(ReconciliationSystemTests, ReplayMovementLeft)
@@ -138,7 +138,7 @@ TEST_F(ReconciliationSystemTests, ReplayMovementLeft)
 
     system->reconcile(registry, entity, 100.0F, 100.0F, 0);
 
-    EXPECT_NEAR(transform.x, 96.8F, 0.01F);
+    EXPECT_NEAR(transform.x, 96.0F, 0.01F);
     EXPECT_FLOAT_EQ(transform.y, 100.0F);
 }
 
@@ -156,8 +156,8 @@ TEST_F(ReconciliationSystemTests, ReplayDiagonalMovement)
 
     system->reconcile(registry, entity, 100.0F, 100.0F, 0);
 
-    EXPECT_NEAR(transform.x, 102.263F, 0.01F);
-    EXPECT_NEAR(transform.y, 97.737F, 0.01F);
+    EXPECT_NEAR(transform.x, 102.828F, 0.01F);
+    EXPECT_NEAR(transform.y, 97.172F, 0.01F);
 }
 
 TEST_F(ReconciliationSystemTests, NoReplayWhenAllInputsAcknowledged)
@@ -193,7 +193,7 @@ TEST_F(ReconciliationSystemTests, MultipleInputReplay)
 
     system->reconcile(registry, entity, 100.0F, 100.0F, 2);
 
-    EXPECT_NEAR(transform.x, 109.6F, 0.01F);
+    EXPECT_NEAR(transform.x, 112.0F, 0.01F);
     EXPECT_FLOAT_EQ(transform.y, 100.0F);
 
     EXPECT_EQ(history.size(), 3u);
