@@ -114,16 +114,16 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
 {
     std::vector<std::uint8_t> packet;
 
-    std::uint32_t roomId         = 5;
-    std::uint16_t playerCount    = 2;
-    std::uint16_t maxPlayers     = 4;
-    std::uint16_t port           = 50105;
-    std::uint8_t state           = static_cast<std::uint8_t>(RoomState::Waiting);
-    std::uint32_t ownerId        = 1;
-    bool passwordProtected       = false;
-    RoomVisibility visibility    = RoomVisibility::Public;
-    std::string roomName         = "Test";
-    std::string inviteCode       = "ABC123";
+    std::uint32_t roomId      = 5;
+    std::uint16_t playerCount = 2;
+    std::uint16_t maxPlayers  = 4;
+    std::uint16_t port        = 50105;
+    std::uint8_t state        = static_cast<std::uint8_t>(RoomState::Waiting);
+    std::uint32_t ownerId     = 1;
+    bool passwordProtected    = false;
+    RoomVisibility visibility = RoomVisibility::Public;
+    std::string roomName      = "Test";
+    std::string inviteCode    = "ABC123";
 
     // Calculate payload size: 2 (room count) + room data
     // Room data: 4 (roomId) + 2 (playerCount) + 2 (maxPlayers) + 2 (port) + 1 (state)
