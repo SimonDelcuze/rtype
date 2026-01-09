@@ -143,6 +143,18 @@ void RoomWaitingMenu::destroy(Registry& registry)
             registry.destroyEntity(entityId);
     }
     playerTextEntities_.clear();
+
+    for (auto entityId : playerBadgeEntities_) {
+        if (registry.isAlive(entityId))
+            registry.destroyEntity(entityId);
+    }
+    playerBadgeEntities_.clear();
+
+    for (auto entityId : kickButtonEntities_) {
+        if (registry.isAlive(entityId))
+            registry.destroyEntity(entityId);
+    }
+    kickButtonEntities_.clear();
 }
 
 bool RoomWaitingMenu::isDone() const
