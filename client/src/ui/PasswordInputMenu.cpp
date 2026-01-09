@@ -104,8 +104,7 @@ namespace
     }
 } // namespace
 
-PasswordInputMenu::PasswordInputMenu(FontManager& fonts, TextureManager& textures)
-    : fonts_(fonts), textures_(textures)
+PasswordInputMenu::PasswordInputMenu(FontManager& fonts, TextureManager& textures) : fonts_(fonts), textures_(textures)
 {}
 
 void PasswordInputMenu::create(Registry& registry)
@@ -126,8 +125,8 @@ void PasswordInputMenu::create(Registry& registry)
     submitButtonEntity_ = createButton(registry, 400.0F, 420.0F, 180.0F, 50.0F, "Join Room", Color(0, 120, 200),
                                        [this]() { onSubmit(); });
 
-    cancelButtonEntity_ = createButton(registry, 600.0F, 420.0F, 150.0F, 50.0F, "Cancel", Color(120, 50, 50),
-                                       [this]() { onCancel(); });
+    cancelButtonEntity_ =
+        createButton(registry, 600.0F, 420.0F, 150.0F, 50.0F, "Cancel", Color(120, 50, 50), [this]() { onCancel(); });
 }
 
 void PasswordInputMenu::destroy(Registry& registry)

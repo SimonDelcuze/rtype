@@ -66,11 +66,12 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
         }
 
         if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::RoomGameStarting)) {
-            if (recvResult.size >= PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t)) {
+            if (recvResult.size >=
+                PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t)) {
                 const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
-                expectedPlayerCount_ = payload[4];
+                expectedPlayerCount_        = payload[4];
                 Logger::instance().info("[LobbyConnection] Received RoomGameStarting - game is starting with " +
-                                       std::to_string(expectedPlayerCount_) + " players!");
+                                        std::to_string(expectedPlayerCount_) + " players!");
                 gameStarting_ = true;
             }
         }
@@ -78,7 +79,7 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
         if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::RoomPlayerKicked)) {
             Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
             wasKicked_ = true;
-            inRoom_ = false;
+            inRoom_    = false;
         }
     }
 }
@@ -108,8 +109,7 @@ std::optional<RoomCreatedResult> LobbyConnection::createRoom()
 }
 
 std::optional<RoomCreatedResult> LobbyConnection::createRoom(const std::string& roomName,
-                                                             const std::string& passwordHash,
-                                                             RoomVisibility visibility)
+                                                             const std::string& passwordHash, RoomVisibility visibility)
 {
     auto packet   = buildCreateRoomPacket(roomName, passwordHash, visibility, nextSequence_++);
     auto response = sendAndWaitForResponse(packet, MessageType::LobbyRoomCreated);
@@ -159,7 +159,7 @@ std::optional<JoinSuccessResult> LobbyConnection::joinRoom(std::uint32_t roomId,
 
 std::optional<std::vector<PlayerInfo>> LobbyConnection::requestPlayerList(std::uint32_t roomId)
 {
-    auto packet = buildGetPlayersPacket(roomId, nextSequence_++);
+    auto packet   = buildGetPlayersPacket(roomId, nextSequence_++);
     auto response = sendAndWaitForResponse(packet, MessageType::RoomPlayerList, std::chrono::milliseconds(500));
 
     if (response.empty()) {
@@ -171,12 +171,13 @@ std::optional<std::vector<PlayerInfo>> LobbyConnection::requestPlayerList(std::u
 
 void LobbyConnection::notifyGameStarting(std::uint32_t roomId)
 {
-    Logger::instance().info("[LobbyConnection] Notifying server that game is starting for room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyConnection] Notifying server that game is starting for room " +
+                            std::to_string(roomId));
 
     PacketHeader hdr{};
-    hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomForceStart);
-    hdr.sequenceId = nextSequence_++;
+    hdr.sequenceId  = nextSequence_++;
     hdr.payloadSize = sizeof(std::uint32_t);
 
     auto encoded = hdr.encode();
@@ -198,12 +199,13 @@ void LobbyConnection::notifyGameStarting(std::uint32_t roomId)
 
 void LobbyConnection::kickPlayer(std::uint32_t roomId, std::uint32_t playerId)
 {
-    Logger::instance().info("[LobbyConnection] Kicking player " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyConnection] Kicking player " + std::to_string(playerId) + " from room " +
+                            std::to_string(roomId));
 
     PacketHeader hdr{};
-    hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomKickPlayer);
-    hdr.sequenceId = nextSequence_++;
+    hdr.sequenceId  = nextSequence_++;
     hdr.payloadSize = sizeof(std::uint32_t) + sizeof(std::uint32_t);
 
     auto encoded = hdr.encode();
@@ -237,9 +239,9 @@ void LobbyConnection::leaveRoom()
     Logger::instance().info("[LobbyConnection] Sending leave room message");
 
     PacketHeader hdr{};
-    hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::LobbyLeaveRoom);
-    hdr.sequenceId = nextSequence_++;
+    hdr.sequenceId  = nextSequence_++;
     hdr.payloadSize = 0;
 
     auto encoded = hdr.encode();

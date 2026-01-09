@@ -50,11 +50,11 @@ void LobbyManager::updateRoomState(std::uint32_t roomId, RoomState state)
     }
 
     RoomState oldState = it->second.state;
-    it->second.state = state;
+    it->second.state   = state;
 
     if (oldState == RoomState::Playing && state == RoomState::Waiting) {
         Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) +
-                               " returned to Waiting state, clearing player list");
+                                " returned to Waiting state, clearing player list");
         roomPlayers_.erase(roomId);
     }
 }
@@ -115,7 +115,8 @@ void LobbyManager::setRoomOwner(std::uint32_t roomId, std::uint32_t ownerId)
     }
 
     it->second.ownerId = ownerId;
-    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " owner set to " + std::to_string(ownerId));
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " owner set to " +
+                            std::to_string(ownerId));
 }
 
 void LobbyManager::addRoomAdmin(std::uint32_t roomId, std::uint32_t playerId)
@@ -130,7 +131,8 @@ void LobbyManager::addRoomAdmin(std::uint32_t roomId, std::uint32_t playerId)
     auto& admins = it->second.adminIds;
     if (std::find(admins.begin(), admins.end(), playerId) == admins.end()) {
         admins.push_back(playerId);
-        Logger::instance().info("[LobbyManager] Added admin " + std::to_string(playerId) + " to room " + std::to_string(roomId));
+        Logger::instance().info("[LobbyManager] Added admin " + std::to_string(playerId) + " to room " +
+                                std::to_string(roomId));
     }
 }
 
@@ -145,7 +147,8 @@ void LobbyManager::removeRoomAdmin(std::uint32_t roomId, std::uint32_t playerId)
 
     auto& admins = it->second.adminIds;
     admins.erase(std::remove(admins.begin(), admins.end(), playerId), admins.end());
-    Logger::instance().info("[LobbyManager] Removed admin " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyManager] Removed admin " + std::to_string(playerId) + " from room " +
+                            std::to_string(roomId));
 }
 
 void LobbyManager::addBannedPlayer(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress)
@@ -167,7 +170,8 @@ void LobbyManager::addBannedPlayer(std::uint32_t roomId, std::uint32_t playerId,
         bannedIPs.push_back(ipAddress);
     }
 
-    Logger::instance().info("[LobbyManager] Banned player " + std::to_string(playerId) + " (" + ipAddress + ") from room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyManager] Banned player " + std::to_string(playerId) + " (" + ipAddress +
+                            ") from room " + std::to_string(roomId));
 }
 
 void LobbyManager::removeBannedPlayer(std::uint32_t roomId, std::uint32_t playerId)
@@ -181,7 +185,8 @@ void LobbyManager::removeBannedPlayer(std::uint32_t roomId, std::uint32_t player
 
     auto& bannedIds = it->second.bannedPlayerIds;
     bannedIds.erase(std::remove(bannedIds.begin(), bannedIds.end(), playerId), bannedIds.end());
-    Logger::instance().info("[LobbyManager] Unbanned player " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyManager] Unbanned player " + std::to_string(playerId) + " from room " +
+                            std::to_string(roomId));
 }
 
 bool LobbyManager::isPlayerBanned(std::uint32_t roomId, std::uint32_t playerId, const std::string& ipAddress) const
@@ -262,7 +267,7 @@ std::string LobbyManager::generateAndSetInviteCode(std::uint32_t roomId)
         return "";
     }
 
-    std::string code     = PasswordUtils::generateInviteCode();
+    std::string code      = PasswordUtils::generateInviteCode();
     it->second.inviteCode = code;
     Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " invite code set to: " + code);
     return code;

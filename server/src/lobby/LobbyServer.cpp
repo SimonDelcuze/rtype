@@ -262,8 +262,8 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
 {
     Logger::instance().info("[LobbyServer] Create room request from client");
 
-    std::string roomName     = "New Room";
-    std::string passwordHash = "";
+    std::string roomName      = "New Room";
+    std::string passwordHash  = "";
     RoomVisibility visibility = RoomVisibility::Public;
 
     if (hdr.payloadSize > 0 && size >= PacketHeader::kSize + hdr.payloadSize) {
@@ -422,7 +422,8 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
     if (lobbyManager_.getRoomPlayers(roomId).size() == 1) {
         lobbyManager_.setRoomOwner(roomId, playerId);
-        Logger::instance().info("[LobbyServer] Player " + std::to_string(playerId) + " is now owner of room " + std::to_string(roomId));
+        Logger::instance().info("[LobbyServer] Player " + std::to_string(playerId) + " is now owner of room " +
+                                std::to_string(roomId));
     }
 
     Logger::instance().info("[LobbyServer] Client joining room " + std::to_string(roomId) + " on port " +
@@ -449,20 +450,19 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
     std::uint32_t roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
                            (static_cast<std::uint32_t>(payload[1]) << 16) |
-                           (static_cast<std::uint32_t>(payload[2]) << 8) |
-                           static_cast<std::uint32_t>(payload[3]);
+                           (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
 
     Logger::instance().info("[LobbyServer] Client requesting player list for room " + std::to_string(roomId));
 
-    auto players = lobbyManager_.getRoomPlayers(roomId);
+    auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
 
     std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + (playerCount * 5);
 
     PacketHeader respHdr{};
-    respHdr.packetType = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
     respHdr.messageType = static_cast<std::uint8_t>(MessageType::RoomPlayerList);
-    respHdr.sequenceId = hdr.sequenceId;
+    respHdr.sequenceId  = hdr.sequenceId;
     respHdr.payloadSize = payloadSize;
 
     auto encoded = respHdr.encode();
@@ -475,7 +475,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
     packet.push_back(playerCount);
 
-    auto roomInfoOpt = lobbyManager_.getRoomInfo(roomId);
+    auto roomInfoOpt      = lobbyManager_.getRoomInfo(roomId);
     std::uint32_t ownerId = roomInfoOpt.has_value() ? roomInfoOpt->ownerId : 0;
 
     for (std::uint32_t playerId : players) {
@@ -503,7 +503,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                                        const IpEndpoint& from)
 {
-    (void)from;
+    (void) from;
 
     if (size < PacketHeader::kSize + sizeof(std::uint32_t)) {
         Logger::instance().warn("[LobbyServer] Invalid RoomForceStart packet size");
@@ -514,10 +514,9 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
 
     std::uint32_t roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
                            (static_cast<std::uint32_t>(payload[1]) << 16) |
-                           (static_cast<std::uint32_t>(payload[2]) << 8) |
-                           static_cast<std::uint32_t>(payload[3]);
+                           (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
 
-    auto players = lobbyManager_.getRoomPlayers(roomId);
+    auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
 
     Logger::instance().info("[LobbyServer] Room " + std::to_string(roomId) + " is starting with " +
@@ -531,9 +530,9 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     std::uint16_t gamePort = roomInfo->port;
 
     PacketHeader respHdr{};
-    respHdr.packetType = static_cast<std::uint8_t>(PacketType::ServerToClient);
+    respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
     respHdr.messageType = static_cast<std::uint8_t>(MessageType::RoomGameStarting);
-    respHdr.sequenceId = hdr.sequenceId;
+    respHdr.sequenceId  = hdr.sequenceId;
     respHdr.payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t);
 
     auto encoded = respHdr.encode();
@@ -558,7 +557,8 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     std::lock_guard<std::mutex> lock(sessionsMutex_);
     for (const auto& [key, session] : lobbySessions_) {
         if (session.roomId == roomId) {
-            Logger::instance().info("[LobbyServer] Sending RoomGameStarting to player in room " + std::to_string(roomId));
+            Logger::instance().info("[LobbyServer] Sending RoomGameStarting to player in room " +
+                                    std::to_string(roomId));
             sendPacket(packet, session.endpoint);
         }
     }
@@ -566,10 +566,10 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
 
 void LobbyServer::handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint& from)
 {
-    (void)hdr;
+    (void) hdr;
 
-    std::string key = endpointToKey(from);
-    std::uint32_t roomId = 0;
+    std::string key        = endpointToKey(from);
+    std::uint32_t roomId   = 0;
     std::uint32_t playerId = 0;
 
     {
@@ -580,7 +580,7 @@ void LobbyServer::handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint
             return;
         }
 
-        roomId = it->second.roomId;
+        roomId   = it->second.roomId;
         playerId = it->second.playerId;
 
         it->second.roomId = 0;
@@ -591,7 +591,8 @@ void LobbyServer::handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint
         return;
     }
 
-    Logger::instance().info("[LobbyServer] Player " + std::to_string(playerId) + " leaving room " + std::to_string(roomId));
+    Logger::instance().info("[LobbyServer] Player " + std::to_string(playerId) + " leaving room " +
+                            std::to_string(roomId));
 
     bool roomDeleted = lobbyManager_.handlePlayerDisconnect(roomId, playerId);
 
@@ -609,7 +610,7 @@ std::string LobbyServer::endpointToKey(const IpEndpoint& ep) const
 void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                                        const IpEndpoint& from)
 {
-    (void)hdr;
+    (void) hdr;
 
     if (size < PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint32_t)) {
         Logger::instance().warn("[LobbyServer] Kick player packet too small");
@@ -620,15 +621,13 @@ void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8
 
     std::uint32_t roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
                            (static_cast<std::uint32_t>(payload[1]) << 16) |
-                           (static_cast<std::uint32_t>(payload[2]) << 8) |
-                           static_cast<std::uint32_t>(payload[3]);
+                           (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
 
-    std::uint32_t targetPlayerId = (static_cast<std::uint32_t>(payload[4]) << 24) |
-                                   (static_cast<std::uint32_t>(payload[5]) << 16) |
-                                   (static_cast<std::uint32_t>(payload[6]) << 8) |
-                                   static_cast<std::uint32_t>(payload[7]);
+    std::uint32_t targetPlayerId =
+        (static_cast<std::uint32_t>(payload[4]) << 24) | (static_cast<std::uint32_t>(payload[5]) << 16) |
+        (static_cast<std::uint32_t>(payload[6]) << 8) | static_cast<std::uint32_t>(payload[7]);
 
-    std::string key = endpointToKey(from);
+    std::string key           = endpointToKey(from);
     std::uint32_t requesterId = 0;
 
     {
@@ -649,12 +648,12 @@ void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8
 
     if (roomInfo->ownerId != requesterId) {
         Logger::instance().warn("[LobbyServer] Player " + std::to_string(requesterId) +
-                               " attempted to kick from room " + std::to_string(roomId) + " but is not owner");
+                                " attempted to kick from room " + std::to_string(roomId) + " but is not owner");
         return;
     }
 
     Logger::instance().info("[LobbyServer] Owner " + std::to_string(requesterId) + " kicking player " +
-                           std::to_string(targetPlayerId) + " from room " + std::to_string(roomId));
+                            std::to_string(targetPlayerId) + " from room " + std::to_string(roomId));
 
     IpEndpoint kickedPlayerEndpoint{};
     bool foundPlayer = false;
@@ -664,9 +663,9 @@ void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8
         for (const auto& [key, session] : lobbySessions_) {
             if (session.playerId == targetPlayerId) {
                 std::string keyStr = key;
-                size_t colonPos = keyStr.rfind(':');
+                size_t colonPos    = keyStr.rfind(':');
                 if (colonPos != std::string::npos) {
-                    std::string ipStr = keyStr.substr(0, colonPos);
+                    std::string ipStr   = keyStr.substr(0, colonPos);
                     std::string portStr = keyStr.substr(colonPos + 1);
 
                     std::istringstream iss(ipStr);
@@ -676,7 +675,7 @@ void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8
                         kickedPlayerEndpoint.addr[i++] = static_cast<std::uint8_t>(std::stoi(octet));
                     }
                     kickedPlayerEndpoint.port = static_cast<std::uint16_t>(std::stoi(portStr));
-                    foundPlayer = true;
+                    foundPlayer               = true;
                 }
                 break;
             }
@@ -687,9 +686,9 @@ void LobbyServer::handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8
 
     if (foundPlayer) {
         PacketHeader notifyHdr{};
-        notifyHdr.packetType = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        notifyHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
         notifyHdr.messageType = static_cast<std::uint8_t>(MessageType::RoomPlayerKicked);
-        notifyHdr.sequenceId = 0;
+        notifyHdr.sequenceId  = 0;
         notifyHdr.payloadSize = 0;
 
         auto encoded = notifyHdr.encode();

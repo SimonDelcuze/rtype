@@ -27,7 +27,7 @@ class LobbyConnection
 
     std::optional<RoomCreatedResult> createRoom();
     std::optional<RoomCreatedResult> createRoom(const std::string& roomName, const std::string& passwordHash,
-                                                 RoomVisibility visibility);
+                                                RoomVisibility visibility);
 
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId);
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId, const std::string& passwordHash);

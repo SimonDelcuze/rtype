@@ -195,16 +195,16 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         fontManager.load("score_font", "client/assets/fonts/ui.ttf");
     }
 
-    (void)options;
+    (void) options;
     bool serverLost = false;
 
     if (g_isRoomHost && g_expectedPlayerCount > 0) {
         Logger::instance().info("[RunClientFlow] Sending expected player count: " +
-                               std::to_string(g_expectedPlayerCount));
+                                std::to_string(g_expectedPlayerCount));
         PacketHeader hdr{};
-        hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+        hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
         hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount);
-        hdr.sequenceId = 0;
+        hdr.sequenceId  = 0;
         hdr.payloadSize = 1;
 
         auto encoded = hdr.encode();

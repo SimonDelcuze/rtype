@@ -27,7 +27,7 @@ std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence)
 }
 
 std::vector<std::uint8_t> buildCreateRoomPacket(const std::string& roomName, const std::string& passwordHash,
-                                                 RoomVisibility visibility, std::uint16_t sequence)
+                                                RoomVisibility visibility, std::uint16_t sequence)
 {
     PacketHeader hdr;
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
@@ -73,7 +73,7 @@ std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, std::uint16_
 }
 
 std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::string& passwordHash,
-                                               std::uint16_t sequence)
+                                              std::uint16_t sequence)
 {
     PacketHeader hdr;
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
@@ -274,8 +274,9 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
         }
 
         PlayerInfo info;
-        info.playerId = (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
-                        (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+        info.playerId = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                        (static_cast<std::uint32_t>(payload[1]) << 16) | (static_cast<std::uint32_t>(payload[2]) << 8) |
+                        static_cast<std::uint32_t>(payload[3]);
         payload += 4;
 
         info.isHost = (payload[0] != 0);

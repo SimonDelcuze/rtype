@@ -60,11 +60,11 @@ struct PlayerInfo
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence);
 
 std::vector<std::uint8_t> buildCreateRoomPacket(const std::string& roomName, const std::string& passwordHash,
-                                                 RoomVisibility visibility, std::uint16_t sequence);
+                                                RoomVisibility visibility, std::uint16_t sequence);
 
 std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, std::uint16_t sequence);
 std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::string& passwordHash,
-                                               std::uint16_t sequence);
+                                              std::uint16_t sequence);
 
 std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std::size_t size);
 

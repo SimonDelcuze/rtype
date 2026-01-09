@@ -32,8 +32,8 @@ TEST_F(LobbyPacketsTest, BuildListRoomsPacketHasValidHeader)
 
 TEST_F(LobbyPacketsTest, BuildCreateRoomPacketHasValidHeader)
 {
-    std::string roomName     = "Test Room";
-    std::string passwordHash = "";
+    std::string roomName      = "Test Room";
+    std::string passwordHash  = "";
     RoomVisibility visibility = RoomVisibility::Public;
 
     auto packet = buildCreateRoomPacket(roomName, passwordHash, visibility, sequence_);

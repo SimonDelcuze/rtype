@@ -9,12 +9,12 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
     hdr.messageType = static_cast<std::uint8_t>(MessageType::LobbyRoomList);
     hdr.sequenceId  = sequence;
 
-    std::uint16_t roomCount   = static_cast<std::uint16_t>(rooms.size());
+    std::uint16_t roomCount = static_cast<std::uint16_t>(rooms.size());
     std::size_t payloadSize = sizeof(std::uint16_t);
 
     for (const auto& room : rooms) {
-        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t) * 3 + sizeof(std::uint16_t) +
-                       room.roomName.size() + sizeof(std::uint16_t) + room.inviteCode.size();
+        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t) * 3 +
+                       sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) + room.inviteCode.size();
     }
 
     hdr.payloadSize  = static_cast<std::uint16_t>(payloadSize);

@@ -29,7 +29,8 @@ namespace
         std::array<std::uint32_t, 64> w{};
 
         for (std::size_t i = 0; i < 16; i++) {
-            w[i] = (static_cast<std::uint32_t>(block[i * 4]) << 24) | (static_cast<std::uint32_t>(block[i * 4 + 1]) << 16) |
+            w[i] = (static_cast<std::uint32_t>(block[i * 4]) << 24) |
+                   (static_cast<std::uint32_t>(block[i * 4 + 1]) << 16) |
                    (static_cast<std::uint32_t>(block[i * 4 + 2]) << 8) | static_cast<std::uint32_t>(block[i * 4 + 3]);
         }
 
@@ -79,7 +80,7 @@ namespace
     std::string sha256(const std::string& input)
     {
         std::array<std::uint32_t, 8> state = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                                               0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+                                              0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
 
         std::vector<std::uint8_t> data(input.begin(), input.end());
         std::uint64_t bitlen = data.size() * 8;

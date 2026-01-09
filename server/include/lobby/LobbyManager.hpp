@@ -17,10 +17,10 @@ enum class RoomState : std::uint8_t
 
 enum class RoomVisibility : std::uint8_t
 {
-    Public = 0,
-    Unlisted = 1,
+    Public      = 0,
+    Unlisted    = 1,
     FriendsOnly = 2,
-    InviteOnly = 3
+    InviteOnly  = 3
 };
 
 struct RoomInfo

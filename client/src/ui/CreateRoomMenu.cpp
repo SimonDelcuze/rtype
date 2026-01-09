@@ -52,7 +52,8 @@ namespace
         return entity;
     }
 
-    EntityId createText(Registry& registry, float x, float y, const std::string& content, unsigned int size, Color color)
+    EntityId createText(Registry& registry, float x, float y, const std::string& content, unsigned int size,
+                        Color color)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
@@ -90,7 +91,7 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box = BoxComponent::create(width, 40.0F, Color(40, 40, 50), Color(60, 60, 70));
+        auto box       = BoxComponent::create(width, 40.0F, Color(40, 40, 50), Color(60, 60, 70));
         box.focusColor = Color(80, 120, 200);
         registry.emplace<BoxComponent>(entity, box);
 

@@ -244,7 +244,8 @@ void GameInstance::kickPlayer(std::uint32_t playerId, const std::string& reason)
         std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
         sendThread_.sendTo(vec, endpoint);
 
-        logInfo("[Admin] Kicked player " + std::to_string(playerId) + " (" + endpointKey(endpoint) + ") - Reason: " + reason);
+        logInfo("[Admin] Kicked player " + std::to_string(playerId) + " (" + endpointKey(endpoint) +
+                ") - Reason: " + reason);
         onDisconnect(endpoint);
     } else {
         logWarn("[Admin] Kick failed: player " + std::to_string(playerId) + " not found");

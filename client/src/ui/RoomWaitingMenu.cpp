@@ -9,8 +9,8 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
-#include "ui/NotificationData.hpp"
 #include "network/LobbyPackets.hpp"
+#include "ui/NotificationData.hpp"
 
 namespace
 {
@@ -108,7 +108,7 @@ void RoomWaitingMenu::create(Registry& registry)
     logoEntity_       = createLogo(registry, textures_);
 
     std::string roomTitle = "Room #" + std::to_string(roomId_);
-    titleEntity_ = createText(registry, 450.0F, 200.0F, roomTitle, 36, Color::White);
+    titleEntity_          = createText(registry, 450.0F, 200.0F, roomTitle, 36, Color::White);
 
     playerCountEntity_ = createText(registry, 400.0F, 260.0F, "Players: 1/4", 24, Color(200, 200, 200));
 
@@ -180,7 +180,7 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
     if (lobbyConnection_ && lobbyConnection_->isGameStarting()) {
         result_.expectedPlayerCount = lobbyConnection_->getExpectedPlayerCount();
         Logger::instance().info("[RoomWaitingMenu] Game starting detected with " +
-                               std::to_string(result_.expectedPlayerCount) + " players, exiting lobby...");
+                                std::to_string(result_.expectedPlayerCount) + " players, exiting lobby...");
         result_.startGame = true;
         done_             = true;
         return;
@@ -189,7 +189,7 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
     if (lobbyConnection_ && lobbyConnection_->wasKicked()) {
         Logger::instance().warn("[RoomWaitingMenu] Player was kicked from the room!");
         result_.leaveRoom = true;
-        done_ = true;
+        done_             = true;
         return;
     }
 
@@ -200,31 +200,31 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
         if (lobbyConnection_) {
             auto playerListOpt = lobbyConnection_->requestPlayerList(roomId_);
             if (playerListOpt.has_value()) {
-                Logger::instance().info("[RoomWaitingMenu] Received player list: " +
-                                       std::to_string(playerListOpt->size()) + " players");
+                Logger::instance().info(
+                    "[RoomWaitingMenu] Received player list: " + std::to_string(playerListOpt->size()) + " players");
 
                 players_.clear();
 
                 for (const auto& playerInfo : *playerListOpt) {
                     PlayerInfo info;
                     info.playerId = playerInfo.playerId;
-                    info.name = "Player " + std::to_string(playerInfo.playerId);
-                    info.isHost = playerInfo.isHost;
+                    info.name     = "Player " + std::to_string(playerInfo.playerId);
+                    info.isHost   = playerInfo.isHost;
                     players_.push_back(info);
                     Logger::instance().info("[RoomWaitingMenu] Player " + std::to_string(playerInfo.playerId) +
-                                           " isHost=" + (playerInfo.isHost ? "true" : "false"));
+                                            " isHost=" + (playerInfo.isHost ? "true" : "false"));
                 }
 
                 updatePlayerList(registry);
             } else {
-                Logger::instance().warn("[RoomWaitingMenu] Failed to get player list for room " + std::to_string(roomId_));
+                Logger::instance().warn("[RoomWaitingMenu] Failed to get player list for room " +
+                                        std::to_string(roomId_));
             }
         }
     }
 
     if (registry.has<TextComponent>(playerCountEntity_)) {
-        registry.get<TextComponent>(playerCountEntity_).content =
-            "Players: " + std::to_string(players_.size()) + "/4";
+        registry.get<TextComponent>(playerCountEntity_).content = "Players: " + std::to_string(players_.size()) + "/4";
     }
 }
 
@@ -251,7 +251,7 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
         const auto& player = players_[i];
 
         Color playerColor = player.isHost ? Color(255, 215, 0) : Color(200, 200, 200);
-        auto nameEntity = createText(registry, 350.0F, startY + (i * 50.0F), player.name, 22, playerColor);
+        auto nameEntity   = createText(registry, 350.0F, startY + (i * 50.0F), player.name, 22, playerColor);
         playerTextEntities_.push_back(nameEntity);
 
         if (player.isHost) {
@@ -260,9 +260,9 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
         }
 
         if (isHost_ && !player.isHost) {
-            auto kickButton = createButton(registry, 680.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick",
-                                          Color(180, 50, 50),
-                                          [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
+            auto kickButton =
+                createButton(registry, 680.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick", Color(180, 50, 50),
+                             [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
             kickButtonEntities_.push_back(kickButton);
         }
     }

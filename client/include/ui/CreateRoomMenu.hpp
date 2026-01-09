@@ -29,7 +29,7 @@ class CreateRoomMenu : public IMenu
 
     Result getResult(Registry& registry) const
     {
-        (void)registry;
+        (void) registry;
         return result_;
     }
 
