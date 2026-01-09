@@ -94,7 +94,10 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
 
     if (result.success) {
         Logger::instance().info("[ConnectionFlow] Lobby returned game endpoint: port " +
-                                std::to_string(result.gamePort));
+                                std::to_string(result.gamePort) + " with " +
+                                std::to_string(result.expectedPlayerCount) + " expected players");
+        g_isRoomHost = result.isHost;
+        g_expectedPlayerCount = result.expectedPlayerCount;
         return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
                               lobbyEndpoint.addr[3], result.gamePort);
     }

@@ -29,6 +29,8 @@ extern std::atomic<bool> g_running;
 extern KeyBindings g_keyBindings;
 extern float g_musicVolume;
 extern bool g_networkDebugEnabled;
+extern bool g_isRoomHost;
+extern std::uint8_t g_expectedPlayerCount;
 
 enum class JoinResult
 {

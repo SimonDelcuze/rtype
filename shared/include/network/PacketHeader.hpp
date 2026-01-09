@@ -45,6 +45,7 @@ enum class MessageType : std::uint8_t
     LobbyJoinFailed    = 0x46,
     LobbyPasswordRequired = 0x47,
     LobbyPasswordIncorrect = 0x48,
+    LobbyLeaveRoom     = 0x49,
     StateChecksum      = 0x50,
     RollbackRequest    = 0x51,
     DesyncDetected     = 0x52,
@@ -56,6 +57,11 @@ enum class MessageType : std::uint8_t
     RoomPlayerKicked   = 0x65,
     RoomPlayerBanned   = 0x66,
     RoomRoleChanged    = 0x67,
+    RoomGetPlayers     = 0x68,
+    RoomPlayerList     = 0x69,
+    RoomForceStart     = 0x6A,
+    RoomGameStarting   = 0x6B,
+    RoomSetPlayerCount = 0x6C,
     Handshake          = ClientHello,
     Ack                = ClientAcknowledge
 };

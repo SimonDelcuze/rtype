@@ -49,7 +49,14 @@ void LobbyManager::updateRoomState(std::uint32_t roomId, RoomState state)
         return;
     }
 
+    RoomState oldState = it->second.state;
     it->second.state = state;
+
+    if (oldState == RoomState::Playing && state == RoomState::Waiting) {
+        Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) +
+                               " returned to Waiting state, clearing player list");
+        roomPlayers_.erase(roomId);
+    }
 }
 
 void LobbyManager::updateRoomPlayerCount(std::uint32_t roomId, std::size_t playerCount)
@@ -84,7 +91,9 @@ std::vector<RoomInfo> LobbyManager::listRooms() const
     result.reserve(rooms_.size());
 
     for (const auto& [_, info] : rooms_) {
-        result.push_back(info);
+        if (info.state == RoomState::Waiting || info.state == RoomState::Countdown) {
+            result.push_back(info);
+        }
     }
 
     return result;
@@ -273,4 +282,70 @@ bool LobbyManager::verifyRoomPassword(std::uint32_t roomId, const std::string& p
     }
 
     return it->second.passwordHash == passwordHash;
+}
+
+void LobbyManager::addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto& players = roomPlayers_[roomId];
+    if (std::find(players.begin(), players.end(), playerId) == players.end()) {
+        players.push_back(playerId);
+        Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " added to room " +
+                                std::to_string(roomId) + " (now " + std::to_string(players.size()) + " players)");
+    }
+}
+
+void LobbyManager::removePlayerFromRoom(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = roomPlayers_.find(roomId);
+    if (it != roomPlayers_.end()) {
+        auto& players = it->second;
+        players.erase(std::remove(players.begin(), players.end(), playerId), players.end());
+        Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " removed from room " +
+                                std::to_string(roomId) + " (now " + std::to_string(players.size()) + " players)");
+    }
+}
+
+std::vector<std::uint32_t> LobbyManager::getRoomPlayers(std::uint32_t roomId) const
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = roomPlayers_.find(roomId);
+    if (it != roomPlayers_.end()) {
+        return it->second;
+    }
+    return {};
+}
+
+bool LobbyManager::handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto roomIt = rooms_.find(roomId);
+    if (roomIt == rooms_.end()) {
+        return false;
+    }
+
+    bool wasOwner = (roomIt->second.ownerId == playerId);
+
+    auto playersIt = roomPlayers_.find(roomId);
+    if (playersIt != roomPlayers_.end()) {
+        auto& players = playersIt->second;
+        players.erase(std::remove(players.begin(), players.end(), playerId), players.end());
+        Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " disconnected from room " +
+                                std::to_string(roomId) + " (owner=" + (wasOwner ? "true" : "false") + ", " +
+                                std::to_string(players.size()) + " players remaining)");
+    }
+
+    if (wasOwner) {
+        Logger::instance().info("[LobbyManager] Room owner left, deleting room " + std::to_string(roomId));
+        rooms_.erase(roomIt);
+        roomPlayers_.erase(roomId);
+        return true;
+    }
+
+    return false;
 }

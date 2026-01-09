@@ -32,7 +32,11 @@ TEST_F(LobbyPacketsTest, BuildListRoomsPacketHasValidHeader)
 
 TEST_F(LobbyPacketsTest, BuildCreateRoomPacketHasValidHeader)
 {
-    auto packet = buildCreateRoomPacket(sequence_);
+    std::string roomName     = "Test Room";
+    std::string passwordHash = "";
+    RoomVisibility visibility = RoomVisibility::Public;
+
+    auto packet = buildCreateRoomPacket(roomName, passwordHash, visibility, sequence_);
 
     ASSERT_GE(packet.size(), PacketHeader::kSize + PacketHeader::kCrcSize);
 
@@ -43,7 +47,7 @@ TEST_F(LobbyPacketsTest, BuildCreateRoomPacketHasValidHeader)
     EXPECT_EQ(header.packetType, static_cast<std::uint8_t>(PacketType::ClientToServer));
     EXPECT_EQ(header.messageType, static_cast<std::uint8_t>(MessageType::LobbyCreateRoom));
     EXPECT_EQ(header.sequenceId, sequence_);
-    EXPECT_EQ(header.payloadSize, 0);
+    EXPECT_GT(header.payloadSize, 0);
 }
 
 TEST_F(LobbyPacketsTest, BuildJoinRoomPacketHasValidHeader)

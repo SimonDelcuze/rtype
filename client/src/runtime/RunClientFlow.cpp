@@ -195,12 +195,32 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         fontManager.load("score_font", "client/assets/fonts/ui.ttf");
     }
 
+    (void)options;
     bool serverLost = false;
-    if (options.useDefault) {
-        sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage, broadcastQueue, serverLost)) {
-        return GameSessionResult{true, serverLost, std::nullopt};
+
+    if (g_isRoomHost && g_expectedPlayerCount > 0) {
+        Logger::instance().info("[RunClientFlow] Sending expected player count: " +
+                               std::to_string(g_expectedPlayerCount));
+        PacketHeader hdr{};
+        hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+        hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount);
+        hdr.sequenceId = 0;
+        hdr.payloadSize = 1;
+
+        auto encoded = hdr.encode();
+        std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+        packet.push_back(g_expectedPlayerCount);
+
+        auto crc = PacketHeader::crc32(packet.data(), packet.size());
+        packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+        net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
     }
+
+    sendClientReady(serverEndpoint, *net.socket);
 
     if (!window.isOpen()) {
         return GameSessionResult{false, false, std::nullopt};

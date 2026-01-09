@@ -85,6 +85,8 @@ class GameInstance
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
     void onJoin(ClientSession& sess, const ControlEvent& ctrl);
+    void onForceStart(std::uint32_t playerId);
+    void onSetPlayerCount(std::uint8_t count);
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
     void tick(const std::vector<ReceivedInput>& inputs);
@@ -171,6 +173,7 @@ class GameInstance
     int lastCountdownValue_{4};
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
+    std::uint8_t expectedPlayerCount_{0};
     std::atomic<bool>* running_{nullptr};
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;

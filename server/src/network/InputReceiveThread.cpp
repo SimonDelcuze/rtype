@@ -152,7 +152,7 @@ void InputReceiveThread::processIncomingPacket(const std::uint8_t* data, std::si
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::Input)) {
         handleInputPacket(*hdr, data, size, src);
     } else {
-        handleControlPacket(*hdr, src);
+        handleControlPacket(*hdr, data, size, src);
     }
 }
 
@@ -192,14 +192,18 @@ void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::u
     queue_.push(ReceivedInput{*parsed.input, src});
 }
 
-void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const IpEndpoint& src)
+void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                                             const IpEndpoint& src)
 {
     if (hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientPing) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::RoomForceStart) ||
+        hdr.messageType == static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
-        controlQueue_.push(ControlEvent{hdr, src});
+        std::vector<std::uint8_t> packetData(data, data + size);
+        controlQueue_.push(ControlEvent{hdr, src, packetData});
     } else {
         Logger::instance().addPacketDropped();
         Logger::instance().warn("[Input] input_drop status=decode_failed from=" + endpointKey(src));

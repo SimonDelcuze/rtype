@@ -82,7 +82,14 @@ class LobbyManager
 
     bool verifyRoomPassword(std::uint32_t roomId, const std::string& passwordHash) const;
 
+    void addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId);
+    void removePlayerFromRoom(std::uint32_t roomId, std::uint32_t playerId);
+    std::vector<std::uint32_t> getRoomPlayers(std::uint32_t roomId) const;
+    bool handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t playerId);
+
   private:
     mutable std::mutex roomsMutex_;
     std::map<std::uint32_t, RoomInfo> rooms_;
+    std::map<std::uint32_t, std::vector<std::uint32_t>> roomPlayers_;
+    std::uint32_t nextPlayerId_{1};
 };

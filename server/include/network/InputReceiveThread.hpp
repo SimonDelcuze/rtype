@@ -31,6 +31,7 @@ struct ControlEvent
 {
     PacketHeader header{};
     IpEndpoint from{};
+    std::vector<std::uint8_t> data{};
 };
 
 class InputReceiveThread
@@ -91,5 +92,5 @@ class InputReceiveThread
     void checkTimeouts(std::chrono::steady_clock::time_point now);
     void processIncomingPacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& src);
     void handleInputPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& src);
-    void handleControlPacket(const PacketHeader& hdr, const IpEndpoint& src);
+    void handleControlPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& src);
 };

@@ -38,6 +38,13 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
         onJoin(sess, ctrl);
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientReady)) {
         sess.ready = true;
+    } else if (type == static_cast<std::uint8_t>(MessageType::RoomForceStart)) {
+        onForceStart(sess.playerId);
+    } else if (type == static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount)) {
+        if (ctrl.data.size() >= PacketHeader::kSize + 1) {
+            std::uint8_t playerCount = ctrl.data[PacketHeader::kSize];
+            onSetPlayerCount(playerCount);
+        }
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientPing)) {
         sendThread_.sendTo(buildPong(ctrl.header), ctrl.from);
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
@@ -98,6 +105,33 @@ void GameInstance::addPlayerEntity(std::uint32_t playerId)
     std::size_t slot = playerEntities_.size() % kPlayerTypes.size();
     registry_.emplace<RenderTypeComponent>(entity, RenderTypeComponent::create(kPlayerTypes[slot]));
     playerEntities_[playerId] = entity;
+}
+
+void GameInstance::onForceStart(std::uint32_t playerId)
+{
+    if (gameStarted_) {
+        Logger::instance().warn("[Game] Cannot force start - game already started");
+        return;
+    }
+
+    if (!isOwner(playerId)) {
+        Logger::instance().warn("[Game] Player " + std::to_string(playerId) + " is not owner, cannot force start");
+        return;
+    }
+
+    Logger::instance().info("[Game] Owner forcing game start");
+
+    for (auto& [_, s] : sessions_) {
+        s.ready = true;
+    }
+
+    maybeStartGame();
+}
+
+void GameInstance::onSetPlayerCount(std::uint8_t count)
+{
+    expectedPlayerCount_ = count;
+    Logger::instance().info("[Game] Expected player count set to " + std::to_string(count));
 }
 
 void GameInstance::maybeStartGame()
@@ -179,6 +213,11 @@ bool GameInstance::ready() const
 {
     if (sessions_.empty())
         return false;
+
+    if (expectedPlayerCount_ > 0 && sessions_.size() < expectedPlayerCount_) {
+        return false;
+    }
+
     for (const auto& [_, s] : sessions_) {
         if (!s.hello || !s.join || !s.ready)
             return false;
