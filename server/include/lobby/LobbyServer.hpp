@@ -43,6 +43,8 @@ class LobbyServer
                               const IpEndpoint& from);
     void handleRoomForceStart(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                               const IpEndpoint& from);
+    void handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                              const IpEndpoint& from);
     void handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint& from);
 
     void sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to);

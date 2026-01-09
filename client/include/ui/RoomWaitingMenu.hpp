@@ -24,6 +24,7 @@ class RoomWaitingMenu : public IMenu
 
     struct PlayerInfo
     {
+        std::uint32_t playerId{0};
         std::string name;
         bool isHost{false};
     };
@@ -46,6 +47,7 @@ class RoomWaitingMenu : public IMenu
   private:
     void onStartGameClicked();
     void onLeaveRoomClicked();
+    void onKickPlayerClicked(std::uint32_t playerId);
     void updatePlayerList(Registry& registry);
 
     FontManager& fonts_;
@@ -66,6 +68,8 @@ class RoomWaitingMenu : public IMenu
     EntityId startButtonEntity_{0};
     EntityId leaveButtonEntity_{0};
     std::vector<EntityId> playerTextEntities_;
+    std::vector<EntityId> playerBadgeEntities_;
+    std::vector<EntityId> kickButtonEntities_;
 
     float updateTimer_{0.0F};
     constexpr static float kUpdateInterval = 1.0F;

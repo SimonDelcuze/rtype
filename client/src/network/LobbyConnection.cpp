@@ -74,6 +74,12 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 gameStarting_ = true;
             }
         }
+
+        if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::RoomPlayerKicked)) {
+            Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
+            wasKicked_ = true;
+            inRoom_ = false;
+        }
     }
 }
 
@@ -180,6 +186,38 @@ void LobbyConnection::notifyGameStarting(std::uint32_t roomId)
     packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    auto crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+}
+
+void LobbyConnection::kickPlayer(std::uint32_t roomId, std::uint32_t playerId)
+{
+    Logger::instance().info("[LobbyConnection] Kicking player " + std::to_string(playerId) + " from room " + std::to_string(roomId));
+
+    PacketHeader hdr{};
+    hdr.packetType = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomKickPlayer);
+    hdr.sequenceId = nextSequence_++;
+    hdr.payloadSize = sizeof(std::uint32_t) + sizeof(std::uint32_t);
+
+    auto encoded = hdr.encode();
+    std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
 
     auto crc = PacketHeader::crc32(packet.data(), packet.size());
     packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));

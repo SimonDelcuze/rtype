@@ -33,6 +33,7 @@ class LobbyConnection
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId, const std::string& passwordHash);
     std::optional<std::vector<PlayerInfo>> requestPlayerList(std::uint32_t roomId);
     void notifyGameStarting(std::uint32_t roomId);
+    void kickPlayer(std::uint32_t roomId, std::uint32_t playerId);
     void leaveRoom();
     void poll(ThreadSafeQueue<NotificationData>& broadcastQueue);
     bool ping();
@@ -48,6 +49,10 @@ class LobbyConnection
     {
         return expectedPlayerCount_;
     }
+    bool wasKicked() const
+    {
+        return wasKicked_;
+    }
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
@@ -62,4 +67,5 @@ class LobbyConnection
     bool gameStarting_{false};
     std::uint8_t expectedPlayerCount_{0};
     bool inRoom_{false};
+    bool wasKicked_{false};
 };

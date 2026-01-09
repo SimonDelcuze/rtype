@@ -107,7 +107,8 @@ void RoomWaitingMenu::create(Registry& registry)
     backgroundEntity_ = createBackground(registry, textures_);
     logoEntity_       = createLogo(registry, textures_);
 
-    titleEntity_ = createText(registry, 450.0F, 200.0F, "Room Lobby", 36, Color::White);
+    std::string roomTitle = "Room #" + std::to_string(roomId_);
+    titleEntity_ = createText(registry, 450.0F, 200.0F, roomTitle, 36, Color::White);
 
     playerCountEntity_ = createText(registry, 400.0F, 260.0F, "Players: 1/4", 24, Color(200, 200, 200));
 
@@ -173,6 +174,13 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
         return;
     }
 
+    if (lobbyConnection_ && lobbyConnection_->wasKicked()) {
+        Logger::instance().warn("[RoomWaitingMenu] Player was kicked from the room!");
+        result_.leaveRoom = true;
+        done_ = true;
+        return;
+    }
+
     updateTimer_ += 0.016F;
     if (updateTimer_ >= kUpdateInterval) {
         updateTimer_ = 0.0F;
@@ -187,6 +195,7 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
 
                 for (const auto& playerInfo : *playerListOpt) {
                     PlayerInfo info;
+                    info.playerId = playerInfo.playerId;
                     info.name = "Player " + std::to_string(playerInfo.playerId);
                     info.isHost = playerInfo.isHost;
                     players_.push_back(info);
@@ -213,19 +222,37 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
         if (registry.isAlive(entityId))
             registry.destroyEntity(entityId);
     }
+    for (auto entityId : playerBadgeEntities_) {
+        if (registry.isAlive(entityId))
+            registry.destroyEntity(entityId);
+    }
+    for (auto entityId : kickButtonEntities_) {
+        if (registry.isAlive(entityId))
+            registry.destroyEntity(entityId);
+    }
     playerTextEntities_.clear();
+    playerBadgeEntities_.clear();
+    kickButtonEntities_.clear();
 
     float startY = 320.0F;
     for (size_t i = 0; i < players_.size(); ++i) {
         const auto& player = players_[i];
-        std::string playerText = player.name;
-        if (player.isHost) {
-            playerText += " (Host)";
-        }
 
         Color playerColor = player.isHost ? Color(255, 215, 0) : Color(200, 200, 200);
-        auto entityId     = createText(registry, 450.0F, startY + (i * 40.0F), playerText, 22, playerColor);
-        playerTextEntities_.push_back(entityId);
+        auto nameEntity = createText(registry, 350.0F, startY + (i * 50.0F), player.name, 22, playerColor);
+        playerTextEntities_.push_back(nameEntity);
+
+        if (player.isHost) {
+            auto badgeEntity = createText(registry, 550.0F, startY + (i * 50.0F), "[OWNER]", 20, Color(255, 215, 0));
+            playerBadgeEntities_.push_back(badgeEntity);
+        }
+
+        if (isHost_ && !player.isHost) {
+            auto kickButton = createButton(registry, 680.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick",
+                                          Color(180, 50, 50),
+                                          [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
+            kickButtonEntities_.push_back(kickButton);
+        }
     }
 }
 
@@ -251,4 +278,15 @@ void RoomWaitingMenu::onLeaveRoomClicked()
 
     result_.leaveRoom = true;
     done_             = true;
+}
+
+void RoomWaitingMenu::onKickPlayerClicked(std::uint32_t playerId)
+{
+    Logger::instance().info("[RoomWaitingMenu] Kick player " + std::to_string(playerId) + " clicked");
+
+    if (lobbyConnection_) {
+        lobbyConnection_->kickPlayer(roomId_, playerId);
+
+        updateTimer_ = kUpdateInterval;
+    }
 }
