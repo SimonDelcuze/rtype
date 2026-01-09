@@ -370,6 +370,7 @@ namespace
         return true;
     }
 
+    bool parseBounds(const Json& j, CameraBounds& out, const std::string& path, LevelLoadError& error);
     bool parseTrigger(const Json& j, Trigger& out, const std::string& path, LevelLoadError& error);
 
     bool parseRepeat(const Json& j, RepeatSpec& out, const std::string& path, LevelLoadError& error)
@@ -461,6 +462,26 @@ namespace
             std::int32_t c = 0;
             readInt(j, "count", c, path, error, true);
             out.count = c;
+            return true;
+        }
+        if (type == "player_in_zone") {
+            out.type = TriggerType::PlayerInZone;
+            if (!j.contains("bounds")) {
+                setError(error, LevelLoadErrorCode::SchemaError, "Missing bounds", "", joinPath(path, "bounds"));
+                return false;
+            }
+            if (!parseBounds(j["bounds"], out.zone.emplace(), joinPath(path, "bounds"), error))
+                return false;
+            if (j.contains("requireAll")) {
+                bool requireAll = false;
+                if (!readBool(j, "requireAll", requireAll, path, error, true))
+                    return false;
+                out.requireAllPlayers = requireAll;
+            }
+            return true;
+        }
+        if (type == "players_ready") {
+            out.type = TriggerType::PlayersReady;
             return true;
         }
         if (type == "and" || type == "all_of") {
@@ -670,6 +691,10 @@ namespace
             out.type = EventType::SetMusic;
         else if (type == "set_camera_bounds")
             out.type = EventType::SetCameraBounds;
+        else if (type == "set_player_bounds")
+            out.type = EventType::SetPlayerBounds;
+        else if (type == "clear_player_bounds")
+            out.type = EventType::ClearPlayerBounds;
         else if (type == "gate_open")
             out.type = EventType::GateOpen;
         else if (type == "gate_close")
@@ -723,6 +748,13 @@ namespace
             Json b;
             if (requireObject(j, "bounds", b, path, error)) {
                 if (!parseBounds(b, out.cameraBounds.emplace(), joinPath(path, "bounds"), error))
+                    return false;
+            }
+        }
+        if (out.type == EventType::SetPlayerBounds && j.contains("bounds")) {
+            Json b;
+            if (requireObject(j, "bounds", b, path, error)) {
+                if (!parseBounds(b, out.playerBounds.emplace(), joinPath(path, "bounds"), error))
                     return false;
             }
         }

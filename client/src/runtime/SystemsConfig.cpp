@@ -32,7 +32,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
                       LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
-                      SoundManager& soundManager, ThreadSafeQueue<std::string>& broadcastQueue)
+                      SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     gameLoop.addSystem(std::make_shared<IntroCinematicSystem>(levelState));
     gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
@@ -40,7 +40,8 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));
-    gameLoop.addSystem(std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures, g_musicVolume));
+    gameLoop.addSystem(
+        std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures, g_musicVolume, levelState));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
     gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));
@@ -48,7 +49,7 @@ void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry&
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
-    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures));
+    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures, levelState));
     gameLoop.addSystem(std::make_shared<NetworkDebugOverlay>(window, fontManager));
     gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
     gameLoop.addSystem(std::make_shared<NotificationSystem>(window, fontManager, broadcastQueue));

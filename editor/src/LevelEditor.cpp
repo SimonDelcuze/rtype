@@ -352,6 +352,9 @@ json makeDefaultTrigger(const std::string& type)
     else if (type == "hp_below") {
         trigger["bossId"] = "";
         trigger["value"]  = 0;
+    } else if (type == "player_in_zone") {
+        trigger["bounds"] = json::object({{"minX", 0.0}, {"maxX", 0.0}, {"minY", 0.0}, {"maxY", 0.0}});
+    } else if (type == "players_ready") {
     } else if (type == "all_of" || type == "any_of") {
         trigger["triggers"] = json::array();
     }
@@ -427,6 +430,9 @@ json makeDefaultEvent(const std::string& type)
         ev["musicId"] = "";
     } else if (type == "set_camera_bounds") {
         ev["bounds"] = json::object({{"minX", 0.0}, {"maxX", 0.0}, {"minY", 0.0}, {"maxY", 0.0}});
+    } else if (type == "set_player_bounds") {
+        ev["bounds"] = json::object({{"minX", 0.0}, {"maxX", 0.0}, {"minY", 0.0}, {"maxY", 0.0}});
+    } else if (type == "clear_player_bounds") {
     } else if (type == "gate_open" || type == "gate_close") {
         ev["gateId"] = "";
     } else if (type == "checkpoint") {
@@ -640,7 +646,8 @@ void drawTrigger(json& trigger, const IdCache& ids, bool& changed)
 
     std::string type = trigger.value("type", "time");
     const std::vector<std::string> types = {"time", "distance", "spawn_dead", "boss_dead", "enemy_count_at_most",
-                                            "checkpoint_reached", "hp_below", "all_of", "any_of"};
+                                            "checkpoint_reached", "hp_below", "player_in_zone", "players_ready",
+                                            "all_of", "any_of"};
 
     if (comboString("Type", type, types)) {
         trigger = makeDefaultTrigger(type);
@@ -712,6 +719,34 @@ void drawTrigger(json& trigger, const IdCache& ids, bool& changed)
             trigger["value"] = value;
             changed           = true;
         }
+    } else if (type == "player_in_zone") {
+        json& bounds = ensureObject(trigger, "bounds");
+        float minX   = static_cast<float>(bounds.value("minX", 0.0));
+        float maxX   = static_cast<float>(bounds.value("maxX", 0.0));
+        float minY   = static_cast<float>(bounds.value("minY", 0.0));
+        float maxY   = static_cast<float>(bounds.value("maxY", 0.0));
+        if (ImGui::DragFloat("MinX", &minX, 1.0f)) {
+            bounds["minX"] = minX;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MaxX", &maxX, 1.0f)) {
+            bounds["maxX"] = maxX;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MinY", &minY, 1.0f)) {
+            bounds["minY"] = minY;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MaxY", &maxY, 1.0f)) {
+            bounds["maxY"] = maxY;
+            changed         = true;
+        }
+        bool requireAll = trigger.value("requireAll", false);
+        if (ImGui::Checkbox("RequireAll", &requireAll)) {
+            trigger["requireAll"] = requireAll;
+            changed                = true;
+        }
+    } else if (type == "players_ready") {
     } else if (type == "all_of" || type == "any_of") {
         json& children = ensureArray(trigger, "triggers");
         if (ImGui::Button("Add trigger")) {
@@ -963,7 +998,8 @@ void drawEvent(json& ev, const IdCache& ids, const AssetIndex& assets, bool& cha
     std::string type = ev.value("type", "spawn_wave");
     const std::vector<std::string> types = {"spawn_wave",   "spawn_obstacle", "spawn_boss", "set_scroll",
                                             "set_background", "set_music",   "set_camera_bounds",
-                                            "gate_open",    "gate_close",    "checkpoint"};
+                                            "set_player_bounds", "clear_player_bounds", "gate_open",
+                                            "gate_close",    "checkpoint"};
 
     if (comboString("EventType", type, types)) {
         json newEv = makeDefaultEvent(type);
@@ -1119,6 +1155,29 @@ void drawEvent(json& ev, const IdCache& ids, const AssetIndex& assets, bool& cha
             bounds["maxY"] = maxY;
             changed         = true;
         }
+    } else if (type == "set_player_bounds") {
+        json& bounds = ensureObject(ev, "bounds");
+        float minX   = static_cast<float>(bounds.value("minX", 0.0));
+        float maxX   = static_cast<float>(bounds.value("maxX", 0.0));
+        float minY   = static_cast<float>(bounds.value("minY", 0.0));
+        float maxY   = static_cast<float>(bounds.value("maxY", 0.0));
+        if (ImGui::DragFloat("MinX", &minX, 1.0f)) {
+            bounds["minX"] = minX;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MaxX", &maxX, 1.0f)) {
+            bounds["maxX"] = maxX;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MinY", &minY, 1.0f)) {
+            bounds["minY"] = minY;
+            changed         = true;
+        }
+        if (ImGui::DragFloat("MaxY", &maxY, 1.0f)) {
+            bounds["maxY"] = maxY;
+            changed         = true;
+        }
+    } else if (type == "clear_player_bounds") {
     } else if (type == "gate_open" || type == "gate_close") {
         std::string gate = ev.value("gateId", "");
         if (comboString("GateId", gate, ids.spawnIds)) {

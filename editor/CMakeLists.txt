@@ -1,3 +1,25 @@
+CPMAddPackage(
+    NAME imgui
+    GITHUB_REPOSITORY ocornut/imgui
+    GIT_TAG v1.90.4
+    GIT_SHALLOW TRUE
+)
+
+if(NOT imgui_ADDED)
+    message(FATAL_ERROR "imgui dependency could not be added. It is required to build the rtype_level_editor target.")
+endif()
+
+find_package(OpenGL REQUIRED)
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
+)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_link_libraries(imgui PUBLIC OpenGL::GL)
+
 file(GLOB_RECURSE RTYPE_EDITOR_SOURCES
     CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"

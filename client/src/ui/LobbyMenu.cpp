@@ -8,6 +8,7 @@
 #include "components/TransformComponent.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <iomanip>
 #include <sstream>
@@ -106,9 +107,10 @@ namespace
 } // namespace
 
 LobbyMenu::LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-                     ThreadSafeQueue<std::string>& broadcastQueue, LobbyConnection* sharedConnection)
+                     ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag,
+                     LobbyConnection* sharedConnection)
     : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue),
-      sharedConnection_(sharedConnection), ownsConnection_(sharedConnection == nullptr)
+      runningFlag_(runningFlag), sharedConnection_(sharedConnection), ownsConnection_(sharedConnection == nullptr)
 {}
 
 void LobbyMenu::create(Registry& registry)
@@ -149,7 +151,7 @@ void LobbyMenu::create(Registry& registry)
     if (sharedConnection_) {
         ownsConnection_ = false;
     } else {
-        lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_);
+        lobbyConnection_ = std::make_unique<LobbyConnection>(lobbyEndpoint_, runningFlag_);
 
         if (!lobbyConnection_->connect()) {
             Logger::instance().error("[LobbyMenu] Failed to connect to lobby server");
@@ -195,6 +197,13 @@ void LobbyMenu::render(Registry& registry, Window& window)
     auto* conn = getConnection();
     if (conn) {
         conn->poll(broadcastQueue_);
+        if (conn->isServerLost()) {
+            Logger::instance().warn("[LobbyMenu] Server lost - returning to connection menu");
+            broadcastQueue_.push(NotificationData{"Lost connection to lobby server", 5.0F});
+            state_                = State::Done;
+            result_.backRequested = true;
+            return;
+        }
     }
 
     if (!statsLoaded_ && sharedConnection_) {
@@ -224,8 +233,17 @@ void LobbyMenu::refreshRoomList()
 
     if (!result.has_value()) {
         Logger::instance().warn("[LobbyMenu] Failed to get room list");
+        consecutiveFailures_++;
+        if (consecutiveFailures_ >= 3) {
+            Logger::instance().error("[LobbyMenu] Connection to lobby server lost (3 timeouts)");
+            broadcastQueue_.push(NotificationData{"Server disconnected", 5.0F});
+            state_                = State::Done;
+            result_.backRequested = true;
+        }
         return;
     }
+
+    consecutiveFailures_ = 0;
 
     rooms_ = result->rooms;
 

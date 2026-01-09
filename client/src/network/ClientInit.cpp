@@ -82,8 +82,17 @@ void sendClientReady(const IpEndpoint& server, UdpSocket& socket)
     Logger::instance().info("CLIENT_READY sent to server");
 }
 
+void sendClientReadyLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket)
+{
+    std::uint16_t seq = 1000;
+    while (!stopFlag.load()) {
+        sendClientReadyOnce(server, seq++, socket);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,
-                   ThreadSafeQueue<std::string>* broadcastQueue)
+                   ThreadSafeQueue<NotificationData>* broadcastQueue)
 {
     if (net.socket == nullptr) {
         net.socket = std::make_shared<UdpSocket>();

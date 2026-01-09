@@ -6,6 +6,7 @@
 #include "network/AuthPackets.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/StatsPackets.hpp"
+#include "network/ServerDisconnectPacket.hpp"
 
 #include <array>
 #include <chrono>
@@ -20,14 +21,12 @@ LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, st
     Logger::instance().info("[LobbyServer] Initialized on port " + std::to_string(lobbyPort) + " with game base port " +
                             std::to_string(gameBasePort));
 
-    // Initialize authentication system
     database_ = std::make_shared<Database>();
     if (!database_->initialize("data/rtype.db")) {
         Logger::instance().error("[LobbyServer] Failed to initialize database");
         return;
     }
 
-    // Load and execute database schema
     std::ifstream schemaFile("server/src/auth/migrations/001_initial_schema.sql");
     if (schemaFile.is_open()) {
         std::string schema((std::istreambuf_iterator<char>(schemaFile)), std::istreambuf_iterator<char>());
@@ -97,6 +96,10 @@ void LobbyServer::run()
 void LobbyServer::stop()
 {
     Logger::instance().info("[LobbyServer] Stopping...");
+
+    notifyDisconnection("Server disconnected");
+    instanceManager_.stopAll("Server disconnected");
+
     receiveRunning_ = false;
 
     if (receiveWorker_.joinable()) {
@@ -128,6 +131,22 @@ void LobbyServer::broadcast(const std::string& message)
     }
 
     instanceManager_.broadcast(message);
+}
+
+void LobbyServer::notifyDisconnection(const std::string& reason)
+{
+    Logger::instance().info("[LobbyServer] Notify disconnect: " + reason);
+
+    auto pkt   = ServerDisconnectPacket::create(reason);
+    auto bytes = pkt.encode();
+    std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        for (const auto& [key, session] : lobbySessions_) {
+            sendPacket(vec, session.endpoint);
+        }
+    }
 }
 
 ServerStats LobbyServer::aggregateStats()
@@ -543,14 +562,12 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
 {
     Logger::instance().info("[LobbyServer] Get stats request from client");
 
-    // Check if user is authenticated
     if (!isAuthenticated(from)) {
         Logger::instance().warn("[LobbyServer] Get stats failed: not authenticated");
         sendAuthRequired(from);
         return;
     }
 
-    // Get session to get userId
     std::string key = endpointToKey(from);
     ClientSession session;
     {
@@ -564,13 +581,11 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
         session = it->second;
     }
 
-    // Get user stats from database
     auto stats = userRepository_->getUserStats(session.userId.value());
     if (!stats.has_value()) {
         Logger::instance().warn("[LobbyServer] Get stats failed: stats not found for userId " +
                                 std::to_string(session.userId.value()));
 
-        // Return empty stats (new user case)
         GetStatsResponseData emptyStats;
         emptyStats.userId      = session.userId.value();
         emptyStats.gamesPlayed = 0;
@@ -583,7 +598,6 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
         return;
     }
 
-    // Build and send response with user stats
     GetStatsResponseData responseData;
     responseData.userId      = stats->userId;
     responseData.gamesPlayed = stats->gamesPlayed;

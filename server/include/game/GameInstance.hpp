@@ -14,6 +14,8 @@
 #include "network/Packets.hpp"
 #include "network/SendThread.hpp"
 #include "replication/ReplicationManager.hpp"
+#include "rollback/DesyncDetector.hpp"
+#include "rollback/RollbackManager.hpp"
 #include "simulation/GameWorld.hpp"
 #include "simulation/PlayerCommand.hpp"
 #include "systems/BoundarySystem.hpp"
@@ -23,6 +25,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/PlayerBoundsSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 #include "systems/ScoreSystem.hpp"
 #include "systems/WalkerShotSystem.hpp"
@@ -43,7 +46,7 @@ class GameInstance
     GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag);
     bool start();
     void run();
-    void stop();
+    void stop(const std::string& reason = "Room closed");
     void notifyDisconnection(const std::string& reason);
     void broadcast(const std::string& message);
 
@@ -147,6 +150,7 @@ class GameInstance
     ScoreSystem scoreSys_;
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
+    PlayerBoundsSystem playerBoundsSys_;
     IntroCinematic introCinematic_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;
@@ -164,4 +168,9 @@ class GameInstance
     std::atomic<bool>* running_{nullptr};
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
+    RollbackManager rollbackManager_;
+    DesyncDetector desyncDetector_;
+
+    void captureStateSnapshot();
+    void handleDesync(const DesyncInfo& desyncInfo);
 };

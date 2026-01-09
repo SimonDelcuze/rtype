@@ -94,13 +94,14 @@ TEST_F(InterpolationSystemTests, ExtrapolationBeyondWindow)
     auto& interp    = registry.emplace<InterpolationComponent>(entity);
 
     interp.setTargetWithVelocity(100.0F, 100.0F, 50.0F, 50.0F);
-    interp.interpolationTime = 1.0F;
-    interp.mode              = InterpolationMode::Extrapolate;
+    interp.interpolationTime    = 1.0F;
+    interp.maxExtrapolationTime = 0.2F;
+    interp.mode                 = InterpolationMode::Extrapolate;
 
     system.update(registry, 1.5F);
 
-    EXPECT_NEAR(transform.x, 125.0F, 0.01F);
-    EXPECT_NEAR(transform.y, 125.0F, 0.01F);
+    EXPECT_NEAR(transform.x, 110.0F, 0.01F);
+    EXPECT_NEAR(transform.y, 110.0F, 0.01F);
 }
 
 TEST_F(InterpolationSystemTests, NoneModeSetsToTarget)

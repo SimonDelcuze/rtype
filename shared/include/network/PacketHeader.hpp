@@ -54,6 +54,9 @@ enum class MessageType : std::uint8_t
     AuthRequired               = 0x58,
     AuthGetStatsRequest        = 0x59,
     AuthGetStatsResponse       = 0x5A,
+    StateChecksum              = 0x60,
+    RollbackRequest            = 0x61,
+    DesyncDetected             = 0x62,
     Handshake                  = ClientHello,
     Ack                        = ClientAcknowledge
 };

@@ -152,9 +152,9 @@ void GameInstance::run()
     }
 }
 
-void GameInstance::stop()
+void GameInstance::stop(const std::string& reason)
 {
-    notifyDisconnection("Room closed");
+    notifyDisconnection(reason);
     gameLoop_.stop();
     sendThread_.stop();
     receiveThread_.stop();
@@ -273,6 +273,7 @@ void GameInstance::resetGame()
         levelDirector_->reset();
         levelSpawnSys_->reset();
     }
+    playerBoundsSys_.reset();
     checkpointState_.reset();
     lastSegmentIndex_ = -1;
 }

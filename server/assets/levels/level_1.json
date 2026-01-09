@@ -2,67 +2,266 @@
   "schemaVersion": 1,
   "levelId": 1,
   "meta": {
-    "name": "Stage 1 - System Test",
+    "name": "",
     "backgroundId": "space_background",
-    "musicId": "theme_music",
-    "author": "rtype-team",
-    "difficulty": "test"
+    "musicId": "menu_music",
+    "author": "",
+    "difficulty": ""
   },
   "archetypes": [
-    { "typeId": 1, "spriteId": "player_ship", "animId": "player1", "layer": 0 },
-    { "typeId": 12, "spriteId": "player_ship", "animId": "player2", "layer": 0 },
-    { "typeId": 13, "spriteId": "player_ship", "animId": "player3", "layer": 0 },
-    { "typeId": 14, "spriteId": "player_ship", "animId": "player4", "layer": 0 },
-    { "typeId": 3, "spriteId": "bullet", "animId": "bullet_basic", "layer": 0 },
-    { "typeId": 4, "spriteId": "bullet", "animId": "bullet_charge_lvl1", "layer": 0 },
-    { "typeId": 5, "spriteId": "bullet", "animId": "bullet_charge_lvl2", "layer": 0 },
-    { "typeId": 6, "spriteId": "bullet", "animId": "bullet_charge_lvl3", "layer": 0 },
-    { "typeId": 7, "spriteId": "bullet", "animId": "bullet_charge_lvl4", "layer": 0 },
-    { "typeId": 8, "spriteId": "bullet", "animId": "bullet_charge_lvl5", "layer": 0 },
-    { "typeId": 15, "spriteId": "enemy_bullet", "animId": "enemy_bullet_basic", "layer": 0 },
-    { "typeId": 16, "spriteId": "bullet", "animId": "player_death", "layer": 50 },
-    { "typeId": 22, "spriteId": "walker_special_shot", "animId": "walker_special_shot", "layer": 1 },
-    { "typeId": 2, "spriteId": "mob1", "animId": "left", "layer": 0 },
-    { "typeId": 21, "spriteId": "mob2", "animId": "walking", "layer": 0 },
-    { "typeId": 9, "spriteId": "obstacle_top", "animId": "", "layer": 0 },
-    { "typeId": 10, "spriteId": "obstacle_middle", "animId": "", "layer": 0 },
-    { "typeId": 11, "spriteId": "obstacle_bottom", "animId": "", "layer": 0 },
-    { "typeId": 20, "spriteId": "enemy_ship", "animId": "enemy1", "layer": 0 }
+    {
+      "typeId": 1,
+      "spriteId": "player_ship",
+      "animId": "player1",
+      "layer": 0
+    },
+    {
+      "typeId": 12,
+      "spriteId": "player_ship",
+      "animId": "player2",
+      "layer": 0
+    },
+    {
+      "typeId": 13,
+      "spriteId": "player_ship",
+      "animId": "player3",
+      "layer": 0
+    },
+    {
+      "typeId": 14,
+      "spriteId": "player_ship",
+      "animId": "player4",
+      "layer": 0
+    },
+    {
+      "typeId": 3,
+      "spriteId": "bullet",
+      "animId": "bullet_basic",
+      "layer": 0
+    },
+    {
+      "typeId": 4,
+      "spriteId": "bullet",
+      "animId": "bullet_charge_lvl1",
+      "layer": 0
+    },
+    {
+      "typeId": 5,
+      "spriteId": "bullet",
+      "animId": "bullet_charge_lvl2",
+      "layer": 0
+    },
+    {
+      "typeId": 6,
+      "spriteId": "bullet",
+      "animId": "bullet_charge_lvl3",
+      "layer": 0
+    },
+    {
+      "typeId": 7,
+      "spriteId": "bullet",
+      "animId": "bullet_charge_lvl4",
+      "layer": 0
+    },
+    {
+      "typeId": 8,
+      "spriteId": "bullet",
+      "animId": "bullet_charge_lvl5",
+      "layer": 0
+    },
+    {
+      "typeId": 15,
+      "spriteId": "enemy_bullet",
+      "animId": "enemy_bullet_basic",
+      "layer": 0
+    },
+    {
+      "typeId": 16,
+      "spriteId": "bullet",
+      "animId": "player_death",
+      "layer": 50
+    },
+    {
+      "typeId": 22,
+      "spriteId": "walker_special_shot",
+      "animId": "walker_special_shot",
+      "layer": 1
+    },
+    {
+      "typeId": 2,
+      "spriteId": "mob1",
+      "animId": "left",
+      "layer": 0
+    },
+    {
+      "typeId": 21,
+      "spriteId": "mob2",
+      "animId": "walking",
+      "layer": 0
+    },
+    {
+      "typeId": 9,
+      "spriteId": "obstacle_top",
+      "animId": "",
+      "layer": 0
+    },
+    {
+      "typeId": 10,
+      "spriteId": "obstacle_middle",
+      "animId": "",
+      "layer": 0
+    },
+    {
+      "typeId": 11,
+      "spriteId": "obstacle_bottom",
+      "animId": "",
+      "layer": 0
+    },
+    {
+      "typeId": 20,
+      "spriteId": "enemy_ship",
+      "animId": "enemy1",
+      "layer": 0
+    }
   ],
   "patterns": [
-    { "id": "p_linear", "type": "linear", "speed": 140 },
-    { "id": "p_sine", "type": "sine", "speed": 120, "amplitude": 140, "frequency": 0.6, "phase": 0.0 },
-    { "id": "p_zigzag", "type": "zigzag", "speed": 150, "amplitude": 120, "frequency": 0.9 },
-    { "id": "p_boss_hover", "type": "sine", "speed": 0, "amplitude": 90, "frequency": 0.35, "phase": 0.0 }
+    {
+      "id": "p_linear",
+      "type": "linear",
+      "speed": 140
+    },
+    {
+      "id": "p_sine",
+      "type": "sine",
+      "speed": 120,
+      "amplitude": 140,
+      "frequency": 0.6,
+      "phase": 0.0
+    },
+    {
+      "id": "p_zigzag",
+      "type": "zigzag",
+      "speed": 150,
+      "amplitude": 120,
+      "frequency": 0.9
+    },
+    {
+      "id": "p_boss_hover",
+      "type": "sine",
+      "speed": 0,
+      "amplitude": 90,
+      "frequency": 0.35,
+      "phase": 0.0
+    }
   ],
   "templates": {
     "hitboxes": {
-      "enemy_small": { "width": 48, "height": 36, "offsetX": 0, "offsetY": 0, "active": true },
-      "enemy_walker": { "width": 32, "height": 32, "offsetX": 0, "offsetY": 0, "active": true },
-      "ob_top": { "width": 147, "height": 23, "offsetX": 0, "offsetY": 0, "active": true },
-      "ob_mid": { "width": 105, "height": 47, "offsetX": 0, "offsetY": 0, "active": true },
-      "ob_bot": { "width": 146, "height": 40, "offsetX": 0, "offsetY": 0, "active": true },
-      "boss_hit": { "width": 140, "height": 90, "offsetX": 0, "offsetY": 0, "active": true }
+      "enemy_small": {
+        "width": 48,
+        "height": 36,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "enemy_walker": {
+        "width": 32,
+        "height": 32,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "ob_top": {
+        "width": 147,
+        "height": 23,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "ob_mid": {
+        "width": 105,
+        "height": 47,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "ob_bot": {
+        "width": 146,
+        "height": 40,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "boss_hit": {
+        "width": 140,
+        "height": 90,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      }
     },
     "colliders": {
-      "enemy_small": { "shape": "box", "width": 48, "height": 36, "offsetX": 0, "offsetY": 0, "active": true },
-      "enemy_walker": { "shape": "box", "width": 32, "height": 32, "offsetX": 0, "offsetY": 0, "active": true },
+      "enemy_small": {
+        "shape": "box",
+        "width": 48,
+        "height": 36,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
+      "enemy_walker": {
+        "shape": "box",
+        "width": 32,
+        "height": 32,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      },
       "ob_top": {
         "shape": "polygon",
         "offsetX": 0,
         "offsetY": 0,
         "active": true,
         "points": [
-          [0, 0],
-          [146, 0],
-          [146, 4],
-          [144, 7],
-          [139, 14],
-          [137, 16],
-          [129, 22],
-          [24, 22],
-          [4, 6],
-          [0, 2]
+          [
+            0,
+            0
+          ],
+          [
+            146,
+            0
+          ],
+          [
+            146,
+            4
+          ],
+          [
+            144,
+            7
+          ],
+          [
+            139,
+            14
+          ],
+          [
+            137,
+            16
+          ],
+          [
+            129,
+            22
+          ],
+          [
+            24,
+            22
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            0,
+            2
+          ]
         ]
       },
       "ob_mid": {
@@ -71,23 +270,74 @@
         "offsetY": 0,
         "active": true,
         "points": [
-          [0, 24],
-          [2, 20],
-          [8, 10],
-          [10, 8],
-          [19, 2],
-          [21, 1],
-          [72, 1],
-          [90, 6],
-          [93, 7],
-          [101, 11],
-          [104, 14],
-          [104, 46],
-          [21, 46],
-          [19, 45],
-          [11, 39],
-          [1, 29],
-          [0, 27]
+          [
+            0,
+            24
+          ],
+          [
+            2,
+            20
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            19,
+            2
+          ],
+          [
+            21,
+            1
+          ],
+          [
+            72,
+            1
+          ],
+          [
+            90,
+            6
+          ],
+          [
+            93,
+            7
+          ],
+          [
+            101,
+            11
+          ],
+          [
+            104,
+            14
+          ],
+          [
+            104,
+            46
+          ],
+          [
+            21,
+            46
+          ],
+          [
+            19,
+            45
+          ],
+          [
+            11,
+            39
+          ],
+          [
+            1,
+            29
+          ],
+          [
+            0,
+            27
+          ]
         ]
       },
       "ob_bot": {
@@ -96,24 +346,76 @@
         "offsetY": 0,
         "active": true,
         "points": [
-          [0, 35],
-          [1, 33],
-          [6, 26],
-          [8, 24],
-          [16, 18],
-          [18, 17],
-          [71, 0],
-          [80, 0],
-          [83, 1],
-          [119, 17],
-          [125, 21],
-          [138, 30],
-          [143, 34],
-          [145, 39],
-          [0, 39]
+          [
+            0,
+            35
+          ],
+          [
+            1,
+            33
+          ],
+          [
+            6,
+            26
+          ],
+          [
+            8,
+            24
+          ],
+          [
+            16,
+            18
+          ],
+          [
+            18,
+            17
+          ],
+          [
+            71,
+            0
+          ],
+          [
+            80,
+            0
+          ],
+          [
+            83,
+            1
+          ],
+          [
+            119,
+            17
+          ],
+          [
+            125,
+            21
+          ],
+          [
+            138,
+            30
+          ],
+          [
+            143,
+            34
+          ],
+          [
+            145,
+            39
+          ],
+          [
+            0,
+            39
+          ]
         ]
       },
-      "boss_box": { "shape": "box", "width": 140, "height": 90, "offsetX": 0, "offsetY": 0, "active": true }
+      "boss_box": {
+        "shape": "box",
+        "width": 140,
+        "height": 90,
+        "offsetX": 0,
+        "offsetY": 0,
+        "active": true
+      }
     },
     "enemies": {
       "grunt": {
@@ -122,8 +424,16 @@
         "collider": "enemy_small",
         "health": 2,
         "score": 200,
-        "scale": [1.4, 1.4],
-        "shooting": { "interval": 1.6, "speed": 260, "damage": 6, "lifetime": 3.0 }
+        "scale": [
+          1.4,
+          1.4
+        ],
+        "shooting": {
+          "interval": 1.6,
+          "speed": 260,
+          "damage": 6,
+          "lifetime": 3.0
+        }
       },
       "walker": {
         "typeId": 21,
@@ -131,8 +441,16 @@
         "collider": "enemy_walker",
         "health": 2,
         "score": 220,
-        "scale": [1.4, 1.4],
-        "shooting": { "interval": 2.8, "speed": 260, "damage": 6, "lifetime": 3.0 }
+        "scale": [
+          1.4,
+          1.4
+        ],
+        "shooting": {
+          "interval": 2.8,
+          "speed": 260,
+          "damage": 6,
+          "lifetime": 3.0
+        }
       }
     },
     "obstacles": {
@@ -145,7 +463,10 @@
         "margin": 0,
         "speedX": -60,
         "speedY": 0,
-        "scale": [1.4, 1.4]
+        "scale": [
+          1.4,
+          1.4
+        ]
       },
       "wall_mid": {
         "typeId": 10,
@@ -156,7 +477,10 @@
         "margin": 0,
         "speedX": -60,
         "speedY": 0,
-        "scale": [1.5, 1.5]
+        "scale": [
+          1.5,
+          1.5
+        ]
       },
       "wall_bot": {
         "typeId": 11,
@@ -167,10 +491,101 @@
         "margin": 20,
         "speedX": -60,
         "speedY": 0,
-        "scale": [1.4, 1.4]
+        "scale": [
+          1.4,
+          1.4
+        ]
       }
     }
   },
+  "segments": [
+    {
+      "id": "segment_1",
+      "scroll": {
+        "mode": "constant",
+        "speedX": -60
+      },
+      "events": [
+        {
+          "type": "spawn_wave",
+          "id": "",
+          "trigger": {
+            "type": "time",
+            "time": 1.0
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_linear",
+            "spawnX": 1220.0,
+            "startY": 140.0,
+            "deltaY": 120.0,
+            "count": 3
+          }
+        }
+      ],
+      "exit": {
+        "type": "time",
+        "time": 8.0
+      }
+    },
+    {
+      "id": "safe_zone",
+      "scroll": {
+        "mode": "stopped",
+        "speedX": 0.0
+      },
+      "events": [
+        {
+          "type": "set_player_bounds",
+          "id": "",
+          "trigger": {
+            "type": "time",
+            "time": 0.0
+          },
+          "bounds": {
+            "minX": 0.0,
+            "maxX": 1246.0,
+            "minY": 0.0,
+            "maxY": 702.0
+          }
+        }
+      ],
+      "exit": {
+        "type": "players_ready"
+      }
+    },
+    {
+      "id": "segment_2",
+      "scroll": {
+        "mode": "constant",
+        "speedX": -60.0
+      },
+      "events": [
+        {
+          "type": "spawn_wave",
+          "id": "",
+          "trigger": {
+            "type": "time",
+            "time": 1.0
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_zigzag",
+            "spawnX": 1220.0,
+            "startY": 180.0,
+            "deltaY": 120.0,
+            "count": 3
+          }
+        }
+      ],
+      "exit": {
+        "type": "time",
+        "time": 10.0
+      }
+    }
+  ],
   "bosses": {
     "boss_alpha": {
       "typeId": 20,
@@ -178,382 +593,19 @@
       "collider": "boss_box",
       "health": 80,
       "score": 1000,
-      "scale": [2.5, 2.5],
+      "scale": [
+        2.5,
+        2.5
+      ],
       "patternId": "p_boss_hover",
-      "shooting": { "interval": 1.3, "speed": 320, "damage": 8, "lifetime": 4.0 },
-      "phases": [
-        {
-          "id": "phase_1",
-          "trigger": { "type": "time", "time": 0 },
-          "events": [
-            {
-              "id": "boss_phase1_minions",
-              "type": "spawn_wave",
-              "trigger": { "type": "time", "time": 0 },
-              "repeat": {
-                "interval": 2.5,
-                "until": { "type": "hp_below", "bossId": "boss_alpha", "value": 40 }
-              },
-              "wave": {
-                "type": "serpent",
-                "enemy": "grunt",
-                "patternId": "p_sine",
-                "spawnX": 1400,
-                "startY": 120,
-                "stepY": 70,
-                "amplitudeX": 90,
-                "stepTime": 0.4,
-                "count": 6,
-                "shootingEnabled": true
-              }
-            }
-          ]
-        },
-        {
-          "id": "phase_2",
-          "trigger": { "type": "hp_below", "bossId": "boss_alpha", "value": 40 },
-          "events": [
-            {
-              "id": "boss_phase2_wave",
-              "type": "spawn_wave",
-              "trigger": { "type": "time", "time": 0 },
-              "wave": {
-                "type": "triangle",
-                "enemy": "grunt",
-                "patternId": "p_zigzag",
-                "spawnX": 1380,
-                "apexY": 180,
-                "rowHeight": 60,
-                "horizontalStep": 50,
-                "layers": 3,
-                "shootingEnabled": true
-              }
-            }
-          ]
-        },
-        {
-          "id": "phase_3",
-          "trigger": { "type": "hp_below", "bossId": "boss_alpha", "value": 15 },
-          "events": [
-            {
-              "id": "boss_phase3_wave",
-              "type": "spawn_wave",
-              "trigger": { "type": "time", "time": 0 },
-              "wave": {
-                "type": "cross",
-                "enemy": "grunt",
-                "patternId": "p_linear",
-                "centerX": 1100,
-                "centerY": 360,
-                "step": 70,
-                "armLength": 3,
-                "shootingEnabled": true
-              }
-            }
-          ]
-        }
-      ],
-      "onDeath": [
-        {
-          "id": "boss_gate_open",
-          "type": "gate_open",
-          "trigger": { "type": "time", "time": 0 },
-          "gateId": "boss_gate"
-        },
-        {
-          "id": "boss_scroll_resume",
-          "type": "set_scroll",
-          "trigger": { "type": "time", "time": 0 },
-          "scroll": { "mode": "constant", "speedX": -60 }
-        }
-      ]
-    }
-  },
-  "segments": [
-    {
-      "id": "intro",
-      "scroll": { "mode": "constant", "speedX": -60 },
-      "events": [
-        {
-          "id": "intro_bg",
-          "type": "set_background",
-          "trigger": { "type": "time", "time": 0 },
-          "backgroundId": "space_background"
-        },
-        {
-          "id": "intro_walker_preview",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 0.2 },
-          "wave": {
-            "type": "line",
-            "enemy": "walker",
-            "patternId": "p_linear",
-            "spawnX": 1400,
-            "startY": 680,
-            "deltaY": 0,
-            "count": 1,
-            "scale": [1.4, 1.4],
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "intro_line",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 1 },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_linear",
-            "spawnX": 1400,
-            "startY": 120,
-            "deltaY": 80,
-            "count": 5,
-            "scale": [1.4, 1.4],
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "intro_wall_mid_abs",
-          "type": "spawn_obstacle",
-          "trigger": { "type": "distance", "distance": 200 },
-          "obstacle": "wall_mid",
-          "x": 1200,
-          "anchor": "absolute",
-          "y": 320
-        },
-        {
-          "id": "intro_wall_top",
-          "type": "spawn_obstacle",
-          "trigger": { "type": "time", "time": 2.5 },
-          "obstacle": "wall_top",
-          "x": 1300
-        },
-        {
-          "id": "intro_wall_bot",
-          "type": "spawn_obstacle",
-          "trigger": { "type": "time", "time": 4 },
-          "obstacle": "wall_bot",
-          "x": 1300
-        },
-        {
-          "id": "cp_intro",
-          "type": "checkpoint",
-          "trigger": { "type": "distance", "distance": 500 },
-          "checkpointId": "cp_intro",
-          "respawn": { "x": 160, "y": 360 }
-        },
-        {
-          "id": "intro_stagger",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 6 },
-          "repeat": { "interval": 2, "count": 3 },
-          "wave": {
-            "type": "stagger",
-            "enemy": "grunt",
-            "patternId": "p_sine",
-            "spawnX": 1400,
-            "startY": 140,
-            "deltaY": 60,
-            "spacing": 0.4,
-            "count": 6,
-            "shootingEnabled": true
-          }
-        }
-      ],
-      "exit": {
-        "type": "any_of",
-        "triggers": [
-          { "type": "distance", "distance": 1200 },
-          { "type": "time", "time": 25 }
-        ]
-      }
-    },
-    {
-      "id": "mid",
-      "scroll": {
-        "mode": "curve",
-        "curve": [
-          { "time": 0, "speedX": -70 },
-          { "time": 6, "speedX": -90 },
-          { "time": 12, "speedX": -60 }
-        ]
+      "shooting": {
+        "interval": 1.3,
+        "speed": 320,
+        "damage": 8,
+        "lifetime": 4.0
       },
-      "events": [
-        {
-          "id": "mid_triangle",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 0.8 },
-          "wave": {
-            "type": "triangle",
-            "enemy": "grunt",
-            "patternId": "p_zigzag",
-            "spawnX": 1380,
-            "apexY": 140,
-            "rowHeight": 60,
-            "horizontalStep": 50,
-            "layers": 3,
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "mid_serpent",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 3 },
-          "wave": {
-            "type": "serpent",
-            "enemy": "grunt",
-            "patternId": "p_sine",
-            "spawnX": 1400,
-            "startY": 200,
-            "stepY": 60,
-            "amplitudeX": 90,
-            "stepTime": 0.35,
-            "count": 6,
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "mid_wall_top",
-          "type": "spawn_obstacle",
-          "trigger": { "type": "distance", "distance": 350 },
-          "obstacle": "wall_top",
-          "x": 1350
-        },
-        {
-          "id": "mid_bounds",
-          "type": "set_camera_bounds",
-          "trigger": { "type": "time", "time": 4 },
-          "bounds": { "minX": 0, "maxX": 1280, "minY": 0, "maxY": 720 }
-        },
-        {
-          "id": "mid_scroll_stop",
-          "type": "set_scroll",
-          "trigger": { "type": "time", "time": 5 },
-          "scroll": { "mode": "stopped" }
-        },
-        {
-          "id": "mid_scroll_resume",
-          "type": "set_scroll",
-          "trigger": { "type": "time", "time": 8 },
-          "scroll": { "mode": "constant", "speedX": -65 }
-        },
-        {
-          "id": "cp_mid",
-          "type": "checkpoint",
-          "trigger": { "type": "time", "time": 9 },
-          "checkpointId": "cp_mid",
-          "respawn": { "x": 180, "y": 360 }
-        },
-        {
-          "id": "gate_wave",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 10 },
-          "wave": {
-            "type": "cross",
-            "enemy": "grunt",
-            "patternId": "p_linear",
-            "centerX": 1100,
-            "centerY": 360,
-            "step": 70,
-            "armLength": 3,
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "gate_close",
-          "type": "gate_close",
-          "trigger": { "type": "time", "time": 10.1 },
-          "gateId": "gate_wave"
-        },
-        {
-          "id": "gate_open",
-          "type": "gate_open",
-          "trigger": { "type": "spawn_dead", "spawnId": "gate_wave" },
-          "gateId": "gate_wave"
-        },
-        {
-          "id": "intro_reached_bg",
-          "type": "set_background",
-          "trigger": { "type": "checkpoint_reached", "checkpointId": "cp_intro" },
-          "backgroundId": "space_background"
-        }
-      ],
-      "exit": {
-        "type": "any_of",
-        "triggers": [
-          { "type": "distance", "distance": 2000 },
-          {
-            "type": "all_of",
-            "triggers": [
-              { "type": "enemy_count_at_most", "count": 2 },
-              { "type": "time", "time": 18 }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": "boss",
-      "bossRoom": true,
-      "scroll": { "mode": "stopped" },
-      "cameraBounds": { "minX": 0, "maxX": 1280, "minY": 0, "maxY": 720 },
-      "events": [
-        {
-          "id": "boss_bg",
-          "type": "set_background",
-          "trigger": { "type": "time", "time": 0 },
-          "backgroundId": "space_background"
-        },
-        {
-          "id": "boss_spawn",
-          "type": "spawn_boss",
-          "trigger": { "type": "time", "time": 0 },
-          "bossId": "boss_alpha",
-          "spawnId": "boss_gate",
-          "spawn": { "x": 1050, "y": 360 }
-        },
-        {
-          "id": "boss_gate_close",
-          "type": "gate_close",
-          "trigger": { "type": "time", "time": 0.1 },
-          "gateId": "boss_gate"
-        },
-        {
-          "id": "boss_support",
-          "type": "spawn_wave",
-          "trigger": { "type": "time", "time": 2 },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_linear",
-            "spawnX": 1400,
-            "startY": 180,
-            "deltaY": 90,
-            "count": 4,
-            "shootingEnabled": true
-          }
-        },
-        {
-          "id": "boss_bounds",
-          "type": "set_camera_bounds",
-          "trigger": { "type": "time", "time": 3 },
-          "bounds": { "minX": 0, "maxX": 1200, "minY": 40, "maxY": 680 }
-        },
-        {
-          "id": "cp_boss",
-          "type": "checkpoint",
-          "trigger": { "type": "time", "time": 4 },
-          "checkpointId": "cp_boss",
-          "respawn": { "x": 200, "y": 360 }
-        },
-        {
-          "id": "boss_dead_event",
-          "type": "set_background",
-          "trigger": { "type": "boss_dead", "bossId": "boss_alpha" },
-          "backgroundId": "space_background"
-        }
-      ],
-      "exit": { "type": "boss_dead", "bossId": "boss_alpha" }
+      "phases": [],
+      "onDeath": []
     }
-  ]
+  }
 }

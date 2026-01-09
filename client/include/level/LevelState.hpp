@@ -9,4 +9,5 @@ struct LevelState
     bool active               = false;
     bool introCinematicActive = false;
     float introCinematicTime  = 0.0F;
+    bool safeZoneActive       = false;
 };

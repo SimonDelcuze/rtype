@@ -4,8 +4,6 @@
 #include <filesystem>
 #include <iostream>
 
-// PreparedStatement Implementation
-
 PreparedStatement::PreparedStatement(sqlite3_stmt* stmt) : stmt_(stmt), lastStepResult_(SQLITE_OK) {}
 
 PreparedStatement::~PreparedStatement()
@@ -113,8 +111,6 @@ std::optional<std::int64_t> PreparedStatement::getColumnInt64(int index) const
     return sqlite3_column_int64(stmt_, index);
 }
 
-// Transaction Implementation
-
 Transaction::Transaction(sqlite3* db) : db_(db), committed_(false)
 {
     sqlite3_exec(db_, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
@@ -149,8 +145,6 @@ void Transaction::rollback()
     }
 }
 
-// Database Implementation
-
 Database::Database() : db_(nullptr) {}
 
 Database::~Database()
@@ -162,7 +156,6 @@ Database::~Database()
 
 bool Database::initialize(const std::string& dbPath)
 {
-    // Create parent directory if it doesn't exist
     std::filesystem::path path(dbPath);
     if (path.has_parent_path()) {
         std::filesystem::create_directories(path.parent_path());
@@ -174,10 +167,8 @@ bool Database::initialize(const std::string& dbPath)
         return false;
     }
 
-    // Enable Write-Ahead Logging for better concurrency
     execute("PRAGMA journal_mode=WAL");
 
-    // Enable foreign key constraints
     execute("PRAGMA foreign_keys=ON");
 
     return true;

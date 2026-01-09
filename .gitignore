@@ -73,13 +73,11 @@ r-type_client
 r-type_server
 Debug/
 
-# SQLite databases (runtime data)
 data/*.db
 data/*.db-shm
 data/*.db-wal
 data/*.db-journal
 
-# JWT test binaries (should be built, not committed)
 es256k
 jwks-verify
 nlohmann-json
@@ -89,8 +87,8 @@ private-claims
 rsa-create
 rsa-verify
 
-# Test scripts
 test_auth.sh
 
-# Server logs
 server_test.log
+r-type_level_editor
+lz4

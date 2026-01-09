@@ -87,7 +87,7 @@ TEST_F(ReplicationSystemTests, SpawnsEntityWithTexture)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 2u); // 1 NetworkStatsComponent + 1 spawned entity
+    EXPECT_EQ(registry.entityCount(), 2u);
     auto id = registry.view<SpriteComponent>().begin().operator*();
     auto& s = registry.get<SpriteComponent>(id);
     EXPECT_TRUE(s.hasSprite());
@@ -102,8 +102,8 @@ TEST_F(ReplicationSystemTests, NoSnapshotLeavesRegistryEmpty)
 
 TEST_F(ReplicationSystemTests, CreatesAndUpdatesEntity)
 {
-    queue.push(makeSnapshot(1, 10, 5.0F, 6.0F, 1.0F, 2.0F, 50));
-    registerType(types, 1);
+    queue.push(makeSnapshot(1, 10, 5.0F, 6.0F, 1.0F, 2.0F, 50, false, 2));
+    registerType(types, 2);
 
     system.initialize();
     system.update(registry, 0.0F);
@@ -161,7 +161,7 @@ TEST_F(ReplicationSystemTests, DestroysWhenDeadFlag)
             ++aliveCount;
         }
     }
-    EXPECT_EQ(aliveCount, 1); // 1 NetworkStatsComponent (dead entity was destroyed)
+    EXPECT_EQ(aliveCount, 1);
 }
 
 TEST_F(ReplicationSystemTests, MultipleEntitiesCreated)
@@ -188,7 +188,7 @@ TEST_F(ReplicationSystemTests, MultipleEntitiesCreated)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 3u); // 1 NetworkStatsComponent + 2 spawned entities
+    EXPECT_EQ(registry.entityCount(), 3u);
     EXPECT_EQ(countView<TransformComponent>(registry), 1u);
     EXPECT_EQ(countView<VelocityComponent>(registry), 1u);
 }
@@ -219,13 +219,13 @@ TEST_F(ReplicationSystemTests, TransformOnlyNoVelocity)
     SnapshotEntity e{};
     e.entityId   = 6;
     e.updateMask = 0x07;
-    e.entityType = 1;
+    e.entityType = 2;
     e.posX       = 9.0F;
     e.posY       = -1.0F;
 
     queue.push(makeCustomSnapshot(1, {e}));
 
-    registerType(types, 1);
+    registerType(types, 2);
 
     system.initialize();
     system.update(registry, 0.0F);
@@ -279,9 +279,9 @@ TEST_F(ReplicationSystemTests, HealthDoesNotLowerMax)
 
 TEST_F(ReplicationSystemTests, ResetsInterpolationOnNewSnapshot)
 {
-    queue.push(makeSnapshot(1, 40, 0.0F, 0.0F, 0.0F, 0.0F, 5));
+    queue.push(makeSnapshot(1, 40, 0.0F, 0.0F, 0.0F, 0.0F, 5, false, 2));
 
-    registerType(types, 1);
+    registerType(types, 2);
 
     system.initialize();
     system.update(registry, 0.0F);
@@ -290,7 +290,7 @@ TEST_F(ReplicationSystemTests, ResetsInterpolationOnNewSnapshot)
     auto& interp       = registry.get<InterpolationComponent>(id);
     interp.elapsedTime = 0.5F;
 
-    queue.push(makeSnapshot(2, 40, 10.0F, 0.0F, 1.0F, 0.0F, 5));
+    queue.push(makeSnapshot(2, 40, 10.0F, 0.0F, 1.0F, 0.0F, 5, false, 2));
     system.update(registry, 0.0F);
 
     EXPECT_FLOAT_EQ(interp.previousX, 0.0F);
@@ -437,7 +437,7 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeMissing)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 1u); // 1 NetworkStatsComponent (entity creation skipped)
+    EXPECT_EQ(registry.entityCount(), 1u);
 }
 
 TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeUnknown)
@@ -456,5 +456,5 @@ TEST_F(ReplicationSystemTests, SkipsCreationWhenTypeUnknown)
     system.initialize();
     system.update(registry, 0.0F);
 
-    EXPECT_EQ(registry.entityCount(), 1u); // 1 NetworkStatsComponent (entity creation skipped)
+    EXPECT_EQ(registry.entityCount(), 1u);
 }

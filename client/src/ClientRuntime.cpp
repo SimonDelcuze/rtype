@@ -21,11 +21,12 @@ int runClient(const ClientOptions& options)
     FontManager fontManager;
     TextureManager textureManager;
     std::string errorMessage;
-    ThreadSafeQueue<std::string> broadcastQueue;
+    ThreadSafeQueue<NotificationData> broadcastQueue;
+    std::optional<IpEndpoint> lastLobbyEndpoint;
     while (window.isOpen() && g_running) {
         Logger::instance().info("[Client] Starting new iteration...");
-        ClientLoopResult result =
-            runClientIteration(options, window, fontManager, textureManager, errorMessage, broadcastQueue);
+        ClientLoopResult result = runClientIteration(options, window, fontManager, textureManager, errorMessage,
+                                                     broadcastQueue, lastLobbyEndpoint);
         if (result.exitCode.has_value())
             return *result.exitCode;
         if (!result.continueLoop)

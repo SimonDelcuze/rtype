@@ -36,6 +36,7 @@ else()
 endif()
 
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_CLIENT "Build client" ON)
 
 file(GLOB_RECURSE RTYPE_SHARED_SOURCES
     CONFIGURE_DEPENDS
@@ -48,17 +49,6 @@ add_library(rtype_shared OBJECT
 
 target_compile_options(rtype_shared PRIVATE ${RTYPE_COMPILE_OPTIONS})
 
-set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
-set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
-set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-CPMAddPackage(
-    NAME SFML
-    GITHUB_REPOSITORY SFML/SFML
-    GIT_TAG 3.0.2
-    GIT_SHALLOW TRUE
-)
-
 CPMAddPackage(
     NAME nlohmann_json
     GITHUB_REPOSITORY nlohmann/json
@@ -66,30 +56,22 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
-CPMAddPackage(
-    NAME imgui
-    GITHUB_REPOSITORY ocornut/imgui
-    GIT_TAG v1.90.4
-    GIT_SHALLOW TRUE
-)
+set(SFML_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(SFML_BUILD_TEST_SUITE OFF CACHE INTERNAL "")
+set(SFML_USE_STATIC_STD_LIBS OFF CACHE INTERNAL "")
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-if(imgui_ADDED)
-    find_package(OpenGL REQUIRED)
-    add_library(imgui STATIC
-        ${imgui_SOURCE_DIR}/imgui.cpp
-        ${imgui_SOURCE_DIR}/imgui_draw.cpp
-        ${imgui_SOURCE_DIR}/imgui_tables.cpp
-        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
+if(BUILD_CLIENT OR BUILD_EDITOR)
+    CPMAddPackage(
+        NAME SFML
+        GITHUB_REPOSITORY SFML/SFML
+        GIT_TAG 3.0.2
+        GIT_SHALLOW TRUE
     )
-    target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
-    target_link_libraries(imgui PUBLIC OpenGL::GL)
 endif()
 
-# SQLite3 for user database
 find_package(SQLite3 REQUIRED)
 
-# jwt-cpp for JWT token generation and validation
 CPMAddPackage(
     NAME jwt-cpp
     GITHUB_REPOSITORY Thalhammer/jwt-cpp
@@ -97,7 +79,6 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
-# OpenSSL for bcrypt password hashing
 find_package(OpenSSL REQUIRED)
 
 set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_cmake.cmake")
@@ -105,33 +86,13 @@ set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_c
 CPMAddPackage(
     NAME lz4
     GITHUB_REPOSITORY lz4/lz4
-    GIT_TAG v1.9.4
+    GIT_TAG v1.10.0
     GIT_SHALLOW TRUE
-    DOWNLOAD_ONLY YES
+    SOURCE_SUBDIR build/cmake
+    OPTIONS
+        "LZ4_BUILD_CLI OFF"
+        "LZ4_BUILD_LEGACY_LZ4C OFF"
 )
-
-if(lz4_ADDED)
-    set(LZ4_CMAKELISTS "${lz4_SOURCE_DIR}/build/cmake/CMakeLists.txt")
-    if(EXISTS "${LZ4_CMAKELISTS}")
-        execute_process(
-            COMMAND ${CMAKE_COMMAND}
-                -DLZ4_CMAKELISTS=${LZ4_CMAKELISTS}
-                -P ${LZ4_MIN_CMAKE_PATCH}
-            WORKING_DIRECTORY ${lz4_SOURCE_DIR}
-        )
-    else()
-        message(FATAL_ERROR "Could not find ${LZ4_CMAKELISTS}")
-    endif()
-
-    if(NOT DEFINED lz4_BINARY_DIR)
-        set(lz4_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lz4-build)
-    endif()
-
-    set(LZ4_BUILD_CLI OFF CACHE BOOL "" FORCE)
-    set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "" FORCE)
-
-    add_subdirectory(${lz4_SOURCE_DIR}/build/cmake ${lz4_BINARY_DIR})
-endif()
 
 target_include_directories(rtype_shared
     PUBLIC
@@ -144,9 +105,16 @@ target_link_libraries(rtype_shared
         lz4_static
 )
 
-add_subdirectory(client)
+option(BUILD_EDITOR "Build editor" OFF)
+
+if(BUILD_CLIENT)
+    add_subdirectory(client)
+endif()
 add_subdirectory(server)
-add_subdirectory(editor)
+
+if(BUILD_EDITOR)
+    add_subdirectory(editor)
+endif()
 
 if (BUILD_TESTS)
     include(CTest)

@@ -10,6 +10,12 @@ void ReconciliationSystem::update(Registry&, float) {}
 
 void ReconciliationSystem::cleanup() {}
 
+void ReconciliationSystem::updateLatencyEstimate(float latencyMs)
+{
+    reconciliationThreshold_ = baseThreshold_ + (latencyMs * latencyFactor_);
+    reconciliationThreshold_ = std::min(reconciliationThreshold_, 5.0F);
+}
+
 void ReconciliationSystem::reconcile(Registry& registry, EntityId entityId, float authoritativeX, float authoritativeY,
                                      std::uint32_t acknowledgedSequence)
 {

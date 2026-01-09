@@ -25,7 +25,7 @@
 
 std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
-                                                 ThreadSafeQueue<std::string>& broadcastQueue)
+                                                 ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     if (!lobbyConn.connect()) {
         Logger::instance().error("[Auth] Failed to connect to lobby server for authentication");
@@ -91,13 +91,17 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 }
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
-                                             std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
+                                             std::string& errorMessage,
+                                             ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     startLauncherMusic(g_musicVolume);
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     while (window.isOpen()) {
         auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
+        if (!errorMessage.empty()) {
+            broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        }
         errorMessage.clear();
 
         if (!window.isOpen())
@@ -127,57 +131,31 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
     return std::nullopt;
 }
 
-std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
-                                               ThreadSafeQueue<std::string>& broadcastQueue)
+bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMessage,
+                           const std::atomic<bool>& runningFlag, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
-    if (useDefault) {
-        Logger::instance().info("Using default server: 127.0.0.1:50010");
-        return IpEndpoint::v4(127, 0, 0, 1, 50010);
+    LobbyConnection conn(lobbyEndpoint, runningFlag);
+    if (!conn.connect()) {
+        errorMessage = "Failed to open socket";
+        broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        return false;
     }
-
-    FontManager fontManager;
-    TextureManager textureManager;
-    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
-
-    while (window.isOpen()) {
-        startLauncherMusic(g_musicVolume);
-        auto result = runner.runAndGetResult<ConnectionMenu>();
-
-        if (!window.isOpen())
-            return std::nullopt;
-
-        if (result.openSettings) {
-            auto settingsResult = runner.runAndGetResult<SettingsMenu>(g_keyBindings, g_musicVolume);
-            g_keyBindings       = settingsResult.bindings;
-            g_musicVolume       = settingsResult.musicVolume;
-            setLauncherMusicVolume(g_musicVolume);
-            if (!window.isOpen())
-                return std::nullopt;
-            continue;
-        }
-
-        if (result.exitRequested) {
-            window.close();
-            return std::nullopt;
-        }
-
-        if (result.useDefault)
-            return IpEndpoint::v4(127, 0, 0, 1, 50010);
-
-        return parseEndpoint(result.ip, result.port);
+    if (!conn.ping()) {
+        errorMessage = "Server not responding";
+        broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+        return false;
     }
-
-    return std::nullopt;
+    return true;
 }
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
-                                                          ThreadSafeQueue<std::string>& broadcastQueue,
+                                                          ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                           LobbyConnection* authenticatedConnection)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, authenticatedConnection);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running, authenticatedConnection);
 
     if (!window.isOpen())
         return std::nullopt;
@@ -231,7 +209,7 @@ JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutS
 }
 
 bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverEp, std::string& errorMessage,
-                    ThreadSafeQueue<std::string>& broadcastQueue)
+                    ThreadSafeQueue<NotificationData>& broadcastQueue, bool& serverLost)
 {
     FontManager fontManager;
     TextureManager textureManager;
@@ -259,6 +237,9 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         std::string disconnectMsg;
         if (net.disconnectEvents.tryPop(disconnectMsg)) {
             Logger::instance().warn("[Net] Disconnected from waiting room: " + disconnectMsg);
+            if (disconnectMsg == "Server disconnected" || disconnectMsg == "Server timeout") {
+                serverLost = true;
+            }
             return false;
         }
 

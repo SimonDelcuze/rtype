@@ -31,6 +31,7 @@ class LobbyServer
     void stop();
 
     void broadcast(const std::string& message);
+    void notifyDisconnection(const std::string& reason);
 
   private:
     void receiveThread();
@@ -41,7 +42,6 @@ class LobbyServer
     void handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                              const IpEndpoint& from);
 
-    // Authentication handlers
     void handleLoginRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                             const IpEndpoint& from);
     void handleRegisterRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
@@ -75,7 +75,6 @@ class LobbyServer
     LobbyManager lobbyManager_;
     std::unique_ptr<ServerConsole> tui_;
 
-    // Authentication
     std::shared_ptr<Database> database_;
     std::shared_ptr<UserRepository> userRepository_;
     std::shared_ptr<AuthService> authService_;

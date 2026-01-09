@@ -54,6 +54,19 @@ These events update server state and are also forwarded to clients as `LevelEven
 - `set_camera_bounds` updates camera clamps.
 - `gate_open` / `gate_close` set gate state on the client.
 
+## Player Bounds Events
+
+- `set_player_bounds` overrides player movement bounds on the server.
+- `clear_player_bounds` restores default player bounds.
+
+These events are server-only and are not sent to clients.
+Player bounds reset on segment transitions.
+
+## Safe Zone Pattern
+
+Use a segment with `scroll` set to `stopped`, a `set_player_bounds` event at time 0, and an exit trigger of
+`players_ready` so all active players confirm before moving on.
+
 ## Checkpoint Event
 
 `checkpoint` marks a checkpoint id and provides a respawn position. The server captures a checkpoint snapshot

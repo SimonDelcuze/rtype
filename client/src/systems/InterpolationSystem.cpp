@@ -38,6 +38,7 @@ void InterpolationSystem::update(Registry& registry, float deltaTime)
                     transform.y = lerp(interp.previousY, interp.targetY, t);
                 } else {
                     float extraTime = interp.elapsedTime - interp.interpolationTime;
+                    extraTime       = clamp(extraTime, 0.0F, interp.maxExtrapolationTime);
                     transform.x     = interp.targetX + interp.velocityX * extraTime;
                     transform.y     = interp.targetY + interp.velocityY * extraTime;
                 }

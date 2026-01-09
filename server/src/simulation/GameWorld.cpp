@@ -23,10 +23,19 @@ void GameWorld::tick(float deltaTime, const std::vector<PlayerCommand>& commands
     monsterMovementSys_.update(registry_, deltaTime);
 
     if (levelLoaded_ && levelDirector_ && levelSpawnSys_) {
+        const auto* segment = levelDirector_->currentSegment();
+        if (segment != nullptr && segment->exit.type == TriggerType::PlayersReady) {
+            for (const auto& cmd : commands) {
+                levelDirector_->registerPlayerInput(cmd.playerId, cmd.inputFlags);
+            }
+        }
         float levelDelta = introActive ? 0.0F : deltaTime;
         levelDirector_->update(registry_, levelDelta);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, levelDelta, events);
+        playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
+    } else {
+        playerBoundsSys_.update(registry_, std::nullopt);
     }
 
     enemyShootingSys_.update(registry_, deltaTime);

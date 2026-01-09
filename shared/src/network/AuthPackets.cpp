@@ -51,8 +51,6 @@ namespace
 
 } // namespace
 
-// Login Request/Response
-
 std::vector<std::uint8_t> buildLoginRequestPacket(const std::string& username, const std::string& password,
                                                   std::uint16_t sequence)
 {
@@ -176,8 +174,6 @@ std::optional<LoginResponseData> parseLoginResponsePacket(const std::uint8_t* da
     return result;
 }
 
-// Register Request/Response
-
 std::vector<std::uint8_t> buildRegisterRequestPacket(const std::string& username, const std::string& password,
                                                      std::uint16_t sequence)
 {
@@ -288,8 +284,6 @@ std::optional<RegisterResponseData> parseRegisterResponsePacket(const std::uint8
     return result;
 }
 
-// Change Password Request/Response
-
 std::vector<std::uint8_t> buildChangePasswordRequestPacket(const std::string& oldPassword,
                                                            const std::string& newPassword, const std::string& token,
                                                            std::uint16_t sequence)
@@ -392,8 +386,6 @@ std::optional<ChangePasswordResponseData> parseChangePasswordResponsePacket(cons
 
     return result;
 }
-
-// Auth Required
 
 std::vector<std::uint8_t> buildAuthRequiredPacket(std::uint16_t sequence)
 {

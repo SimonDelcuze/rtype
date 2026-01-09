@@ -140,6 +140,11 @@ void WaitingRoomMenu::update(Registry& registry, float dt)
         case State::WaitingForClick:
             break;
         case State::WaitingForPlayers:
+            readyRetryTimer_ += dt;
+            if (readyRetryTimer_ >= 0.5F) {
+                sendClientReady(server_, socket_);
+                readyRetryTimer_ = 0.0F;
+            }
             updateDotAnimation(dt);
             updateWaitingText(registry);
             if (allReadyFlag_.load()) {

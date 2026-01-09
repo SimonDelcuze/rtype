@@ -24,6 +24,7 @@
 #include "systems/EnemyShootingSystem.hpp"
 #include "systems/MonsterMovementSystem.hpp"
 #include "systems/MovementSystem.hpp"
+#include "systems/PlayerBoundsSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 #include "systems/ScoreSystem.hpp"
 #include "systems/WalkerShotSystem.hpp"
@@ -119,6 +120,7 @@ class ServerApp
     ScoreSystem scoreSys_;
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
+    PlayerBoundsSystem playerBoundsSys_;
     IntroCinematic introCinematic_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;

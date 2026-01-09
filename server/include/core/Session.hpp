@@ -19,7 +19,6 @@ struct ClientSession
     std::uint32_t roomId{0};
     IpEndpoint endpoint{};
 
-    // Authentication fields
     bool authenticated = false;
     std::optional<std::uint32_t> userId;
     std::string username;

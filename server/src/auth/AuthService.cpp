@@ -8,10 +8,6 @@
 #include <openssl/rand.h>
 #include <sstream>
 
-// Bcrypt implementation using OpenSSL
-// This is a simplified bcrypt-style password hashing using PBKDF2
-// For production, consider using a dedicated bcrypt library
-
 namespace
 {
 
@@ -52,18 +48,15 @@ AuthService::AuthService(const std::string& jwtSecret) : jwtSecret_(jwtSecret) {
 
 std::string AuthService::hashPassword(const std::string& password) const
 {
-    // Generate salt and hash password with PBKDF2 (2^12 iterations for bcrypt cost 12)
     std::string salt       = generateSalt();
-    int iterations         = 1 << BCRYPT_COST; // 2^12 = 4096 iterations
+    int iterations         = 1 << BCRYPT_COST;
     std::string hashedPass = pbkdf2Hash(password, salt, iterations);
 
-    // Store as "salt:hash"
     return salt + ":" + hashedPass;
 }
 
 bool AuthService::verifyPassword(const std::string& password, const std::string& hash) const
 {
-    // Extract salt from stored hash
     size_t colonPos = hash.find(':');
     if (colonPos == std::string::npos) {
         return false;
@@ -122,7 +115,6 @@ std::optional<JWTPayload> AuthService::validateJWT(const std::string& token) con
 
 std::string AuthService::hashToken(const std::string& token) const
 {
-    // Hash token using SHA-256 for storage
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hashLen;
 
