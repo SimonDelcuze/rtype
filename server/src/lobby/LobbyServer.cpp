@@ -5,8 +5,8 @@
 #include "lobby/LobbyPackets.hpp"
 #include "network/AuthPackets.hpp"
 #include "network/ServerBroadcastPacket.hpp"
-#include "network/StatsPackets.hpp"
 #include "network/ServerDisconnectPacket.hpp"
+#include "network/StatsPackets.hpp"
 
 #include <array>
 #include <chrono>

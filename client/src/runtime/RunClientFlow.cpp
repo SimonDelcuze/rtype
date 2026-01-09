@@ -34,7 +34,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                 std::optional<IpEndpoint>& lastLobbyEndpoint)
 {
-    (void)lastLobbyEndpoint;
+    (void) lastLobbyEndpoint;
 
     static bool serverSelected = false;
     static IpEndpoint savedLobbyEp;
@@ -105,7 +105,8 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         authenticated = false;
         authenticatedConnection.reset();
 
-        return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue, lastLobbyEndpoint);
+        return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                     lastLobbyEndpoint);
     }
 
     return std::nullopt;

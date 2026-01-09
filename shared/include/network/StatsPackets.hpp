@@ -9,8 +9,7 @@
 #include <vector>
 
 struct GetStatsRequestData
-{
-};
+{};
 
 struct GetStatsResponseData
 {
