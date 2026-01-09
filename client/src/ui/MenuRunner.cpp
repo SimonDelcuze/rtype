@@ -1,5 +1,6 @@
 #include "ui/MenuRunner.hpp"
 
+#include "ClientRuntime.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
@@ -27,6 +28,8 @@ void MenuRunner::runLoop(IMenu& menu)
         std::chrono::duration<float> elapsed = currentTime - lastTime;
         lastTime                             = currentTime;
         float dt                             = std::min(elapsed.count(), 0.1F);
+
+        window_.setColorFilter(g_colorFilterMode);
 
         window_.pollEvents([&](const Event& event) {
             if (event.type == EventType::Closed) {
