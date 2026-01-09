@@ -252,7 +252,7 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             if (entity.entityType.has_value())
                 remoteToType_[entity.entityId] = *entity.entityType;
             lastSeenTick_[entity.entityId] = snapshot.header.tickId;
-            applyEntity(registry, *localId, entity);
+            applyEntity(registry, *localId, entity, snapshot.header.sequenceId);
             applyStatusEffects(registry, *localId, entity);
             if (!registry.isAlive(*localId)) {
                 continue;
@@ -439,9 +439,10 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     }
 }
 
-void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity)
+void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const SnapshotEntity& entity,
+                                    std::uint32_t sequenceId)
 {
-    applyTransform(registry, id, entity);
+    applyTransform(registry, id, entity, sequenceId);
     applyVelocity(registry, id, entity);
     applyHealth(registry, id, entity);
     applyLives(registry, id, entity);
@@ -450,7 +451,8 @@ void ReplicationSystem::applyEntity(Registry& registry, EntityId id, const Snaps
     applyDead(registry, id, entity);
 }
 
-void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity)
+void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const SnapshotEntity& entity,
+                                       std::uint32_t sequenceId)
 {
     if (!entity.posX.has_value() && !entity.posY.has_value()) {
         return;
@@ -474,35 +476,17 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
                                    registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
                                    registry.has<InputHistoryComponent>(id);
 
-    if (entity.posX.has_value()) {
-        if (isPredictedPlayer) {
-            const float errorX          = *entity.posX - comp->x;
-            const float errorY          = entity.posY.has_value() ? (*entity.posY - comp->y) : 0.0F;
-            const float errorMag        = std::sqrt(errorX * errorX + errorY * errorY);
-            constexpr float deadband    = 5.0F;
-            constexpr float maxStep     = 5.0F; // clamp correction per frame to avoid TP
-            constexpr float correctionK = 0.02F;
-            if (errorMag > deadband) {
-                const float step = std::clamp(errorX * correctionK, -maxStep, maxStep);
-                comp->x += step;
-            }
-        } else {
+    if (isPredictedPlayer) {
+        if (entity.posX.has_value() || entity.posY.has_value()) {
+            float authX = entity.posX.value_or(comp->x);
+            float authY = entity.posY.value_or(comp->y);
+            reconciliation_.reconcile(registry, id, authX, authY, sequenceId);
+        }
+    } else {
+        if (entity.posX.has_value()) {
             comp->x = *entity.posX;
         }
-    }
-    if (entity.posY.has_value()) {
-        if (isPredictedPlayer) {
-            const float errorX          = entity.posX.has_value() ? (*entity.posX - comp->x) : 0.0F;
-            const float errorY          = *entity.posY - comp->y;
-            const float errorMag        = std::sqrt(errorX * errorX + errorY * errorY);
-            constexpr float deadband    = 5.0F;
-            constexpr float maxStep     = 5.0F;
-            constexpr float correctionK = 0.02F;
-            if (errorMag > deadband) {
-                const float step = std::clamp(errorY * correctionK, -maxStep, maxStep);
-                comp->y += step;
-            }
-        } else {
+        if (entity.posY.has_value()) {
             comp->y = *entity.posY;
         }
     }
@@ -517,7 +501,7 @@ void ReplicationSystem::applyVelocity(Registry& registry, EntityId id, const Sna
                                    registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
                                    registry.has<InputHistoryComponent>(id);
     if (isPredictedPlayer) {
-        return; // éviter d’écraser la vitesse prédite pour le joueur local
+        return;
     }
     auto* comp = registry.has<VelocityComponent>(id) ? &registry.get<VelocityComponent>(id) : nullptr;
     if (comp == nullptr) {

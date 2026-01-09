@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "components/BoxComponent.hpp"
 #include "components/ColliderComponent.hpp"
+#include "components/HealthComponent.hpp"
 #include "components/HitboxComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -55,6 +56,12 @@ void RenderSystem::update(Registry& registry, float deltaTime)
             if (color.a != 255) {
                 color.a = 255;
                 sprite->setColor(color);
+            }
+        }
+
+        if (registry.has<HealthComponent>(id)) {
+            if (registry.get<HealthComponent>(id).current <= 0) {
+                currentIsVisible = false;
             }
         }
 

@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
+#include "components/HealthComponent.hpp"
 #include "components/InputHistoryComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -51,17 +52,45 @@ void InputSystem::update(Registry& registry, float deltaTime)
     bool changedMovement = moves != lastSentMoveFlags_;
 
     bool canFire = true;
+    bool canMove = true;
     if (playerId_.has_value() && registry.isAlive(*playerId_)) {
+        if (registry.has<TransformComponent>(*playerId_)) {
+            if (registry.get<TransformComponent>(*playerId_).y < -5000.0F) {
+                canMove = false;
+                canFire = false;
+            }
+        }
+        if (registry.has<HealthComponent>(*playerId_)) {
+            if (registry.get<HealthComponent>(*playerId_).current <= 0) {
+                canMove = false;
+                canFire = false;
+                resetInputState(registry);
+            }
+        }
         if (registry.has<InvincibilityComponent>(*playerId_))
             canFire = false;
-        if (registry.has<LivesComponent>(*playerId_) && registry.get<LivesComponent>(*playerId_).current <= 0)
+        if (registry.has<LivesComponent>(*playerId_) && registry.get<LivesComponent>(*playerId_).current <= 0) {
             canFire = false;
-    } else {
-        canFire = false;
+            canMove = false;
+        }
     }
 
     const bool firePressedRaw = (flags & InputMapper::FireFlag) != 0;
-    const bool firePressed    = firePressedRaw && canFire;
+    const bool isDead         = !canMove || !canFire;
+
+    if (isDead) {
+        if (lastSentMoveFlags_ != 0 || fireHeldLastFrame_) {
+            resetInputState(registry);
+            InputCommand stopCmd = buildCommand(0, 0.0F, deltaTime);
+            buffer_->push(stopCmd);
+            recordHistory(registry, stopCmd, deltaTime);
+            lastSentMoveFlags_ = 0;
+            fireHeldLastFrame_ = false;
+        }
+        return;
+    }
+
+    const bool firePressed = firePressedRaw;
 
     if (firePressed) {
         fireHoldTime_ += deltaTime;
@@ -96,14 +125,16 @@ void InputSystem::update(Registry& registry, float deltaTime)
 
     float dx = 0.0F;
     float dy = 0.0F;
-    if (left)
-        dx -= 1.0F;
-    if (right)
-        dx += 1.0F;
-    if (up)
-        dy -= 1.0F;
-    if (down)
-        dy += 1.0F;
+    if (canMove) {
+        if (left)
+            dx -= 1.0F;
+        if (right)
+            dx += 1.0F;
+        if (up)
+            dy -= 1.0F;
+        if (down)
+            dy += 1.0F;
+    }
     if (dx != 0.0F || dy != 0.0F) {
         float len = std::sqrt(dx * dx + dy * dy);
         if (len > 0.0F) {

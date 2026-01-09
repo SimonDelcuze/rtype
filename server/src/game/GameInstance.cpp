@@ -501,6 +501,11 @@ void GameInstance::handleDeathAndRespawn()
                         if (registry_.has<TransformComponent>(id)) {
                             registry_.get<TransformComponent>(id).y = kOffscreenRespawnPlaceholder;
                         }
+                        if (registry_.has<VelocityComponent>(id)) {
+                            auto& v = registry_.get<VelocityComponent>(id);
+                            v.vx    = 0.0F;
+                            v.vy    = 0.0F;
+                        }
                     }
                     continue;
                 }

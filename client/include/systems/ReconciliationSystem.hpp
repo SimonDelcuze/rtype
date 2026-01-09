@@ -32,5 +32,4 @@ class ReconciliationSystem : public ISystem
     float reconciliationThreshold_ = 1.5F;
     float baseThreshold_           = 1.0F;
     float latencyFactor_           = 0.02F;
-    float timeSinceLastReconcile_  = 0.0F;
 };

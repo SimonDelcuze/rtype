@@ -1,4 +1,5 @@
 #include "systems/ReconciliationSystem.hpp"
+#include "Logger.hpp"
 
 #include "components/VelocityComponent.hpp"
 
@@ -30,29 +31,29 @@ void ReconciliationSystem::reconcile(Registry& registry, EntityId entityId, floa
     auto& transform = registry.get<TransformComponent>(entityId);
     auto& history   = registry.get<InputHistoryComponent>(entityId);
 
-    float predictedX = transform.x;
-    float predictedY = transform.y;
-
-    float errorX         = predictedX - authoritativeX;
-    float errorY         = predictedY - authoritativeY;
+    float errorX         = transform.x - authoritativeX;
+    float errorY         = transform.y - authoritativeY;
     float errorMagnitude = std::sqrt(errorX * errorX + errorY * errorY);
 
-    float magnitude  = std::sqrt(authoritativeX * authoritativeX + authoritativeY * authoritativeY);
-    float percentErr = (magnitude > 0.0F) ? (errorMagnitude / magnitude) : errorMagnitude;
+    constexpr float kHardResetThreshold = 1000.0F;
+    constexpr float kReconcileThreshold = 1.5F;
 
-    const bool overHardThreshold = percentErr >= 0.05F;
-    const bool overSoftThreshold = percentErr >= 0.02F;
+    if (errorMagnitude > kHardResetThreshold) {
+        Logger::instance().info("[Reconciliation] Teleport detected (error=" + std::to_string(errorMagnitude) + 
+                                "), resetting history.");
+        history.clear();
+        transform.x = authoritativeX;
+        transform.y = authoritativeY;
+        return;
+    }
 
-    timeSinceLastReconcile_ += 0.05F;
-
-    if (!overHardThreshold && !(overSoftThreshold && timeSinceLastReconcile_ >= 2.0F)) {
+    if (errorMagnitude < kReconcileThreshold) {
         history.acknowledgeUpTo(acknowledgedSequence);
         return;
     }
 
-    transform.x             = authoritativeX;
-    transform.y             = authoritativeY;
-    timeSinceLastReconcile_ = 0.0F;
+    transform.x = authoritativeX;
+    transform.y = authoritativeY;
 
     auto unacknowledgedInputs = history.getInputsAfter(acknowledgedSequence);
 
