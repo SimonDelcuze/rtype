@@ -64,7 +64,7 @@ TEST_F(LobbyPacketsTest, BuildJoinRoomPacketHasValidHeader)
     EXPECT_EQ(header.packetType, static_cast<std::uint8_t>(PacketType::ClientToServer));
     EXPECT_EQ(header.messageType, static_cast<std::uint8_t>(MessageType::LobbyJoinRoom));
     EXPECT_EQ(header.sequenceId, sequence_);
-    EXPECT_EQ(header.payloadSize, 4);
+    EXPECT_EQ(header.payloadSize, 6); // 4 bytes roomId + 2 bytes password length (0)
 }
 
 TEST_F(LobbyPacketsTest, BuildJoinRoomPacketContainsCorrectRoomId)
@@ -114,42 +114,84 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
 {
     std::vector<std::uint8_t> packet;
 
+    std::uint32_t roomId         = 5;
+    std::uint16_t playerCount    = 2;
+    std::uint16_t maxPlayers     = 4;
+    std::uint16_t port           = 50105;
+    std::uint8_t state           = static_cast<std::uint8_t>(RoomState::Waiting);
+    std::uint32_t ownerId        = 1;
+    bool passwordProtected       = false;
+    RoomVisibility visibility    = RoomVisibility::Public;
+    std::string roomName         = "Test";
+    std::string inviteCode       = "ABC123";
+
+    // Calculate payload size: 2 (room count) + room data
+    // Room data: 4 (roomId) + 2 (playerCount) + 2 (maxPlayers) + 2 (port) + 1 (state)
+    //          + 4 (ownerId) + 1 (passwordProtected) + 1 (visibility)
+    //          + 2 (nameLen) + name.size() + 2 (codeLen) + code.size()
+    std::uint16_t payloadSize = 2 + 4 + 2 + 2 + 2 + 1 + 4 + 1 + 1 + 2 + roomName.size() + 2 + inviteCode.size();
+
     PacketHeader header;
     header.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
     header.messageType  = static_cast<std::uint8_t>(MessageType::LobbyRoomList);
     header.sequenceId   = sequence_;
-    header.payloadSize  = 2 + 11;
-    header.originalSize = 2 + 11;
+    header.payloadSize  = payloadSize;
+    header.originalSize = payloadSize;
 
     auto headerBytes = header.encode();
     packet.insert(packet.end(), headerBytes.begin(), headerBytes.end());
 
+    // Room count
     std::uint16_t roomCount = 1;
     packet.push_back(static_cast<std::uint8_t>(roomCount >> 8));
     packet.push_back(static_cast<std::uint8_t>(roomCount));
 
-    std::uint32_t roomId      = 5;
-    std::uint16_t playerCount = 2;
-    std::uint16_t maxPlayers  = 4;
-    std::uint16_t port        = 50105;
-    std::uint8_t state        = static_cast<std::uint8_t>(RoomState::Waiting);
-
+    // Room ID
     packet.push_back(static_cast<std::uint8_t>(roomId >> 24));
     packet.push_back(static_cast<std::uint8_t>(roomId >> 16));
     packet.push_back(static_cast<std::uint8_t>(roomId >> 8));
     packet.push_back(static_cast<std::uint8_t>(roomId));
 
+    // Player count
     packet.push_back(static_cast<std::uint8_t>(playerCount >> 8));
     packet.push_back(static_cast<std::uint8_t>(playerCount));
 
+    // Max players
     packet.push_back(static_cast<std::uint8_t>(maxPlayers >> 8));
     packet.push_back(static_cast<std::uint8_t>(maxPlayers));
 
+    // Port
     packet.push_back(static_cast<std::uint8_t>(port >> 8));
     packet.push_back(static_cast<std::uint8_t>(port));
 
+    // State
     packet.push_back(state);
 
+    // Owner ID
+    packet.push_back(static_cast<std::uint8_t>(ownerId >> 24));
+    packet.push_back(static_cast<std::uint8_t>(ownerId >> 16));
+    packet.push_back(static_cast<std::uint8_t>(ownerId >> 8));
+    packet.push_back(static_cast<std::uint8_t>(ownerId));
+
+    // Password protected
+    packet.push_back(passwordProtected ? 1 : 0);
+
+    // Visibility
+    packet.push_back(static_cast<std::uint8_t>(visibility));
+
+    // Room name
+    std::uint16_t nameLen = static_cast<std::uint16_t>(roomName.size());
+    packet.push_back(static_cast<std::uint8_t>(nameLen >> 8));
+    packet.push_back(static_cast<std::uint8_t>(nameLen));
+    packet.insert(packet.end(), roomName.begin(), roomName.end());
+
+    // Invite code
+    std::uint16_t codeLen = static_cast<std::uint16_t>(inviteCode.size());
+    packet.push_back(static_cast<std::uint8_t>(codeLen >> 8));
+    packet.push_back(static_cast<std::uint8_t>(codeLen));
+    packet.insert(packet.end(), inviteCode.begin(), inviteCode.end());
+
+    // CRC
     std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());
     packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
@@ -167,6 +209,11 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
     EXPECT_EQ(room.maxPlayers, maxPlayers);
     EXPECT_EQ(room.state, RoomState::Waiting);
     EXPECT_EQ(room.port, port);
+    EXPECT_EQ(room.ownerId, ownerId);
+    EXPECT_EQ(room.passwordProtected, passwordProtected);
+    EXPECT_EQ(room.visibility, visibility);
+    EXPECT_EQ(room.roomName, roomName);
+    EXPECT_EQ(room.inviteCode, inviteCode);
 }
 
 TEST_F(LobbyPacketsTest, ParseRoomCreatedPacket)
