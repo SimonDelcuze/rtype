@@ -12,6 +12,8 @@ void PlayerInputSystem::update(Registry& registry, const std::vector<PlayerComma
         EntityId id = cmd.playerId;
         if (!registry.isAlive(id))
             continue;
+        if (registry.has<HealthComponent>(id) && registry.get<HealthComponent>(id).current <= 0)
+            continue;
         if (!registry.has<PlayerInputComponent>(id))
             continue;
         auto& comp = registry.get<PlayerInputComponent>(id);
