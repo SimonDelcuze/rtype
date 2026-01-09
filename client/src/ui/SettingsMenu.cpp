@@ -75,11 +75,29 @@ namespace
         registry.emplace<TextComponent>(entity, text);
         return entity;
     }
+
+    ColorFilterMode nextColorFilter(ColorFilterMode mode)
+    {
+        switch (mode) {
+            case ColorFilterMode::None:
+                return ColorFilterMode::Protanopia;
+            case ColorFilterMode::Protanopia:
+                return ColorFilterMode::Deuteranopia;
+            case ColorFilterMode::Deuteranopia:
+                return ColorFilterMode::Tritanopia;
+            case ColorFilterMode::Tritanopia:
+                return ColorFilterMode::Achromatopsia;
+            case ColorFilterMode::Achromatopsia:
+            default:
+                return ColorFilterMode::None;
+        }
+    }
 } // namespace
 
-SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings, float musicVolume)
+SettingsMenu::SettingsMenu(FontManager& fonts, TextureManager& textures, KeyBindings bindings, float musicVolume,
+                           ColorFilterMode colorFilterMode)
     : fonts_(fonts), textures_(textures), currentBindings_(bindings),
-      musicVolume_(std::clamp(musicVolume, 0.0F, 100.0F))
+      musicVolume_(std::clamp(musicVolume, 0.0F, 100.0F)), colorFilterMode_(colorFilterMode)
 {}
 
 void SettingsMenu::create(Registry& registry)
@@ -148,7 +166,13 @@ void SettingsMenu::create(Registry& registry)
     volumeValueLabel_ = createLabel(registry, sliderX_ + sliderWidth_ + 24.0F, sliderRowY, "");
     refreshVolumeLabel(registry);
 
-    float networkDebugY = sliderRowY + spacing;
+    float colorFilterY = sliderRowY + spacing;
+    createLabel(registry, 360.0F, colorFilterY + 12.0F, "Color Blind");
+    colorFilterButton_ =
+        createCenteredButton(registry, colorFilterY, colorFilterToString(colorFilterMode_),
+                             [this, &registry]() { setColorFilterMode(registry, nextColorFilter(colorFilterMode_)); });
+
+    float networkDebugY = colorFilterY + spacing;
     createLabel(registry, 360.0F, networkDebugY + 12.0F, "Network Debug");
     networkDebugButton_ =
         createCenteredButton(registry, networkDebugY, g_networkDebugEnabled ? "ON" : "OFF", [this, &registry]() {
@@ -247,7 +271,7 @@ void SettingsMenu::render(Registry&, Window& window)
 
 SettingsMenu::Result SettingsMenu::getResult(Registry&) const
 {
-    return Result{currentBindings_, musicVolume_};
+    return Result{currentBindings_, musicVolume_, colorFilterMode_};
 }
 
 void SettingsMenu::startRebinding(Registry& registry, BindingAction action)
@@ -348,6 +372,24 @@ void SettingsMenu::refreshVolumeLabel(Registry& registry)
     text.content = std::to_string(static_cast<int>(std::lround(std::clamp(musicVolume_, 0.0F, 100.0F)))) + "%";
 }
 
+void SettingsMenu::setColorFilterMode(Registry& registry, ColorFilterMode mode)
+{
+    colorFilterMode_  = mode;
+    g_colorFilterMode = mode;
+    refreshColorFilterLabel(registry);
+}
+
+void SettingsMenu::refreshColorFilterLabel(Registry& registry)
+{
+    if (colorFilterButton_ == 0 || !registry.isAlive(colorFilterButton_) ||
+        !registry.has<ButtonComponent>(colorFilterButton_)) {
+        return;
+    }
+
+    auto& button = registry.get<ButtonComponent>(colorFilterButton_);
+    button.label = colorFilterToString(colorFilterMode_);
+}
+
 bool SettingsMenu::handleVolumeMouseEvent(Registry& registry, const Vector2i& mousePos, bool isClick)
 {
     float minX = sliderX_;
@@ -431,5 +473,23 @@ std::string SettingsMenu::keyToString(KeyCode code)
             return "Escape";
         default:
             return "Key(" + std::to_string(static_cast<int>(code)) + ")";
+    }
+}
+
+std::string SettingsMenu::colorFilterToString(ColorFilterMode mode)
+{
+    switch (mode) {
+        case ColorFilterMode::None:
+            return "Normal";
+        case ColorFilterMode::Protanopia:
+            return "Protanopia";
+        case ColorFilterMode::Deuteranopia:
+            return "Deuteranopia";
+        case ColorFilterMode::Tritanopia:
+            return "Tritanopia";
+        case ColorFilterMode::Achromatopsia:
+            return "Achromatopsia";
+        default:
+            return "Normal";
     }
 }

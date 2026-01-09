@@ -127,6 +127,8 @@ namespace
             lastTime                             = currentTime;
             const float deltaTime                = std::min(elapsed.count(), 0.1F);
 
+            window.setColorFilter(g_colorFilterMode);
+
             window.clear();
             gameLoop.update(registry, deltaTime);
             eventBus.process();
@@ -157,6 +159,8 @@ namespace
             std::chrono::duration<float> elapsed = currentTime - lastTime;
             lastTime                             = currentTime;
             const float deltaTime                = std::min(elapsed.count(), 0.1F);
+
+            window.setColorFilter(g_colorFilterMode);
 
             buttonSystem.update(registry, deltaTime);
 

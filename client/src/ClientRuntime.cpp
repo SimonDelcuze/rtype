@@ -8,9 +8,10 @@
 #include "level/EntityTypeSetup.hpp"
 
 std::atomic<bool> g_running{true};
-KeyBindings g_keyBindings  = KeyBindings::defaults();
-float g_musicVolume        = 20.0F;
-bool g_networkDebugEnabled = false;
+KeyBindings g_keyBindings         = KeyBindings::defaults();
+float g_musicVolume               = 20.0F;
+bool g_networkDebugEnabled        = false;
+ColorFilterMode g_colorFilterMode = ColorFilterMode::None;
 
 int runClient(const ClientOptions& options)
 {

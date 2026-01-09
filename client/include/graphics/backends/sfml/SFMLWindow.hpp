@@ -23,7 +23,17 @@ class SFMLWindow : public IWindow
     void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type) override;
     void drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
                        Color outlineColor, float outlineThickness) override;
+    void setColorFilter(ColorFilterMode mode) override;
+    ColorFilterMode getColorFilter() const override;
 
   private:
+    bool useColorFilter() const;
+    sf::RenderTarget& activeTarget();
+
     sf::RenderWindow window_;
+    sf::RenderTexture renderTexture_;
+    sf::Shader colorShader_;
+    ColorFilterMode colorFilterMode_ = ColorFilterMode::None;
+    bool renderTextureReady_         = false;
+    bool shaderReady_                = false;
 };

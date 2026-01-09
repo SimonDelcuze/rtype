@@ -1,5 +1,6 @@
 #pragma once
 
+#include "graphics/ColorFilter.hpp"
 #include "graphics/abstraction/Common.hpp"
 #include "graphics/abstraction/ISprite.hpp"
 #include "graphics/abstraction/IText.hpp"
@@ -27,6 +28,9 @@ class Window
     void draw(const Vector2f* vertices, std::size_t vertexCount, Color color, int type);
     void drawRectangle(Vector2f size, Vector2f position, float rotation, Vector2f scale, Color fillColor,
                        Color outlineColor, float outlineThickness);
+
+    void setColorFilter(ColorFilterMode mode);
+    ColorFilterMode getColorFilter() const;
 
     std::shared_ptr<IWindow> getNativeWindow() const;
 

@@ -59,6 +59,16 @@ void Window::drawRectangle(Vector2f size, Vector2f position, float rotation, Vec
     window_->drawRectangle(size, position, rotation, scale, fillColor, outlineColor, outlineThickness);
 }
 
+void Window::setColorFilter(ColorFilterMode mode)
+{
+    window_->setColorFilter(mode);
+}
+
+ColorFilterMode Window::getColorFilter() const
+{
+    return window_->getColorFilter();
+}
+
 std::shared_ptr<IWindow> Window::getNativeWindow() const
 {
     return window_;
