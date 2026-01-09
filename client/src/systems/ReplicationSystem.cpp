@@ -219,7 +219,6 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
     while (snapshots_->tryPop(snapshot)) {
         auto now = std::chrono::steady_clock::now();
 
-        // Create NetworkStatsComponent on first snapshot if it doesn't exist
         if (stats == nullptr) {
             EntityId statsEntity = registry.createEntity();
             registry.emplace<NetworkStatsComponent>(statsEntity, NetworkStatsComponent::create());

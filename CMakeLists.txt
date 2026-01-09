@@ -86,6 +86,20 @@ if(imgui_ADDED)
     target_link_libraries(imgui PUBLIC OpenGL::GL)
 endif()
 
+# SQLite3 for user database
+find_package(SQLite3 REQUIRED)
+
+# jwt-cpp for JWT token generation and validation
+CPMAddPackage(
+    NAME jwt-cpp
+    GITHUB_REPOSITORY Thalhammer/jwt-cpp
+    GIT_TAG v0.7.0
+    GIT_SHALLOW TRUE
+)
+
+# OpenSSL for bcrypt password hashing
+find_package(OpenSSL REQUIRED)
+
 set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_cmake.cmake")
 
 CPMAddPackage(

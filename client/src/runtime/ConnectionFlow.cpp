@@ -1,5 +1,6 @@
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
+#include "auth/AuthResult.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
@@ -7,17 +8,87 @@
 #include "graphics/TextureManager.hpp"
 #include "graphics/abstraction/Event.hpp"
 #include "network/EndpointParser.hpp"
+#include "network/LobbyConnection.hpp"
 #include "runtime/MenuMusic.hpp"
 #include "systems/ButtonSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/LobbyMenu.hpp"
+#include "ui/LoginMenu.hpp"
 #include "ui/MenuRunner.hpp"
+#include "ui/RegisterMenu.hpp"
 #include "ui/SettingsMenu.hpp"
 #include "ui/WaitingRoomMenu.hpp"
 
 #include <chrono>
+
+std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
+                                                 TextureManager& textureManager, LobbyConnection& lobbyConn,
+                                                 ThreadSafeQueue<std::string>& broadcastQueue)
+{
+    if (!lobbyConn.connect()) {
+        Logger::instance().error("[Auth] Failed to connect to lobby server for authentication");
+        return std::nullopt;
+    }
+
+    startLauncherMusic(g_musicVolume);
+    MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
+
+    std::optional<AuthResult> result;
+
+    while (window.isOpen()) {
+        auto loginResult = runner.runAndGetResult<LoginMenu>(lobbyConn);
+
+        if (!window.isOpen())
+            break;
+
+        if (loginResult.backRequested) {
+            Logger::instance().info("[Auth] User wants to go back to server selection");
+            break;
+        }
+
+        if (loginResult.exitRequested) {
+            window.close();
+            break;
+        }
+
+        if (loginResult.openRegister) {
+            auto registerResult = runner.runAndGetResult<RegisterMenu>(lobbyConn);
+
+            if (!window.isOpen())
+                break;
+
+            if (registerResult.exitRequested) {
+                window.close();
+                break;
+            }
+
+            if (registerResult.backToLogin) {
+                continue;
+            }
+
+            if (registerResult.registered) {
+                Logger::instance().info("[Auth] Registration successful, please login");
+                continue;
+            }
+
+            continue;
+        }
+
+        if (loginResult.authenticated) {
+            AuthResult authResult;
+            authResult.authenticated = true;
+            authResult.username      = loginResult.username;
+            authResult.token         = loginResult.token;
+            authResult.userId        = loginResult.userId;
+            result                   = authResult;
+            break;
+        }
+    }
+
+    return result;
+}
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage, ThreadSafeQueue<std::string>& broadcastQueue)
@@ -101,11 +172,12 @@ std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
-                                                          ThreadSafeQueue<std::string>& broadcastQueue)
+                                                          ThreadSafeQueue<std::string>& broadcastQueue,
+                                                          LobbyConnection* authenticatedConnection)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue);
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, authenticatedConnection);
 
     if (!window.isOpen())
         return std::nullopt;

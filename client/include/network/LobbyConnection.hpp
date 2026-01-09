@@ -1,8 +1,10 @@
 #pragma once
 
 #include "concurrency/ThreadSafeQueue.hpp"
+#include "network/AuthPackets.hpp"
 #include "network/LobbyPackets.hpp"
 #include "network/PacketHeader.hpp"
+#include "network/StatsPackets.hpp"
 #include "network/UdpSocket.hpp"
 
 #include <array>
@@ -28,6 +30,13 @@ class LobbyConnection
 
     std::optional<JoinSuccessResult> joinRoom(std::uint32_t roomId);
     void poll(ThreadSafeQueue<std::string>& broadcastQueue);
+
+    std::optional<LoginResponseData> login(const std::string& username, const std::string& password);
+    std::optional<RegisterResponseData> registerUser(const std::string& username, const std::string& password);
+    std::optional<ChangePasswordResponseData> changePassword(const std::string& oldPassword,
+                                                             const std::string& newPassword, const std::string& token);
+
+    std::optional<struct GetStatsResponseData> getStats();
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
