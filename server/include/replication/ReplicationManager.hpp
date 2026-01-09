@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/Registry.hpp"
+#include "network/NetworkConstants.hpp"
 #include "replication/EntityStateCache.hpp"
 
 #include <cstdint>
@@ -23,7 +24,5 @@ class ReplicationManager
     void clear();
 
   private:
-    static constexpr std::size_t kMaxPacketSize       = 1400;
- 
     EntityStateCache entityStateCache_;
 };
