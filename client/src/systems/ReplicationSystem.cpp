@@ -8,6 +8,7 @@
 #include "components/ColliderComponent.hpp"
 #include "components/DirectionalAnimationComponent.hpp"
 #include "components/HealthComponent.hpp"
+#include "components/InputHistoryComponent.hpp"
 #include "components/InterpolationComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
@@ -469,16 +470,54 @@ void ReplicationSystem::applyTransform(Registry& registry, EntityId id, const Sn
         registry.emplace<TransformComponent>(id, t);
         return;
     }
-    if (entity.posX.has_value())
-        comp->x = *entity.posX;
-    if (entity.posY.has_value())
-        comp->y = *entity.posY;
+    const bool isPredictedPlayer = registry.has<TagComponent>(id) &&
+                                   registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
+                                   registry.has<InputHistoryComponent>(id);
+
+    if (entity.posX.has_value()) {
+        if (isPredictedPlayer) {
+            const float errorX          = *entity.posX - comp->x;
+            const float errorY          = entity.posY.has_value() ? (*entity.posY - comp->y) : 0.0F;
+            const float errorMag        = std::sqrt(errorX * errorX + errorY * errorY);
+            constexpr float deadband    = 5.0F;
+            constexpr float maxStep     = 5.0F; // clamp correction per frame to avoid TP
+            constexpr float correctionK = 0.02F;
+            if (errorMag > deadband) {
+                const float step = std::clamp(errorX * correctionK, -maxStep, maxStep);
+                comp->x += step;
+            }
+        } else {
+            comp->x = *entity.posX;
+        }
+    }
+    if (entity.posY.has_value()) {
+        if (isPredictedPlayer) {
+            const float errorX          = entity.posX.has_value() ? (*entity.posX - comp->x) : 0.0F;
+            const float errorY          = *entity.posY - comp->y;
+            const float errorMag        = std::sqrt(errorX * errorX + errorY * errorY);
+            constexpr float deadband    = 5.0F;
+            constexpr float maxStep     = 5.0F;
+            constexpr float correctionK = 0.02F;
+            if (errorMag > deadband) {
+                const float step = std::clamp(errorY * correctionK, -maxStep, maxStep);
+                comp->y += step;
+            }
+        } else {
+            comp->y = *entity.posY;
+        }
+    }
 }
 
 void ReplicationSystem::applyVelocity(Registry& registry, EntityId id, const SnapshotEntity& entity)
 {
     if (!entity.velX.has_value() && !entity.velY.has_value()) {
         return;
+    }
+    const bool isPredictedPlayer = registry.has<TagComponent>(id) &&
+                                   registry.get<TagComponent>(id).hasTag(EntityTag::Player) &&
+                                   registry.has<InputHistoryComponent>(id);
+    if (isPredictedPlayer) {
+        return; // éviter d’écraser la vitesse prédite pour le joueur local
     }
     auto* comp = registry.has<VelocityComponent>(id) ? &registry.get<VelocityComponent>(id) : nullptr;
     if (comp == nullptr) {

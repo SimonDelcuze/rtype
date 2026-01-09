@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation/AnimationRegistry.hpp"
+#include "components/InputHistoryComponent.hpp"
 #include "graphics/TextureManager.hpp"
 #include "input/InputBuffer.hpp"
 #include "input/InputMapper.hpp"
@@ -22,15 +23,16 @@ class InputSystem : public ISystem
     void cleanup() override;
 
   private:
-    InputCommand buildCommand(std::uint16_t flags, float angle);
+    InputCommand buildCommand(std::uint16_t flags, float angle, float deltaTime);
     std::uint32_t nextSequence();
-    void sendChargedFireCommand();
+    void sendChargedFireCommand(Registry& registry, float deltaTime);
     void ensureChargeFx(Registry& registry, float x, float y);
     void destroyChargeFx(Registry& registry);
     void updateChargeFx(Registry& registry, float x, float y);
     bool ensurePlayerPosition(Registry& registry);
     void updateChargeMeter(Registry& registry, float progress);
     void resetInputState(Registry& registry);
+    void recordHistory(Registry& registry, const InputCommand& cmd, float deltaTime);
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
 
@@ -45,7 +47,7 @@ class InputSystem : public ISystem
     AnimationRegistry* animations_;
     LevelState* levelState_ = nullptr;
     float fireElapsed_      = 0.0F;
-    float repeatInterval_   = 0.05F;
+    float repeatInterval_   = 0.02F;
     float repeatElapsed_    = 0.0F;
     float fireHoldTime_     = 0.0F;
     bool fireHeldLastFrame_ = false;

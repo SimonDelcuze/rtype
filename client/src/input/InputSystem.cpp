@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "components/AnimationComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
+#include "components/InputHistoryComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
@@ -73,7 +74,7 @@ void InputSystem::update(Registry& registry, float deltaTime)
     }
     if (!firePressed && fireHeldLastFrame_) {
         destroyChargeFx(registry);
-        sendChargedFireCommand();
+        sendChargedFireCommand(registry, deltaTime);
         fireHoldTime_ = 0.0F;
         updateChargeMeter(registry, 0.0F);
     }
@@ -93,8 +94,6 @@ void InputSystem::update(Registry& registry, float deltaTime)
     const bool up    = (moves & InputMapper::UpFlag) != 0;
     const bool down  = (moves & InputMapper::DownFlag) != 0;
 
-    float angle = 0.0F;
-
     float dx = 0.0F;
     float dy = 0.0F;
     if (left)
@@ -111,8 +110,25 @@ void InputSystem::update(Registry& registry, float deltaTime)
             dx /= len;
             dy /= len;
         }
-        *posX_ += dx * kMoveSpeed * deltaTime;
-        *posY_ += dy * kMoveSpeed * deltaTime;
+        const float stepX = dx * kMoveSpeed * deltaTime;
+        const float stepY = dy * kMoveSpeed * deltaTime;
+        *posX_ += stepX;
+        *posY_ += stepY;
+        if (playerId_.has_value() && registry.isAlive(*playerId_) && registry.has<TransformComponent>(*playerId_)) {
+            auto& t = registry.get<TransformComponent>(*playerId_);
+            t.x += stepX;
+            t.y += stepY;
+            if (registry.has<VelocityComponent>(*playerId_)) {
+                auto& v = registry.get<VelocityComponent>(*playerId_);
+                v.vx    = dx * kMoveSpeed;
+                v.vy    = dy * kMoveSpeed;
+            }
+        }
+    }
+
+    float angle = 0.0F;
+    if (dx != 0.0F || dy != 0.0F) {
+        angle = std::atan2(dy, dx);
     }
 
     if (inactive && !changedMovement) {
@@ -124,22 +140,24 @@ void InputSystem::update(Registry& registry, float deltaTime)
         return;
     }
 
-    InputCommand cmd = buildCommand(moves, angle);
+    InputCommand cmd = buildCommand(moves, angle, deltaTime);
     auto now         = std::chrono::steady_clock::now().time_since_epoch();
     cmd.captureTimestampNs =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
     buffer_->push(cmd);
+    recordHistory(registry, cmd, deltaTime);
     lastSentMoveFlags_ = moves;
     repeatElapsed_     = 0.0F;
 }
 
 void InputSystem::cleanup() {}
 
-InputCommand InputSystem::buildCommand(std::uint16_t flags, float angle)
+InputCommand InputSystem::buildCommand(std::uint16_t flags, float angle, float deltaTime)
 {
     InputCommand cmd{};
     cmd.flags      = flags;
     cmd.sequenceId = nextSequence();
+    cmd.deltaTime  = deltaTime;
     cmd.posX       = *posX_;
     cmd.posY       = *posY_;
     cmd.angle      = angle;
@@ -153,15 +171,16 @@ std::uint32_t InputSystem::nextSequence()
     return seq;
 }
 
-void InputSystem::sendChargedFireCommand()
+void InputSystem::sendChargedFireCommand(Registry& registry, float deltaTime)
 {
     std::uint16_t flags = InputMapper::FireFlag;
     if (fireHoldTime_ < chargeFxDelay_) {
-        InputCommand cmd = buildCommand(flags, 0.0F);
+        InputCommand cmd = buildCommand(flags, 0.0F, deltaTime);
         auto now         = std::chrono::steady_clock::now().time_since_epoch();
         cmd.captureTimestampNs =
             static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
         buffer_->push(cmd);
+        recordHistory(registry, cmd, deltaTime);
         return;
     }
 
@@ -177,11 +196,12 @@ void InputSystem::sendChargedFireCommand()
         flags |= InputMapper::Charge2Flag;
     }
 
-    InputCommand cmd = buildCommand(flags, 0.0F);
+    InputCommand cmd = buildCommand(flags, 0.0F, deltaTime);
     auto now         = std::chrono::steady_clock::now().time_since_epoch();
     cmd.captureTimestampNs =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
     buffer_->push(cmd);
+    recordHistory(registry, cmd, deltaTime);
 }
 
 void InputSystem::ensureChargeFx(Registry& registry, float x, float y)
@@ -282,6 +302,13 @@ void InputSystem::resetInputState(Registry& registry)
 
 bool InputSystem::ensurePlayerPosition(Registry& registry)
 {
+    if (playerId_.has_value() && registry.isAlive(*playerId_)) {
+        const auto& t = registry.get<TransformComponent>(*playerId_);
+        *posX_        = t.x;
+        *posY_        = t.y;
+        return true;
+    }
+
     auto view = registry.view<TransformComponent, TagComponent>();
     for (auto id : view) {
         const auto& tag = registry.get<TagComponent>(id);
@@ -295,4 +322,17 @@ bool InputSystem::ensurePlayerPosition(Registry& registry)
         return true;
     }
     return false;
+}
+
+void InputSystem::recordHistory(Registry& registry, const InputCommand& cmd, float deltaTime)
+{
+    if (!playerId_.has_value() || !registry.isAlive(*playerId_)) {
+        return;
+    }
+    EntityId id = *playerId_;
+    if (!registry.has<InputHistoryComponent>(id)) {
+        registry.emplace<InputHistoryComponent>(id);
+    }
+    auto& history = registry.get<InputHistoryComponent>(id);
+    history.pushInput(cmd.sequenceId, cmd.flags, cmd.posX, cmd.posY, cmd.angle, deltaTime);
 }

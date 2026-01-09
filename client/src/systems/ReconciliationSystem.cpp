@@ -37,13 +37,22 @@ void ReconciliationSystem::reconcile(Registry& registry, EntityId entityId, floa
     float errorY         = predictedY - authoritativeY;
     float errorMagnitude = std::sqrt(errorX * errorX + errorY * errorY);
 
-    if (errorMagnitude < reconciliationThreshold_) {
+    float magnitude  = std::sqrt(authoritativeX * authoritativeX + authoritativeY * authoritativeY);
+    float percentErr = (magnitude > 0.0F) ? (errorMagnitude / magnitude) : errorMagnitude;
+
+    const bool overHardThreshold = percentErr >= 0.05F;
+    const bool overSoftThreshold = percentErr >= 0.02F;
+
+    timeSinceLastReconcile_ += 0.05F;
+
+    if (!overHardThreshold && !(overSoftThreshold && timeSinceLastReconcile_ >= 2.0F)) {
         history.acknowledgeUpTo(acknowledgedSequence);
         return;
     }
 
-    transform.x = authoritativeX;
-    transform.y = authoritativeY;
+    transform.x             = authoritativeX;
+    transform.y             = authoritativeY;
+    timeSinceLastReconcile_ = 0.0F;
 
     auto unacknowledgedInputs = history.getInputsAfter(acknowledgedSequence);
 

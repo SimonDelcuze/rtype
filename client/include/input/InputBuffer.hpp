@@ -9,6 +9,7 @@ struct InputCommand
 {
     std::uint16_t flags              = 0;
     std::uint32_t sequenceId         = 0;
+    float deltaTime                  = 0.0F;
     float posX                       = 0.0F;
     float posY                       = 0.0F;
     float angle                      = 0.0F;

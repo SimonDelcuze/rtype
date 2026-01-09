@@ -4,7 +4,15 @@
 #include "input/InputMapper.hpp"
 #include "input/InputSystem.hpp"
 
+#include <cmath>
 #include <gtest/gtest.h>
+
+namespace
+{
+    constexpr float kPi      = 3.14159265358979323846F;
+    constexpr float kPiOver2 = kPi / 2.0F;
+    constexpr float kPiOver4 = kPi / 4.0F;
+} // namespace
 
 namespace
 {
@@ -82,7 +90,7 @@ TEST(InputSystem, SetsLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, kPi, 0.001F);
 }
 
 TEST(InputSystem, SetsRightAngle)
@@ -97,7 +105,7 @@ TEST(InputSystem, SetsRightAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, 0.0F, 0.001F);
 }
 
 TEST(InputSystem, SetsUpAngle)
@@ -112,7 +120,7 @@ TEST(InputSystem, SetsUpAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, -kPiOver2, 0.001F);
 }
 
 TEST(InputSystem, SetsDownAngle)
@@ -127,7 +135,7 @@ TEST(InputSystem, SetsDownAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, kPiOver2, 0.001F);
 }
 
 TEST(InputSystem, SetsDiagonalUpLeftAngle)
@@ -142,7 +150,7 @@ TEST(InputSystem, SetsDiagonalUpLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, -3.0F * kPiOver4, 0.001F);
 }
 
 TEST(InputSystem, SetsDiagonalDownRightAngle)
@@ -157,7 +165,7 @@ TEST(InputSystem, SetsDiagonalDownRightAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, kPiOver4, 0.001F);
 }
 
 TEST(InputSystem, FireOnlyKeepsDefaultAngle)
@@ -187,7 +195,7 @@ TEST(InputSystem, MovementWithFireKeepsMovementAngle)
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
     EXPECT_EQ(out.flags, InputMapper::LeftFlag);
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, kPi, 0.001F);
 }
 
 TEST(InputSystem, SetsDiagonalDownLeftAngle)
@@ -202,7 +210,7 @@ TEST(InputSystem, SetsDiagonalDownLeftAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, 3.0F * kPiOver4, 0.001F);
 }
 
 TEST(InputSystem, SetsDiagonalUpRightAngle)
@@ -217,7 +225,7 @@ TEST(InputSystem, SetsDiagonalUpRightAngle)
     sys.update(registry, 0.0F);
     InputCommand out{};
     ASSERT_TRUE(buffer.tryPop(out));
-    EXPECT_FLOAT_EQ(out.angle, 0.0F);
+    EXPECT_NEAR(out.angle, -kPiOver4, 0.001F);
 }
 
 TEST(InputSystem, SequenceNotIncrementedWhenNoInput)
