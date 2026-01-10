@@ -1089,13 +1089,13 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
                                 std::to_string(session.userId.value()));
 
         GetStatsResponseData emptyStats;
-        emptyStats.userId      = session.userId.value();
+        emptyStats.userId = session.userId.value();
         std::strncpy(emptyStats.username, session.username.c_str(), 31);
         emptyStats.username[31] = '\0';
-        emptyStats.gamesPlayed = 0;
-        emptyStats.wins        = 0;
-        emptyStats.losses      = 0;
-        emptyStats.totalScore  = 0;
+        emptyStats.gamesPlayed  = 0;
+        emptyStats.wins         = 0;
+        emptyStats.losses       = 0;
+        emptyStats.totalScore   = 0;
 
         auto response = buildGetStatsResponsePacket(emptyStats, hdr.sequenceId);
         sendPacket(response, from);
@@ -1103,13 +1103,13 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
     }
 
     GetStatsResponseData responseData;
-    responseData.userId      = stats->userId;
+    responseData.userId = stats->userId;
     std::strncpy(responseData.username, session.username.c_str(), 31);
     responseData.username[31] = '\0';
-    responseData.gamesPlayed = stats->gamesPlayed;
-    responseData.wins        = stats->wins;
-    responseData.losses      = stats->losses;
-    responseData.totalScore  = stats->totalScore;
+    responseData.gamesPlayed  = stats->gamesPlayed;
+    responseData.wins         = stats->wins;
+    responseData.losses       = stats->losses;
+    responseData.totalScore   = stats->totalScore;
 
     Logger::instance().info("[LobbyServer] Sending stats for user " + session.username +
                             ": games=" + std::to_string(stats->gamesPlayed) + ", wins=" + std::to_string(stats->wins));
@@ -1149,8 +1149,8 @@ void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* 
         playerName = session.playerName.empty() ? ("Player " + std::to_string(playerId)) : session.playerName;
     }
 
-    Logger::instance().info("[LobbyServer] Chat in Room " + std::to_string(roomId) + " [" + playerName + "]: " +
-                            chatPkt->message);
+    Logger::instance().info("[LobbyServer] Chat in Room " + std::to_string(roomId) + " [" + playerName +
+                            "]: " + chatPkt->message);
     ChatPacket broadcastPkt;
     broadcastPkt.roomId   = roomId;
     broadcastPkt.playerId = playerId;
