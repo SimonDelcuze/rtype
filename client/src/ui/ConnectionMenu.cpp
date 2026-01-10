@@ -199,7 +199,7 @@ void ConnectionMenu::showConnectingText(Registry& registry)
     text.content  = "Connecting to server.";
     text.centered = true;
     registry.emplace<TextComponent>(entity, text);
-    registry.emplace<LayerComponent>(entity, 100);
+    registry.emplace<LayerComponent>(entity, LayerComponent::create(RenderLayer::UI));
 
     connectingText_      = entity;
     connectingStartTime_ = std::chrono::steady_clock::now();
