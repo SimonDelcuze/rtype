@@ -107,6 +107,7 @@ void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures,
     registerPlayerType(registry, textures, manifest);
     registerWalkingMobType(registry, textures, manifest, 2, "mob1", 36.0F);
     registerWalkingMobType(registry, textures, manifest, 21, "mob2", 32.0F);
+    registerWalkingMobType(registry, textures, manifest, 23, "follower", 33.0F);
     registerBulletType(registry, textures, manifest);
     registerObstacleType(registry, textures, manifest, 9, "obstacle_top");
     registerObstacleType(registry, textures, manifest, 10, "obstacle_middle");

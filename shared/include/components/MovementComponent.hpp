@@ -6,7 +6,8 @@ enum class MovementPattern : std::uint8_t
 {
     Linear,
     Zigzag,
-    Sine
+    Sine,
+    FollowPlayer
 };
 
 struct MovementComponent
@@ -21,6 +22,7 @@ struct MovementComponent
     static MovementComponent linear(float speed);
     static MovementComponent zigzag(float speed, float amplitude, float frequency);
     static MovementComponent sine(float speed, float amplitude, float frequency, float phase = 0.0F);
+    static MovementComponent followPlayer(float speed);
 };
 
 inline MovementComponent MovementComponent::linear(float speed)
@@ -55,6 +57,18 @@ inline MovementComponent MovementComponent::sine(float speed, float amplitude, f
     component.amplitude = amplitude;
     component.frequency = frequency;
     component.phase     = phase;
+    component.time      = 0.0F;
+    return component;
+}
+
+inline MovementComponent MovementComponent::followPlayer(float speed)
+{
+    MovementComponent component;
+    component.pattern   = MovementPattern::FollowPlayer;
+    component.speed     = speed;
+    component.phase     = 0.0F;
+    component.frequency = 0.0F;
+    component.amplitude = 0.0F;
     component.time      = 0.0F;
     return component;
 }

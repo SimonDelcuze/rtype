@@ -15,6 +15,7 @@
 #include "components/LivesComponent.hpp"
 #include "components/NetworkStatsComponent.hpp"
 #include "components/OwnershipComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
@@ -375,6 +376,7 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
         registry.emplace<DirectionalAnimationComponent>(id, dir);
     }
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
+    registry.emplace<RenderTypeComponent>(id, RenderTypeComponent::create(typeId));
     if (!registry.has<TagComponent>(id)) {
         EntityTag tag = EntityTag::Enemy;
         if (isPlayer) {

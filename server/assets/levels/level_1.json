@@ -100,6 +100,12 @@
       "layer": 0
     },
     {
+      "typeId": 23,
+      "spriteId": "follower",
+      "animId": "walk",
+      "layer": 0
+    },
+    {
       "typeId": 9,
       "spriteId": "obstacle_top",
       "animId": "",
@@ -144,6 +150,11 @@
       "speed": 150,
       "amplitude": 120,
       "frequency": 0.9
+    },
+    {
+      "id": "p_follower",
+      "type": "follow",
+      "speed": 160
     },
     {
       "id": "p_boss_hover",
@@ -451,6 +462,17 @@
           "damage": 6,
           "lifetime": 3.0
         }
+      },
+      "follower": {
+        "typeId": 23,
+        "hitbox": "enemy_small",
+        "collider": "enemy_small",
+        "health": 3,
+        "score": 260,
+        "scale": [
+          1.2,
+          1.2
+        ]
       }
     },
     "obstacles": {
@@ -521,6 +543,23 @@
             "startY": 140.0,
             "deltaY": 120.0,
             "count": 3
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "follower_intro",
+          "trigger": {
+            "type": "time",
+            "time": 3.0
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "spawnX": 1180.0,
+            "startY": 200.0,
+            "deltaY": 160.0,
+            "count": 2
           }
         }
       ],

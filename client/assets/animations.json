@@ -695,6 +695,56 @@
       ]
     },
     {
+      "id": "follower_walk_left",
+      "frameTime": 0.18,
+      "loop": true,
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 34,
+          "height": 33
+        },
+        {
+          "x": 34,
+          "y": 0,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "x": 67,
+          "y": 0,
+          "width": 33,
+          "height": 33
+        }
+      ]
+    },
+    {
+      "id": "follower_walk_right",
+      "frameTime": 0.18,
+      "loop": true,
+      "frames": [
+        {
+          "x": 100,
+          "y": 0,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "x": 133,
+          "y": 0,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "x": 166,
+          "y": 0,
+          "width": 33,
+          "height": 33
+        }
+      ]
+    },
+    {
       "id": "enemy_bullet_basic",
       "frameTime": 0.12,
       "loop": true,
@@ -845,6 +895,11 @@
     },
     "mob2": {
       "walking": "mob2_walking"
+    },
+    "follower": {
+      "walk": "follower_walk_left",
+      "walk_left": "follower_walk_left",
+      "walk_right": "follower_walk_right"
     },
     "enemy_bullet": {
       "base": "enemy_bullet_basic"
