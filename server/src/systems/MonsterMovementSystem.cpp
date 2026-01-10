@@ -13,8 +13,8 @@ void MonsterMovementSystem::update(Registry& registry, float deltaTime) const
     for (EntityId id : registry.view<MovementComponent, VelocityComponent, TransformComponent>()) {
         if (!registry.isAlive(id))
             continue;
-        auto& move = registry.get<MovementComponent>(id);
-        auto& vel  = registry.get<VelocityComponent>(id);
+        auto& move                = registry.get<MovementComponent>(id);
+        auto& vel                 = registry.get<VelocityComponent>(id);
         const auto& selfTransform = registry.get<TransformComponent>(id);
         move.time += deltaTime;
         switch (move.pattern) {
