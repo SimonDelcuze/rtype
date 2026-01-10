@@ -21,6 +21,7 @@ void InputFieldSystem::update(Registry& registry, float)
 
         auto& transform = registry.get<TransformComponent>(entity);
         auto& input     = registry.get<InputFieldComponent>(entity);
+        auto& box       = registry.get<BoxComponent>(entity);
 
         auto font = fonts_.get("ui");
         if (font == nullptr)
@@ -40,11 +41,22 @@ void InputFieldSystem::update(Registry& registry, float)
         GraphicsFactory factory;
         auto text = factory.createText();
         text->setFont(*font);
-        text->setString(displayText);
         text->setCharacterSize(20);
-        text->setPosition(Vector2f{transform.x + 10.0F, transform.y + 13.0F});
         text->setFillColor(Color::White);
 
+        std::string fullText = displayText;
+        float maxWidth = box.width - 20.0F;
+
+        text->setString(fullText);
+        if (text->getGlobalBounds().width > maxWidth) {
+            std::string visibleText = fullText;
+            while (!visibleText.empty() && text->getGlobalBounds().width > maxWidth) {
+                visibleText.erase(0, 1);
+                text->setString(visibleText);
+            }
+        }
+
+        text->setPosition(Vector2f{transform.x + 10.0F, transform.y + 13.0F});
         window_.draw(*text);
     }
 }

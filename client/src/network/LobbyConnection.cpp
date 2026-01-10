@@ -136,6 +136,11 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             auto pkt = parsePlayerListPacket(buffer.data(), recvResult.size);
             if (pkt.has_value())
                 pendingPlayerListResult_ = pkt;
+        } else if (type == MessageType::Chat) {
+            auto pkt = ChatPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                chatMessages_.push(*pkt);
+            }
         }
     }
 }
@@ -565,4 +570,31 @@ std::optional<std::vector<PlayerInfo>> LobbyConnection::popPlayerListResult()
     pendingPlayerListResult_.reset();
     return res;
 }
+
+void LobbyConnection::sendChatMessage(std::uint32_t roomId, const std::string& message)
+{
+    ChatPacket pkt;
+    pkt.roomId = roomId;
+    std::strncpy(pkt.message, message.c_str(), 120);
+    pkt.message[120] = '\0';
+
+    auto encoded = pkt.encode(nextSequence_++);
+    socket_.sendTo(encoded.data(), encoded.size(), lobbyEndpoint_);
+}
+
+bool LobbyConnection::hasNewChatMessages() const
+{
+    return !chatMessages_.empty();
+}
+
+std::vector<ChatPacket> LobbyConnection::popChatMessages()
+{
+    std::vector<ChatPacket> messages;
+    ChatPacket msg;
+    while (chatMessages_.tryPop(msg)) {
+        messages.push_back(msg);
+    }
+    return messages;
+}
+
 #include "ClientRuntime.hpp"

@@ -7,7 +7,11 @@
 #include "core/Session.hpp"
 #include "game/GameInstanceManager.hpp"
 #include "lobby/LobbyManager.hpp"
+#include "lobby/LobbyPackets.hpp"
+#include "network/AuthPackets.hpp"
+#include "network/ChatPacket.hpp"
 #include "network/PacketHeader.hpp"
+#include "network/ServerBroadcastPacket.hpp"
 #include "network/UdpSocket.hpp"
 
 #include <atomic>
@@ -57,6 +61,8 @@ class LobbyServer
     void handleChangePasswordRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                                      const IpEndpoint& from);
     void handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoint& from);
+    void handleChatPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                          const IpEndpoint& from);
 
     void sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to);
     void sendAuthRequired(const IpEndpoint& to);

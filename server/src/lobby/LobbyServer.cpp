@@ -4,6 +4,7 @@
 #include "core/Session.hpp"
 #include "lobby/LobbyPackets.hpp"
 #include "network/AuthPackets.hpp"
+#include "network/ChatPacket.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 #include "network/StatsPackets.hpp"
@@ -319,6 +320,10 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
             handleLobbyLeaveRoom(*hdr, from);
             break;
 
+        case MessageType::Chat:
+            handleChatPacket(*hdr, data, size, from);
+            break;
+
         default:
             Logger::instance().warn("[LobbyServer] Unhandled message type: " +
                                     std::to_string(static_cast<std::uint8_t>(msgType)));
@@ -554,7 +559,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
     auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
 
-    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + (playerCount * 5);
+    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + (playerCount * 37);
 
     PacketHeader respHdr{};
     respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -580,6 +585,24 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
         packet.push_back(static_cast<std::uint8_t>((playerId >> 16) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
+
+        std::string name = "Player " + std::to_string(playerId);
+        {
+            std::lock_guard<std::mutex> lock(sessionsMutex_);
+            for (const auto& [key, session] : lobbySessions_) {
+                if (session.playerId == playerId && !session.playerName.empty()) {
+                    name = session.playerName;
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < 32; ++i) {
+            if (i < static_cast<int>(name.size())) {
+                packet.push_back(static_cast<std::uint8_t>(name[i]));
+            } else {
+                packet.push_back(0);
+            }
+        }
 
         bool isHost = (playerId == ownerId);
         packet.push_back(isHost ? 1 : 0);
@@ -909,6 +932,7 @@ void LobbyServer::handleLoginRequest(const PacketHeader& hdr, const std::uint8_t
         session.authenticated = true;
         session.userId        = user->id;
         session.username      = user->username;
+        session.playerName    = user->username;
         session.jwtToken      = token;
         session.endpoint      = from;
         session.lastActivity  = std::chrono::steady_clock::now();
@@ -1066,6 +1090,8 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
 
         GetStatsResponseData emptyStats;
         emptyStats.userId      = session.userId.value();
+        std::strncpy(emptyStats.username, session.username.c_str(), 31);
+        emptyStats.username[31] = '\0';
         emptyStats.gamesPlayed = 0;
         emptyStats.wins        = 0;
         emptyStats.losses      = 0;
@@ -1078,6 +1104,8 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
 
     GetStatsResponseData responseData;
     responseData.userId      = stats->userId;
+    std::strncpy(responseData.username, session.username.c_str(), 31);
+    responseData.username[31] = '\0';
     responseData.gamesPlayed = stats->gamesPlayed;
     responseData.wins        = stats->wins;
     responseData.losses      = stats->losses;
@@ -1088,4 +1116,54 @@ void LobbyServer::handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoin
 
     auto response = buildGetStatsResponsePacket(responseData, hdr.sequenceId);
     sendPacket(response, from);
+}
+
+void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                                   const IpEndpoint& from)
+{
+    auto chatPkt = ChatPacket::decode(data, size);
+    if (!chatPkt.has_value()) {
+        Logger::instance().warn("[LobbyServer] Failed to decode ChatPacket from " + endpointToKey(from));
+        return;
+    }
+
+    std::uint32_t roomId = chatPkt->roomId;
+    std::string key      = endpointToKey(from);
+    std::uint32_t playerId;
+    std::string playerName;
+
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        if (!lobbySessions_.contains(key)) {
+            Logger::instance().warn("[LobbyServer] Chat message from unknown session: " + key);
+            return;
+        }
+        auto& session = lobbySessions_[key];
+        if (session.roomId != roomId) {
+            Logger::instance().warn("[LobbyServer] Player " + std::to_string(session.playerId) +
+                                    " tried to chat in room " + std::to_string(roomId) + " but is in room " +
+                                    std::to_string(session.roomId));
+            return;
+        }
+        playerId   = session.playerId;
+        playerName = session.playerName.empty() ? ("Player " + std::to_string(playerId)) : session.playerName;
+    }
+
+    Logger::instance().info("[LobbyServer] Chat in Room " + std::to_string(roomId) + " [" + playerName + "]: " +
+                            chatPkt->message);
+    ChatPacket broadcastPkt;
+    broadcastPkt.roomId   = roomId;
+    broadcastPkt.playerId = playerId;
+    std::strncpy(broadcastPkt.playerName, playerName.c_str(), 31);
+    broadcastPkt.playerName[31] = '\0';
+    std::strncpy(broadcastPkt.message, chatPkt->message, 120);
+    broadcastPkt.message[120] = '\0';
+
+    auto encoded = broadcastPkt.encode(hdr.sequenceId);
+    std::lock_guard<std::mutex> lock(sessionsMutex_);
+    for (const auto& [sessKey, session] : lobbySessions_) {
+        if (session.roomId == roomId) {
+            sendPacket(encoded, session.endpoint);
+        }
+    }
 }

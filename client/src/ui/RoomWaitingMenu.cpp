@@ -3,14 +3,18 @@
 #include "Logger.hpp"
 #include "components/BoxComponent.hpp"
 #include "components/ButtonComponent.hpp"
+#include "components/FocusableComponent.hpp"
+#include "components/InputFieldComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "graphics/FontManager.hpp"
+#include "graphics/GraphicsFactory.hpp"
 #include "graphics/TextureManager.hpp"
 #include "network/LobbyPackets.hpp"
 #include "ui/NotificationData.hpp"
+#include <sstream>
 
 namespace
 {
@@ -87,6 +91,66 @@ namespace
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         return entity;
     }
+
+    EntityId createInputField(Registry& registry, float x, float y, float width, float height, InputFieldComponent field,
+                              int tabOrder)
+    {
+        EntityId entity = registry.createEntity();
+        auto& transform = registry.emplace<TransformComponent>(entity);
+        transform.x     = x;
+        transform.y     = y;
+
+        auto box       = BoxComponent::create(width, height, Color(50, 50, 50), Color(100, 100, 100));
+        box.focusColor = Color(100, 200, 255);
+        registry.emplace<BoxComponent>(entity, box);
+        registry.emplace<InputFieldComponent>(entity, field);
+        registry.emplace<FocusableComponent>(entity, FocusableComponent::create(tabOrder));
+        return entity;
+    }
+    void wrapText(const std::string& text, float maxWidth, FontManager& fonts, std::vector<std::string>& lines)
+    {
+        auto font = fonts.get("ui");
+        if (!font) {
+            lines.push_back(text);
+            return;
+        }
+
+        GraphicsFactory factory;
+        auto textObj = factory.createText();
+        textObj->setFont(*font);
+        textObj->setCharacterSize(18);
+
+        std::string currentLine;
+        std::string word;
+        std::stringstream ss(text);
+
+        while (ss >> word) {
+            std::string testLine = currentLine.empty() ? word : currentLine + " " + word;
+            textObj->setString(testLine);
+            if (textObj->getGlobalBounds().width > maxWidth) {
+                if (!currentLine.empty()) {
+                    lines.push_back(currentLine);
+                    currentLine = word;
+                } else {
+                    std::string fragmented;
+                    for (char c : word) {
+                        textObj->setString(fragmented + c);
+                        if (textObj->getGlobalBounds().width > maxWidth) {
+                            lines.push_back(fragmented);
+                            fragmented = c;
+                        } else {
+                            fragmented += c;
+                        }
+                    }
+                    currentLine = fragmented;
+                }
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (!currentLine.empty())
+            lines.push_back(currentLine);
+    }
 } // namespace
 
 RoomWaitingMenu::RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId,
@@ -119,6 +183,21 @@ void RoomWaitingMenu::create(Registry& registry)
 
     leaveButtonEntity_ = createButton(registry, 620.0F, 600.0F, 150.0F, 50.0F, "Leave Room", Color(120, 50, 50),
                                       [this]() { onLeaveRoomClicked(); });
+
+    chatBackgroundEntity_ = registry.createEntity();
+    auto& chatBgTransform = registry.emplace<TransformComponent>(chatBackgroundEntity_);
+    chatBgTransform.x     = 800.0F;
+    chatBgTransform.y     = 250.0F;
+    auto chatBgBox = BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
+    registry.emplace<BoxComponent>(chatBackgroundEntity_, chatBgBox);
+
+    createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
+    auto chatField = InputFieldComponent::create("", 120);
+    chatField.placeholder = "Type message...";
+    chatInputField_ = createInputField(registry, 820.0F, 600.0F, 300.0F, 40.0F, chatField, 0);
+
+    sendButtonEntity_ = createButton(registry, 1160.0F, 600.0F, 80.0F, 40.0F, "Send", Color(0, 150, 80),
+                                     [this, &registry]() { onSendChatClicked(registry); });
 
     updatePlayerList(registry);
 }
@@ -155,6 +234,18 @@ void RoomWaitingMenu::destroy(Registry& registry)
             registry.destroyEntity(entityId);
     }
     kickButtonEntities_.clear();
+
+    if (registry.isAlive(chatInputField_))
+        registry.destroyEntity(chatInputField_);
+    if (registry.isAlive(chatBackgroundEntity_))
+        registry.destroyEntity(chatBackgroundEntity_);
+    if (registry.isAlive(sendButtonEntity_))
+        registry.destroyEntity(sendButtonEntity_);
+    for (auto entityId : chatMessageEntities_) {
+        if (registry.isAlive(entityId))
+            registry.destroyEntity(entityId);
+    }
+    chatMessageEntities_.clear();
 }
 
 bool RoomWaitingMenu::isDone() const
@@ -164,8 +255,9 @@ bool RoomWaitingMenu::isDone() const
 
 void RoomWaitingMenu::handleEvent(Registry& registry, const Event& event)
 {
-    (void) registry;
-    (void) event;
+    if (event.type == EventType::KeyPressed && event.key.code == KeyCode::Enter) {
+        onSendChatClicked(registry);
+    }
 }
 
 void RoomWaitingMenu::render(Registry& registry, Window& window)
@@ -214,7 +306,7 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
                     for (const auto& playerInfo : *playerListOpt) {
                         PlayerInfo info;
                         info.playerId = playerInfo.playerId;
-                        info.name     = "Player " + std::to_string(playerInfo.playerId);
+                        info.name     = std::string(playerInfo.name);
                         info.isHost   = playerInfo.isHost;
                         players_.push_back(info);
                     }
@@ -245,6 +337,31 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
 
     if (registry.has<TextComponent>(playerCountEntity_)) {
         registry.get<TextComponent>(playerCountEntity_).content = "Players: " + std::to_string(players_.size()) + "/4";
+    }
+    if (lobbyConnection_ && lobbyConnection_->hasNewChatMessages()) {
+        auto newMsgs = lobbyConnection_->popChatMessages();
+        for (const auto& msg : newMsgs) {
+            std::string formatted = "[" + std::string(msg.playerName) + "] " + std::string(msg.message);
+            std::vector<std::string> lines;
+            wrapText(formatted, 420.0F, fonts_, lines);
+            for (const auto& line : lines) {
+                chatHistory_.push_back(line);
+                if (chatHistory_.size() > kMaxChatMessages) {
+                    chatHistory_.erase(chatHistory_.begin());
+                }
+            }
+        }
+        for (auto entityId : chatMessageEntities_) {
+            if (registry.isAlive(entityId))
+                registry.destroyEntity(entityId);
+        }
+        chatMessageEntities_.clear();
+
+        for (std::size_t i = 0; i < chatHistory_.size(); ++i) {
+            auto msgEntity = createText(registry, 820.0F, 300.0F + (static_cast<float>(i) * 25.0F), chatHistory_[i], 18,
+                                        Color(220, 220, 220));
+            chatMessageEntities_.push_back(msgEntity);
+        }
     }
 }
 
@@ -316,5 +433,16 @@ void RoomWaitingMenu::onKickPlayerClicked(std::uint32_t playerId)
 
     if (lobbyConnection_) {
         lobbyConnection_->sendKickPlayer(roomId_, playerId);
+    }
+}
+
+void RoomWaitingMenu::onSendChatClicked(Registry& registry)
+{
+    if (chatInputField_ != 0 && registry.has<InputFieldComponent>(chatInputField_)) {
+        auto& input = registry.get<InputFieldComponent>(chatInputField_);
+        if (!input.value.empty()) {
+            lobbyConnection_->sendChatMessage(roomId_, input.value);
+            input.value.clear();
+        }
     }
 }

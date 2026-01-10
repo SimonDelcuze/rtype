@@ -15,3 +15,7 @@ target_link_libraries(rtype_shared_tests
 )
 
 add_test(NAME shared_tests COMMAND rtype_shared_tests)
+
+set_target_properties(rtype_shared_tests PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)

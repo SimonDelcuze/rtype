@@ -55,6 +55,7 @@ struct JoinSuccessResult
 struct PlayerInfo
 {
     std::uint32_t playerId;
+    char name[32];
     bool isHost;
 };
 

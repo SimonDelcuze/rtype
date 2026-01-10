@@ -25,3 +25,7 @@ target_compile_definitions(rtype_client_tests
 )
 
 add_test(NAME client_tests COMMAND rtype_client_tests)
+
+set_target_properties(rtype_client_tests PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
