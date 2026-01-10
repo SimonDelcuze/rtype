@@ -15,7 +15,8 @@ enum class AuthErrorCode : std::uint8_t
     WeakPassword       = 0x03,
     InvalidToken       = 0x04,
     ServerError        = 0x05,
-    Unauthorized       = 0x06
+    Unauthorized       = 0x06,
+    AlreadyConnected   = 0x07
 };
 
 struct LoginRequestData

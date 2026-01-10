@@ -50,7 +50,7 @@ class LoginMenu : public IMenu
     bool backRequested_ = false;
     bool exitRequested_ = false;
     bool authenticated_ = false;
-    bool isLoading_ = false;
+    bool isLoading_     = false;
 
     std::uint32_t userId_{0};
     std::string username_;

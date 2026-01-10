@@ -7,8 +7,8 @@
 void signalHandler(int signum)
 {
     (void) signum;
-    Logger::instance().info("Received signal " + std::to_string(signum) + ", stopping...");
-    g_running = false;
+    g_forceExit = true;
+    g_running   = false;
 }
 
 int main(int argc, char* argv[])

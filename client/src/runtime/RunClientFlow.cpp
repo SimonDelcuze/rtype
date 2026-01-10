@@ -34,7 +34,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                 std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId)
 {
-    while (window.isOpen()) {
+    while (window.isOpen() && g_running && !g_forceExit.load()) {
         if (!options.useDefault && !lastLobbyEndpoint.has_value()) {
             Logger::instance().info("[Nav] Showing server selection menu");
             auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
@@ -51,7 +51,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         Logger::instance().info("[Nav] Using lobby endpoint: port " + std::to_string(lobbyEp.port));
         bool backToServerSelect = false;
 
-        while (window.isOpen() && !backToServerSelect) {
+        while (window.isOpen() && !backToServerSelect && g_running && !g_forceExit.load()) {
             Logger::instance().info("[Auth] Starting authentication flow");
             LobbyConnection conn(lobbyEp, g_running);
             if (!conn.connect() || !conn.ping()) {
@@ -146,6 +146,9 @@ namespace
 
     void sendDisconnectPacket(const IpEndpoint& serverEndpoint, NetPipelines& net)
     {
+        if (g_forceExit.load()) {
+            return;
+        }
         if (net.socket && g_running == false) {
             PacketHeader header{};
             header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
@@ -190,7 +193,6 @@ namespace
                 }
             }
 
-
             std::string disconnectMsg;
             if (net.disconnectEvents.tryPop(disconnectMsg)) {
                 Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
@@ -218,8 +220,8 @@ namespace
                 header.messageType = static_cast<std::uint8_t>(MessageType::ClientPing);
                 auto packet        = header.encode();
                 if (net.socket) {
-                     Logger::instance().info("[Heartbeat] Sending ping to game server...");
-                     net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
+                    Logger::instance().info("[Heartbeat] Sending ping to game server...");
+                    net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
                 }
             }
 

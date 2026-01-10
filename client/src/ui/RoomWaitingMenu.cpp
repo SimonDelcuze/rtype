@@ -203,24 +203,25 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
     if (lobbyConnection_) {
         if (isRefreshingPlayers_) {
             if (lobbyConnection_->hasPlayerListResult()) {
-                auto playerListOpt = lobbyConnection_->popPlayerListResult();
+                auto playerListOpt   = lobbyConnection_->popPlayerListResult();
                 isRefreshingPlayers_ = false;
 
                 if (playerListOpt.has_value()) {
-                     consecutiveFailures_ = 0;
-                     Logger::instance().info("[RoomWaitingMenu] Received player list: " + std::to_string(playerListOpt->size()) + " players");
-                     players_.clear();
-                     for (const auto& playerInfo : *playerListOpt) {
+                    consecutiveFailures_ = 0;
+                    Logger::instance().info("[RoomWaitingMenu] Received player list: " +
+                                            std::to_string(playerListOpt->size()) + " players");
+                    players_.clear();
+                    for (const auto& playerInfo : *playerListOpt) {
                         PlayerInfo info;
                         info.playerId = playerInfo.playerId;
-                        info.name = "Player " + std::to_string(playerInfo.playerId);
-                        info.isHost = playerInfo.isHost;
+                        info.name     = "Player " + std::to_string(playerInfo.playerId);
+                        info.isHost   = playerInfo.isHost;
                         players_.push_back(info);
-                     }
-                     updatePlayerList(registry);
+                    }
+                    updatePlayerList(registry);
                 } else {
-                     Logger::instance().warn("[RoomWaitingMenu] Failed to get player list");
-                     consecutiveFailures_++;
+                    Logger::instance().warn("[RoomWaitingMenu] Failed to get player list");
+                    consecutiveFailures_++;
                 }
             }
         }
@@ -230,15 +231,15 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
     if (updateTimer_ >= kUpdateInterval) {
         updateTimer_ = 0.0F;
         if (lobbyConnection_ && !isRefreshingPlayers_) {
-             lobbyConnection_->sendRequestPlayerList(roomId_);
-             isRefreshingPlayers_ = true;
+            lobbyConnection_->sendRequestPlayerList(roomId_);
+            isRefreshingPlayers_ = true;
         }
 
         if (consecutiveFailures_ >= 2) {
-             Logger::instance().error("[RoomWaitingMenu] Connection to lobby server lost (2 timeouts)");
-             result_.serverLost = true;
-             result_.leaveRoom  = true;
-             done_              = true;
+            Logger::instance().error("[RoomWaitingMenu] Connection to lobby server lost (2 timeouts)");
+            result_.serverLost = true;
+            result_.leaveRoom  = true;
+            done_              = true;
         }
     }
 

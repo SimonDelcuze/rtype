@@ -14,5 +14,5 @@ class IMenu
     virtual bool isDone() const                                      = 0;
     virtual void handleEvent(Registry& registry, const Event& event) = 0;
     virtual void update(Registry&, float) {}
-    virtual void render(Registry& registry, Window& window)          = 0;
+    virtual void render(Registry& registry, Window& window) = 0;
 };

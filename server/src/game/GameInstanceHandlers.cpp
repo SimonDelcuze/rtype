@@ -16,9 +16,8 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
     auto key  = endpointKey(ctrl.from);
     auto type = ctrl.header.messageType;
 
-    bool isAuthoritative = (ctrl.from.addr[0] == 0 && ctrl.from.addr[1] == 0 &&
-                           ctrl.from.addr[2] == 0 && ctrl.from.addr[3] == 0 &&
-                           ctrl.from.port == 0);
+    bool isAuthoritative = (ctrl.from.addr[0] == 0 && ctrl.from.addr[1] == 0 && ctrl.from.addr[2] == 0 &&
+                            ctrl.from.addr[3] == 0 && ctrl.from.port == 0);
 
     if (isAuthoritative) {
         if (type == static_cast<std::uint8_t>(MessageType::RoomForceStart)) {
@@ -56,7 +55,6 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
         onDisconnect(ctrl.from);
     }
 }
-
 
 void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 {
@@ -144,7 +142,8 @@ void GameInstance::onForceStart(std::uint32_t playerId, bool authoritative)
     }
 
     for (auto& [key, s] : sessions_) {
-        Logger::instance().info("[Game] Marking session " + key + " (PlayerId=" + std::to_string(s.playerId) + ") as auto-ready");
+        Logger::instance().info("[Game] Marking session " + key + " (PlayerId=" + std::to_string(s.playerId) +
+                                ") as auto-ready");
         s.ready = true;
     }
 
@@ -164,7 +163,8 @@ void GameInstance::maybeStartGame()
     }
 
     if (!ready()) {
-        Logger::instance().info("[Game] maybeStartGame: ready() returned FALSE - waiting for more players or ready status");
+        Logger::instance().info(
+            "[Game] maybeStartGame: ready() returned FALSE - waiting for more players or ready status");
         return;
     }
 
@@ -253,10 +253,9 @@ bool GameInstance::ready() const
 
     for (const auto& [key, s] : sessions_) {
         if (!s.hello || !s.join || !s.ready) {
-            Logger::instance().info("[Game] ready() = FALSE: player " + std::to_string(s.playerId) +
-                                    " (" + key + ") not fully ready: hello=" + std::string(s.hello?"Y":"N") +
-                                    " join=" + std::string(s.join?"Y":"N") +
-                                    " ready=" + std::string(s.ready?"Y":"N"));
+            Logger::instance().info("[Game] ready() = FALSE: player " + std::to_string(s.playerId) + " (" + key +
+                                    ") not fully ready: hello=" + std::string(s.hello ? "Y" : "N") + " join=" +
+                                    std::string(s.join ? "Y" : "N") + " ready=" + std::string(s.ready ? "Y" : "N"));
             return false;
         }
     }
