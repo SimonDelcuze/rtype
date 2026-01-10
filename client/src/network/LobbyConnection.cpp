@@ -4,6 +4,7 @@
 #include "Logger.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
+#include "utils/StringSanity.hpp"
 
 #include <chrono>
 #include <thread>
@@ -575,7 +576,14 @@ void LobbyConnection::sendChatMessage(std::uint32_t roomId, const std::string& m
 {
     ChatPacket pkt;
     pkt.roomId = roomId;
-    std::strncpy(pkt.message, message.c_str(), 120);
+
+    std::string safeMessage = rtype::utils::sanitizeChatMessage(message);
+    if (safeMessage.empty() && !message.empty()) {
+        Logger::instance().warn("[LobbyConnection] Message was completely sanitized (unsafe characters)");
+        return;
+    }
+
+    std::strncpy(pkt.message, safeMessage.c_str(), 120);
     pkt.message[120] = '\0';
 
     auto encoded = pkt.encode(nextSequence_++);

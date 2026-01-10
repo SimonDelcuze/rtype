@@ -1,6 +1,7 @@
 file(GLOB_RECURSE RTYPE_SHARED_TEST_SOURCES
     CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cpp"
 )
 
 add_executable(rtype_shared_tests
