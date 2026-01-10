@@ -19,6 +19,7 @@ namespace
     constexpr std::uint16_t kPlayerDeathFxType   = 16;
     constexpr float kPlayerDeathFxLifetime       = 0.9F;
     constexpr float kOffscreenRespawnPlaceholder = -10000.0F;
+    constexpr float kRespawnDelay                = 2.0F;
     constexpr float kRespawnInvincibility        = 3.0F;
     const Vec2f kDefaultRespawn{100.0F, 400.0F};
 
@@ -212,22 +213,21 @@ void ServerApp::resetGame()
         levelSpawnSys_->reset();
     }
     playerBoundsSys_.reset();
-    checkpointState_.reset();
     lastSegmentIndex_ = -1;
 }
 
 void ServerApp::updateRespawnTimers(float deltaTime)
 {
-    bool shouldReset = false;
+    std::vector<EntityId> ready;
     for (EntityId id : registry_.view<RespawnTimerComponent>()) {
         auto& timer = registry_.get<RespawnTimerComponent>(id);
         timer.timeLeft -= deltaTime;
         if (timer.timeLeft <= 0.0F) {
-            shouldReset = true;
+            ready.push_back(id);
         }
     }
-    if (shouldReset) {
-        resetToCheckpoint();
+    for (EntityId id : ready) {
+        respawnPlayer(id);
     }
 }
 
@@ -244,23 +244,6 @@ void ServerApp::updateInvincibilityTimers(float deltaTime)
     for (EntityId id : vulnerable) {
         registry_.remove<InvincibilityComponent>(id);
         Logger::instance().info("[Player] Player (ID:" + std::to_string(id) + ") is no longer invincible.");
-    }
-}
-
-void ServerApp::captureCheckpoint(const std::vector<DispatchedEvent>& events)
-{
-    if (!levelLoaded_) {
-        return;
-    }
-    for (const auto& dispatched : events) {
-        const auto& event = dispatched.event;
-        if (event.type != EventType::Checkpoint || !event.checkpoint.has_value())
-            continue;
-        CheckpointState state;
-        state.director   = levelDirector_->captureCheckpointState();
-        state.spawns     = levelSpawnSys_->captureCheckpointState();
-        state.respawn    = event.checkpoint->respawn;
-        checkpointState_ = std::move(state);
     }
 }
 
@@ -318,81 +301,38 @@ void ServerApp::sendSegmentState()
     }
 }
 
-void ServerApp::purgeNonPlayerEntities()
-{
-    std::unordered_set<EntityId> players;
-    for (const auto& [_, entityId] : playerEntities_) {
-        players.insert(entityId);
-    }
-    std::vector<EntityId> toDestroy;
-    for (EntityId id : registry_.view<TransformComponent>()) {
-        if (!registry_.isAlive(id))
-            continue;
-        if (players.contains(id))
-            continue;
-        toDestroy.push_back(id);
-    }
-    for (EntityId id : toDestroy) {
-        registry_.destroyEntity(id);
-    }
-}
-
-void ServerApp::respawnPlayers(const Vec2f& respawn)
-{
-    for (const auto& [_, entityId] : playerEntities_) {
-        if (!registry_.isAlive(entityId))
-            continue;
-        registry_.remove<RespawnTimerComponent>(entityId);
-        if (registry_.has<HealthComponent>(entityId)) {
-            auto& h   = registry_.get<HealthComponent>(entityId);
-            h.current = h.max;
-        }
-        if (registry_.has<TransformComponent>(entityId)) {
-            auto& t = registry_.get<TransformComponent>(entityId);
-            t.x     = respawn.x;
-            t.y     = respawn.y;
-        }
-        if (registry_.has<VelocityComponent>(entityId)) {
-            auto& v = registry_.get<VelocityComponent>(entityId);
-            v.vx    = 0.0F;
-            v.vy    = 0.0F;
-        }
-        registry_.emplace<InvincibilityComponent>(entityId, InvincibilityComponent::create(kRespawnInvincibility));
-    }
-}
-
-void ServerApp::resetToCheckpoint()
+Vec2f ServerApp::respawnPosition(EntityId entityId) const
 {
     Vec2f respawn = kDefaultRespawn;
-    std::vector<LevelDirector::BossCheckpointState> bossStates;
-
-    if (levelLoaded_) {
-        if (checkpointState_.has_value()) {
-            levelDirector_->restoreCheckpointState(checkpointState_->director);
-            levelSpawnSys_->restoreCheckpointState(checkpointState_->spawns);
-            respawn    = checkpointState_->respawn;
-            bossStates = checkpointState_->director.bosses;
-        } else {
-            levelDirector_->reset();
-            levelSpawnSys_->reset();
-        }
+    if (registry_.has<BoundaryComponent>(entityId)) {
+        const auto& bounds = registry_.get<BoundaryComponent>(entityId);
+        respawn.x          = std::clamp(bounds.minX + kDefaultRespawn.x, bounds.minX, bounds.maxX);
+        respawn.y          = std::clamp(kDefaultRespawn.y, bounds.minY, bounds.maxY);
     }
-    lastSegmentIndex_ = -1;
+    return respawn;
+}
 
-    purgeNonPlayerEntities();
-
-    if (levelLoaded_ && checkpointState_.has_value()) {
-        for (const auto& bossState : bossStates) {
-            if (bossState.status != LevelDirector::BossCheckpointStatus::Alive)
-                continue;
-            auto settings = levelSpawnSys_->getBossSpawnSettings(bossState.bossId);
-            if (!settings.has_value())
-                continue;
-            levelSpawnSys_->spawnBossImmediate(registry_, *settings);
-        }
+void ServerApp::respawnPlayer(EntityId entityId)
+{
+    if (!registry_.isAlive(entityId))
+        return;
+    registry_.remove<RespawnTimerComponent>(entityId);
+    if (registry_.has<HealthComponent>(entityId)) {
+        auto& h   = registry_.get<HealthComponent>(entityId);
+        h.current = h.max;
     }
-
-    respawnPlayers(respawn);
+    if (registry_.has<TransformComponent>(entityId)) {
+        auto& t  = registry_.get<TransformComponent>(entityId);
+        auto pos = respawnPosition(entityId);
+        t.x      = pos.x;
+        t.y      = pos.y;
+    }
+    if (registry_.has<VelocityComponent>(entityId)) {
+        auto& v = registry_.get<VelocityComponent>(entityId);
+        v.vx    = 0.0F;
+        v.vy    = 0.0F;
+    }
+    registry_.emplace<InvincibilityComponent>(entityId, InvincibilityComponent::create(kRespawnInvincibility));
 }
 
 void ServerApp::spawnPlayerDeathFx(float x, float y)
@@ -435,9 +375,14 @@ void ServerApp::handleDeathAndRespawn()
                         if (isPlayer && hadTransform) {
                             deathFxToSpawn.emplace_back(deathX, deathY);
                         }
-                        registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(2.0F));
+                        registry_.emplace<RespawnTimerComponent>(id, RespawnTimerComponent::create(kRespawnDelay));
                         if (registry_.has<TransformComponent>(id)) {
                             registry_.get<TransformComponent>(id).y = kOffscreenRespawnPlaceholder;
+                        }
+                        if (registry_.has<VelocityComponent>(id)) {
+                            auto& v = registry_.get<VelocityComponent>(id);
+                            v.vx    = 0.0F;
+                            v.vy    = 0.0F;
                         }
                     }
                     continue;

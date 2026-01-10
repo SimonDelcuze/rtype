@@ -15,7 +15,7 @@
 - Trigger: Condition that activates an event (time, distance, entity state).
 - Boss Room: Segment that can override scroll and lock progress.
 - Gate: Blocking element controlling player progress during scripted moments.
-- Checkpoint: Explicit point where player can restart after death.
+- Checkpoint: Explicit marker used for trigger evaluation.
 
 ## Core Design
 
@@ -75,28 +75,14 @@ The level system tracks:
 
 This allows triggers based on distance, not only time.
 
-## Checkpoint Rules (R-Type)
+## Checkpoint Behavior
 
-Checkpoints are explicit and placed at precise positions.
-
-When a checkpoint is reached, the server stores a `CheckpointState`:
-
-- current segment index, time, and distance.
-- current scroll settings.
-- segment event runtime state (fired flags and repeat counters).
-- spawn group state (ids already spawned).
-- boss status (alive or dead at the checkpoint).
-- spawn system state (pending enemy spawns, boss spawn settings).
-- player respawn position.
+Checkpoints are explicit markers placed at precise positions and used for trigger evaluation.
 
 On player death:
 
 - player loses all power-ups and respawns at base loadout.
-- the world is reset to the last checkpoint.
-- all enemies and obstacles after the checkpoint are reset.
-- any active boss is reset to its initial state.
-
-This matches classic R-Type behavior.
+- the level continues without reset or rewind.
 
 See `docs/server/level-checkpoints.md` for runtime details.
 
@@ -138,8 +124,7 @@ Events can be extended without breaking compatibility.
 
 - All events are driven by the server timeline.
 - Random choices must use the level seed.
-- On checkpoint reset, the timeline is rewound to the checkpoint and replayed.
-- The resulting world state must be identical to the original pass.
+- No checkpoint rewind is performed during runtime.
 
 ## Versioning and Validation
 

@@ -69,8 +69,8 @@ Use a segment with `scroll` set to `stopped`, a `set_player_bounds` event at tim
 
 ## Checkpoint Event
 
-`checkpoint` marks a checkpoint id and provides a respawn position. The server captures a checkpoint snapshot
-after dispatching events for that tick.
+`checkpoint` marks a checkpoint id for trigger evaluation. Respawn positions are ignored; respawn uses the default
+left-of-screen position and does not reset the level.
 
 ## Network Mapping
 

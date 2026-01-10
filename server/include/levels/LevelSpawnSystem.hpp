@@ -30,19 +30,8 @@ class LevelSpawnSystem
         std::string spawnGroupId;
     };
 
-    struct CheckpointState
-    {
-        float time = 0.0F;
-        std::vector<PendingEnemySpawn> pendingEnemies;
-        std::unordered_map<std::string, SpawnBossSettings> bossSpawns;
-    };
-
     void reset();
     void update(Registry& registry, float deltaTime, const std::vector<DispatchedEvent>& events);
-    CheckpointState captureCheckpointState() const;
-    void restoreCheckpointState(const CheckpointState& state);
-    std::optional<SpawnBossSettings> getBossSpawnSettings(const std::string& bossId) const;
-    void spawnBossImmediate(Registry& registry, const SpawnBossSettings& settings);
 
   private:
     void dispatchEvents(Registry& registry, const std::vector<DispatchedEvent>& events);
@@ -65,5 +54,4 @@ class LevelSpawnSystem
 
     std::unordered_map<std::string, MovementComponent> patternMap_;
     std::vector<PendingEnemySpawn> pendingEnemies_;
-    std::unordered_map<std::string, SpawnBossSettings> bossSpawns_;
 };

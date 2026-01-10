@@ -5,8 +5,8 @@ This plan covers validation, runtime behavior, and regressions for the JSON leve
 ## Goals
 
 - Catch invalid JSON/schema/semantic errors early.
-- Verify checkpoint reset matches R-Type rules.
-- Ensure boss reset and boss phase state are deterministic.
+- Verify respawn delay and position.
+- Ensure boss phases continue without reset on player death.
 - Validate scroll changes (constant, stopped, curve) in runtime events.
 
 ## Test Data
@@ -17,8 +17,7 @@ Create a minimal set of JSON fixtures under `server/assets/levels/test/` (or a t
 - `invalid_schema_bad_types.json`
 - `invalid_semantic_unknown_ids.json`
 - `invalid_semantic_duplicate_ids.json`
-- `checkpoint_basic.json`
-- `checkpoint_with_boss.json`
+- `respawn_basic.json`
 - `scroll_constant.json`
 - `scroll_stop_resume.json`
 - `scroll_curve.json`
@@ -50,49 +49,30 @@ Expected: loader returns `LevelLoadError` with `SchemaError`, path and jsonPoint
 
 Expected: loader returns `SemanticError` with clear message and path.
 
-## Checkpoint Behavior
+## Respawn Behavior
 
-### Checkpoint basic reset
+### Respawn timing and position
 
-- Build a level with a checkpoint, a few waves, and obstacles after it.
-- Progress past checkpoint, kill some enemies, then die.
+- Build a level with waves and obstacles.
+- Die while the level is running.
 
 Expected on respawn:
 
-- All non-player entities are cleared.
-- LevelDirector restores segment time/distance/scroll to checkpoint snapshot.
-- LevelSpawnSystem restores pending spawns from checkpoint time.
-- Players respawn at checkpoint position with base loadout and invincibility.
+- Player respawns after the configured delay.
+- Player respawns on the left side of the screen with base loadout and invincibility.
+- The level timeline, spawns, and bosses continue without reset.
 
-### Checkpoint determinism
+## Boss Continuity
 
-- Run the same sequence twice with identical inputs and checkpoint reset.
+### Boss room death
 
-Expected:
-
-- Event order is identical across runs.
-- Enemy/obstacle spawns after checkpoint match positions and timing.
-
-## Boss Reset
-
-### Boss alive at checkpoint
-
-- Reach a checkpoint before boss spawn, then trigger boss spawn.
-- Die and respawn.
+- Trigger a boss spawn.
+- Die and respawn during the boss fight.
 
 Expected:
 
-- Boss is respawned with full HP, phase index reset.
-- Boss onDeath events do not fire during reset.
-
-### Boss dead at checkpoint
-
-- Kill boss, reach a checkpoint after boss death, then die.
-
-Expected:
-
-- Boss remains dead after reset (no re-spawn).
-- Gate state for boss room matches checkpoint snapshot.
+- Boss remains alive with current state.
+- Boss phase progression continues without reset.
 
 ## Scroll Variable
 

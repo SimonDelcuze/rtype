@@ -7,7 +7,7 @@ It is the runtime component that turns `LevelData` into gameplay events.
 
 - Track the current segment and its clocks (time + distance).
 - Evaluate triggers and dispatch level events.
-- Apply local effects required for deterministic evaluation (scroll, checkpoints).
+- Apply local effects required for deterministic evaluation (scroll, checkpoint markers).
 - Manage boss phase transitions and boss events.
 
 ## State Machine
@@ -64,7 +64,6 @@ Triggers are evaluated against a context:
 
 - `set_scroll` events update `activeScroll` immediately.
 - `checkpoint` events mark checkpoints as reached.
-- The server snapshots LevelDirector runtime when a checkpoint event fires.
 
 These effects are applied inside the LevelDirector to keep triggers deterministic.
 

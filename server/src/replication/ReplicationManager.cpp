@@ -6,10 +6,16 @@ ReplicationManager::ReplicationManager() = default;
 
 ReplicationManager::SyncResult ReplicationManager::synchronize(const Registry& registry, std::uint32_t currentTick)
 {
-    std::vector<std::vector<std::uint8_t>> packets = buildSmartDeltaSnapshot(
-        const_cast<Registry&>(registry), currentTick, entityStateCache_, false, Network::kMaxSafePacketPayload);
+    return synchronize(registry, currentTick, false);
+}
 
-    return SyncResult{std::move(packets), false};
+ReplicationManager::SyncResult ReplicationManager::synchronize(const Registry& registry, std::uint32_t currentTick,
+                                                               bool forceFull)
+{
+    std::vector<std::vector<std::uint8_t>> packets = buildSmartDeltaSnapshot(
+        const_cast<Registry&>(registry), currentTick, entityStateCache_, forceFull, Network::kMaxSafePacketPayload);
+
+    return SyncResult{std::move(packets), forceFull};
 }
 
 void ReplicationManager::clear()

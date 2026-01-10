@@ -34,7 +34,6 @@
 #include <events/EventBus.hpp>
 #include <map>
 #include <memory>
-#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -87,17 +86,8 @@ class ServerApp
     void spawnPlayerDeathFx(float x, float y);
     void sendLevelEvents(const std::vector<DispatchedEvent>& events);
     void sendSegmentState();
-    void captureCheckpoint(const std::vector<DispatchedEvent>& events);
-    void resetToCheckpoint();
-    void respawnPlayers(const Vec2f& respawn);
-    void purgeNonPlayerEntities();
-
-    struct CheckpointState
-    {
-        LevelDirector::CheckpointState director;
-        LevelSpawnSystem::CheckpointState spawns;
-        Vec2f respawn;
-    };
+    Vec2f respawnPosition(EntityId entityId) const;
+    void respawnPlayer(EntityId entityId);
 
     GameWorld world_;
     Registry& registry_;
@@ -109,7 +99,6 @@ class ServerApp
     std::unique_ptr<LevelDirector> levelDirector_;
     std::unique_ptr<LevelSpawnSystem> levelSpawnSys_;
     bool levelLoaded_{false};
-    std::optional<CheckpointState> checkpointState_;
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
     MonsterMovementSystem monsterMovementSys_;

@@ -80,15 +80,12 @@ Boss rooms are standard segments:
 
 This allows flexible R-Type behavior, including moving bosses.
 
-## Checkpoint and Reset
+## Checkpoint and Respawn
 
 On player death in a boss room:
 
-- The boss is destroyed and re-spawned from scratch.
-- The segment timeline is rewound to the last checkpoint.
-- Gates revert to their checkpoint state.
-
-This matches classic R-Type reset behavior.
+- The boss and timeline continue without reset.
+- The player respawns on the left side of the screen with base loadout.
 
 ## Network Implications (Future)
 
