@@ -33,7 +33,7 @@ class WaitingRoomMenu : public IMenu
     void handleEvent(Registry& registry, const Event& event) override;
     void render(Registry& registry, Window& window) override;
 
-    void update(Registry& registry, float dt);
+    void update(Registry& registry, float dt) override;
     Result getResult(Registry& registry) const;
 
     State getState() const
