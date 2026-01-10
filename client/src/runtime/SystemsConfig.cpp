@@ -5,6 +5,7 @@
 #include "systems/AudioSystem.hpp"
 #include "systems/BackgroundScrollSystem.hpp"
 #include "systems/DirectionalAnimationSystem.hpp"
+#include "systems/FollowerFacingSystem.hpp"
 #include "systems/GameOverSystem.hpp"
 #include "systems/HUDSystem.hpp"
 #include "systems/IntroCinematicSystem.hpp"
@@ -45,6 +46,7 @@ void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipeli
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
     gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));
+    gameLoop.addSystem(std::make_shared<FollowerFacingSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<DirectionalAnimationSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));

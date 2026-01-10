@@ -898,6 +898,11 @@ namespace
                 out.push_back(PatternDefinition{
                     id, MovementComponent::sine(static_cast<float>(speed), static_cast<float>(amp),
                                                 static_cast<float>(freq), static_cast<float>(phase))});
+            } else if (type == "follow" || type == "follow_player") {
+                double speed = 0.0;
+                readNumber(p, "speed", speed, ppath, error, true);
+                out.push_back(
+                    PatternDefinition{id, MovementComponent::followPlayer(static_cast<float>(speed))});
             } else {
                 setError(error, LevelLoadErrorCode::SchemaError, "Unknown pattern type: " + type, "", ppath);
                 return false;
