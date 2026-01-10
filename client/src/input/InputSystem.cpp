@@ -8,6 +8,7 @@
 #include "components/InvincibilityComponent.hpp"
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -23,15 +24,17 @@ namespace
     constexpr float kMoveSpeed = 250.0F;
 }
 
-InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
-                         float& posY, TextureManager& textures, AnimationRegistry& animations, LevelState* levelState)
-    : buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter), posX_(&posX), posY_(&posY),
-      textures_(&textures), animations_(&animations), levelState_(levelState)
+InputSystem::InputSystem(std::uint32_t localPlayerId, InputBuffer& buffer, InputMapper& mapper,
+                         std::uint32_t& sequenceCounter, float& posX, float& posY, TextureManager& textures,
+                         AnimationRegistry& animations, LevelState* levelState)
+    : localPlayerId_(localPlayerId), buffer_(&buffer), mapper_(&mapper), sequenceCounter_(&sequenceCounter),
+      posX_(&posX), posY_(&posY), textures_(&textures), animations_(&animations), levelState_(levelState)
 {}
 
-InputSystem::InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX,
-                         float& posY, LevelState* levelState)
-    : InputSystem(buffer, mapper, sequenceCounter, posX, posY, dummyTextures(), dummyAnimations(), levelState)
+InputSystem::InputSystem(std::uint32_t localPlayerId, InputBuffer& buffer, InputMapper& mapper,
+                         std::uint32_t& sequenceCounter, float& posX, float& posY, LevelState* levelState)
+    : InputSystem(localPlayerId, buffer, mapper, sequenceCounter, posX, posY, dummyTextures(), dummyAnimations(),
+                  levelState)
 {}
 
 void InputSystem::initialize() {}
@@ -345,6 +348,14 @@ bool InputSystem::ensurePlayerPosition(Registry& registry)
         const auto& tag = registry.get<TagComponent>(id);
         if (!tag.hasTag(EntityTag::Player))
             continue;
+
+        if (registry.has<OwnershipComponent>(id)) {
+            const auto& ownership = registry.get<OwnershipComponent>(id);
+            if (ownership.ownerId != localPlayerId_) {
+                continue;
+            }
+        }
+
         const auto& t        = registry.get<TransformComponent>(id);
         *posX_               = t.x;
         *posY_               = t.y;

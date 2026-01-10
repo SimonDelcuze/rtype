@@ -32,7 +32,8 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint)
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint,
+                                                std::uint32_t& outUserId)
 {
     (void) lastLobbyEndpoint;
 
@@ -40,6 +41,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
     static IpEndpoint savedLobbyEp;
     static bool authenticated = false;
     static std::string authenticatedUsername;
+    static std::uint32_t authenticatedUserId;
     static std::unique_ptr<LobbyConnection> authenticatedConnection;
 
     if (!serverSelected) {
@@ -89,7 +91,10 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         Logger::instance().info("[Auth] User authenticated: " + authResult->username);
         authenticated         = true;
         authenticatedUsername = authResult->username;
+        authenticatedUserId   = authResult->userId;
     }
+    
+    outUserId = authenticatedUserId;
 
     while (window.isOpen()) {
         Logger::instance().info("[Nav] Showing lobby menu");
@@ -106,7 +111,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         authenticatedConnection.reset();
 
         return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
-                                     lastLobbyEndpoint);
+                                     lastLobbyEndpoint, outUserId);
     }
 
     return std::nullopt;
@@ -265,9 +270,9 @@ namespace
 
 } // namespace
 
-GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager, std::string& errorMessage,
+GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, const ClientOptions& options,
+                                 const IpEndpoint& serverEndpoint, NetPipelines& net, InputBuffer& inputBuffer,
+                                 TextureManager& textureManager, FontManager& fontManager, std::string& errorMessage,
                                  ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     GraphicsFactory graphicsFactory;
@@ -336,9 +341,9 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosX            = 0.0F;
     float playerPosY            = 0.0F;
 
-    configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     graphicsFactory, soundManager, broadcastQueue);
+    configureSystems(localPlayerId, gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels,
+                     levelState, inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager,
+                     eventBus, graphicsFactory, soundManager, broadcastQueue);
 
     ButtonSystem buttonSystem(window, fontManager);
 

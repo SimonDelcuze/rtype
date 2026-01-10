@@ -17,6 +17,7 @@ void NetworkBridge::processEvents(const std::vector<GameEvent>& events)
                     pkt.entityType = evt.entityType;
                     pkt.posX       = evt.posX;
                     pkt.posY       = evt.posY;
+                    pkt.ownerId    = evt.ownerId;
                     sendThread_.broadcast(pkt);
                     knownEntities_.insert(evt.entityId);
                 } else if constexpr (std::is_same_v<T, EntityDestroyedEvent>) {

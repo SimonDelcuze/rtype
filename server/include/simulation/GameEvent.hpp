@@ -6,6 +6,7 @@
 struct EntitySpawnedEvent
 {
     std::uint32_t entityId;
+    std::uint32_t ownerId;
     std::uint8_t entityType;
     float posX;
     float posY;
