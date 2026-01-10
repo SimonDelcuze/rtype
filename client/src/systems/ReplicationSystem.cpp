@@ -377,7 +377,7 @@ void ReplicationSystem::applyArchetype(Registry& registry, EntityId id, std::uin
     registry.emplace<LayerComponent>(id, LayerComponent::create(static_cast<int>(data->layer)));
     if (!registry.has<TagComponent>(id)) {
         EntityTag tag = EntityTag::Enemy;
-        if (typeId == 1) {
+        if (isPlayer) {
             tag = EntityTag::Player;
         } else if (typeId == 9 || typeId == 10 || typeId == 11) {
             tag = EntityTag::Obstacle;

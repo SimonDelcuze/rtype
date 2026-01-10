@@ -87,5 +87,6 @@ class LobbyServer
     std::shared_ptr<UserRepository> userRepository_;
     std::shared_ptr<AuthService> authService_;
 
+    std::atomic<std::uint32_t> nextPlayerId_{1};
     std::uint16_t nextSequence_{0};
 };

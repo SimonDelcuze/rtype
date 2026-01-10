@@ -3,7 +3,6 @@
 #include "Logger.hpp"
 #include "components/BackgroundScrollComponent.hpp"
 #include "components/LayerComponent.hpp"
-#include "components/LivesComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
@@ -64,11 +63,6 @@ void LevelInitSystem::createHUDEntities(Registry& registry)
     scoreText.content = "SCORE 0000000";
     registry.emplace<ScoreComponent>(score, ScoreComponent::create(0));
     registry.emplace<LayerComponent>(score, LayerComponent::create(100));
-
-    EntityId lives = registry.createEntity();
-    registry.emplace<TransformComponent>(lives, TransformComponent::create(10.0F, 680.0F));
-    registry.emplace<LivesComponent>(lives, LivesComponent::create(3, 3));
-    registry.emplace<LayerComponent>(lives, LayerComponent::create(100));
 }
 
 void LevelInitSystem::resolveEntityType(const ArchetypeEntry& entry)
