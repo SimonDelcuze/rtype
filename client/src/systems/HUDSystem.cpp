@@ -259,8 +259,7 @@ void HUDSystem::update(Registry& registry, float)
         }
         playerLives.emplace_back(key, registry.get<LivesComponent>(id).current);
     }
-    std::sort(playerLives.begin(), playerLives.end(),
-              [](const auto& a, const auto& b) { return a.first < b.first; });
+    std::sort(playerLives.begin(), playerLives.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
 
     if (!playerLives.empty()) {
         const auto size = window_.getSize();
@@ -270,8 +269,8 @@ void HUDSystem::update(Registry& registry, float)
         }
         for (std::size_t i = 0; i < playerLives.size(); ++i) {
             int livesCount = std::max(0, playerLives[i].second);
-            float startX = kLivesLeftMargin;
-            float startY = baseY - kLivesPipHeight - (static_cast<float>(i) * kLivesRowSpacing);
+            float startX   = kLivesLeftMargin;
+            float startY   = baseY - kLivesPipHeight - (static_cast<float>(i) * kLivesRowSpacing);
             drawLivesPips(startX, startY, livesCount);
         }
     }
