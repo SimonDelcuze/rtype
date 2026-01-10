@@ -1,6 +1,7 @@
 #include "network/LobbyPackets.hpp"
 
 #include "network/PacketHeader.hpp"
+
 #include <cstring>
 
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence)

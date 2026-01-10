@@ -23,6 +23,7 @@
 
 * [Level Messages & Entity Typing](protocol/level-messages.md)
 * [Lobby Protocol](protocol/lobby-protocol.md)
+* [Chat Protocol](protocol/chat.md)
 
 ## Authentication & User Management
 

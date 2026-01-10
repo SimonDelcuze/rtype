@@ -14,6 +14,7 @@
 #include "graphics/TextureManager.hpp"
 #include "network/LobbyPackets.hpp"
 #include "ui/NotificationData.hpp"
+
 #include <sstream>
 
 namespace
@@ -92,8 +93,8 @@ namespace
         return entity;
     }
 
-    EntityId createInputField(Registry& registry, float x, float y, float width, float height, InputFieldComponent field,
-                              int tabOrder)
+    EntityId createInputField(Registry& registry, float x, float y, float width, float height,
+                              InputFieldComponent field, int tabOrder)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
@@ -188,13 +189,13 @@ void RoomWaitingMenu::create(Registry& registry)
     auto& chatBgTransform = registry.emplace<TransformComponent>(chatBackgroundEntity_);
     chatBgTransform.x     = 800.0F;
     chatBgTransform.y     = 250.0F;
-    auto chatBgBox = BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
+    auto chatBgBox        = BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
     registry.emplace<BoxComponent>(chatBackgroundEntity_, chatBgBox);
 
     createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
-    auto chatField = InputFieldComponent::create("", 120);
+    auto chatField        = InputFieldComponent::create("", 120);
     chatField.placeholder = "Type message...";
-    chatInputField_ = createInputField(registry, 820.0F, 600.0F, 300.0F, 40.0F, chatField, 0);
+    chatInputField_       = createInputField(registry, 820.0F, 600.0F, 300.0F, 40.0F, chatField, 0);
 
     sendButtonEntity_ = createButton(registry, 1160.0F, 600.0F, 80.0F, 40.0F, "Send", Color(0, 150, 80),
                                      [this, &registry]() { onSendChatClicked(registry); });

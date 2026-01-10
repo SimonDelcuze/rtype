@@ -45,7 +45,7 @@ void InputFieldSystem::update(Registry& registry, float)
         text->setFillColor(Color::White);
 
         std::string fullText = displayText;
-        float maxWidth = box.width - 20.0F;
+        float maxWidth       = box.width - 20.0F;
 
         text->setString(fullText);
         if (text->getGlobalBounds().width > maxWidth) {
