@@ -1,9 +1,11 @@
 #pragma once
 
+#include "concurrency/ThreadSafeQueue.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "network/LobbyConnection.hpp"
 #include "ui/IMenu.hpp"
+#include "ui/NotificationData.hpp"
 
 #include <string>
 
@@ -21,7 +23,8 @@ class LoginMenu : public IMenu
         std::string token;
     };
 
-    LoginMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn);
+    LoginMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn,
+              ThreadSafeQueue<NotificationData>& broadcastQueue);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -39,6 +42,7 @@ class LoginMenu : public IMenu
     FontManager& fonts_;
     TextureManager& textures_;
     LobbyConnection& lobbyConn_;
+    ThreadSafeQueue<NotificationData>& broadcastQueue_;
 
     bool done_          = false;
     bool openRegister_  = false;
@@ -52,5 +56,4 @@ class LoginMenu : public IMenu
 
     EntityId usernameInput_ = 0;
     EntityId passwordInput_ = 0;
-    EntityId errorText_     = 0;
 };

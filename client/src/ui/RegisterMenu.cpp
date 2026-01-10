@@ -105,8 +105,9 @@ namespace
 
 } // namespace
 
-RegisterMenu::RegisterMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn)
-    : fonts_(fonts), textures_(textures), lobbyConn_(lobbyConn)
+RegisterMenu::RegisterMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn,
+                           ThreadSafeQueue<NotificationData>& broadcastQueue)
+    : fonts_(fonts), textures_(textures), lobbyConn_(lobbyConn), broadcastQueue_(broadcastQueue)
 {}
 
 void RegisterMenu::create(Registry& registry)
@@ -122,21 +123,20 @@ void RegisterMenu::create(Registry& registry)
     createBackground(registry, textures_);
     createLogo(registry, textures_);
 
-    createLabel(registry, 480.0F, 180.0F, "REGISTER", 36);
-    createLabel(registry, 440.0F, 260.0F, "Username (3-32 chars):");
-    createLabel(registry, 440.0F, 340.0F, "Password (8+ chars):");
-    createLabel(registry, 440.0F, 420.0F, "Confirm Password:");
+    createLabel(registry, 440.0F, 250.0F, "Username");
+    createLabel(registry, 440.0F, 350.0F, "Password");
+    createLabel(registry, 440.0F, 450.0F, "Confirm Password");
 
-    usernameInput_        = createInputField(registry, 440.0F, 290.0F, InputFieldComponent::create("", 32), 0);
-    passwordInput_        = createInputField(registry, 440.0F, 370.0F, InputFieldComponent::password("", 64), 1);
-    confirmPasswordInput_ = createInputField(registry, 440.0F, 450.0F, InputFieldComponent::password("", 64), 2);
+    usernameInput_        = createInputField(registry, 440.0F, 285.0F, InputFieldComponent::create("", 32), 0);
+    passwordInput_        = createInputField(registry, 440.0F, 385.0F, InputFieldComponent::password("", 64), 1);
+    confirmPasswordInput_ = createInputField(registry, 440.0F, 485.0F, InputFieldComponent::password("", 64), 2);
 
-    createButton(registry, 440.0F, 540.0F, "Register", Color(80, 150, 80), [this, &registry]() {
+    createButton(registry, 550.0F, 585.0F, "Register", Color(80, 150, 80), [this, &registry]() {
         Logger::instance().info("Register clicked");
         handleRegisterAttempt(registry);
     });
 
-    createButton(registry, 660.0F, 540.0F, "Back to Login", Color(80, 80, 80), [this]() {
+    createButton(registry, 1050.0F, 560.0F, "Back", Color(100, 100, 100), [this]() {
         Logger::instance().info("Back to Login clicked");
         done_        = true;
         backToLogin_ = true;
@@ -148,7 +148,6 @@ void RegisterMenu::create(Registry& registry)
         exitRequested_ = true;
     });
 
-    errorText_ = createLabel(registry, 440.0F, 620.0F, "", 16);
 }
 
 void RegisterMenu::destroy(Registry& registry)
@@ -176,13 +175,9 @@ RegisterMenu::Result RegisterMenu::getResult(Registry& /* registry */) const
     return result;
 }
 
-void RegisterMenu::setError(Registry& registry, const std::string& message)
+void RegisterMenu::setError(Registry& /* registry */, const std::string& message)
 {
-    if (errorText_ != 0 && registry.has<TextComponent>(errorText_)) {
-        auto& text   = registry.get<TextComponent>(errorText_);
-        text.content = message;
-        text.color   = Color(255, 100, 100);
-    }
+    broadcastQueue_.push(NotificationData{message, 5.0F});
 }
 
 void RegisterMenu::reset()
@@ -221,7 +216,7 @@ bool RegisterMenu::validatePassword(const std::string& password, std::string& er
     }
 
     if (!hasUpper || !hasLower || !hasDigit) {
-        errorMsg = "Password must contain uppercase, lowercase, and digit";
+        errorMsg = "Password must contain uppercase\n\t  lowercase, and digit";
         return false;
     }
 

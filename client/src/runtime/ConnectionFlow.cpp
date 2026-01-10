@@ -38,7 +38,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
     std::optional<AuthResult> result;
 
     while (window.isOpen()) {
-        auto loginResult = runner.runAndGetResult<LoginMenu>(lobbyConn);
+        auto loginResult = runner.runAndGetResult<LoginMenu>(lobbyConn, broadcastQueue);
 
         if (!window.isOpen())
             break;
@@ -54,7 +54,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
         }
 
         if (loginResult.openRegister) {
-            auto registerResult = runner.runAndGetResult<RegisterMenu>(lobbyConn);
+            auto registerResult = runner.runAndGetResult<RegisterMenu>(lobbyConn, broadcastQueue);
 
             if (!window.isOpen())
                 break;
