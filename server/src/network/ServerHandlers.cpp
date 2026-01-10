@@ -1,6 +1,6 @@
 #include "Logger.hpp"
-#include "network/ServerRunner.hpp"
 #include "components/OwnershipComponent.hpp"
+#include "network/ServerRunner.hpp"
 
 #include <random>
 

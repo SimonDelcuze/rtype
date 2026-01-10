@@ -7,7 +7,6 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
                                     ThreadSafeQueue<NotificationData>& broadcastQueue,
                                     std::optional<IpEndpoint>& lastLobbyEndpoint)
 {
-
     NetPipelines net;
     std::uint32_t userId = 0;
     auto serverEndpoint  = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,

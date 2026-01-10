@@ -32,8 +32,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint,
-                                                std::uint32_t& outUserId)
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId)
 {
     (void) lastLobbyEndpoint;
 
@@ -93,7 +92,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         authenticatedUsername = authResult->username;
         authenticatedUserId   = authResult->userId;
     }
-    
+
     outUserId = authenticatedUserId;
 
     while (window.isOpen()) {
