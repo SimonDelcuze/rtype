@@ -150,7 +150,6 @@ void LoginMenu::create(Registry& registry)
         done_          = true;
         exitRequested_ = true;
     });
-
 }
 
 void LoginMenu::destroy(Registry& registry)
@@ -174,7 +173,7 @@ void LoginMenu::update(Registry& registry, float dt)
     if (isLoading_) {
         if (lobbyConn_.hasLoginResult()) {
             auto response = lobbyConn_.popLoginResult();
-            isLoading_ = false;
+            isLoading_    = false;
 
             if (response.has_value() && response->success) {
                 Logger::instance().info("Login successful for user: " + username_);
@@ -186,9 +185,18 @@ void LoginMenu::update(Registry& registry, float dt)
                 std::string errorMsg = "Login failed";
                 if (response.has_value()) {
                     switch (response->errorCode) {
-                        case AuthErrorCode::InvalidCredentials: errorMsg = "Invalid username or password"; break;
-                        case AuthErrorCode::ServerError:        errorMsg = "Server error occurred"; break;
-                        default:                                     errorMsg = "Login failed"; break;
+                        case AuthErrorCode::InvalidCredentials:
+                            errorMsg = "Invalid username or password";
+                            break;
+                        case AuthErrorCode::AlreadyConnected:
+                            errorMsg = "Account already connected";
+                            break;
+                        case AuthErrorCode::ServerError:
+                            errorMsg = "Server error occurred";
+                            break;
+                        default:
+                            errorMsg = "Login failed";
+                            break;
                     }
                 } else {
                     errorMsg = "Login failed: No response";
@@ -204,10 +212,10 @@ void LoginMenu::update(Registry& registry, float dt)
     if (heartbeatTimer_ >= 1.0F) {
         heartbeatTimer_ = 0.0F;
         if (!lobbyConn_.ping()) {
-             Logger::instance().warn("[Heartbeat] Ping failed in Login Menu");
-             consecutiveFailures_++;
+            Logger::instance().warn("[Heartbeat] Ping failed in Login Menu");
+            consecutiveFailures_++;
         } else {
-             consecutiveFailures_ = 0;
+            consecutiveFailures_ = 0;
         }
 
         if (consecutiveFailures_ >= 2) {
@@ -237,7 +245,8 @@ void LoginMenu::handleLoginAttempt(Registry& registry)
         return;
     }
 
-    if (isLoading_) return;
+    if (isLoading_)
+        return;
 
     username_ = username;
     lobbyConn_.sendLogin(username, password);
@@ -249,31 +258,32 @@ LoginMenu::Result LoginMenu::getResult(Registry& registry) const
     (void) registry;
     Result res;
     res.authenticated = authenticated_;
-    res.openRegister = openRegister_;
+    res.openRegister  = openRegister_;
     res.backRequested = backRequested_;
     res.exitRequested = exitRequested_;
-    res.userId = userId_;
-    res.username = username_;
-    res.token = token_;
+    res.userId        = userId_;
+    res.username      = username_;
+    res.token         = token_;
     return res;
 }
 
 void LoginMenu::setError(Registry& registry, const std::string& message)
 {
-     (void) registry;
-     broadcastQueue_.push(NotificationData{message, 3.0F});
+    (void) registry;
+    broadcastQueue_.push(NotificationData{message, 3.0F});
 }
 
-void LoginMenu::reset() {
-    done_ = false;
-    openRegister_ = false;
+void LoginMenu::reset()
+{
+    done_          = false;
+    openRegister_  = false;
     backRequested_ = false;
     exitRequested_ = false;
     authenticated_ = false;
-    isLoading_ = false;
-    userId_ = 0;
+    isLoading_     = false;
+    userId_        = 0;
     username_.clear();
     token_.clear();
-    heartbeatTimer_ = 0.0F;
+    heartbeatTimer_      = 0.0F;
     consecutiveFailures_ = 0;
 }

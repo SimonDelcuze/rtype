@@ -14,9 +14,11 @@ bool g_networkDebugEnabled         = false;
 bool g_isRoomHost                  = false;
 std::uint8_t g_expectedPlayerCount = 0;
 ColorFilterMode g_colorFilterMode  = ColorFilterMode::None;
+std::atomic<bool> g_forceExit{false};
 
 int runClient(const ClientOptions& options)
 {
+    g_forceExit = false;
     configureLogger(options.verbose);
 
     Window window = createMainWindow();

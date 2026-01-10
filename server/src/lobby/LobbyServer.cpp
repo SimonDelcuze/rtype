@@ -166,8 +166,8 @@ ServerStats LobbyServer::aggregateStats()
         lobbyClientCount = lobbySessions_.size();
     }
 
-    auto roomIds                     = instanceManager_.getAllRoomIds();
-    std::size_t gameInstancePlayers  = 0;
+    auto roomIds                    = instanceManager_.getAllRoomIds();
+    std::size_t gameInstancePlayers = 0;
     for (auto roomId : roomIds) {
         auto* instance = instanceManager_.getInstance(roomId);
         if (instance != nullptr) {
@@ -268,14 +268,12 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
     auto msgType = static_cast<MessageType>(hdr->messageType);
 
     switch (msgType) {
-        case MessageType::ClientDisconnect:
-            {
-                std::lock_guard<std::mutex> lock(sessionsMutex_);
-                std::string key = endpointToKey(from);
-                lobbySessions_.erase(key);
-                Logger::instance().info("[LobbyServer] Client disconnected (explicitly): " + key);
-            }
-            break;
+        case MessageType::ClientDisconnect: {
+            std::lock_guard<std::mutex> lock(sessionsMutex_);
+            std::string key = endpointToKey(from);
+            lobbySessions_.erase(key);
+            Logger::instance().info("[LobbyServer] Client disconnected (explicitly): " + key);
+        } break;
 
         case MessageType::AuthLoginRequest:
             handleLoginRequest(*hdr, data, size, from);
@@ -623,7 +621,7 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
         return;
     }
 
-    std::string senderKey = endpointToKey(from);
+    std::string senderKey        = endpointToKey(from);
     std::uint32_t senderPlayerId = 0;
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
@@ -633,7 +631,8 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     }
 
     Logger::instance().info("[LobbyServer] Owner check: SenderPlayerId=" + std::to_string(senderPlayerId) +
-                            ", RoomOwnerId=" + std::to_string(roomInfo->ownerId) + " for Room=" + std::to_string(roomId));
+                            ", RoomOwnerId=" + std::to_string(roomInfo->ownerId) +
+                            " for Room=" + std::to_string(roomId));
 
     if (senderPlayerId != roomInfo->ownerId) {
         Logger::instance().warn("[LobbyServer] Player " + std::to_string(senderPlayerId) +
@@ -645,9 +644,8 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
 
-    Logger::instance().info("[LobbyServer] Owner validated. Starting Room " +
-                            std::to_string(roomId) + " with " + std::to_string(playerCount) + " players (IDs: " +
-                            std::to_string(senderPlayerId) + ")");
+    Logger::instance().info("[LobbyServer] Owner validated. Starting Room " + std::to_string(roomId) + " with " +
+                            std::to_string(playerCount) + " players (IDs: " + std::to_string(senderPlayerId) + ")");
 
     std::uint16_t gamePort = roomInfo->port;
 
@@ -689,8 +687,8 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
         ctrl.data[4] = playerCount;
 
         instance->handleControlEvent(ctrl);
-        Logger::instance().info("[LobbyServer] Sent authoritative force start for room " +
-                                std::to_string(roomId) + " with " + std::to_string(playerCount) + " players");
+        Logger::instance().info("[LobbyServer] Sent authoritative force start for room " + std::to_string(roomId) +
+                                " with " + std::to_string(playerCount) + " players");
     }
 
     std::lock_guard<std::mutex> lock(sessionsMutex_);
@@ -698,7 +696,8 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     for (const auto& [key, session] : lobbySessions_) {
         if (session.roomId == roomId) {
             Logger::instance().info("[LobbyServer] Sending RoomGameStarting to player in room " +
-                                    std::to_string(roomId) + " at " + key + " (PlayerId=" + std::to_string(session.playerId) + ")");
+                                    std::to_string(roomId) + " at " + key +
+                                    " (PlayerId=" + std::to_string(session.playerId) + ")");
             sendPacket(packet, session.endpoint);
             broadcastCount++;
         }
@@ -891,17 +890,33 @@ void LobbyServer::handleLoginRequest(const PacketHeader& hdr, const std::uint8_t
         return;
     }
 
-    std::string token = authService_->generateJWT(user->id, user->username);
-    userRepository_->updateLastLogin(user->id);
+    std::string token;
+    std::string requesterKey = endpointToKey(from);
 
-    std::lock_guard<std::mutex> lock(sessionsMutex_);
-    std::string key       = endpointToKey(from);
-    auto& session         = lobbySessions_[key];
-    session.authenticated = true;
-    session.userId        = user->id;
-    session.username      = user->username;
-    session.jwtToken      = token;
-    session.endpoint      = from;
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        for (const auto& [sessionKey, session] : lobbySessions_) {
+            if (session.authenticated && session.userId.has_value() && session.userId.value() == user->id &&
+                sessionKey != requesterKey) {
+                Logger::instance().warn("[LobbyServer] Login failed: account already connected - " +
+                                        loginData->username);
+                auto response = buildLoginResponsePacket(false, 0, "", AuthErrorCode::AlreadyConnected, hdr.sequenceId);
+                sendPacket(response, from);
+                return;
+            }
+        }
+
+        token                 = authService_->generateJWT(user->id, user->username);
+        auto& session         = lobbySessions_[requesterKey];
+        session.authenticated = true;
+        session.userId        = user->id;
+        session.username      = user->username;
+        session.jwtToken      = token;
+        session.endpoint      = from;
+        session.lastActivity  = std::chrono::steady_clock::now();
+    }
+
+    userRepository_->updateLastLogin(user->id);
 
     Logger::instance().info("[LobbyServer] User " + user->username + " logged in successfully");
 

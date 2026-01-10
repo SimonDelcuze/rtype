@@ -13,7 +13,6 @@ class ConnectionMenu : public IMenu
     struct Result
     {
         bool connected     = false;
-        bool useDefault    = false;
         bool openSettings  = false;
         bool exitRequested = false;
         std::string ip;
@@ -40,7 +39,6 @@ class ConnectionMenu : public IMenu
     TextureManager& textures_;
     std::string initialError_;
     bool done_               = false;
-    bool useDefault_         = false;
     bool openSettings_       = false;
     bool exitRequested_      = false;
     bool connecting_         = false;

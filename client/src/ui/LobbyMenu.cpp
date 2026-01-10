@@ -270,7 +270,7 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     }
 
                     conn->sendCreateRoom(result.roomName, result.password, result.visibility);
-                    state_ = State::Creating;
+                    state_      = State::Creating;
                     isCreating_ = true;
 
                 } else {
@@ -286,15 +286,25 @@ void LobbyMenu::render(Registry& registry, Window& window)
     if (state_ == State::ShowingPasswordInput) {
         if (passwordInputMenu_) {
             if (!passwordMenuInitialized_) {
-                for (EntityId id : roomButtonEntities_) { if (registry.isAlive(id)) registry.destroyEntity(id); }
+                for (EntityId id : roomButtonEntities_) {
+                    if (registry.isAlive(id))
+                        registry.destroyEntity(id);
+                }
                 roomButtonEntities_.clear();
-                if (registry.isAlive(titleEntity_)) registry.destroyEntity(titleEntity_);
-                if (registry.isAlive(statusEntity_)) registry.destroyEntity(statusEntity_);
-                if (registry.isAlive(createButtonEntity_)) registry.destroyEntity(createButtonEntity_);
-                if (registry.isAlive(refreshButtonEntity_)) registry.destroyEntity(refreshButtonEntity_);
-                if (registry.isAlive(backButtonEntity_)) registry.destroyEntity(backButtonEntity_);
-                if (registry.isAlive(filterFullButtonEntity_)) registry.destroyEntity(filterFullButtonEntity_);
-                if (registry.isAlive(filterProtectedButtonEntity_)) registry.destroyEntity(filterProtectedButtonEntity_);
+                if (registry.isAlive(titleEntity_))
+                    registry.destroyEntity(titleEntity_);
+                if (registry.isAlive(statusEntity_))
+                    registry.destroyEntity(statusEntity_);
+                if (registry.isAlive(createButtonEntity_))
+                    registry.destroyEntity(createButtonEntity_);
+                if (registry.isAlive(refreshButtonEntity_))
+                    registry.destroyEntity(refreshButtonEntity_);
+                if (registry.isAlive(backButtonEntity_))
+                    registry.destroyEntity(backButtonEntity_);
+                if (registry.isAlive(filterFullButtonEntity_))
+                    registry.destroyEntity(filterFullButtonEntity_);
+                if (registry.isAlive(filterProtectedButtonEntity_))
+                    registry.destroyEntity(filterProtectedButtonEntity_);
 
                 passwordInputMenu_->create(registry);
                 passwordMenuInitialized_ = true;
@@ -309,13 +319,20 @@ void LobbyMenu::render(Registry& registry, Window& window)
 
                 backgroundEntity_ = createBackground(registry, textures_);
                 logoEntity_       = createLogo(registry, textures_);
-                titleEntity_ = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
-                statusEntity_ = createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
-                createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
-                refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh", Color(80, 80, 80), [this]() { onRefreshClicked(); });
-                backButtonEntity_ = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50), [this]() { onBackClicked(); });
-                filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full", Color(60, 100, 60), [this]() { onToggleFilterFull(); });
-                filterProtectedButtonEntity_ = createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60), [this]() { onToggleFilterProtected(); });
+                titleEntity_      = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
+                statusEntity_ =
+                    createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
+                createButtonEntity_  = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
+                                                    Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
+                refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh",
+                                                    Color(80, 80, 80), [this]() { onRefreshClicked(); });
+                backButtonEntity_    = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
+                                                    [this]() { onBackClicked(); });
+                filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full",
+                                                       Color(60, 100, 60), [this]() { onToggleFilterFull(); });
+                filterProtectedButtonEntity_ =
+                    createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60),
+                                 [this]() { onToggleFilterProtected(); });
 
                 if (result.submitted) {
                     Logger::instance().info("[LobbyMenu] Password submitted, joining room...");
@@ -329,8 +346,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
 
                     const auto& room = rooms_[pendingJoinRoomIndex_];
                     conn->sendJoinRoom(room.roomId, result.password);
-                    state_ = State::Joining;
-                    isJoining_ = true;
+                    state_      = State::Joining;
+                    isJoining_  = true;
                     isRoomHost_ = false;
                 } else {
                     Logger::instance().info("[LobbyMenu] Password input cancelled");
@@ -364,15 +381,16 @@ void LobbyMenu::update(Registry& registry, float dt)
 
         if (isRefreshing_) {
             if (conn->hasRoomListResult()) {
-                auto result = conn->popRoomListResult();
+                auto result   = conn->popRoomListResult();
                 isRefreshing_ = false;
                 if (result.has_value()) {
-                     rooms_ = result->rooms;
-                     if (state_ == State::Loading) state_ = State::ShowingRooms;
-                     Logger::instance().info("[LobbyMenu] Received " + std::to_string(rooms_.size()) + " rooms");
-                     updateRoomListDisplay(registry);
+                    rooms_ = result->rooms;
+                    if (state_ == State::Loading)
+                        state_ = State::ShowingRooms;
+                    Logger::instance().info("[LobbyMenu] Received " + std::to_string(rooms_.size()) + " rooms");
+                    updateRoomListDisplay(registry);
                 } else {
-                     Logger::instance().warn("[LobbyMenu] Failed to refresh rooms");
+                    Logger::instance().warn("[LobbyMenu] Failed to refresh rooms");
                 }
             }
         }
@@ -385,7 +403,7 @@ void LobbyMenu::update(Registry& registry, float dt)
                     Logger::instance().info("[LobbyMenu] Room created: ID=" + std::to_string(result->roomId));
                     Logger::instance().info("[LobbyMenu] Joining own room...");
                     conn->sendJoinRoom(result->roomId);
-                    isJoining_ = true;
+                    isJoining_  = true;
                     isRoomHost_ = true;
                 } else {
                     Logger::instance().error("[LobbyMenu] Failed to create room");
@@ -399,17 +417,17 @@ void LobbyMenu::update(Registry& registry, float dt)
         if (isJoining_) {
             if (conn->hasJoinRoomResult()) {
                 auto result = conn->popJoinRoomResult();
-                isJoining_ = false;
+                isJoining_  = false;
                 if (result.has_value()) {
-                     Logger::instance().info("[LobbyMenu] Joined room: ID=" + std::to_string(result->roomId));
-                     result_.roomId = result->roomId;
-                     result_.gamePort = result->port;
-                     state_ = State::InRoom;
+                    Logger::instance().info("[LobbyMenu] Joined room: ID=" + std::to_string(result->roomId));
+                    result_.roomId   = result->roomId;
+                    result_.gamePort = result->port;
+                    state_           = State::InRoom;
                 } else {
-                     Logger::instance().error("[LobbyMenu] Failed to join room");
-                     broadcastQueue_.push(NotificationData{"Failed to join room", 3.0F});
-                     state_ = State::ShowingRooms;
-                     updateRoomListDisplay(registry);
+                    Logger::instance().error("[LobbyMenu] Failed to join room");
+                    broadcastQueue_.push(NotificationData{"Failed to join room", 3.0F});
+                    state_ = State::ShowingRooms;
+                    updateRoomListDisplay(registry);
                 }
             }
         }
@@ -422,15 +440,25 @@ void LobbyMenu::update(Registry& registry, float dt)
         }
 
         if (!roomWaitingMenuInitialized_) {
-            for (EntityId id : roomButtonEntities_) { if (registry.isAlive(id)) registry.destroyEntity(id); }
+            for (EntityId id : roomButtonEntities_) {
+                if (registry.isAlive(id))
+                    registry.destroyEntity(id);
+            }
             roomButtonEntities_.clear();
-            if (registry.isAlive(titleEntity_)) registry.destroyEntity(titleEntity_);
-            if (registry.isAlive(statusEntity_)) registry.destroyEntity(statusEntity_);
-            if (registry.isAlive(createButtonEntity_)) registry.destroyEntity(createButtonEntity_);
-            if (registry.isAlive(refreshButtonEntity_)) registry.destroyEntity(refreshButtonEntity_);
-            if (registry.isAlive(backButtonEntity_)) registry.destroyEntity(backButtonEntity_);
-            if (registry.isAlive(filterFullButtonEntity_)) registry.destroyEntity(filterFullButtonEntity_);
-            if (registry.isAlive(filterProtectedButtonEntity_)) registry.destroyEntity(filterProtectedButtonEntity_);
+            if (registry.isAlive(titleEntity_))
+                registry.destroyEntity(titleEntity_);
+            if (registry.isAlive(statusEntity_))
+                registry.destroyEntity(statusEntity_);
+            if (registry.isAlive(createButtonEntity_))
+                registry.destroyEntity(createButtonEntity_);
+            if (registry.isAlive(refreshButtonEntity_))
+                registry.destroyEntity(refreshButtonEntity_);
+            if (registry.isAlive(backButtonEntity_))
+                registry.destroyEntity(backButtonEntity_);
+            if (registry.isAlive(filterFullButtonEntity_))
+                registry.destroyEntity(filterFullButtonEntity_);
+            if (registry.isAlive(filterProtectedButtonEntity_))
+                registry.destroyEntity(filterProtectedButtonEntity_);
 
             roomWaitingMenu_->create(registry);
             roomWaitingMenuInitialized_ = true;
@@ -445,25 +473,32 @@ void LobbyMenu::update(Registry& registry, float dt)
             roomWaitingMenuInitialized_ = false;
 
             if (result.startGame) {
-                result_.success = true;
-                result_.isHost = isRoomHost_;
+                result_.success             = true;
+                result_.isHost              = isRoomHost_;
                 result_.expectedPlayerCount = result.expectedPlayerCount;
-                state_ = State::Done;
+                state_                      = State::Done;
             } else if (result.serverLost) {
-                 state_ = State::Done;
-                 result_.serverLost = true;
-                 result_.backRequested = true;
+                state_                = State::Done;
+                result_.serverLost    = true;
+                result_.backRequested = true;
             } else if (result.leaveRoom) {
-                 titleEntity_ = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
-                 statusEntity_ = createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
-                 createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200), [this](){ onCreateRoomClicked(); });
-                 refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh", Color(80, 80, 80), [this](){ onRefreshClicked(); });
-                 backButtonEntity_ = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50), [this](){ onBackClicked(); });
-                 filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full", Color(60, 100, 60), [this](){ onToggleFilterFull(); });
-                 filterProtectedButtonEntity_ = createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60), [this](){ onToggleFilterProtected(); });
+                titleEntity_ = createText(registry, 400.0F, 200.0F, "Game Lobby", 36, Color::White);
+                statusEntity_ =
+                    createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
+                createButtonEntity_  = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
+                                                    Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
+                refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh",
+                                                    Color(80, 80, 80), [this]() { onRefreshClicked(); });
+                backButtonEntity_    = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
+                                                    [this]() { onBackClicked(); });
+                filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full",
+                                                       Color(60, 100, 60), [this]() { onToggleFilterFull(); });
+                filterProtectedButtonEntity_ =
+                    createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60),
+                                 [this]() { onToggleFilterProtected(); });
 
-                 state_ = State::ShowingRooms;
-                 refreshRoomList();
+                state_ = State::ShowingRooms;
+                refreshRoomList();
             }
         }
         return;
@@ -484,7 +519,8 @@ void LobbyMenu::update(Registry& registry, float dt)
     if (refreshTimer_ >= kRefreshInterval) {
         refreshTimer_ = 0.0F;
         if (state_ == State::ShowingRooms || state_ == State::Loading) {
-             if (!isRefreshing_) refreshRoomList();
+            if (!isRefreshing_)
+                refreshRoomList();
         } else {
         }
     }
@@ -493,9 +529,11 @@ void LobbyMenu::update(Registry& registry, float dt)
 void LobbyMenu::refreshRoomList()
 {
     auto* conn = getConnection();
-    if (!conn) return;
+    if (!conn)
+        return;
 
-    if (isRefreshing_) return;
+    if (isRefreshing_)
+        return;
 
     conn->sendRequestRoomList();
     isRefreshing_ = true;
@@ -509,7 +547,8 @@ void LobbyMenu::onCreateRoomClicked()
 
 void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
 {
-    if (roomIndex >= rooms_.size()) return;
+    if (roomIndex >= rooms_.size())
+        return;
 
     const auto& room = rooms_[roomIndex];
 
@@ -520,18 +559,19 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
         return;
     }
 
-    if (isJoining_) return;
+    if (isJoining_)
+        return;
 
     Logger::instance().info("[LobbyMenu] Joining room " + std::to_string(room.roomId) + "...");
     auto* conn = getConnection();
     if (!conn) {
-        state_ = State::Done;
+        state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
 
     conn->sendJoinRoom(room.roomId);
-    isJoining_ = true;
+    isJoining_  = true;
     isRoomHost_ = false;
 }
 

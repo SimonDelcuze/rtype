@@ -27,6 +27,9 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
                                                  ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
+    if (g_forceExit.load()) {
+        return std::nullopt;
+    }
     if (!lobbyConn.connect()) {
         Logger::instance().error("[Auth] Failed to connect to lobby server for authentication");
         return std::nullopt;
@@ -37,7 +40,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 
     std::optional<AuthResult> result;
 
-    while (window.isOpen()) {
+    while (window.isOpen() && g_running && !g_forceExit.load()) {
         auto loginResult = runner.runAndGetResult<LoginMenu>(lobbyConn, broadcastQueue);
 
         if (!window.isOpen())
@@ -94,10 +97,13 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
                                              std::string& errorMessage,
                                              ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
+    if (g_forceExit.load()) {
+        return std::nullopt;
+    }
     startLauncherMusic(g_musicVolume);
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    while (window.isOpen()) {
+    while (window.isOpen() && g_running && !g_forceExit.load()) {
         if (!errorMessage.empty()) {
             broadcastQueue.push(NotificationData{errorMessage, 5.0F});
             errorMessage.clear();
@@ -124,9 +130,6 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
             return std::nullopt;
         }
 
-        if (result.useDefault) {
-            return IpEndpoint::v4(127, 0, 0, 1, 50010);
-        }
         return parseEndpoint(result.ip, result.port);
     }
 
@@ -275,8 +278,8 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
             header.messageType = static_cast<std::uint8_t>(MessageType::ClientPing);
             auto packet        = header.encode();
             if (net.socket) {
-                 Logger::instance().info("[Heartbeat] Sending ping to game server (WaitingRoom)...");
-                 net.socket->sendTo(packet.data(), packet.size(), serverEp);
+                Logger::instance().info("[Heartbeat] Sending ping to game server (WaitingRoom)...");
+                net.socket->sendTo(packet.data(), packet.size(), serverEp);
             }
         }
 

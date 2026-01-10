@@ -113,7 +113,6 @@ ConnectionMenu::ConnectionMenu(FontManager& fonts, TextureManager& textures, std
 void ConnectionMenu::create(Registry& registry)
 {
     done_         = false;
-    useDefault_   = false;
     openSettings_ = false;
     connecting_   = false;
 
@@ -132,13 +131,7 @@ void ConnectionMenu::create(Registry& registry)
         connecting_ = true;
     });
 
-    createButton(registry, 660.0F, 550.0F, "Use Default", Color(80, 80, 80), [this]() {
-        Logger::instance().info("Use Default clicked");
-        useDefault_ = true;
-        connecting_ = true;
-    });
-
-    createButton(registry, 550.0F, 620.0F, "Settings", Color(70, 70, 70), [this]() {
+    createButton(registry, 660.0F, 550.0F, "Settings", Color(70, 70, 70), [this]() {
         Logger::instance().info("Settings clicked");
         done_         = true;
         openSettings_ = true;
@@ -229,7 +222,6 @@ void ConnectionMenu::updateConnectingText(Registry& registry)
 ConnectionMenu::Result ConnectionMenu::getResult(Registry& registry) const
 {
     Result result;
-    result.useDefault    = useDefault_;
     result.openSettings  = openSettings_;
     result.exitRequested = exitRequested_;
     result.connected     = done_ && !openSettings_;
@@ -251,7 +243,6 @@ void ConnectionMenu::setError(Registry&, const std::string&) {}
 void ConnectionMenu::reset()
 {
     done_          = false;
-    useDefault_    = false;
     openSettings_  = false;
     exitRequested_ = false;
 }

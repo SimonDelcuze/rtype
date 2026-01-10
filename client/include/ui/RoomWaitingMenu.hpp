@@ -15,8 +15,8 @@ class RoomWaitingMenu : public IMenu
   public:
     struct Result
     {
-        bool startGame = false;
-        bool leaveRoom = false;
+        bool startGame  = false;
+        bool leaveRoom  = false;
         bool serverLost = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};

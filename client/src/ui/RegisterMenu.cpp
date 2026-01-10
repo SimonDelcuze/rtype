@@ -147,7 +147,6 @@ void RegisterMenu::create(Registry& registry)
         done_          = true;
         exitRequested_ = true;
     });
-
 }
 
 void RegisterMenu::destroy(Registry& registry)
@@ -171,7 +170,7 @@ void RegisterMenu::update(Registry& registry, float dt)
     if (isLoading_) {
         if (lobbyConn_.hasRegisterResult()) {
             auto response = lobbyConn_.popRegisterResult();
-            isLoading_ = false;
+            isLoading_    = false;
 
             if (response.has_value() && response->success) {
                 Logger::instance().info("Registration successful for user: " + username_);
@@ -182,10 +181,18 @@ void RegisterMenu::update(Registry& registry, float dt)
                 std::string errorMsg = "Registration failed";
                 if (response.has_value()) {
                     switch (response->errorCode) {
-                        case AuthErrorCode::UsernameTaken: errorMsg = "Username is already taken"; break;
-                        case AuthErrorCode::WeakPassword:  errorMsg = "Password is too weak"; break;
-                        case AuthErrorCode::ServerError:   errorMsg = "Server error occurred"; break;
-                        default:                           errorMsg = "Registration failed"; break;
+                        case AuthErrorCode::UsernameTaken:
+                            errorMsg = "Username is already taken";
+                            break;
+                        case AuthErrorCode::WeakPassword:
+                            errorMsg = "Password is too weak";
+                            break;
+                        case AuthErrorCode::ServerError:
+                            errorMsg = "Server error occurred";
+                            break;
+                        default:
+                            errorMsg = "Registration failed";
+                            break;
                     }
                 } else {
                     errorMsg = "Registration failed: No response";
@@ -201,10 +208,10 @@ void RegisterMenu::update(Registry& registry, float dt)
     if (heartbeatTimer_ >= 1.0F) {
         heartbeatTimer_ = 0.0F;
         if (!lobbyConn_.ping()) {
-             Logger::instance().warn("[Heartbeat] Ping failed in Register Menu");
-             consecutiveFailures_++;
+            Logger::instance().warn("[Heartbeat] Ping failed in Register Menu");
+            consecutiveFailures_++;
         } else {
-             consecutiveFailures_ = 0;
+            consecutiveFailures_ = 0;
         }
 
         if (consecutiveFailures_ >= 2) {
@@ -262,7 +269,8 @@ void RegisterMenu::handleRegisterAttempt(Registry& registry)
         return;
     }
 
-    if (isLoading_) return;
+    if (isLoading_)
+        return;
 
     Logger::instance().info("Attempting registration (async) for user: " + username);
     username_ = username;
@@ -275,11 +283,11 @@ RegisterMenu::Result RegisterMenu::getResult(Registry& registry) const
 {
     (void) registry;
     Result res;
-    res.registered = registered_;
-    res.backToLogin = backToLogin_;
+    res.registered    = registered_;
+    res.backToLogin   = backToLogin_;
     res.exitRequested = exitRequested_;
-    res.userId = userId_;
-    res.username = username_;
+    res.userId        = userId_;
+    res.username      = username_;
     return res;
 }
 
@@ -291,14 +299,14 @@ void RegisterMenu::setError(Registry& registry, const std::string& message)
 
 void RegisterMenu::reset()
 {
-    done_ = false;
-    backToLogin_ = false;
+    done_          = false;
+    backToLogin_   = false;
     exitRequested_ = false;
-    registered_ = false;
-    isLoading_ = false;
-    userId_ = 0;
+    registered_    = false;
+    isLoading_     = false;
+    userId_        = 0;
     username_.clear();
-    heartbeatTimer_ = 0.0F;
+    heartbeatTimer_      = 0.0F;
     consecutiveFailures_ = 0;
 }
 

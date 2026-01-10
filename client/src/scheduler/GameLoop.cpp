@@ -43,7 +43,7 @@ int GameLoop::run(Window& window, Registry& registry, UdpSocket* networkSocket, 
         window.display();
     }
 
-    if (networkSocket != nullptr && serverEndpoint != nullptr) {
+    if (!g_forceExit.load() && networkSocket != nullptr && serverEndpoint != nullptr) {
         PacketHeader header{};
         header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
         header.messageType = static_cast<std::uint8_t>(MessageType::ClientDisconnect);
