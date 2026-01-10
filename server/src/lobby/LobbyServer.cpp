@@ -175,7 +175,7 @@ ServerStats LobbyServer::aggregateStats()
         }
     }
 
-    stats.clientCount = lobbyClientCount;
+    stats.clientCount = lobbyClientCount + gameInstancePlayers;
 
     return stats;
 }
@@ -413,8 +413,7 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
         session.roomId   = *roomId;
 
         if (session.playerId == 0) {
-            static std::atomic<std::uint32_t> nextPlayerId{1};
-            session.playerId = nextPlayerId++;
+            session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
     }
@@ -508,8 +507,7 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
         session.roomId   = roomId;
 
         if (session.playerId == 0) {
-            static std::atomic<std::uint32_t> nextPlayerId{1};
-            session.playerId = nextPlayerId++;
+            session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
     }

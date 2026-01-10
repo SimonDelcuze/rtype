@@ -22,7 +22,7 @@ class HUDSystem : public ISystem
 
   private:
     void updateContent(Registry& registry, EntityId id, TextComponent& textComp) const;
-    void drawLivesPips(const TransformComponent& transform, const LivesComponent& lives) const;
+    void drawLivesPips(float startX, float startY, int lives) const;
     std::string formatScore(int value) const;
 
     Window& window_;

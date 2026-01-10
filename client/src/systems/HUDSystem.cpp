@@ -3,7 +3,7 @@
 #include "components/BossComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
 #include "components/HealthComponent.hpp"
-#include "components/LayerComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "graphics/GraphicsFactory.hpp"
 #include "graphics/abstraction/Common.hpp"
@@ -12,12 +12,20 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace
 {
     constexpr int kScoreDigits         = 7;
     constexpr float kScoreRightMargin  = 16.0F;
     constexpr float kScoreBottomMargin = 12.0F;
+    constexpr float kLivesLeftMargin   = 16.0F;
+    constexpr float kLivesBottomMargin = 12.0F;
+    constexpr float kLivesRowSpacing   = 26.0F;
+    constexpr float kLivesPipSpacing   = 40.0F;
+    constexpr float kLivesPipHeight    = 17.0F;
+    constexpr float kLivesChargeOffset = 24.0F;
 } // namespace
 
 HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager)
@@ -46,7 +54,7 @@ std::string HUDSystem::formatScore(int value) const
     return "SCORE " + digits;
 }
 
-void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesComponent& lives) const
+void HUDSystem::drawLivesPips(float startX, float startY, int lives) const
 {
     static std::shared_ptr<ISprite> livesSprite = nullptr;
     if (!livesSprite) {
@@ -63,12 +71,11 @@ void HUDSystem::drawLivesPips(const TransformComponent& transform, const LivesCo
     if (!livesSprite)
         return;
 
-    float startX  = transform.x;
-    float startY  = transform.y;
-    float spacing = 40.0f;
+    if (lives <= 0)
+        return;
 
-    for (int i = 0; i < lives.current; ++i) {
-        livesSprite->setPosition({startX + (static_cast<float>(i) * spacing), startY});
+    for (int i = 0; i < lives; ++i) {
+        livesSprite->setPosition({startX + (static_cast<float>(i) * kLivesPipSpacing), startY});
         window_.draw(*livesSprite);
     }
 }
@@ -152,15 +159,6 @@ void HUDSystem::update(Registry& registry, float)
             }
         }
     }
-    int playerLives = -1;
-    for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
-        const auto& tag = registry.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Player)) {
-            playerLives = registry.get<LivesComponent>(id).current;
-            break;
-        }
-    }
-
     int playerScore = -1;
     for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
         const auto& tag = registry.get<TagComponent>(id);
@@ -248,16 +246,33 @@ void HUDSystem::update(Registry& registry, float)
         }
     }
 
-    for (EntityId id : registry.view<LivesComponent, TransformComponent, LayerComponent>()) {
-        if (registry.get<LayerComponent>(id).layer == 100) {
-            const auto& transform = registry.get<TransformComponent>(id);
-            auto& lives           = registry.get<LivesComponent>(id);
+    std::vector<std::pair<std::uint32_t, int>> playerLives;
+    for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        const auto& tag = registry.get<TagComponent>(id);
+        if (!tag.hasTag(EntityTag::Player))
+            continue;
+        std::uint32_t key = id;
+        if (registry.has<OwnershipComponent>(id)) {
+            key = registry.get<OwnershipComponent>(id).ownerId;
+        }
+        playerLives.emplace_back(key, registry.get<LivesComponent>(id).current);
+    }
+    std::sort(playerLives.begin(), playerLives.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
 
-            if (playerLives != -1) {
-                lives.current = playerLives;
-            }
-
-            drawLivesPips(transform, lives);
+    if (!playerLives.empty()) {
+        const auto size = window_.getSize();
+        float baseY     = static_cast<float>(size.y) - kLivesBottomMargin;
+        if (hasCharge) {
+            baseY -= kLivesChargeOffset;
+        }
+        for (std::size_t i = 0; i < playerLives.size(); ++i) {
+            int livesCount = std::max(0, playerLives[i].second);
+            float startX = kLivesLeftMargin;
+            float startY = baseY - kLivesPipHeight - (static_cast<float>(i) * kLivesRowSpacing);
+            drawLivesPips(startX, startY, livesCount);
         }
     }
 }

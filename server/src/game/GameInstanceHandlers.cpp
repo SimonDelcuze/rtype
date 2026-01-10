@@ -117,6 +117,7 @@ void GameInstance::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<LivesComponent>(entity, LivesComponent::create(3, 3));
     registry_.emplace<ScoreComponent>(entity, ScoreComponent::create(0));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
+    registry_.emplace<OwnershipComponent>(entity, OwnershipComponent::create(playerId));
     std::size_t slot = playerEntities_.size() % kPlayerTypes.size();
     registry_.emplace<RenderTypeComponent>(entity, RenderTypeComponent::create(kPlayerTypes[slot]));
     playerEntities_[playerId] = entity;
