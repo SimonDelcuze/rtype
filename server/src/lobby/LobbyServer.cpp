@@ -166,8 +166,8 @@ ServerStats LobbyServer::aggregateStats()
         lobbyClientCount = lobbySessions_.size();
     }
 
-    auto roomIds                    = instanceManager_.getAllRoomIds();
-    std::size_t gameInstancePlayers = 0;
+    auto roomIds                                     = instanceManager_.getAllRoomIds();
+    [[maybe_unused]] std::size_t gameInstancePlayers = 0;
     for (auto roomId : roomIds) {
         auto* instance = instanceManager_.getInstance(roomId);
         if (instance != nullptr) {
