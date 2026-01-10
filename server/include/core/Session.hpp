@@ -3,6 +3,7 @@
 #include "network/PacketHeader.hpp"
 #include "network/UdpSocket.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -25,6 +26,8 @@ struct ClientSession
     std::optional<std::uint32_t> userId;
     std::string username;
     std::string jwtToken;
+
+    std::chrono::steady_clock::time_point lastActivity{std::chrono::steady_clock::now()};
 };
 
 std::string endpointKey(const IpEndpoint& ep);

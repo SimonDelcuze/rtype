@@ -27,6 +27,7 @@ class LobbyMenu : public IMenu
         bool exitRequested = false;
         bool backRequested = false;
         bool isHost        = false;
+        bool serverLost    = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
         std::uint8_t expectedPlayerCount{0};
@@ -40,6 +41,7 @@ class LobbyMenu : public IMenu
     void destroy(Registry& registry) override;
     bool isDone() const override;
     void handleEvent(Registry& registry, const Event& event) override;
+    void update(Registry& registry, float dt) override;
     void render(Registry& registry, Window& window) override;
 
     Result getResult(Registry& registry) const
@@ -120,11 +122,15 @@ class LobbyMenu : public IMenu
     bool createMenuInitialized_{false};
     bool passwordMenuInitialized_{false};
     bool roomWaitingMenuInitialized_{false};
-    constexpr static float kRefreshInterval = 2.0F;
+    constexpr static float kRefreshInterval = 1.0F;
 
     std::unique_ptr<CreateRoomMenu> createRoomMenu_;
     std::unique_ptr<PasswordInputMenu> passwordInputMenu_;
     std::unique_ptr<RoomWaitingMenu> roomWaitingMenu_;
     std::size_t pendingJoinRoomIndex_{0};
     bool isRoomHost_{false};
+    bool isRefreshing_{false};
+    bool isCreating_{false};
+    bool isJoining_{false};
+    bool isGettingStats_{false};
 };

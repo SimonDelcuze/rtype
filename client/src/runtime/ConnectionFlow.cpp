@@ -98,11 +98,12 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     while (window.isOpen()) {
-        auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
         if (!errorMessage.empty()) {
             broadcastQueue.push(NotificationData{errorMessage, 5.0F});
+            errorMessage.clear();
         }
-        errorMessage.clear();
+
+        auto result = runner.runAndGetResult<ConnectionMenu>(errorMessage);
 
         if (!window.isOpen())
             return std::nullopt;
@@ -152,7 +153,7 @@ bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMe
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
                                                           FontManager& fontManager, TextureManager& textureManager,
                                                           ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                          LobbyConnection* authenticatedConnection)
+                                                          LobbyConnection* authenticatedConnection, bool& serverLost)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
@@ -160,6 +161,12 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
 
     if (!window.isOpen())
         return std::nullopt;
+
+    if (result.serverLost) {
+        Logger::instance().warn("[ConnectionFlow] Lobby menu reported server lost");
+        serverLost = true;
+        return std::nullopt;
+    }
 
     if (result.backRequested || result.exitRequested) {
         return std::nullopt;
@@ -234,9 +241,17 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
 
     auto lastTime = std::chrono::steady_clock::now();
 
+    float pingTimer = 0.0F;
+
     while (window.isOpen() && !menu.isDone() && g_running) {
-        if (net.handler)
+        if (net.handler) {
             net.handler->poll();
+            if (net.handler->getLastPacketAge() > 5.0F) {
+                Logger::instance().warn("[Net] Server timeout in waiting room (5s)");
+                serverLost = true;
+                return false;
+            }
+        }
 
         std::string disconnectMsg;
         if (net.disconnectEvents.tryPop(disconnectMsg)) {
@@ -251,6 +266,19 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
         std::chrono::duration<float> elapsed = currentTime - lastTime;
         lastTime                             = currentTime;
         float dt                             = std::min(elapsed.count(), 0.1F);
+
+        pingTimer += dt;
+        if (pingTimer >= 2.0F) {
+            pingTimer = 0.0F;
+            PacketHeader header{};
+            header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+            header.messageType = static_cast<std::uint8_t>(MessageType::ClientPing);
+            auto packet        = header.encode();
+            if (net.socket) {
+                 Logger::instance().info("[Heartbeat] Sending ping to game server (WaitingRoom)...");
+                 net.socket->sendTo(packet.data(), packet.size(), serverEp);
+            }
+        }
 
         window.setColorFilter(g_colorFilterMode);
 

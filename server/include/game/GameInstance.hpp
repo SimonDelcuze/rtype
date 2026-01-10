@@ -86,7 +86,7 @@ class GameInstance
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
     void onJoin(ClientSession& sess, const ControlEvent& ctrl);
-    void onForceStart(std::uint32_t playerId);
+    void onForceStart(std::uint32_t playerId, bool authoritative = false);
     void onSetPlayerCount(std::uint8_t count);
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
@@ -170,6 +170,7 @@ class GameInstance
     GameLoopThread gameLoop_;
     std::uint32_t currentTick_{0};
     bool gameStarted_{false};
+    bool forceStarted_{false};
     bool countdownActive_{false};
     float countdownTimer_{3.0F};
     int lastCountdownValue_{4};

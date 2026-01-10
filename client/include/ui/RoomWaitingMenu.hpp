@@ -17,6 +17,7 @@ class RoomWaitingMenu : public IMenu
     {
         bool startGame = false;
         bool leaveRoom = false;
+        bool serverLost = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
         std::uint8_t expectedPlayerCount{0};
@@ -36,6 +37,7 @@ class RoomWaitingMenu : public IMenu
     void destroy(Registry& registry) override;
     bool isDone() const override;
     void handleEvent(Registry& registry, const Event& event) override;
+    void update(Registry& registry, float dt) override;
     void render(Registry& registry, Window& window) override;
 
     Result getResult(Registry& registry) const
@@ -73,4 +75,7 @@ class RoomWaitingMenu : public IMenu
 
     float updateTimer_{0.0F};
     constexpr static float kUpdateInterval = 1.0F;
+
+    int consecutiveFailures_{0};
+    bool isRefreshingPlayers_{false};
 };
