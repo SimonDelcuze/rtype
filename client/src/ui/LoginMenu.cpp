@@ -104,8 +104,9 @@ namespace
 
 } // namespace
 
-LoginMenu::LoginMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn)
-    : fonts_(fonts), textures_(textures), lobbyConn_(lobbyConn)
+LoginMenu::LoginMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn,
+                     ThreadSafeQueue<NotificationData>& broadcastQueue)
+    : fonts_(fonts), textures_(textures), lobbyConn_(lobbyConn), broadcastQueue_(broadcastQueue)
 {}
 
 void LoginMenu::create(Registry& registry)
@@ -121,9 +122,8 @@ void LoginMenu::create(Registry& registry)
     createBackground(registry, textures_);
     createLogo(registry, textures_);
 
-    createLabel(registry, 500.0F, 200.0F, "LOGIN", 36);
-    createLabel(registry, 440.0F, 290.0F, "Username:");
-    createLabel(registry, 440.0F, 390.0F, "Password:");
+    createLabel(registry, 440.0F, 285.0F, "Username");
+    createLabel(registry, 440.0F, 385.0F, "Password");
 
     usernameInput_ = createInputField(registry, 440.0F, 320.0F, InputFieldComponent::create("", 32), 0);
     passwordInput_ = createInputField(registry, 440.0F, 420.0F, InputFieldComponent::password("", 64), 1);
@@ -139,7 +139,7 @@ void LoginMenu::create(Registry& registry)
         openRegister_ = true;
     });
 
-    createButton(registry, 900.0F, 620.0F, "Back", Color(100, 100, 100), [this]() {
+    createButton(registry, 1050.0F, 560.0F, "Back", Color(100, 100, 100), [this]() {
         Logger::instance().info("Back clicked - returning to server selection");
         done_          = true;
         backRequested_ = true;
@@ -151,7 +151,6 @@ void LoginMenu::create(Registry& registry)
         exitRequested_ = true;
     });
 
-    errorText_ = createLabel(registry, 440.0F, 600.0F, "", 18);
 }
 
 void LoginMenu::destroy(Registry& registry)
@@ -181,13 +180,9 @@ LoginMenu::Result LoginMenu::getResult(Registry& /* registry */) const
     return result;
 }
 
-void LoginMenu::setError(Registry& registry, const std::string& message)
+void LoginMenu::setError(Registry& /* registry */, const std::string& message)
 {
-    if (errorText_ != 0 && registry.has<TextComponent>(errorText_)) {
-        auto& text   = registry.get<TextComponent>(errorText_);
-        text.content = message;
-        text.color   = Color(255, 100, 100);
-    }
+    broadcastQueue_.push(NotificationData{message, 5.0F});
 }
 
 void LoginMenu::reset()
