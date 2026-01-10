@@ -24,24 +24,16 @@ struct ChatPacket
 
         auto encodedHdr = hdr.encode();
         std::vector<std::uint8_t> packet(encodedHdr.begin(), encodedHdr.end());
-
-        // Room ID
         packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
-
-        // Player ID
         packet.push_back(static_cast<std::uint8_t>((playerId >> 24) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((playerId >> 16) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
-
-        // Player Name
         for (int i = 0; i < 32; ++i)
             packet.push_back(static_cast<std::uint8_t>(playerName[i]));
-
-        // Message
         for (int i = 0; i < 121; ++i)
             packet.push_back(static_cast<std::uint8_t>(message[i]));
 

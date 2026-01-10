@@ -8,6 +8,7 @@
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 #include "network/StatsPackets.hpp"
+#include "utils/StringSanity.hpp"
 
 #include <array>
 #include <chrono>
@@ -1151,6 +1152,12 @@ void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* 
 
     Logger::instance().info("[LobbyServer] Chat in Room " + std::to_string(roomId) + " [" + playerName +
                             "]: " + chatPkt->message);
+
+    if (!rtype::utils::isSafeChatMessage(chatPkt->message)) {
+        Logger::instance().warn("[LobbyServer] Rejected unsafe chat message from " + playerName);
+        return;
+    }
+
     ChatPacket broadcastPkt;
     broadcastPkt.roomId   = roomId;
     broadcastPkt.playerId = playerId;
