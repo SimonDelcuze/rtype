@@ -2,6 +2,7 @@
 
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "network/AuthPackets.hpp"
+#include "network/ChatPacket.hpp"
 #include "network/LobbyPackets.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/StatsPackets.hpp"
@@ -92,6 +93,10 @@ class LobbyConnection
                                                              const std::string& newPassword, const std::string& token);
     std::optional<struct GetStatsResponseData> getStats();
 
+    void sendChatMessage(std::uint32_t roomId, const std::string& message);
+    bool hasNewChatMessages() const;
+    std::vector<ChatPacket> popChatMessages();
+
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
                                                      MessageType expectedResponse,
@@ -113,4 +118,5 @@ class LobbyConnection
     std::optional<RoomCreatedResult> pendingRoomCreatedResult_;
     std::optional<JoinSuccessResult> pendingJoinRoomResult_;
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
+    ThreadSafeQueue<ChatPacket> chatMessages_;
 };

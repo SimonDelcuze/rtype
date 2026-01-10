@@ -51,6 +51,7 @@ class RoomWaitingMenu : public IMenu
     void onLeaveRoomClicked();
     void onKickPlayerClicked(std::uint32_t playerId);
     void updatePlayerList(Registry& registry);
+    void onSendChatClicked(Registry& registry);
 
     FontManager& fonts_;
     TextureManager& textures_;
@@ -72,6 +73,12 @@ class RoomWaitingMenu : public IMenu
     std::vector<EntityId> playerTextEntities_;
     std::vector<EntityId> playerBadgeEntities_;
     std::vector<EntityId> kickButtonEntities_;
+    EntityId chatBackgroundEntity_{0};
+    EntityId chatInputField_{0};
+    EntityId sendButtonEntity_{0};
+    std::vector<EntityId> chatMessageEntities_;
+    std::vector<std::string> chatHistory_;
+    constexpr static std::size_t kMaxChatMessages = 12;
 
     float updateTimer_{0.0F};
     constexpr static float kUpdateInterval = 1.0F;

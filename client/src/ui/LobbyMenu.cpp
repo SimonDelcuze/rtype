@@ -703,7 +703,7 @@ void LobbyMenu::loadAndDisplayStats(Registry& registry)
 
     Logger::instance().info("[LobbyMenu] Calculated win rate: " + std::to_string(winRate) + "%");
 
-    std::string username = "Player #" + std::to_string(stats->userId);
+    std::string username = std::string(stats->username);
 
     if (registry.has<TextComponent>(statsUsernameEntity_)) {
         registry.get<TextComponent>(statsUsernameEntity_).content = username;

@@ -1,6 +1,7 @@
 #include "network/LobbyPackets.hpp"
 
 #include "network/PacketHeader.hpp"
+#include <cstring>
 
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence)
 {
@@ -269,7 +270,7 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
     players.reserve(playerCount);
 
     for (std::uint8_t i = 0; i < playerCount; ++i) {
-        if (payload + 5 > data + size - PacketHeader::kCrcSize) {
+        if (payload + 37 > data + size - PacketHeader::kCrcSize) {
             return std::nullopt;
         }
 
@@ -278,6 +279,9 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
                         (static_cast<std::uint32_t>(payload[1]) << 16) | (static_cast<std::uint32_t>(payload[2]) << 8) |
                         static_cast<std::uint32_t>(payload[3]);
         payload += 4;
+
+        std::memcpy(info.name, payload, 32);
+        payload += 32;
 
         info.isHost = (payload[0] != 0);
         payload += 1;

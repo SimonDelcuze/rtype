@@ -23,6 +23,10 @@ target_include_directories(rtype_server_tests
 
 add_test(NAME server_tests COMMAND rtype_server_tests)
 
+set_target_properties(rtype_server_tests PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 set_tests_properties(server_tests PROPERTIES
     FIXTURES_SETUP server_assets
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

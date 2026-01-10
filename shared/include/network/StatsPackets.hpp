@@ -14,6 +14,7 @@ struct GetStatsRequestData
 struct GetStatsResponseData
 {
     std::uint32_t userId;
+    char username[32];
     std::uint32_t gamesPlayed;
     std::uint32_t wins;
     std::uint32_t losses;
@@ -46,7 +47,7 @@ inline std::vector<std::uint8_t> buildGetStatsResponsePacket(const GetStatsRespo
     header.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
     header.messageType = static_cast<std::uint8_t>(MessageType::AuthGetStatsResponse);
     header.sequenceId  = sequenceId;
-    header.payloadSize = 24;
+    header.payloadSize = 56;
 
     auto headerBytes = header.encode();
     std::vector<std::uint8_t> packet(headerBytes.begin(), headerBytes.end());
@@ -55,6 +56,14 @@ inline std::vector<std::uint8_t> buildGetStatsResponsePacket(const GetStatsRespo
     packet.push_back(static_cast<std::uint8_t>((stats.userId >> 16) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>((stats.userId >> 8) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>(stats.userId & 0xFF));
+
+    for (int i = 0; i < 32; ++i) {
+        if (i < 32) {
+            packet.push_back(static_cast<std::uint8_t>(stats.username[i]));
+        } else {
+            packet.push_back(0);
+        }
+    }
 
     packet.push_back(static_cast<std::uint8_t>((stats.gamesPlayed >> 24) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>((stats.gamesPlayed >> 16) & 0xFF));
@@ -90,7 +99,7 @@ inline std::vector<std::uint8_t> buildGetStatsResponsePacket(const GetStatsRespo
 
 inline std::optional<GetStatsResponseData> parseGetStatsResponsePacket(const std::uint8_t* data, std::size_t size)
 {
-    if (size < PacketHeader::kSize + 24) {
+    if (size < PacketHeader::kSize + 56) {
         return std::nullopt;
     }
 
@@ -100,6 +109,10 @@ inline std::optional<GetStatsResponseData> parseGetStatsResponsePacket(const std
 
     stats.userId = (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
                    (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+    payload += 4;
+
+    std::memcpy(stats.username, payload, 32);
+    payload += 32;
 
     stats.gamesPlayed = (static_cast<std::uint32_t>(payload[4]) << 24) |
                         (static_cast<std::uint32_t>(payload[5]) << 16) | (static_cast<std::uint32_t>(payload[6]) << 8) |
