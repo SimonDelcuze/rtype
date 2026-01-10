@@ -10,12 +10,15 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
     hdr.sequenceId  = sequence;
 
     std::uint16_t roomCount = static_cast<std::uint16_t>(rooms.size());
-    std::uint16_t payloadSize =
-        sizeof(std::uint16_t) + (roomCount * (sizeof(std::uint32_t) + sizeof(std::uint16_t) + sizeof(std::uint16_t) +
-                                              sizeof(std::uint16_t) + sizeof(std::uint8_t)));
+    std::size_t payloadSize = sizeof(std::uint16_t);
 
-    hdr.payloadSize  = payloadSize;
-    hdr.originalSize = payloadSize;
+    for (const auto& room : rooms) {
+        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t) * 3 +
+                       sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) + room.inviteCode.size();
+    }
+
+    hdr.payloadSize  = static_cast<std::uint16_t>(payloadSize);
+    hdr.originalSize = static_cast<std::uint16_t>(payloadSize);
 
     std::vector<std::uint8_t> packet;
     packet.reserve(PacketHeader::kSize + payloadSize + PacketHeader::kCrcSize);
@@ -44,6 +47,25 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
         packet.push_back(static_cast<std::uint8_t>(room.port & 0xFF));
 
         packet.push_back(static_cast<std::uint8_t>(room.state));
+
+        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 24) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 16) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(room.ownerId & 0xFF));
+
+        packet.push_back(room.passwordProtected ? 1 : 0);
+
+        packet.push_back(static_cast<std::uint8_t>(room.visibility));
+
+        std::uint16_t nameLen = static_cast<std::uint16_t>(room.roomName.size());
+        packet.push_back(static_cast<std::uint8_t>((nameLen >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(nameLen & 0xFF));
+        packet.insert(packet.end(), room.roomName.begin(), room.roomName.end());
+
+        std::uint16_t codeLen = static_cast<std::uint16_t>(room.inviteCode.size());
+        packet.push_back(static_cast<std::uint8_t>((codeLen >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(codeLen & 0xFF));
+        packet.insert(packet.end(), room.inviteCode.begin(), room.inviteCode.end());
     }
 
     std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());

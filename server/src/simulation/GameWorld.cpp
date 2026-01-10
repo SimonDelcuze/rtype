@@ -53,6 +53,8 @@ std::vector<GameEvent> GameWorld::consumeEvents()
     return events;
 }
 
+#include "components/OwnershipComponent.hpp"
+
 void GameWorld::emitSpawn(EntityId id, std::uint8_t type, float x, float y)
 {
     EntitySpawnedEvent evt{};
@@ -60,6 +62,11 @@ void GameWorld::emitSpawn(EntityId id, std::uint8_t type, float x, float y)
     evt.entityType = type;
     evt.posX       = x;
     evt.posY       = y;
+    if (registry_.has<OwnershipComponent>(id)) {
+        evt.ownerId = registry_.get<OwnershipComponent>(id).ownerId;
+    } else {
+        evt.ownerId = 0;
+    }
     pendingEvents_.push_back(evt);
 }
 

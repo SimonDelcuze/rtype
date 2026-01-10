@@ -29,6 +29,8 @@ extern std::atomic<bool> g_running;
 extern KeyBindings g_keyBindings;
 extern float g_musicVolume;
 extern bool g_networkDebugEnabled;
+extern bool g_isRoomHost;
+extern std::uint8_t g_expectedPlayerCount;
 extern ColorFilterMode g_colorFilterMode;
 
 enum class JoinResult
@@ -55,9 +57,9 @@ Window createMainWindow();
 std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
                                                ThreadSafeQueue<NotificationData>& broadcastQueue);
 AssetManifest loadManifest();
-void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
-                      TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
-                      LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
+void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
+                      const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
+                      AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
                       SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue);
@@ -79,13 +81,13 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint);
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue);
-GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager, std::string& errorMessage,
+GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, const ClientOptions& options,
+                                 const IpEndpoint& serverEndpoint, NetPipelines& net, InputBuffer& inputBuffer,
+                                 TextureManager& textureManager, FontManager& fontManager, std::string& errorMessage,
                                  ThreadSafeQueue<NotificationData>& broadcastQueue);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage,

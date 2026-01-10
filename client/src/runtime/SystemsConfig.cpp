@@ -27,16 +27,16 @@ AssetManifest loadManifest()
     }
 }
 
-void configureSystems(GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types, const AssetManifest& manifest,
-                      TextureManager& textures, AnimationRegistry& animations, AnimationLabels& labels,
-                      LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
+void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
+                      const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
+                      AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
                       std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
                       SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     gameLoop.addSystem(std::make_shared<IntroCinematicSystem>(levelState));
-    gameLoop.addSystem(std::make_shared<InputSystem>(inputBuffer, mapper, inputSequence, playerPosX, playerPosY,
-                                                     textures, animations, &levelState));
+    gameLoop.addSystem(std::make_shared<InputSystem>(localPlayerId, inputBuffer, mapper, inputSequence, playerPosX,
+                                                     playerPosY, textures, animations, &levelState));
     gameLoop.addSystem(std::make_shared<NetworkMessageSystem>(*net.handler));
     gameLoop.addSystem(
         std::make_shared<LevelInitSystem>(net.levelInit, types, manifest, textures, animations, labels, levelState));

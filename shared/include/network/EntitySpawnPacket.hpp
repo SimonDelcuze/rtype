@@ -12,11 +12,12 @@ struct EntitySpawnPacket
 {
     PacketHeader header{};
     std::uint32_t entityId  = 0;
+    std::uint32_t ownerId   = 0;
     std::uint8_t entityType = 0;
     float posX              = 0.0F;
     float posY              = 0.0F;
 
-    static constexpr std::size_t kPayloadSize = 4 + 1 + 4 + 4;
+    static constexpr std::size_t kPayloadSize = 4 + 4 + 1 + 4 + 4;
     static constexpr std::size_t kSize        = PacketHeader::kSize + kPayloadSize + PacketHeader::kCrcSize;
 
     [[nodiscard]] std::array<std::uint8_t, kSize> encode() const noexcept
@@ -35,6 +36,11 @@ struct EntitySpawnPacket
         out[o + 1]    = static_cast<std::uint8_t>((entityId >> 16) & 0xFF);
         out[o + 2]    = static_cast<std::uint8_t>((entityId >> 8) & 0xFF);
         out[o + 3]    = static_cast<std::uint8_t>(entityId & 0xFF);
+        o += 4;
+        out[o]     = static_cast<std::uint8_t>((ownerId >> 24) & 0xFF);
+        out[o + 1] = static_cast<std::uint8_t>((ownerId >> 16) & 0xFF);
+        out[o + 2] = static_cast<std::uint8_t>((ownerId >> 8) & 0xFF);
+        out[o + 3] = static_cast<std::uint8_t>(ownerId & 0xFF);
         o += 4;
         out[o] = entityType;
         o += 1;
@@ -87,6 +93,10 @@ struct EntitySpawnPacket
         eid = (static_cast<std::uint32_t>(data[o]) << 24) | (static_cast<std::uint32_t>(data[o + 1]) << 16) |
               (static_cast<std::uint32_t>(data[o + 2]) << 8) | static_cast<std::uint32_t>(data[o + 3]);
         o += 4;
+        std::uint32_t owner{};
+        owner = (static_cast<std::uint32_t>(data[o]) << 24) | (static_cast<std::uint32_t>(data[o + 1]) << 16) |
+                (static_cast<std::uint32_t>(data[o + 2]) << 8) | static_cast<std::uint32_t>(data[o + 3]);
+        o += 4;
         std::uint8_t etype = data[o];
         o += 1;
         std::uint32_t bx{};
@@ -103,6 +113,7 @@ struct EntitySpawnPacket
         EntitySpawnPacket p{};
         p.header     = *hdr;
         p.entityId   = eid;
+        p.ownerId    = owner;
         p.entityType = etype;
         p.posX       = px;
         p.posY       = py;
@@ -110,4 +121,4 @@ struct EntitySpawnPacket
     }
 };
 
-static_assert(EntitySpawnPacket::kSize == 34, "EntitySpawnPacket wire size must remain 34 bytes");
+static_assert(EntitySpawnPacket::kSize == 38, "EntitySpawnPacket wire size must remain 38 bytes");

@@ -14,6 +14,7 @@
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/NetworkStatsComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
@@ -117,6 +118,12 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
             playExplosionSound(registry);
         }
         applyArchetype(registry, id, spawnPkt.entityType);
+        if (spawnPkt.entityType == 1 || spawnPkt.entityType == 12 || spawnPkt.entityType == 13 ||
+            spawnPkt.entityType == 14) {
+            if (!registry.has<OwnershipComponent>(id)) {
+                registry.emplace<OwnershipComponent>(id, OwnershipComponent::create(spawnPkt.ownerId));
+            }
+        }
         TransformComponent t{};
         auto [sx, sy] = defaultScaleForType(*types_, spawnPkt.entityType);
         t.scaleX      = sx;
@@ -302,6 +309,12 @@ std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, cons
     remoteToLocal_[remoteId] = id;
     remoteToType_[remoteId]  = *entity.entityType;
     applyArchetype(registry, id, *entity.entityType);
+    std::uint16_t tId = *entity.entityType;
+    if (tId == 1 || tId == 12 || tId == 13 || tId == 14) {
+        if (!registry.has<OwnershipComponent>(id)) {
+            registry.emplace<OwnershipComponent>(id, OwnershipComponent::create(remoteId));
+        }
+    }
     return std::optional<EntityId>(id);
 }
 

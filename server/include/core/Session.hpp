@@ -18,6 +18,8 @@ struct ClientSession
     std::uint32_t playerId{0};
     std::uint32_t roomId{0};
     IpEndpoint endpoint{};
+    PlayerRole role{PlayerRole::Player};
+    std::string playerName;
 
     bool authenticated = false;
     std::optional<std::uint32_t> userId;

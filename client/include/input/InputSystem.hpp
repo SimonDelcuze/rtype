@@ -13,10 +13,11 @@
 class InputSystem : public ISystem
 {
   public:
-    InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY,
-                TextureManager& textures, AnimationRegistry& animations, LevelState* levelState = nullptr);
-    InputSystem(InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter, float& posX, float& posY,
+    InputSystem(std::uint32_t localPlayerId, InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter,
+                float& posX, float& posY, TextureManager& textures, AnimationRegistry& animations,
                 LevelState* levelState = nullptr);
+    InputSystem(std::uint32_t localPlayerId, InputBuffer& buffer, InputMapper& mapper, std::uint32_t& sequenceCounter,
+                float& posX, float& posY, LevelState* levelState = nullptr);
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;
@@ -36,6 +37,7 @@ class InputSystem : public ISystem
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
 
+    std::uint32_t localPlayerId_ = 0;
     InputBuffer* buffer_;
     InputMapper* mapper_;
     std::uint32_t* sequenceCounter_;

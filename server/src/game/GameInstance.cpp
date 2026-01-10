@@ -223,6 +223,122 @@ void GameInstance::kickPlayer(std::uint32_t playerId)
     }
 }
 
+void GameInstance::kickPlayer(std::uint32_t playerId, const std::string& reason)
+{
+    std::string keyToRemove;
+    bool found = false;
+    IpEndpoint endpoint;
+
+    for (const auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            keyToRemove = key;
+            endpoint    = session.endpoint;
+            found       = true;
+            break;
+        }
+    }
+
+    if (found) {
+        auto pkt   = ServerDisconnectPacket::create(reason);
+        auto bytes = pkt.encode();
+        std::vector<std::uint8_t> vec(bytes.begin(), bytes.end());
+        sendThread_.sendTo(vec, endpoint);
+
+        logInfo("[Admin] Kicked player " + std::to_string(playerId) + " (" + endpointKey(endpoint) +
+                ") - Reason: " + reason);
+        onDisconnect(endpoint);
+    } else {
+        logWarn("[Admin] Kick failed: player " + std::to_string(playerId) + " not found");
+    }
+}
+
+void GameInstance::banPlayer(std::uint32_t playerId, const std::string& reason)
+{
+    std::string ipAddress;
+    bool found = false;
+
+    for (const auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            ipAddress = endpointKey(session.endpoint);
+            found     = true;
+            break;
+        }
+    }
+
+    if (found) {
+        kickPlayer(playerId, "Banned: " + reason);
+        logInfo("[Admin] Banned player " + std::to_string(playerId) + " - Reason: " + reason);
+    } else {
+        logWarn("[Admin] Ban failed: player " + std::to_string(playerId) + " not found");
+    }
+}
+
+void GameInstance::promoteToAdmin(std::uint32_t playerId)
+{
+    for (auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            session.role = PlayerRole::Admin;
+            logInfo("[Admin] Promoted player " + std::to_string(playerId) + " to admin");
+            return;
+        }
+    }
+    logWarn("[Admin] Promote failed: player " + std::to_string(playerId) + " not found");
+}
+
+void GameInstance::demoteFromAdmin(std::uint32_t playerId)
+{
+    for (auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            session.role = PlayerRole::Player;
+            logInfo("[Admin] Demoted player " + std::to_string(playerId) + " from admin");
+            return;
+        }
+    }
+    logWarn("[Admin] Demote failed: player " + std::to_string(playerId) + " not found");
+}
+
+bool GameInstance::isOwner(std::uint32_t playerId) const
+{
+    for (const auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            return session.role == PlayerRole::Owner;
+        }
+    }
+    return false;
+}
+
+bool GameInstance::isAdmin(std::uint32_t playerId) const
+{
+    for (const auto& [key, session] : sessions_) {
+        if (session.playerId == playerId) {
+            return session.role == PlayerRole::Admin || session.role == PlayerRole::Owner;
+        }
+    }
+    return false;
+}
+
+bool GameInstance::canKick(std::uint32_t kickerId, std::uint32_t targetId) const
+{
+    if (!isAdmin(kickerId)) {
+        return false;
+    }
+
+    if (isOwner(targetId)) {
+        return false;
+    }
+
+    if (isAdmin(targetId) && !isOwner(kickerId)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool GameInstance::canPromoteAdmin(std::uint32_t promoterId) const
+{
+    return isOwner(promoterId);
+}
+
 bool GameInstance::isEmpty() const
 {
     return sessions_.empty();

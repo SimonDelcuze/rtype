@@ -7,8 +7,11 @@
 #include "graphics/Window.hpp"
 #include "network/LobbyConnection.hpp"
 #include "network/LobbyPackets.hpp"
+#include "ui/CreateRoomMenu.hpp"
 #include "ui/IMenu.hpp"
 #include "ui/NotificationData.hpp"
+#include "ui/PasswordInputMenu.hpp"
+#include "ui/RoomWaitingMenu.hpp"
 
 #include <memory>
 #include <optional>
@@ -23,8 +26,10 @@ class LobbyMenu : public IMenu
         bool success       = false;
         bool exitRequested = false;
         bool backRequested = false;
+        bool isHost        = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
+        std::uint8_t expectedPlayerCount{0};
     };
 
     LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
@@ -49,8 +54,11 @@ class LobbyMenu : public IMenu
     void onJoinRoomClicked(std::size_t roomIndex);
     void onRefreshClicked();
     void onBackClicked();
+    void onToggleFilterFull();
+    void onToggleFilterProtected();
     void updateRoomListDisplay(Registry& registry);
     void createRoomButton(Registry& registry, const RoomInfo& room, std::size_t index);
+    bool shouldShowRoom(const RoomInfo& room) const;
     void loadAndDisplayStats(Registry& registry);
 
     LobbyConnection* getConnection()
@@ -62,8 +70,11 @@ class LobbyMenu : public IMenu
     {
         Loading,
         ShowingRooms,
+        ShowingCreateMenu,
+        ShowingPasswordInput,
         Creating,
         Joining,
+        InRoom,
         Done
     };
 
@@ -97,9 +108,23 @@ class LobbyMenu : public IMenu
     EntityId createButtonEntity_{0};
     EntityId refreshButtonEntity_{0};
     EntityId backButtonEntity_{0};
+    EntityId filterFullButtonEntity_{0};
+    EntityId filterProtectedButtonEntity_{0};
 
     float refreshTimer_{0.0F};
     bool statsLoaded_{false};
     int consecutiveFailures_{0};
+    bool filterShowFull_{true};
+    bool filterShowProtected_{true};
+    bool filterChanged_{false};
+    bool createMenuInitialized_{false};
+    bool passwordMenuInitialized_{false};
+    bool roomWaitingMenuInitialized_{false};
     constexpr static float kRefreshInterval = 2.0F;
+
+    std::unique_ptr<CreateRoomMenu> createRoomMenu_;
+    std::unique_ptr<PasswordInputMenu> passwordInputMenu_;
+    std::unique_ptr<RoomWaitingMenu> roomWaitingMenu_;
+    std::size_t pendingJoinRoomIndex_{0};
+    bool isRoomHost_{false};
 };

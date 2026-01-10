@@ -38,9 +38,17 @@ class LobbyServer
     void cleanupThread();
     void handlePacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& from);
     void handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint& from);
-    void handleLobbyCreateRoom(const PacketHeader& hdr, const IpEndpoint& from);
+    void handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                               const IpEndpoint& from);
     void handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                              const IpEndpoint& from);
+    void handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                              const IpEndpoint& from);
+    void handleRoomForceStart(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                              const IpEndpoint& from);
+    void handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                              const IpEndpoint& from);
+    void handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint& from);
 
     void handleLoginRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                             const IpEndpoint& from);

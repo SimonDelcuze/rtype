@@ -8,8 +8,9 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
                                     std::optional<IpEndpoint>& lastLobbyEndpoint)
 {
     NetPipelines net;
-    auto serverEndpoint = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,
-                                                broadcastQueue, lastLobbyEndpoint);
+    std::uint32_t userId = 0;
+    auto serverEndpoint  = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,
+                                                 broadcastQueue, lastLobbyEndpoint, userId);
     if (!serverEndpoint) {
         return ClientLoopResult{false, 0};
     }
@@ -35,8 +36,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     }
 
     stopLauncherMusic();
-    auto gameResult = runGameSession(window, options, *serverEndpoint, net, inputBuffer, textureManager, fontManager,
-                                     errorMessage, broadcastQueue);
+    auto gameResult = runGameSession(userId, window, options, *serverEndpoint, net, inputBuffer, textureManager,
+                                     fontManager, errorMessage, broadcastQueue);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     if (gameResult.serverLost) {

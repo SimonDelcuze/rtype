@@ -150,15 +150,21 @@ std::vector<std::uint8_t> buildServerHello(std::uint16_t sequence)
     return out;
 }
 
-std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence)
+std::vector<std::uint8_t> buildJoinAccept(std::uint16_t sequence, std::uint32_t playerId)
 {
     PacketHeader hdr{};
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::ServerJoinAccept);
     hdr.sequenceId  = sequence;
-    hdr.payloadSize = 0;
+    hdr.payloadSize = sizeof(std::uint32_t);
     auto hdrBytes   = hdr.encode();
     std::vector<std::uint8_t> out(hdrBytes.begin(), hdrBytes.end());
+
+    out.push_back(static_cast<std::uint8_t>((playerId >> 24) & 0xFF));
+    out.push_back(static_cast<std::uint8_t>((playerId >> 16) & 0xFF));
+    out.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
+    out.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
+
     auto crc = PacketHeader::crc32(out.data(), out.size());
     writeU32(out, crc);
     return out;

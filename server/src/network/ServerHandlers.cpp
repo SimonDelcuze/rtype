@@ -1,4 +1,5 @@
 #include "Logger.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "network/ServerRunner.hpp"
 
 #include <random>
@@ -58,7 +59,7 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     }
 
     sess.join = true;
-    sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId), ctrl.from);
+    sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId, sess.playerId), ctrl.from);
 
     bool alreadyExists = false;
     for (const auto& ep : clients_) {
@@ -77,6 +78,8 @@ void ServerApp::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     }
 }
 
+#include "components/OwnershipComponent.hpp"
+
 void ServerApp::addPlayerEntity(std::uint32_t playerId)
 {
     static const std::array<std::uint16_t, 4> kPlayerTypes{1, 12, 13, 14};
@@ -90,6 +93,7 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<ScoreComponent>(entity, ScoreComponent::create(0));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
     registry_.emplace<BoundaryComponent>(entity, BoundaryComponent::create(0.0F, 0.0F, 1246.0F, 702.0F));
+    registry_.emplace<OwnershipComponent>(entity, OwnershipComponent::create(playerId));
     std::size_t slot = playerEntities_.size() % kPlayerTypes.size();
     registry_.emplace<RenderTypeComponent>(entity, RenderTypeComponent::create(kPlayerTypes[slot]));
     playerEntities_[playerId] = entity;

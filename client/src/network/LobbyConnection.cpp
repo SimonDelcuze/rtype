@@ -13,6 +13,9 @@ LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::ato
 
 LobbyConnection::~LobbyConnection()
 {
+    if (inRoom_) {
+        leaveRoom();
+    }
     disconnect();
 }
 
@@ -61,6 +64,23 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 serverLost_ = true;
             }
         }
+
+        if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::RoomGameStarting)) {
+            if (recvResult.size >=
+                PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t)) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
+                expectedPlayerCount_        = payload[4];
+                Logger::instance().info("[LobbyConnection] Received RoomGameStarting - game is starting with " +
+                                        std::to_string(expectedPlayerCount_) + " players!");
+                gameStarting_ = true;
+            }
+        }
+
+        if (hdr.has_value() && hdr->messageType == static_cast<std::uint8_t>(MessageType::RoomPlayerKicked)) {
+            Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
+            wasKicked_ = true;
+            inRoom_    = false;
+        }
     }
 }
 
@@ -85,14 +105,24 @@ std::optional<RoomListResult> LobbyConnection::requestRoomList()
 
 std::optional<RoomCreatedResult> LobbyConnection::createRoom()
 {
-    auto packet   = buildCreateRoomPacket(nextSequence_++);
+    return createRoom("New Room", "", RoomVisibility::Public);
+}
+
+std::optional<RoomCreatedResult> LobbyConnection::createRoom(const std::string& roomName,
+                                                             const std::string& passwordHash, RoomVisibility visibility)
+{
+    auto packet   = buildCreateRoomPacket(roomName, passwordHash, visibility, nextSequence_++);
     auto response = sendAndWaitForResponse(packet, MessageType::LobbyRoomCreated);
 
     if (response.empty()) {
         return std::nullopt;
     }
 
-    return parseRoomCreatedPacket(response.data(), response.size());
+    auto result = parseRoomCreatedPacket(response.data(), response.size());
+    if (result.has_value()) {
+        inRoom_ = true;
+    }
+    return result;
 }
 
 std::optional<JoinSuccessResult> LobbyConnection::joinRoom(std::uint32_t roomId)
@@ -104,7 +134,128 @@ std::optional<JoinSuccessResult> LobbyConnection::joinRoom(std::uint32_t roomId)
         return std::nullopt;
     }
 
-    return parseJoinSuccessPacket(response.data(), response.size());
+    auto result = parseJoinSuccessPacket(response.data(), response.size());
+    if (result.has_value()) {
+        inRoom_ = true;
+    }
+    return result;
+}
+
+std::optional<JoinSuccessResult> LobbyConnection::joinRoom(std::uint32_t roomId, const std::string& passwordHash)
+{
+    auto packet   = buildJoinRoomPacket(roomId, passwordHash, nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::LobbyJoinSuccess, std::chrono::seconds(5));
+
+    if (response.empty()) {
+        return std::nullopt;
+    }
+
+    auto result = parseJoinSuccessPacket(response.data(), response.size());
+    if (result.has_value()) {
+        inRoom_ = true;
+    }
+    return result;
+}
+
+std::optional<std::vector<PlayerInfo>> LobbyConnection::requestPlayerList(std::uint32_t roomId)
+{
+    auto packet   = buildGetPlayersPacket(roomId, nextSequence_++);
+    auto response = sendAndWaitForResponse(packet, MessageType::RoomPlayerList, std::chrono::milliseconds(500));
+
+    if (response.empty()) {
+        return std::nullopt;
+    }
+
+    return parsePlayerListPacket(response.data(), response.size());
+}
+
+void LobbyConnection::notifyGameStarting(std::uint32_t roomId)
+{
+    Logger::instance().info("[LobbyConnection] Notifying server that game is starting for room " +
+                            std::to_string(roomId));
+
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomForceStart);
+    hdr.sequenceId  = nextSequence_++;
+    hdr.payloadSize = sizeof(std::uint32_t);
+
+    auto encoded = hdr.encode();
+    std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    auto crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+}
+
+void LobbyConnection::kickPlayer(std::uint32_t roomId, std::uint32_t playerId)
+{
+    Logger::instance().info("[LobbyConnection] Kicking player " + std::to_string(playerId) + " from room " +
+                            std::to_string(roomId));
+
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomKickPlayer);
+    hdr.sequenceId  = nextSequence_++;
+    hdr.payloadSize = sizeof(std::uint32_t) + sizeof(std::uint32_t);
+
+    auto encoded = hdr.encode();
+    std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
+
+    auto crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+}
+
+void LobbyConnection::leaveRoom()
+{
+    if (!inRoom_) {
+        return;
+    }
+
+    Logger::instance().info("[LobbyConnection] Sending leave room message");
+
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::LobbyLeaveRoom);
+    hdr.sequenceId  = nextSequence_++;
+    hdr.payloadSize = 0;
+
+    auto encoded = hdr.encode();
+    std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+
+    auto crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+
+    inRoom_ = false;
 }
 
 std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,

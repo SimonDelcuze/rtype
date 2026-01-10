@@ -32,7 +32,8 @@ TEST(InputSystem, DoesNothingWhenNoFlags)
     FakeMapper mapper;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -47,7 +48,8 @@ TEST(InputSystem, EnqueuesCommandWithSequenceAndPos)
     mapper.nextFlags  = InputMapper::UpFlag;
     std::uint32_t seq = 5;
     float x = 10.0F, y = 20.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.initialize();
     sys.update(registry, 0.0F);
@@ -66,7 +68,8 @@ TEST(InputSystem, IncrementsSequenceEachPush)
     mapper.nextFlags  = InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     sys.update(registry, 0.0F);
@@ -85,7 +88,8 @@ TEST(InputSystem, SetsLeftAngle)
     mapper.nextFlags  = InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -100,7 +104,8 @@ TEST(InputSystem, SetsRightAngle)
     mapper.nextFlags  = InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -115,7 +120,8 @@ TEST(InputSystem, SetsUpAngle)
     mapper.nextFlags  = InputMapper::UpFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -130,7 +136,8 @@ TEST(InputSystem, SetsDownAngle)
     mapper.nextFlags  = InputMapper::DownFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -145,7 +152,8 @@ TEST(InputSystem, SetsDiagonalUpLeftAngle)
     mapper.nextFlags  = InputMapper::UpFlag | InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -160,7 +168,8 @@ TEST(InputSystem, SetsDiagonalDownRightAngle)
     mapper.nextFlags  = InputMapper::DownFlag | InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -175,7 +184,8 @@ TEST(InputSystem, FireOnlyKeepsDefaultAngle)
     mapper.nextFlags  = InputMapper::FireFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -189,7 +199,8 @@ TEST(InputSystem, MovementWithFireKeepsMovementAngle)
     mapper.nextFlags  = InputMapper::FireFlag | InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -205,7 +216,8 @@ TEST(InputSystem, SetsDiagonalDownLeftAngle)
     mapper.nextFlags  = InputMapper::DownFlag | InputMapper::LeftFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -220,7 +232,8 @@ TEST(InputSystem, SetsDiagonalUpRightAngle)
     mapper.nextFlags  = InputMapper::UpFlag | InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     InputCommand out{};
@@ -235,7 +248,8 @@ TEST(InputSystem, SequenceNotIncrementedWhenNoInput)
     mapper.nextFlags  = 0;
     std::uint32_t seq = 10;
     float x = 0.0F, y = 0.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     EXPECT_EQ(seq, 10u);
@@ -250,7 +264,8 @@ TEST(InputSystem, UsesLatestPositionEachDispatch)
     mapper.nextFlags  = InputMapper::RightFlag;
     std::uint32_t seq = 0;
     float x = 1.0F, y = 2.0F;
-    InputSystem sys(buffer, mapper, seq, x, y);
+    std::uint32_t localPlayerId = 0;
+    InputSystem sys(localPlayerId, buffer, mapper, seq, x, y);
     Registry registry;
     sys.update(registry, 0.0F);
     x = 5.0F;

@@ -32,7 +32,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint)
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId)
 {
     (void) lastLobbyEndpoint;
 
@@ -40,6 +40,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
     static IpEndpoint savedLobbyEp;
     static bool authenticated = false;
     static std::string authenticatedUsername;
+    static std::uint32_t authenticatedUserId;
     static std::unique_ptr<LobbyConnection> authenticatedConnection;
 
     if (!serverSelected) {
@@ -89,7 +90,10 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         Logger::instance().info("[Auth] User authenticated: " + authResult->username);
         authenticated         = true;
         authenticatedUsername = authResult->username;
+        authenticatedUserId   = authResult->userId;
     }
+
+    outUserId = authenticatedUserId;
 
     while (window.isOpen()) {
         Logger::instance().info("[Nav] Showing lobby menu");
@@ -106,7 +110,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
         authenticatedConnection.reset();
 
         return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
-                                     lastLobbyEndpoint);
+                                     lastLobbyEndpoint, outUserId);
     }
 
     return std::nullopt;
@@ -265,9 +269,9 @@ namespace
 
 } // namespace
 
-GameSessionResult runGameSession(Window& window, const ClientOptions& options, const IpEndpoint& serverEndpoint,
-                                 NetPipelines& net, InputBuffer& inputBuffer, TextureManager& textureManager,
-                                 FontManager& fontManager, std::string& errorMessage,
+GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, const ClientOptions& options,
+                                 const IpEndpoint& serverEndpoint, NetPipelines& net, InputBuffer& inputBuffer,
+                                 TextureManager& textureManager, FontManager& fontManager, std::string& errorMessage,
                                  ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     GraphicsFactory graphicsFactory;
@@ -288,12 +292,32 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
         fontManager.load("score_font", "client/assets/fonts/ui.ttf");
     }
 
+    (void) options;
     bool serverLost = false;
-    if (options.useDefault) {
-        sendClientReady(serverEndpoint, *net.socket);
-    } else if (!runWaitingRoom(window, net, serverEndpoint, errorMessage, broadcastQueue, serverLost)) {
-        return GameSessionResult{true, serverLost, std::nullopt};
+
+    if (g_isRoomHost && g_expectedPlayerCount > 0) {
+        Logger::instance().info("[RunClientFlow] Sending expected player count: " +
+                                std::to_string(g_expectedPlayerCount));
+        PacketHeader hdr{};
+        hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+        hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount);
+        hdr.sequenceId  = 0;
+        hdr.payloadSize = 1;
+
+        auto encoded = hdr.encode();
+        std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+        packet.push_back(g_expectedPlayerCount);
+
+        auto crc = PacketHeader::crc32(packet.data(), packet.size());
+        packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+        net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
     }
+
+    sendClientReady(serverEndpoint, *net.socket);
 
     if (!window.isOpen()) {
         return GameSessionResult{false, false, std::nullopt};
@@ -316,9 +340,9 @@ GameSessionResult runGameSession(Window& window, const ClientOptions& options, c
     float playerPosX            = 0.0F;
     float playerPosY            = 0.0F;
 
-    configureSystems(gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels, levelState,
-                     inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager, eventBus,
-                     graphicsFactory, soundManager, broadcastQueue);
+    configureSystems(localPlayerId, gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels,
+                     levelState, inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager,
+                     eventBus, graphicsFactory, soundManager, broadcastQueue);
 
     ButtonSystem buttonSystem(window, fontManager);
 

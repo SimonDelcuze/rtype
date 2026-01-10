@@ -61,6 +61,14 @@ class GameInstance
     std::size_t getPlayerCount() const;
     std::vector<ClientSession> getSessions() const;
     void kickPlayer(std::uint32_t playerId);
+    void kickPlayer(std::uint32_t playerId, const std::string& reason);
+    void banPlayer(std::uint32_t playerId, const std::string& reason);
+    void promoteToAdmin(std::uint32_t playerId);
+    void demoteFromAdmin(std::uint32_t playerId);
+    bool isOwner(std::uint32_t playerId) const;
+    bool isAdmin(std::uint32_t playerId) const;
+    bool canKick(std::uint32_t kickerId, std::uint32_t targetId) const;
+    bool canPromoteAdmin(std::uint32_t promoterId) const;
     bool isGameStarted() const
     {
         return gameStarted_;
@@ -78,6 +86,8 @@ class GameInstance
     void handleControl();
     void handleControlMessage(const ControlEvent& ctrl);
     void onJoin(ClientSession& sess, const ControlEvent& ctrl);
+    void onForceStart(std::uint32_t playerId);
+    void onSetPlayerCount(std::uint8_t count);
     void addPlayerEntity(std::uint32_t playerId);
     void maybeStartGame();
     void tick(const std::vector<ReceivedInput>& inputs);
@@ -165,6 +175,7 @@ class GameInstance
     int lastCountdownValue_{4};
     std::int32_t lastSegmentIndex_{-1};
     std::uint32_t nextPlayerId_{1};
+    std::uint8_t expectedPlayerCount_{0};
     std::atomic<bool>* running_{nullptr};
     NetworkBridge networkBridge_;
     ReplicationManager replicationManager_;
