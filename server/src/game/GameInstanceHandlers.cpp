@@ -16,13 +16,18 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
     auto key  = endpointKey(ctrl.from);
     auto type = ctrl.header.messageType;
 
-    if (gameStarted_) {
-        if (type == static_cast<std::uint8_t>(MessageType::ClientHello) ||
-            type == static_cast<std::uint8_t>(MessageType::ClientJoinRequest)) {
-            Logger::instance().warn("[Net] Rejecting connection - game already started");
-            sendThread_.sendTo(buildJoinDeny(ctrl.header.sequenceId), ctrl.from);
-            return;
+    bool isAuthoritative = (ctrl.from.addr[0] == 0 && ctrl.from.addr[1] == 0 &&
+                           ctrl.from.addr[2] == 0 && ctrl.from.addr[3] == 0 &&
+                           ctrl.from.port == 0);
+
+    if (isAuthoritative) {
+        if (type == static_cast<std::uint8_t>(MessageType::RoomForceStart)) {
+            if (ctrl.data.size() >= 5) {
+                onSetPlayerCount(ctrl.data[4]);
+            }
+            onForceStart(0, true);
         }
+        return;
     }
 
     auto& sess    = sessions_[key];
@@ -39,7 +44,7 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientReady)) {
         sess.ready = true;
     } else if (type == static_cast<std::uint8_t>(MessageType::RoomForceStart)) {
-        onForceStart(sess.playerId);
+        onForceStart(sess.playerId, false);
     } else if (type == static_cast<std::uint8_t>(MessageType::RoomSetPlayerCount)) {
         if (ctrl.data.size() >= PacketHeader::kSize + 1) {
             std::uint8_t playerCount = ctrl.data[PacketHeader::kSize];
@@ -51,6 +56,7 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
         onDisconnect(ctrl.from);
     }
 }
+
 
 void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 {
@@ -70,6 +76,12 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     }
 
     sess.join = true;
+    if (forceStarted_) {
+        sess.hello = true;
+        sess.ready = true;
+        Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " auto-ready (force started)");
+    }
+
     sendThread_.sendTo(buildJoinAccept(ctrl.header.sequenceId, sess.playerId), ctrl.from);
 
     bool alreadyExists = false;
@@ -86,6 +98,10 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
 
     if (!playerEntities_.contains(sess.playerId)) {
         addPlayerEntity(sess.playerId);
+    }
+
+    if (forceStarted_) {
+        maybeStartGame();
     }
 }
 
@@ -107,21 +123,28 @@ void GameInstance::addPlayerEntity(std::uint32_t playerId)
     playerEntities_[playerId] = entity;
 }
 
-void GameInstance::onForceStart(std::uint32_t playerId)
+void GameInstance::onForceStart(std::uint32_t playerId, bool authoritative)
 {
     if (gameStarted_) {
         Logger::instance().warn("[Game] Cannot force start - game already started");
         return;
     }
 
-    if (!isOwner(playerId)) {
+    if (!authoritative && !isOwner(playerId)) {
         Logger::instance().warn("[Game] Player " + std::to_string(playerId) + " is not owner, cannot force start");
         return;
     }
 
-    Logger::instance().info("[Game] Owner forcing game start");
+    if (authoritative) {
+        Logger::instance().info("[Game] Authoritative force start command received (from Lobby)");
+        forceStarted_ = true;
+    } else {
+        Logger::instance().info("[Game] Force start command from Player " + std::to_string(playerId) +
+                                " (isOwner=" + std::string(isOwner(playerId) ? "TRUE" : "FALSE") + ")");
+    }
 
-    for (auto& [_, s] : sessions_) {
+    for (auto& [key, s] : sessions_) {
+        Logger::instance().info("[Game] Marking session " + key + " (PlayerId=" + std::to_string(s.playerId) + ") as auto-ready");
         s.ready = true;
     }
 
@@ -136,10 +159,16 @@ void GameInstance::onSetPlayerCount(std::uint8_t count)
 
 void GameInstance::maybeStartGame()
 {
-    if (gameStarted_ || !ready())
+    if (gameStarted_) {
         return;
+    }
 
-    Logger::instance().info("[Game] All players ready, starting game");
+    if (!ready()) {
+        Logger::instance().info("[Game] maybeStartGame: ready() returned FALSE - waiting for more players or ready status");
+        return;
+    }
+
+    Logger::instance().info("[Game] All players ready, starting simulation for Room " + std::to_string(roomId_));
 
     auto startPkt = buildGameStart(0);
     for (auto& [_, s] : sessions_) {
@@ -211,16 +240,25 @@ LevelDefinition GameInstance::buildLevel() const
 
 bool GameInstance::ready() const
 {
-    if (sessions_.empty())
-        return false;
-
-    if (expectedPlayerCount_ > 0 && sessions_.size() < expectedPlayerCount_) {
+    if (sessions_.empty()) {
+        Logger::instance().info("[Game] ready() = FALSE: sessions map is empty");
         return false;
     }
 
-    for (const auto& [_, s] : sessions_) {
-        if (!s.hello || !s.join || !s.ready)
+    if (expectedPlayerCount_ > 0 && sessions_.size() < expectedPlayerCount_) {
+        Logger::instance().info("[Game] ready() = FALSE: sessions.size(" + std::to_string(sessions_.size()) +
+                                ") < expected(" + std::to_string(expectedPlayerCount_) + ")");
+        return false;
+    }
+
+    for (const auto& [key, s] : sessions_) {
+        if (!s.hello || !s.join || !s.ready) {
+            Logger::instance().info("[Game] ready() = FALSE: player " + std::to_string(s.playerId) +
+                                    " (" + key + ") not fully ready: hello=" + std::string(s.hello?"Y":"N") +
+                                    " join=" + std::string(s.join?"Y":"N") +
+                                    " ready=" + std::string(s.ready?"Y":"N"));
             return false;
+        }
     }
     return true;
 }

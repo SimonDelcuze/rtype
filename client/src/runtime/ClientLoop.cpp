@@ -43,6 +43,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     if (gameResult.serverLost) {
         Logger::instance().info("Server connection lost - clearing lobby persistence");
         lastLobbyEndpoint.reset();
+        errorMessage = "Connection lost to server";
     }
 
     if (gameResult.retry) {

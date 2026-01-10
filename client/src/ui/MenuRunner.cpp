@@ -47,7 +47,9 @@ void MenuRunner::runLoop(IMenu& menu)
 
         inputFieldSystem_.update(registry_, dt);
         buttonSystem_.update(registry_, dt);
+        buttonSystem_.update(registry_, dt);
         hudSystem_.update(registry_, dt);
+        menu.update(registry_, dt);
         menu.render(registry_, window_);
         notificationSystem_.update(registry_, dt);
         window_.display();

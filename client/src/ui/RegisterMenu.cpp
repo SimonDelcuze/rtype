@@ -164,63 +164,56 @@ void RegisterMenu::handleEvent(Registry& /* registry */, const Event& /* event *
 
 void RegisterMenu::render(Registry& /* registry */, Window& /* window */) {}
 
-RegisterMenu::Result RegisterMenu::getResult(Registry& /* registry */) const
+void RegisterMenu::update(Registry& registry, float dt)
 {
-    Result result;
-    result.registered    = registered_;
-    result.backToLogin   = backToLogin_;
-    result.exitRequested = exitRequested_;
-    result.userId        = userId_;
-    result.username      = username_;
-    return result;
-}
+    lobbyConn_.poll(broadcastQueue_);
 
-void RegisterMenu::setError(Registry& /* registry */, const std::string& message)
-{
-    broadcastQueue_.push(NotificationData{message, 5.0F});
-}
+    if (isLoading_) {
+        if (lobbyConn_.hasRegisterResult()) {
+            auto response = lobbyConn_.popRegisterResult();
+            isLoading_ = false;
 
-void RegisterMenu::reset()
-{
-    done_          = false;
-    backToLogin_   = false;
-    exitRequested_ = false;
-    registered_    = false;
-    userId_        = 0;
-    username_.clear();
-}
-
-bool RegisterMenu::validatePassword(const std::string& password, std::string& errorMsg)
-{
-    if (password.length() < 8) {
-        errorMsg = "Password must be at least 8 characters";
-        return false;
+            if (response.has_value() && response->success) {
+                Logger::instance().info("Registration successful for user: " + username_);
+                registered_ = true;
+                userId_     = response->userId;
+                done_       = true;
+            } else {
+                std::string errorMsg = "Registration failed";
+                if (response.has_value()) {
+                    switch (response->errorCode) {
+                        case AuthErrorCode::UsernameTaken: errorMsg = "Username is already taken"; break;
+                        case AuthErrorCode::WeakPassword:  errorMsg = "Password is too weak"; break;
+                        case AuthErrorCode::ServerError:   errorMsg = "Server error occurred"; break;
+                        default:                           errorMsg = "Registration failed"; break;
+                    }
+                } else {
+                    errorMsg = "Registration failed: No response";
+                }
+                setError(registry, errorMsg);
+                Logger::instance().warn("Registration failed: " + errorMsg);
+            }
+        }
+        return;
     }
 
-    if (password.length() > 64) {
-        errorMsg = "Password must be at most 64 characters";
-        return false;
+    heartbeatTimer_ += dt;
+    if (heartbeatTimer_ >= 1.0F) {
+        heartbeatTimer_ = 0.0F;
+        if (!lobbyConn_.ping()) {
+             Logger::instance().warn("[Heartbeat] Ping failed in Register Menu");
+             consecutiveFailures_++;
+        } else {
+             consecutiveFailures_ = 0;
+        }
+
+        if (consecutiveFailures_ >= 2) {
+            Logger::instance().error("[Heartbeat] Server lost in Register Menu");
+            setError(registry, "Server connection lost");
+            backToLogin_ = true;
+            done_        = true;
+        }
     }
-
-    bool hasUpper = false;
-    bool hasLower = false;
-    bool hasDigit = false;
-
-    for (char c : password) {
-        if (std::isupper(c))
-            hasUpper = true;
-        if (std::islower(c))
-            hasLower = true;
-        if (std::isdigit(c))
-            hasDigit = true;
-    }
-
-    if (!hasUpper || !hasLower || !hasDigit) {
-        errorMsg = "Password must contain uppercase\n\t  lowercase, and digit";
-        return false;
-    }
-
-    return true;
 }
 
 void RegisterMenu::handleRegisterAttempt(Registry& registry)
@@ -269,40 +262,51 @@ void RegisterMenu::handleRegisterAttempt(Registry& registry)
         return;
     }
 
-    Logger::instance().info("Attempting registration for user: " + username);
+    if (isLoading_) return;
 
-    auto response = lobbyConn_.registerUser(username, password);
+    Logger::instance().info("Attempting registration (async) for user: " + username);
+    username_ = username;
 
-    if (!response.has_value()) {
-        setError(registry, "Connection error: Unable to reach server");
-        Logger::instance().error("Registration failed: no response from server");
-        return;
+    lobbyConn_.sendRegister(username, password);
+    isLoading_ = true;
+}
+
+RegisterMenu::Result RegisterMenu::getResult(Registry& registry) const
+{
+    (void) registry;
+    Result res;
+    res.registered = registered_;
+    res.backToLogin = backToLogin_;
+    res.exitRequested = exitRequested_;
+    res.userId = userId_;
+    res.username = username_;
+    return res;
+}
+
+void RegisterMenu::setError(Registry& registry, const std::string& message)
+{
+    (void) registry;
+    broadcastQueue_.push(NotificationData{message, 3.0F});
+}
+
+void RegisterMenu::reset()
+{
+    done_ = false;
+    backToLogin_ = false;
+    exitRequested_ = false;
+    registered_ = false;
+    isLoading_ = false;
+    userId_ = 0;
+    username_.clear();
+    heartbeatTimer_ = 0.0F;
+    consecutiveFailures_ = 0;
+}
+
+bool RegisterMenu::validatePassword(const std::string& password, std::string& errorMsg)
+{
+    if (password.length() < 8) {
+        errorMsg = "Password must be at least 8 characters";
+        return false;
     }
-
-    if (!response->success) {
-        std::string errorMsg;
-        switch (response->errorCode) {
-            case AuthErrorCode::UsernameTaken:
-                errorMsg = "Username is already taken";
-                break;
-            case AuthErrorCode::WeakPassword:
-                errorMsg = "Password is too weak";
-                break;
-            case AuthErrorCode::ServerError:
-                errorMsg = "Server error occurred";
-                break;
-            default:
-                errorMsg = "Registration failed";
-                break;
-        }
-        setError(registry, errorMsg);
-        Logger::instance().warn("Registration failed for user " + username + ": " + errorMsg);
-        return;
-    }
-
-    Logger::instance().info("Registration successful for user: " + username);
-    registered_ = true;
-    userId_     = response->userId;
-    username_   = username;
-    done_       = true;
+    return true;
 }

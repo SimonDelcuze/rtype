@@ -193,33 +193,52 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
         return;
     }
 
-    updateTimer_ += 0.016F;
+    if (registry.has<TextComponent>(playerCountEntity_)) {
+        registry.get<TextComponent>(playerCountEntity_).content = "Players: " + std::to_string(players_.size()) + "/4";
+    }
+}
+
+void RoomWaitingMenu::update(Registry& registry, float dt)
+{
+    if (lobbyConnection_) {
+        if (isRefreshingPlayers_) {
+            if (lobbyConnection_->hasPlayerListResult()) {
+                auto playerListOpt = lobbyConnection_->popPlayerListResult();
+                isRefreshingPlayers_ = false;
+
+                if (playerListOpt.has_value()) {
+                     consecutiveFailures_ = 0;
+                     Logger::instance().info("[RoomWaitingMenu] Received player list: " + std::to_string(playerListOpt->size()) + " players");
+                     players_.clear();
+                     for (const auto& playerInfo : *playerListOpt) {
+                        PlayerInfo info;
+                        info.playerId = playerInfo.playerId;
+                        info.name = "Player " + std::to_string(playerInfo.playerId);
+                        info.isHost = playerInfo.isHost;
+                        players_.push_back(info);
+                     }
+                     updatePlayerList(registry);
+                } else {
+                     Logger::instance().warn("[RoomWaitingMenu] Failed to get player list");
+                     consecutiveFailures_++;
+                }
+            }
+        }
+    }
+
+    updateTimer_ += dt;
     if (updateTimer_ >= kUpdateInterval) {
         updateTimer_ = 0.0F;
+        if (lobbyConnection_ && !isRefreshingPlayers_) {
+             lobbyConnection_->sendRequestPlayerList(roomId_);
+             isRefreshingPlayers_ = true;
+        }
 
-        if (lobbyConnection_) {
-            auto playerListOpt = lobbyConnection_->requestPlayerList(roomId_);
-            if (playerListOpt.has_value()) {
-                Logger::instance().info(
-                    "[RoomWaitingMenu] Received player list: " + std::to_string(playerListOpt->size()) + " players");
-
-                players_.clear();
-
-                for (const auto& playerInfo : *playerListOpt) {
-                    PlayerInfo info;
-                    info.playerId = playerInfo.playerId;
-                    info.name     = "Player " + std::to_string(playerInfo.playerId);
-                    info.isHost   = playerInfo.isHost;
-                    players_.push_back(info);
-                    Logger::instance().info("[RoomWaitingMenu] Player " + std::to_string(playerInfo.playerId) +
-                                            " isHost=" + (playerInfo.isHost ? "true" : "false"));
-                }
-
-                updatePlayerList(registry);
-            } else {
-                Logger::instance().warn("[RoomWaitingMenu] Failed to get player list for room " +
-                                        std::to_string(roomId_));
-            }
+        if (consecutiveFailures_ >= 2) {
+             Logger::instance().error("[RoomWaitingMenu] Connection to lobby server lost (2 timeouts)");
+             result_.serverLost = true;
+             result_.leaveRoom  = true;
+             done_              = true;
         }
     }
 
@@ -273,7 +292,7 @@ void RoomWaitingMenu::onStartGameClicked()
     Logger::instance().info("[RoomWaitingMenu] Start game clicked (Host only)");
 
     if (lobbyConnection_) {
-        lobbyConnection_->notifyGameStarting(roomId_);
+        lobbyConnection_->sendNotifyGameStarting(roomId_);
         Logger::instance().info("[RoomWaitingMenu] Waiting for server confirmation...");
     }
 }
@@ -283,7 +302,7 @@ void RoomWaitingMenu::onLeaveRoomClicked()
     Logger::instance().info("[RoomWaitingMenu] Leave room clicked");
 
     if (lobbyConnection_) {
-        lobbyConnection_->leaveRoom();
+        lobbyConnection_->sendLeaveRoom();
     }
 
     result_.leaveRoom = true;
@@ -295,8 +314,6 @@ void RoomWaitingMenu::onKickPlayerClicked(std::uint32_t playerId)
     Logger::instance().info("[RoomWaitingMenu] Kick player " + std::to_string(playerId) + " clicked");
 
     if (lobbyConnection_) {
-        lobbyConnection_->kickPlayer(roomId_, playerId);
-
-        updateTimer_ = kUpdateInterval;
+        lobbyConnection_->sendKickPlayer(roomId_, playerId);
     }
 }

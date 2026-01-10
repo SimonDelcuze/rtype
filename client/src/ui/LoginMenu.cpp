@@ -167,34 +167,56 @@ void LoginMenu::handleEvent(Registry& /* registry */, const Event& /* event */) 
 
 void LoginMenu::render(Registry& /* registry */, Window& /* window */) {}
 
-LoginMenu::Result LoginMenu::getResult(Registry& /* registry */) const
+void LoginMenu::update(Registry& registry, float dt)
 {
-    Result result;
-    result.authenticated = authenticated_;
-    result.openRegister  = openRegister_;
-    result.backRequested = backRequested_;
-    result.exitRequested = exitRequested_;
-    result.userId        = userId_;
-    result.username      = username_;
-    result.token         = token_;
-    return result;
-}
+    lobbyConn_.poll(broadcastQueue_);
 
-void LoginMenu::setError(Registry& /* registry */, const std::string& message)
-{
-    broadcastQueue_.push(NotificationData{message, 5.0F});
-}
+    if (isLoading_) {
+        if (lobbyConn_.hasLoginResult()) {
+            auto response = lobbyConn_.popLoginResult();
+            isLoading_ = false;
 
-void LoginMenu::reset()
-{
-    done_          = false;
-    openRegister_  = false;
-    backRequested_ = false;
-    exitRequested_ = false;
-    authenticated_ = false;
-    userId_        = 0;
-    username_.clear();
-    token_.clear();
+            if (response.has_value() && response->success) {
+                Logger::instance().info("Login successful for user: " + username_);
+                authenticated_ = true;
+                userId_        = response->userId;
+                token_         = response->token;
+                done_          = true;
+            } else {
+                std::string errorMsg = "Login failed";
+                if (response.has_value()) {
+                    switch (response->errorCode) {
+                        case AuthErrorCode::InvalidCredentials: errorMsg = "Invalid username or password"; break;
+                        case AuthErrorCode::ServerError:        errorMsg = "Server error occurred"; break;
+                        default:                                     errorMsg = "Login failed"; break;
+                    }
+                } else {
+                    errorMsg = "Login failed: No response";
+                }
+                setError(registry, errorMsg);
+                Logger::instance().warn("Login failed: " + errorMsg);
+            }
+        }
+        return;
+    }
+
+    heartbeatTimer_ += dt;
+    if (heartbeatTimer_ >= 1.0F) {
+        heartbeatTimer_ = 0.0F;
+        if (!lobbyConn_.ping()) {
+             Logger::instance().warn("[Heartbeat] Ping failed in Login Menu");
+             consecutiveFailures_++;
+        } else {
+             consecutiveFailures_ = 0;
+        }
+
+        if (consecutiveFailures_ >= 2) {
+            Logger::instance().error("[Heartbeat] Server lost in Login Menu");
+            setError(registry, "Server connection lost");
+            backRequested_ = true;
+            done_          = true;
+        }
+    }
 }
 
 void LoginMenu::handleLoginAttempt(Registry& registry)
@@ -215,38 +237,43 @@ void LoginMenu::handleLoginAttempt(Registry& registry)
         return;
     }
 
-    Logger::instance().info("Attempting login for user: " + username);
+    if (isLoading_) return;
 
-    auto response = lobbyConn_.login(username, password);
+    username_ = username;
+    lobbyConn_.sendLogin(username, password);
+    isLoading_ = true;
+}
 
-    if (!response.has_value()) {
-        setError(registry, "Connection error: Unable to reach server");
-        Logger::instance().error("Login failed: no response from server");
-        return;
-    }
+LoginMenu::Result LoginMenu::getResult(Registry& registry) const
+{
+    (void) registry;
+    Result res;
+    res.authenticated = authenticated_;
+    res.openRegister = openRegister_;
+    res.backRequested = backRequested_;
+    res.exitRequested = exitRequested_;
+    res.userId = userId_;
+    res.username = username_;
+    res.token = token_;
+    return res;
+}
 
-    if (!response->success) {
-        std::string errorMsg;
-        switch (response->errorCode) {
-            case AuthErrorCode::InvalidCredentials:
-                errorMsg = "Invalid username or password";
-                break;
-            case AuthErrorCode::ServerError:
-                errorMsg = "Server error occurred";
-                break;
-            default:
-                errorMsg = "Login failed";
-                break;
-        }
-        setError(registry, errorMsg);
-        Logger::instance().warn("Login failed for user " + username + ": " + errorMsg);
-        return;
-    }
+void LoginMenu::setError(Registry& registry, const std::string& message)
+{
+     (void) registry;
+     broadcastQueue_.push(NotificationData{message, 3.0F});
+}
 
-    Logger::instance().info("Login successful for user: " + username);
-    authenticated_ = true;
-    userId_        = response->userId;
-    username_      = username;
-    token_         = response->token;
-    done_          = true;
+void LoginMenu::reset() {
+    done_ = false;
+    openRegister_ = false;
+    backRequested_ = false;
+    exitRequested_ = false;
+    authenticated_ = false;
+    isLoading_ = false;
+    userId_ = 0;
+    username_.clear();
+    token_.clear();
+    heartbeatTimer_ = 0.0F;
+    consecutiveFailures_ = 0;
 }

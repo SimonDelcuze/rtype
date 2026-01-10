@@ -34,83 +34,70 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                 std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId)
 {
-    (void) lastLobbyEndpoint;
-
-    static bool serverSelected = false;
-    static IpEndpoint savedLobbyEp;
-    static bool authenticated = false;
-    static std::string authenticatedUsername;
-    static std::uint32_t authenticatedUserId;
-    static std::unique_ptr<LobbyConnection> authenticatedConnection;
-
-    if (!serverSelected) {
-        Logger::instance().info("[Nav] Starting server selection flow");
-
-        if (options.useDefault) {
-            Logger::instance().info("Using default lobby: 127.0.0.1:50010");
-            savedLobbyEp = IpEndpoint::v4(127, 0, 0, 1, 50010);
-        } else {
-            auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
-            if (!ep.has_value()) {
-                return std::nullopt;
-            }
-            savedLobbyEp = *ep;
-        }
-        serverSelected = true;
-        Logger::instance().info("[Nav] Server selected");
-    }
-
-    while (window.isOpen() && !authenticated) {
-        Logger::instance().info("[Auth] Starting authentication flow");
-
-        authenticatedConnection = std::make_unique<LobbyConnection>(savedLobbyEp, g_running);
-
-        auto authResult =
-            showAuthenticationMenu(window, fontManager, textureManager, *authenticatedConnection, broadcastQueue);
-
-        if (!authResult.has_value()) {
-            Logger::instance().info("[Nav] Authentication cancelled, returning to server selection");
-            serverSelected = false;
-            authenticated  = false;
-            authenticatedConnection.reset();
-
-            if (options.useDefault) {
-                return std::nullopt;
-            }
-
-            auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
-            if (!ep.has_value()) {
-                return std::nullopt;
-            }
-            savedLobbyEp   = *ep;
-            serverSelected = true;
-            continue;
-        }
-
-        Logger::instance().info("[Auth] User authenticated: " + authResult->username);
-        authenticated         = true;
-        authenticatedUsername = authResult->username;
-        authenticatedUserId   = authResult->userId;
-    }
-
-    outUserId = authenticatedUserId;
-
     while (window.isOpen()) {
-        Logger::instance().info("[Nav] Showing lobby menu");
-
-        auto gameEp = showLobbyMenuAndGetGameEndpoint(window, savedLobbyEp, fontManager, textureManager, broadcastQueue,
-                                                      authenticatedConnection.get());
-
-        if (gameEp.has_value()) {
-            return gameEp;
+        if (!options.useDefault && !lastLobbyEndpoint.has_value()) {
+            Logger::instance().info("[Nav] Showing server selection menu");
+            auto ep = showConnectionMenu(window, fontManager, textureManager, errorMessage, broadcastQueue);
+            if (!ep.has_value()) {
+                return std::nullopt;
+            }
+            lastLobbyEndpoint = *ep;
+        } else if (options.useDefault && !lastLobbyEndpoint.has_value()) {
+            Logger::instance().info("Using default lobby: 127.0.0.1:50010");
+            lastLobbyEndpoint = IpEndpoint::v4(127, 0, 0, 1, 50010);
         }
 
-        Logger::instance().info("[Nav] Back from lobby, returning to login");
-        authenticated = false;
-        authenticatedConnection.reset();
+        IpEndpoint lobbyEp = *lastLobbyEndpoint;
+        Logger::instance().info("[Nav] Using lobby endpoint: port " + std::to_string(lobbyEp.port));
+        bool backToServerSelect = false;
 
-        return resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
-                                     lastLobbyEndpoint, outUserId);
+        while (window.isOpen() && !backToServerSelect) {
+            Logger::instance().info("[Auth] Starting authentication flow");
+            LobbyConnection conn(lobbyEp, g_running);
+            if (!conn.connect() || !conn.ping()) {
+                Logger::instance().warn("[Nav] Failed to reach lobby server at port " + std::to_string(lobbyEp.port));
+                backToServerSelect = true;
+                lastLobbyEndpoint.reset();
+                errorMessage = "Could not reach server";
+                if (options.useDefault) {
+                    return std::nullopt;
+                }
+                continue;
+            }
+
+            auto authResult = showAuthenticationMenu(window, fontManager, textureManager, conn, broadcastQueue);
+
+            if (!authResult.has_value()) {
+                Logger::instance().info("[Nav] Authentication cancelled/failed, returning to server selection");
+                backToServerSelect = true;
+                lastLobbyEndpoint.reset();
+                if (options.useDefault) {
+                    return std::nullopt;
+                }
+                continue;
+            }
+
+            Logger::instance().info("[Auth] User authenticated: " + authResult->username);
+            outUserId = authResult->userId;
+            Logger::instance().info("[Nav] Showing lobby menu");
+            bool serverLost = false;
+            auto gameEp = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue,
+                                                          &conn, serverLost);
+
+            if (gameEp.has_value()) {
+                return gameEp;
+            }
+
+            if (serverLost) {
+                Logger::instance().warn("[Nav] Server connection lost in lobby");
+                backToServerSelect = true;
+                lastLobbyEndpoint.reset();
+                errorMessage = "Connection lost to server";
+                continue;
+            }
+
+            Logger::instance().info("[Nav] Back from lobby, returning to login");
+        }
     }
 
     return std::nullopt;
@@ -172,7 +159,8 @@ namespace
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
-                         bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue)
+                         bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue,
+                         const IpEndpoint& serverEndpoint)
     {
         auto onEvent = [&](const Event& event) {
             mapper.handleEvent(event);
@@ -202,6 +190,7 @@ namespace
                 }
             }
 
+
             std::string disconnectMsg;
             if (net.disconnectEvents.tryPop(disconnectMsg)) {
                 Logger::instance().warn("[Net] Disconnected from server: " + disconnectMsg);
@@ -219,6 +208,20 @@ namespace
             std::chrono::duration<float> elapsed = currentTime - lastTime;
             lastTime                             = currentTime;
             const float deltaTime                = std::min(elapsed.count(), 0.1F);
+
+            static float pingTimer = 0.0F;
+            pingTimer += deltaTime;
+            if (pingTimer >= 2.0F) {
+                pingTimer = 0.0F;
+                PacketHeader header{};
+                header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+                header.messageType = static_cast<std::uint8_t>(MessageType::ClientPing);
+                auto packet        = header.encode();
+                if (net.socket) {
+                     Logger::instance().info("[Heartbeat] Sending ping to game server...");
+                     net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
+                }
+            }
 
             window.setColorFilter(g_colorFilterMode);
 
@@ -348,7 +351,7 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
 
     bool disconnected = false;
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
-                    serverLost, broadcastQueue);
+                    serverLost, broadcastQueue, serverEndpoint);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();

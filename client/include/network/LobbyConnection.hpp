@@ -56,11 +56,40 @@ class LobbyConnection
         return wasKicked_;
     }
 
+    void sendLogin(const std::string& username, const std::string& password);
+    bool hasLoginResult() const;
+    std::optional<LoginResponseData> popLoginResult();
+
+    void sendRegister(const std::string& username, const std::string& password);
+    bool hasRegisterResult() const;
+    std::optional<RegisterResponseData> popRegisterResult();
+
+    void sendRequestRoomList();
+    bool hasRoomListResult() const;
+    std::optional<RoomListResult> popRoomListResult();
+
+    void sendCreateRoom(const std::string& roomName = "New Room", const std::string& password = "",
+                        RoomVisibility visibility = RoomVisibility::Public);
+    bool hasRoomCreatedResult() const;
+    std::optional<RoomCreatedResult> popRoomCreatedResult();
+
+    void sendJoinRoom(std::uint32_t roomId, const std::string& password = "");
+    bool hasJoinRoomResult() const;
+    std::optional<JoinSuccessResult> popJoinRoomResult();
+
+    void sendRequestPlayerList(std::uint32_t roomId);
+    bool hasPlayerListResult() const;
+    std::optional<std::vector<PlayerInfo>> popPlayerListResult();
+
+    void sendNotifyGameStarting(std::uint32_t roomId);
+
+    void sendKickPlayer(std::uint32_t roomId, std::uint32_t playerId);
+
+    void sendLeaveRoom();
     std::optional<LoginResponseData> login(const std::string& username, const std::string& password);
     std::optional<RegisterResponseData> registerUser(const std::string& username, const std::string& password);
     std::optional<ChangePasswordResponseData> changePassword(const std::string& oldPassword,
                                                              const std::string& newPassword, const std::string& token);
-
     std::optional<struct GetStatsResponseData> getStats();
 
   private:
@@ -77,4 +106,11 @@ class LobbyConnection
     std::uint8_t expectedPlayerCount_{0};
     bool inRoom_{false};
     bool wasKicked_{false};
+
+    std::optional<LoginResponseData> pendingLoginResult_;
+    std::optional<RegisterResponseData> pendingRegisterResult_;
+    std::optional<RoomListResult> pendingRoomListResult_;
+    std::optional<RoomCreatedResult> pendingRoomCreatedResult_;
+    std::optional<JoinSuccessResult> pendingJoinRoomResult_;
+    std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
 };

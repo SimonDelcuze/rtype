@@ -218,7 +218,12 @@ void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const std:
     } else {
         Logger::instance().addPacketDropped();
         Logger::instance().warn("[Input] input_drop status=decode_failed from=" + endpointKey(src));
+        return;
     }
+
+    EndpointKey key{src.addr, src.port};
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    sessions_[key].lastPacketTime = std::chrono::steady_clock::now();
 }
 
 void InputReceiveThread::checkTimeouts(std::chrono::steady_clock::time_point now)

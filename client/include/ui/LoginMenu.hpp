@@ -30,6 +30,7 @@ class LoginMenu : public IMenu
     void destroy(Registry& registry) override;
     bool isDone() const override;
     void handleEvent(Registry& registry, const Event& event) override;
+    void update(Registry& registry, float dt) override;
     void render(Registry& registry, Window& window) override;
 
     Result getResult(Registry& registry) const;
@@ -49,10 +50,14 @@ class LoginMenu : public IMenu
     bool backRequested_ = false;
     bool exitRequested_ = false;
     bool authenticated_ = false;
+    bool isLoading_ = false;
 
     std::uint32_t userId_{0};
     std::string username_;
     std::string token_;
+
+    float heartbeatTimer_{0.0F};
+    int consecutiveFailures_{0};
 
     EntityId usernameInput_ = 0;
     EntityId passwordInput_ = 0;
