@@ -901,8 +901,7 @@ namespace
             } else if (type == "follow" || type == "follow_player") {
                 double speed = 0.0;
                 readNumber(p, "speed", speed, ppath, error, true);
-                out.push_back(
-                    PatternDefinition{id, MovementComponent::followPlayer(static_cast<float>(speed))});
+                out.push_back(PatternDefinition{id, MovementComponent::followPlayer(static_cast<float>(speed))});
             } else {
                 setError(error, LevelLoadErrorCode::SchemaError, "Unknown pattern type: " + type, "", ppath);
                 return false;
