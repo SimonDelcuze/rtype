@@ -20,6 +20,7 @@ class ReplicationManager
     };
 
     SyncResult synchronize(const Registry& registry, std::uint32_t currentTick);
+    SyncResult synchronize(const Registry& registry, std::uint32_t currentTick, bool forceFull);
 
     void clear();
 

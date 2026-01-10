@@ -83,7 +83,6 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
         levelDirector_->update(registry_, levelDelta);
         auto events = levelDirector_->consumeEvents();
         levelSpawnSys_->update(registry_, levelDelta, events);
-        captureCheckpoint(events);
         sendLevelEvents(events);
         sendSegmentState();
         playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
@@ -123,7 +122,8 @@ void GameInstance::logSnapshotSummary(std::size_t totalBytes, std::size_t payloa
 
 void GameInstance::sendSnapshots()
 {
-    auto result = replicationManager_.synchronize(world_.getRegistry(), currentTick_);
+    bool forceFull = (currentTick_ % kFullStateInterval == 0);
+    auto result    = replicationManager_.synchronize(world_.getRegistry(), currentTick_, forceFull);
 
     if (result.packets.empty())
         return;

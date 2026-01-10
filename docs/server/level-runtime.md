@@ -29,15 +29,10 @@ Events are dispatched by `LevelDirector` and split into two buckets:
 
 ## Checkpoints
 
-When a checkpoint event fires, the server captures a snapshot:
+Checkpoint events only mark ids for trigger evaluation. No snapshot is stored.
 
-- Segment index, time, distance, and active scroll.
-- Fired event state and repeat counters.
-- Spawn group state and pending spawns.
-- Boss alive/dead status.
-- Set of reached checkpoints.
-
-On player death, the server resets to the snapshot, clears non-player entities, and respawns players with base loadout.
+On player death, the server starts a respawn timer. When it expires, the player respawns on the left side of the screen
+with base loadout and the level continues without reset.
 
 ## Error Handling
 

@@ -84,7 +84,9 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
 {
     static const std::array<std::uint16_t, 4> kPlayerTypes{1, 12, 13, 14};
     EntityId entity = registry_.createEntity();
-    registry_.emplace<TransformComponent>(entity, TransformComponent::create(100.0F, 400.0F));
+    registry_.emplace<BoundaryComponent>(entity, BoundaryComponent::create(0.0F, 0.0F, 1246.0F, 702.0F));
+    auto spawn = respawnPosition(entity);
+    registry_.emplace<TransformComponent>(entity, TransformComponent::create(spawn.x, spawn.y));
     registry_.emplace<VelocityComponent>(entity, VelocityComponent::create(0.0F, 0.0F));
     registry_.emplace<HealthComponent>(entity, HealthComponent::create(1));
     registry_.emplace<PlayerInputComponent>(entity);
@@ -92,7 +94,6 @@ void ServerApp::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<LivesComponent>(entity, LivesComponent::create(3, 3));
     registry_.emplace<ScoreComponent>(entity, ScoreComponent::create(0));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
-    registry_.emplace<BoundaryComponent>(entity, BoundaryComponent::create(0.0F, 0.0F, 1246.0F, 702.0F));
     registry_.emplace<OwnershipComponent>(entity, OwnershipComponent::create(playerId));
     std::size_t slot = playerEntities_.size() % kPlayerTypes.size();
     registry_.emplace<RenderTypeComponent>(entity, RenderTypeComponent::create(kPlayerTypes[slot]));

@@ -24,7 +24,7 @@ On every server tick:
 3) Dispatch events whose triggers become true.
 4) Apply event effects in a stable order (sorted by event id and list order).
 
-This order is required for deterministic replay at checkpoints.
+This order ensures deterministic trigger evaluation.
 
 ## Trigger Types (v1)
 
@@ -87,15 +87,9 @@ Events can repeat using a `repeat` block:
 
 Repeat evaluation uses `realTime` and is independent from `scrollTime`.
 
-## Checkpoint Determinism
+## Checkpoint Behavior
 
-On checkpoint reset:
-
-- The segment clocks and scroll settings are restored to the checkpoint snapshot.
-- Events before the checkpoint remain fired; events after the checkpoint can fire again.
-- Pending spawns are restored from the spawn system snapshot.
-
-This requires event order and trigger semantics to be stable.
+Checkpoint ids are recorded for trigger evaluation. No timeline rewind is performed.
 
 ## Recommended Usage
 

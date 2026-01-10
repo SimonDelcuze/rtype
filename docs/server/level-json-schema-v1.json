@@ -633,7 +633,7 @@
         },
         {
           "type": "object",
-          "required": ["type", "trigger", "checkpointId", "respawn"],
+          "required": ["type", "trigger", "checkpointId"],
           "additionalProperties": false,
           "properties": {
             "type": { "const": "checkpoint" },

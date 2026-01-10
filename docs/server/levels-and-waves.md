@@ -45,7 +45,7 @@ Speed, scale, and health can be overridden per event.
 ## Bosses and checkpoints
 
 - Bosses spawn via `spawn_boss` events and are driven by boss phases.
-- Checkpoints are events that capture respawn state and reset rules.
+- Checkpoints are marker events used for trigger evaluation; respawn does not reset the level.
 
 See `docs/server/level-boss-spec.md` and `docs/server/level-checkpoints.md`.
 
