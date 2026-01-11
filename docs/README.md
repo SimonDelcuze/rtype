@@ -33,7 +33,7 @@ La logique "Master" du jeu.
 
 ### 🕹️ [Client (Visuals & Prediction)](client/README.md)
 L'expérience utilisateur.
-- **Rendering Pipeline** : Gestion des graphismes SFML.
+- **Rendering Pipeline** : Gestion des graphismes SFML 3.0.
 - **Prediction & Reconciliation** : Comment nous gérons la latence.
 - **UI Module** : Architecture des menus et interactions.
 
