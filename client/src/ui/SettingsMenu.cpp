@@ -357,6 +357,7 @@ void SettingsMenu::refreshButtonLabel(Registry& registry, BindingAction action)
 void SettingsMenu::setMusicVolume(Registry& registry, float volume)
 {
     musicVolume_ = std::clamp(volume, 0.0F, 100.0F);
+    g_musicVolume = musicVolume_;
     SoundManager::setGlobalVolume(musicVolume_);
     refreshVolumeLabel(registry);
 }

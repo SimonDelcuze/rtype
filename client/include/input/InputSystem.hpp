@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation/AnimationRegistry.hpp"
+#include "components/AudioComponent.hpp"
 #include "components/InputHistoryComponent.hpp"
 #include "graphics/TextureManager.hpp"
 #include "input/InputBuffer.hpp"
@@ -9,6 +10,7 @@
 #include "systems/ISystem.hpp"
 
 #include <optional>
+#include <string>
 
 class InputSystem : public ISystem
 {
@@ -36,6 +38,9 @@ class InputSystem : public ISystem
     void recordHistory(Registry& registry, const InputCommand& cmd, float deltaTime);
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
+    void startChargeSound(Registry& registry);
+    void stopChargeSound(Registry& registry);
+    void playChargedShotSound(Registry& registry);
 
     std::uint32_t localPlayerId_ = 0;
     InputBuffer* buffer_;
@@ -56,6 +61,10 @@ class InputSystem : public ISystem
     std::optional<EntityId> chargeFxId_;
     std::optional<EntityId> playerId_;
     std::optional<EntityId> chargeMeterId_;
+    std::optional<EntityId> chargedShotSoundId_;
+    bool chargeSoundActive_           = false;
+    const std::string chargeSoundId_  = "loading_sound";
+    const std::string chargedShotId_  = "loading_laser";
     const float chargeFxDelay_ = 0.1F;
     const float maxChargeTime_ = 0.7F;
 };
