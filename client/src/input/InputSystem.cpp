@@ -342,7 +342,7 @@ void InputSystem::startChargeSound(Registry& registry)
     if (!registry.has<AudioComponent>(id)) {
         registry.emplace<AudioComponent>(id, AudioComponent::create(chargeSoundId_));
     }
-    auto& audio = registry.get<AudioComponent>(id);
+    auto& audio   = registry.get<AudioComponent>(id);
     audio.soundId = chargeSoundId_;
     audio.loop    = true;
     audio.volume  = std::clamp(g_musicVolume, 0.0F, 100.0F);
@@ -377,7 +377,7 @@ void InputSystem::playChargedShotSound(Registry& registry)
     if (!registry.has<AudioComponent>(*chargedShotSoundId_)) {
         registry.emplace<AudioComponent>(*chargedShotSoundId_, AudioComponent::create(chargedShotId_));
     }
-    auto& audio = registry.get<AudioComponent>(*chargedShotSoundId_);
+    auto& audio  = registry.get<AudioComponent>(*chargedShotSoundId_);
     audio.loop   = false;
     audio.volume = std::clamp(g_musicVolume, 0.0F, 100.0F);
     audio.play(chargedShotId_);
