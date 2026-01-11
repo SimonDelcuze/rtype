@@ -44,41 +44,54 @@
 
 ---
 
-## 🏗️ Architecture & ECS Flow
+## 🏗️ The ECS Architecture
 
-The project leverages a custom **Entity Component System (ECS)** to decouple data from logic, ensuring maximum performance and scalability.
+Our engine is built on a custom **Entity Component System (ECS)**. This pattern decouples data (Components) from logic (Systems), allowing for high-performance processing and extreme flexibility.
+
+### How it works:
 
 ```mermaid
-graph TD
-    subgraph "ECS Engine Core"
-        Reg[Registry] --> Comp[Component Containers]
-        Reg --> Sys[Systems]
-        Reg --> Ent[Entity Manager]
+graph LR
+    subgraph "Entities"
+        E1[Entity 1]
+        E2[Entity 2]
+        E3[Entity 3]
     end
 
-    subgraph "Game Loop"
-        Sys -->|Update| Comp
-        Sys -->|Query| Ent
+    subgraph "Components (Data Only)"
+        C1["Transform {x, y}"]
+        C2["Velocity {vx, vy}"]
+        C3["Sprite {texture_id}"]
+        C4["Health {hp}"]
     end
 
-    subgraph "Networking"
-        Net[Network System] -->|Replicate| Reg
-        Net -->|Predict/Reconcile| Comp
+    subgraph "Systems (Logic Only)"
+        S1[Movement System]
+        S2[Render System]
+        S3[Collision System]
     end
 
-    subgraph "Presentation"
-        Render[Render System] -->|Draw| SFML[SFML 3.0 Window]
-        Comp -->|Data| Render
-    end
+    E1 --- C1
+    E1 --- C3
+    
+    E2 --- C1
+    E2 --- C2
+    E2 --- C3
+    
+    E3 --- C1
+    E3 --- C4
 
-    Client[Client] <-->|UDP/TCP| Lobby[Lobby Server]
-    Client <-->|UDP Snapshots| Game[Game Instance]
-    Lobby -->|Spawn| Game
+    S1 -->|Processes| C1
+    S1 -->|Processes| C2
+    S2 -->|Processes| C1
+    S2 -->|Processes| C3
+    S3 -->|Processes| C1
+    S3 -->|Processes| C4
 ```
 
-- **Registry**: The central hub managing entities and their associated components.
-- **Systems**: Logic units that process entities with specific component signatures (e.g., `RenderSystem`, `PhysicsSystem`).
-- **Components**: Pure data structures (POD) attached to entities.
+- **Entities**: Simple unique IDs representing game objects (Player, Enemy, Bullet).
+- **Components**: Pure data structures (POD) attached to entities. They define *what* an entity is.
+- **Systems**: Logic units that run every frame. They query entities that have a specific set of components and update them. For example, the **Movement System** only cares about entities with both `Transform` and `Velocity`.
 
 ---
 
