@@ -1,37 +1,51 @@
-# Introduction
+# 📚 Documentation R-Type
 
-Welcome to the official documentation for our R-Type project.\
-This GitBook provides a complete technical overview of the engine, networking model, ECS architecture, server simulation, and client rendering pipeline.
+Bienvenue dans la documentation officielle du projet **R-Type**. Ce guide est conçu pour vous aider à comprendre l'architecture, le fonctionnement et les protocoles de notre moteur de jeu multijoueur.
 
-The goal of this documentation is to offer a clear, structured, and exhaustive reference for:
+---
 
-* developers continuing the project
-* contributors reading or modifying the codebase
-* students learning from the architecture
-* anyone needing insight into the gameplay, networking, and ECS design choices
+## 🗺️ Navigation Rapide
 
-This documentation covers both sides of the project:
+Pour une exploration efficace, la documentation est divisée en 5 piliers majeurs :
 
-#### **Server**
+### 🚀 [Installation & Setup](installation/README.md)
+Tout ce dont vous avez besoin pour compiler et lancer le projet sur n'importe quelle plateforme.
+- Guide d'installation rapide
+- Configuration multi-instance
 
-* authoritative gameplay simulation
-* deterministic ECS logic
-* delta-state snapshot generation
-* multithreaded networking
+### 🏗️ [Architecture Globale](architecture/README.md)
+Le cœur technique du projet.
+- **ECS (Entity Component System)** : Notre moteur maison ultra-performant.
+- **Core Components** : Les briques de base de l'engine.
+- **JSON Wrapper** : Gestion flexible des données.
 
-#### **Client**
+### 🌐 [Network & Protocoles](network/README.md)
+Comment le client et le serveur communiquent.
+- **Protocoles UDP/TCP** : Détails des paquets et de la synchronisation.
+- **Authentification** : Système de lobby et sécurité des comptes.
+- **Collision Masks** : Gestion des masques de collision réseau.
 
-* interpolation and prediction
-* replicated ECS state
-* rendering pipeline
-* networking threads
+### 🖥️ [Serveur (Authoritative)](server/README.md)
+La logique "Master" du jeu.
+- **Game Instance Management** : Gestion dynamique des parties.
+- **Systems & Components** : Logique serveur pure.
+- **Level System** : Design et runtime des niveaux.
 
-#### **Shared Engine**
+### 🕹️ [Client (Visuals & Prediction)](client/README.md)
+L'expérience utilisateur.
+- **Rendering Pipeline** : Gestion des graphismes SFML.
+- **Prediction & Reconciliation** : Comment nous gérons la latence.
+- **UI Module** : Architecture des menus et interactions.
 
-* custom ECS framework
-* registry and views
-* shared components
-* concurrency utilities
+---
 
-The project is designed around clear separation of responsibilities, deterministic simulation, and high-performance client rendering.\
-Each section of this documentation guides you through a different layer of the engine, from the high-level concepts down to the implementation details.
+## 🛠️ Outils Supplémentaires
+
+- **[Level Editor](architecture/README.md)** : Documentation sur l'outil de création de niveaux.
+- **[Comparative Study](architecture/comparative-study.md)** : Analyse technique des choix d'implémentation.
+
+---
+
+<p align="center">
+  <i>Besoin d'aide ? Consultez notre <a href="../README.md">README principal</a> ou ouvrez une issue sur GitHub.</i>
+</p>
