@@ -62,9 +62,9 @@ class InputSystem : public ISystem
     std::optional<EntityId> playerId_;
     std::optional<EntityId> chargeMeterId_;
     std::optional<EntityId> chargedShotSoundId_;
-    bool chargeSoundActive_           = false;
-    const std::string chargeSoundId_  = "loading_sound";
-    const std::string chargedShotId_  = "loading_laser";
-    const float chargeFxDelay_ = 0.1F;
-    const float maxChargeTime_ = 0.7F;
+    bool chargeSoundActive_          = false;
+    const std::string chargeSoundId_ = "loading_sound";
+    const std::string chargedShotId_ = "loading_laser";
+    const float chargeFxDelay_       = 0.1F;
+    const float maxChargeTime_       = 0.7F;
 };
