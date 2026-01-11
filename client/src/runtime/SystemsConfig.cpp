@@ -28,6 +28,23 @@ AssetManifest loadManifest()
     }
 }
 
+namespace
+{
+    void preloadSounds(const AssetManifest& manifest, SoundManager& soundManager)
+    {
+        for (const auto& entry : manifest.getSounds()) {
+            if (entry.type == "music") {
+                continue;
+            }
+            try {
+                soundManager.load(entry.id, "client/assets/" + entry.path);
+            } catch (const std::exception& e) {
+                Logger::instance().warn("[Audio] Failed to load sound " + entry.id + ": " + e.what());
+            }
+        }
+    }
+} // namespace
+
 void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
                       const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
                       AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
@@ -35,6 +52,8 @@ void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipeli
                       FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
                       SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
+    preloadSounds(manifest, soundManager);
+
     gameLoop.addSystem(std::make_shared<IntroCinematicSystem>(levelState));
     gameLoop.addSystem(std::make_shared<InputSystem>(localPlayerId, inputBuffer, mapper, inputSequence, playerPosX,
                                                      playerPosY, textures, animations, &levelState));

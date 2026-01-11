@@ -68,6 +68,16 @@
       "type": "sfx"
     },
     {
+      "id": "loading_sound",
+      "path": "sounds/loading_sound.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "loading_laser",
+      "path": "sounds/loading_laser.wav",
+      "type": "sfx"
+    },
+    {
       "id": "explosion",
       "path": "sounds/explosion.wav",
       "type": "sfx"

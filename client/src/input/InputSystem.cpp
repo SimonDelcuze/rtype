@@ -1,7 +1,9 @@
 #include "input/InputSystem.hpp"
 
+#include "ClientRuntime.hpp"
 #include "Logger.hpp"
 #include "components/AnimationComponent.hpp"
+#include "components/AudioComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/InputHistoryComponent.hpp"
@@ -100,22 +102,30 @@ void InputSystem::update(Registry& registry, float deltaTime)
         if (fireHoldTime_ >= chargeFxDelay_) {
             ensureChargeFx(registry, *posX_, *posY_);
             updateChargeFx(registry, *posX_, *posY_);
+            startChargeSound(registry);
         }
         float progress = std::clamp((fireHoldTime_ - chargeFxDelay_) / maxChargeTime_, 0.0F, 1.0F);
         updateChargeMeter(registry, progress);
     }
     if (!firePressed && fireHeldLastFrame_) {
+        const bool wasCharging = fireHoldTime_ >= chargeFxDelay_;
+        stopChargeSound(registry);
         destroyChargeFx(registry);
+        if (wasCharging) {
+            playChargedShotSound(registry);
+        }
         sendChargedFireCommand(registry, deltaTime);
         fireHoldTime_ = 0.0F;
         updateChargeMeter(registry, 0.0F);
     }
     if (!firePressed && !fireHeldLastFrame_) {
         updateChargeMeter(registry, 0.0F);
+        stopChargeSound(registry);
     }
     if (!canFire) {
         destroyChargeFx(registry);
         updateChargeMeter(registry, 0.0F);
+        stopChargeSound(registry);
     }
     fireHeldLastFrame_ = firePressed;
 
@@ -323,10 +333,61 @@ void InputSystem::updateChargeMeter(Registry& registry, float progress)
     meter.progress = progress;
 }
 
+void InputSystem::startChargeSound(Registry& registry)
+{
+    if (!playerId_.has_value() || !registry.isAlive(*playerId_)) {
+        return;
+    }
+    const EntityId id = *playerId_;
+    if (!registry.has<AudioComponent>(id)) {
+        registry.emplace<AudioComponent>(id, AudioComponent::create(chargeSoundId_));
+    }
+    auto& audio = registry.get<AudioComponent>(id);
+    audio.soundId = chargeSoundId_;
+    audio.loop    = true;
+    audio.volume  = std::clamp(g_musicVolume, 0.0F, 100.0F);
+    if (!chargeSoundActive_ || !audio.isPlaying) {
+        audio.play();
+    }
+    chargeSoundActive_ = true;
+}
+
+void InputSystem::stopChargeSound(Registry& registry)
+{
+    if (!chargeSoundActive_) {
+        return;
+    }
+    if (!playerId_.has_value() || !registry.isAlive(*playerId_) || !registry.has<AudioComponent>(*playerId_)) {
+        chargeSoundActive_ = false;
+        return;
+    }
+    auto& audio = registry.get<AudioComponent>(*playerId_);
+    audio.loop  = false;
+    audio.stop();
+    chargeSoundActive_ = false;
+}
+
+void InputSystem::playChargedShotSound(Registry& registry)
+{
+    if (!chargedShotSoundId_.has_value() || !registry.isAlive(*chargedShotSoundId_)) {
+        EntityId e = registry.createEntity();
+        registry.emplace<AudioComponent>(e, AudioComponent::create(chargedShotId_));
+        chargedShotSoundId_ = e;
+    }
+    if (!registry.has<AudioComponent>(*chargedShotSoundId_)) {
+        registry.emplace<AudioComponent>(*chargedShotSoundId_, AudioComponent::create(chargedShotId_));
+    }
+    auto& audio = registry.get<AudioComponent>(*chargedShotSoundId_);
+    audio.loop   = false;
+    audio.volume = std::clamp(g_musicVolume, 0.0F, 100.0F);
+    audio.play(chargedShotId_);
+}
+
 void InputSystem::resetInputState(Registry& registry)
 {
     destroyChargeFx(registry);
     updateChargeMeter(registry, 0.0F);
+    stopChargeSound(registry);
     fireHoldTime_      = 0.0F;
     fireHeldLastFrame_ = false;
     fireElapsed_       = 0.0F;
