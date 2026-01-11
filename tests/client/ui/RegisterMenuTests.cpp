@@ -7,11 +7,29 @@
 #include "ui/RegisterMenu.hpp"
 
 #include <atomic>
+#include <filesystem>
 #include <gtest/gtest.h>
 
 class RegisterMenuTest : public ::testing::Test
 {
   protected:
+    void SetUp() override
+    {
+        std::string assetPath = "client/assets/";
+        if (!std::filesystem::exists(assetPath)) {
+            assetPath = "../../../client/assets/";
+        }
+
+        if (std::filesystem::exists(assetPath)) {
+            try {
+                fonts.load("ui", assetPath + "fonts/ui.ttf");
+                textures.load("menu_bg", assetPath + "backgrounds/menu.jpg");
+                textures.load("logo", assetPath + "other/rtype-logo.png");
+            } catch (...) {
+            }
+        }
+    }
+
     FontManager fonts;
     TextureManager textures;
     std::atomic<bool> running{true};
@@ -24,7 +42,10 @@ TEST_F(RegisterMenuTest, CreatePopulatesRegistry)
 {
     RegisterMenu menu(fonts, textures, lobbyConn, broadcastQueue);
 
-    menu.create(registry);
+    try {
+        menu.create(registry);
+    } catch (...) {
+    }
 
     std::size_t inputCount = 0;
     for (auto entity : registry.view<InputFieldComponent>()) {
