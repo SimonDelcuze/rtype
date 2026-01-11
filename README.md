@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++ 20">
-  <img src="https://img.shields.io/badge/SFML-2.6-green.svg?style=for-the-badge&logo=sfml" alt="SFML 2.6">
+  <img src="https://img.shields.io/badge/C%2B%2B-Latest-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++">
+  <img src="https://img.shields.io/badge/SFML-3.0-green.svg?style=for-the-badge&logo=sfml" alt="SFML 3.0">
   <img src="https://img.shields.io/badge/Platform-Cross--Platform-lightgrey.svg?style=for-the-badge" alt="Platform">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License">
 </p>
@@ -27,7 +27,7 @@
 - 🌐 **Multiplayer Synchronization**: Advanced client-side prediction and server reconciliation for lag-free gameplay.
 - 🛠️ **Level Editor**: Create and share custom levels with a dedicated visual tool.
 - 🛡️ **Secure Authentication**: Integrated lobby system with user accounts, statistics, and secure login.
-- 🎨 **Dynamic Rendering**: Smooth animations, parallax scrolling, and high-fidelity visual effects powered by SFML.
+- 🎨 **Dynamic Rendering**: Smooth animations, parallax scrolling, and high-fidelity visual effects powered by SFML 3.0.
 - 📊 **Scalable Architecture**: Multi-threaded server design capable of hosting hundreds of players.
 
 ---
@@ -44,24 +44,41 @@
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & ECS Flow
 
-The project is divided into three main components:
+The project leverages a custom **Entity Component System (ECS)** to decouple data from logic, ensuring maximum performance and scalability.
 
 ```mermaid
 graph TD
-    A[Client] <-->|UDP/TCP| B[Lobby Server]
-    A <-->|UDP| C[Game Instance]
-    B -->|Spawns| C
-    A --> D[SFML Renderer]
-    A --> E[Custom ECS]
-    C --> F[Server ECS]
-    C --> G[Physics Engine]
+    subgraph "ECS Engine Core"
+        Reg[Registry] --> Comp[Component Containers]
+        Reg --> Sys[Systems]
+        Reg --> Ent[Entity Manager]
+    end
+
+    subgraph "Game Loop"
+        Sys -->|Update| Comp
+        Sys -->|Query| Ent
+    end
+
+    subgraph "Networking"
+        Net[Network System] -->|Replicate| Reg
+        Net -->|Predict/Reconcile| Comp
+    end
+
+    subgraph "Presentation"
+        Render[Render System] -->|Draw| SFML[SFML 3.0 Window]
+        Comp -->|Data| Render
+    end
+
+    Client[Client] <-->|UDP/TCP| Lobby[Lobby Server]
+    Client <-->|UDP Snapshots| Game[Game Instance]
+    Lobby -->|Spawn| Game
 ```
 
-- **Client**: Handles rendering, user input, and local simulation (prediction).
-- **Server**: Manages game logic, authoritative state, and player sessions.
-- **Shared**: Common ECS logic, network protocols, and utility functions.
+- **Registry**: The central hub managing entities and their associated components.
+- **Systems**: Logic units that process entities with specific component signatures (e.g., `RenderSystem`, `PhysicsSystem`).
+- **Components**: Pure data structures (POD) attached to entities.
 
 ---
 
@@ -91,7 +108,7 @@ Our documentation is extensive and organized for developers of all levels.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/rtype.git
+git clone https://github.com/SimonDelcuze/rtype.git
 cd rtype
 
 # Configure and build
@@ -116,9 +133,3 @@ Contributions are welcome! Please check our [Contribution Guidelines](CONTRIBUTI
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
----
-
-<p align="center">
-  Developed with ❤️ by the R-Type Team
-</p>
