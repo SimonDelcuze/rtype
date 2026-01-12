@@ -115,6 +115,7 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
     std::vector<std::uint8_t> packet;
 
     std::uint32_t roomId      = 5;
+    std::uint8_t roomType     = static_cast<std::uint8_t>(RoomType::Quickplay);
     std::uint16_t playerCount = 2;
     std::uint16_t maxPlayers  = 4;
     std::uint16_t port        = 50105;
@@ -125,7 +126,9 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
     std::string roomName      = "Test";
     std::string inviteCode    = "ABC123";
 
-    std::uint16_t payloadSize = 2 + 4 + 2 + 2 + 2 + 1 + 4 + 1 + 1 + 2 + roomName.size() + 2 + inviteCode.size();
+    std::uint16_t payloadSize =
+        2 /*count*/ + 4 /*id*/ + 1 /*roomType*/ + 2 /*player*/ + 2 /*max*/ + 2 /*port*/ + 1 /*state*/ +
+        4 /*owner*/ + 1 /*pwd*/ + 1 /*visibility*/ + 1 /*countdown*/ + 2 + roomName.size() + 2 + inviteCode.size();
 
     PacketHeader header;
     header.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -146,6 +149,8 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
     packet.push_back(static_cast<std::uint8_t>(roomId >> 8));
     packet.push_back(static_cast<std::uint8_t>(roomId));
 
+    packet.push_back(roomType);
+
     packet.push_back(static_cast<std::uint8_t>(playerCount >> 8));
     packet.push_back(static_cast<std::uint8_t>(playerCount));
 
@@ -165,6 +170,9 @@ TEST_F(LobbyPacketsTest, ParseRoomListPacketSingleRoom)
     packet.push_back(passwordProtected ? 1 : 0);
 
     packet.push_back(static_cast<std::uint8_t>(visibility));
+
+    std::uint8_t countdown = 0;
+    packet.push_back(countdown);
 
     std::uint16_t nameLen = static_cast<std::uint16_t>(roomName.size());
     packet.push_back(static_cast<std::uint8_t>(nameLen >> 8));

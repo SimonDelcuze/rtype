@@ -89,7 +89,7 @@ void RenderSystem::update(Registry& registry, float deltaTime)
     }
 
     auto typePriority = [](DrawItem::Type t) {
-        return t == DrawItem::Type::Box ? 0 : 1; // draw boxes first when layers match so sprites/icons sit above
+        return t == DrawItem::Type::Box ? 0 : 1;
     };
 
     std::stable_sort(drawQueue.begin(), drawQueue.end(), [&](const DrawItem& a, const DrawItem& b) {

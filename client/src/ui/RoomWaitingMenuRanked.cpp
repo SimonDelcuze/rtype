@@ -145,7 +145,6 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     background_ = createBackground(registry, textures_);
     logo_       = createLogo(registry, textures_);
 
-    // Load rank icon (fallback if not in manifest)
     if (!textures_.has("rank_prey")) {
         textures_.load("rank_prey", "client/assets/ranks/prey.png");
     }
@@ -346,7 +345,6 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
         std::string readyText = p.isReady ? " [READY]" : "";
         Color textColor       = p.isReady ? Color(100, 255, 100) : Color(220, 220, 220);
 
-        // Create background panel for this player row FIRST (so it renders before sprites)
         EntityId rowBg = registry.createEntity();
         auto& bgT      = registry.emplace<TransformComponent>(rowBg);
         bgT.x          = 435.0F;
@@ -356,7 +354,6 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
         registry.emplace<LayerComponent>(rowBg, LayerComponent::create(RenderLayer::UI - 10));
         playerEntities_.push_back(rowBg);
 
-        // Rank Icon (created after panel, so it renders on top)
         if (textures_.has("rank_prey")) {
             auto tex      = textures_.get("rank_prey");
             EntityId icon = registry.createEntity();
