@@ -114,7 +114,8 @@ void GameInstance::addPlayerEntity(std::uint32_t playerId)
     registry_.emplace<HealthComponent>(entity, HealthComponent::create(1));
     registry_.emplace<PlayerInputComponent>(entity);
     registry_.emplace<TagComponent>(entity, TagComponent::create(EntityTag::Player));
-    registry_.emplace<LivesComponent>(entity, LivesComponent::create(3, 3));
+    std::uint8_t lives = computePlayerLives();
+    registry_.emplace<LivesComponent>(entity, LivesComponent::create(lives, lives));
     registry_.emplace<ScoreComponent>(entity, ScoreComponent::create(0));
     registry_.emplace<HitboxComponent>(entity, HitboxComponent::create(60.0F, 30.0F, 0.0F, 0.0F, true));
     registry_.emplace<OwnershipComponent>(entity, OwnershipComponent::create(playerId));
@@ -165,8 +166,6 @@ void GameInstance::maybeStartGame()
     }
 
     if (!ready()) {
-        Logger::instance().info(
-            "[Game] maybeStartGame: ready() returned FALSE - waiting for more players or ready status");
         return;
     }
 
@@ -243,7 +242,6 @@ LevelDefinition GameInstance::buildLevel() const
 bool GameInstance::ready() const
 {
     if (sessions_.empty()) {
-        Logger::instance().info("[Game] ready() = FALSE: sessions map is empty");
         return false;
     }
 

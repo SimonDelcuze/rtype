@@ -20,6 +20,7 @@ void LobbyManager::addRoom(std::uint32_t roomId, std::uint16_t port, std::size_t
     info.maxPlayers  = maxPlayers;
     info.state       = RoomState::Waiting;
     info.port        = port;
+    info.config      = RoomConfig::preset(RoomDifficulty::Hell);
 
     rooms_[roomId] = info;
 
@@ -256,6 +257,24 @@ void LobbyManager::setRoomVisibility(std::uint32_t roomId, RoomVisibility visibi
     it->second.visibility = visibility;
     Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " visibility set to " +
                             std::to_string(static_cast<int>(visibility)));
+}
+
+void LobbyManager::setRoomConfig(std::uint32_t roomId, const RoomConfig& config)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+
+    auto it = rooms_.find(roomId);
+    if (it == rooms_.end()) {
+        return;
+    }
+
+    RoomConfig cfg = config;
+    if (cfg.mode == RoomDifficulty::Custom) {
+        cfg.clampCustom();
+    }
+    it->second.config = cfg;
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " config set (mode=" +
+                            std::to_string(static_cast<int>(cfg.mode)) + ")");
 }
 
 std::string LobbyManager::generateAndSetInviteCode(std::uint32_t roomId)

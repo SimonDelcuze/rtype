@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "lobby/RoomConfig.hpp"
+
 enum class RoomState : std::uint8_t
 {
     Waiting   = 0,
@@ -39,6 +41,7 @@ struct RoomInfo
     std::string passwordHash;
     RoomVisibility visibility{RoomVisibility::Public};
     std::string inviteCode;
+    RoomConfig config{RoomConfig::preset(RoomDifficulty::Hell)};
 };
 
 class LobbyManager
@@ -77,6 +80,7 @@ class LobbyManager
     void setRoomPassword(std::uint32_t roomId, const std::string& passwordHash);
 
     void setRoomVisibility(std::uint32_t roomId, RoomVisibility visibility);
+    void setRoomConfig(std::uint32_t roomId, const RoomConfig& config);
 
     std::string generateAndSetInviteCode(std::uint32_t roomId);
 

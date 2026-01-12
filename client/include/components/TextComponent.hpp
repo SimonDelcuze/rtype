@@ -15,6 +15,8 @@ struct TextComponent
     Color color                = Color::White;
     std::string content;
     bool centered = false;
+    float centerOffsetX{0.0F};
+    float centerOffsetY{0.0F};
     std::shared_ptr<IText> text;
 
     static TextComponent create(const std::string& font, unsigned int size, const Color& c)

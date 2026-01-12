@@ -73,6 +73,7 @@ enum class MessageType : std::uint8_t
     RoomForceStart             = 0x6D,
     RoomGameStarting           = 0x6E,
     RoomSetPlayerCount         = 0x6F,
+    RoomSetConfig              = 0x71,
     Chat                       = 0x70,
     Handshake                  = ClientHello,
     Ack                        = ClientAcknowledge

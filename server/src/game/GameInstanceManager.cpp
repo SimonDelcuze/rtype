@@ -11,7 +11,7 @@ GameInstanceManager::GameInstanceManager(std::uint16_t basePort, std::uint32_t m
     Logger::instance().info("[InstanceManager] Initialized with max instances: " + std::to_string(maxInstances));
 }
 
-std::optional<std::uint32_t> GameInstanceManager::createInstance()
+std::optional<std::uint32_t> GameInstanceManager::createInstance(const RoomConfig& config)
 {
     std::lock_guard<std::mutex> lock(instancesMutex_);
 
@@ -26,6 +26,7 @@ std::optional<std::uint32_t> GameInstanceManager::createInstance()
     std::uint16_t instancePort = basePort_ + static_cast<std::uint16_t>(roomId);
 
     auto instance = std::make_unique<GameInstance>(roomId, instancePort, *running_);
+    instance->setRoomConfig(config);
 
     if (!instance->start()) {
         Logger::instance().error("[InstanceManager] Failed to start instance " + std::to_string(roomId));
@@ -122,6 +123,16 @@ void GameInstanceManager::broadcast(const std::string& message)
     for (const auto& [roomId, instance] : instances_) {
         instance->broadcast(message);
     }
+}
+
+void GameInstanceManager::setRoomConfig(std::uint32_t roomId, const RoomConfig& config)
+{
+    std::lock_guard<std::mutex> lock(instancesMutex_);
+    auto it = instances_.find(roomId);
+    if (it == instances_.end()) {
+        return;
+    }
+    it->second->setRoomConfig(config);
 }
 
 void GameInstanceManager::stopAll(const std::string& reason)

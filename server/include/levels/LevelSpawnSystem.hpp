@@ -14,6 +14,14 @@ class LevelSpawnSystem
   public:
     LevelSpawnSystem(const LevelData& data, LevelDirector* director, float playfieldHeight = 720.0F);
 
+    struct SpawnScaling
+    {
+        float enemyHealthMultiplier{1.0F};
+        float enemySpeedMultiplier{1.0F};
+        float enemyDamageMultiplier{1.0F};
+        float scoreMultiplier{1.0F};
+    };
+
     struct PendingEnemySpawn
     {
         float time = 0.0F;
@@ -32,6 +40,7 @@ class LevelSpawnSystem
 
     void reset();
     void update(Registry& registry, float deltaTime, const std::vector<DispatchedEvent>& events);
+    void setScaling(const SpawnScaling& scaling);
 
   private:
     void dispatchEvents(Registry& registry, const std::vector<DispatchedEvent>& events);
@@ -52,6 +61,7 @@ class LevelSpawnSystem
     float playfieldHeight_   = 720.0F;
     float time_              = 0.0F;
 
+    SpawnScaling scaling_{};
     std::unordered_map<std::string, MovementComponent> patternMap_;
     std::vector<PendingEnemySpawn> pendingEnemies_;
 };

@@ -52,6 +52,8 @@ class LobbyServer
                               const IpEndpoint& from);
     void handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                               const IpEndpoint& from);
+    void handleRoomSetConfig(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                             const IpEndpoint& from);
     void handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint& from);
 
     void handleLoginRequest(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,

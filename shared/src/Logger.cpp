@@ -277,9 +277,9 @@ std::vector<std::string> Logger::getEnabledTags() const
 
 std::vector<std::string> Logger::getAllKnownTags() const
 {
-    return {"[Net]",     "[Packets]",     "[Game]",    "[Collision]",   "[Spawn]",
-            "[Level]",   "[Replication]", "[Network]", "[Player]",      "[Death]",
-            "[Respawn]", "[Snapshot]",    "[Input]",   "[LobbyServer]", "[InstanceManager]"};
+    return {"[Net]",     "[Packets]",     "[Game]",    "[Collision]",   "[Spawn]", "[Level]",    "[Replication]",
+            "[Network]", "[Player]",      "[Death]",   "[Respawn]",     "[Snapshot]",
+            "[Input]",   "[LobbyServer]", "[InstanceManager]", "[Config]"};
 }
 
 bool Logger::hasTag(const std::string& tag) const

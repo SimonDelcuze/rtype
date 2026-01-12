@@ -137,6 +137,25 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             auto pkt = parsePlayerListPacket(buffer.data(), recvResult.size);
             if (pkt.has_value())
                 pendingPlayerListResult_ = pkt;
+        } else if (type == MessageType::RoomSetConfig) {
+            if (hdr->packetType == static_cast<std::uint8_t>(PacketType::ServerToClient) &&
+                hdr->payloadSize >= sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
+                RoomConfigUpdate upd;
+                upd.roomId = (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
+                             (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+                upd.mode = static_cast<RoomDifficulty>(payload[4]);
+                auto decodePercent = [](const std::uint8_t* p) {
+                    std::uint16_t v = (static_cast<std::uint16_t>(p[0]) << 8) | static_cast<std::uint16_t>(p[1]);
+                    return static_cast<float>(v) / 100.0F;
+                };
+                upd.enemyMultiplier       = decodePercent(payload + 5);
+                upd.playerSpeedMultiplier = decodePercent(payload + 7);
+                upd.scoreMultiplier       = decodePercent(payload + 9);
+                upd.playerLives           = payload[11];
+                pendingRoomConfig_        = upd;
+                Logger::instance().info("[LobbyConnection] Received RoomSetConfig for room " + std::to_string(upd.roomId));
+            }
         } else if (type == MessageType::Chat) {
             auto pkt = ChatPacket::decode(buffer.data(), recvResult.size);
             if (pkt.has_value()) {
@@ -154,6 +173,54 @@ void LobbyConnection::sendNotifyGameStarting(std::uint32_t roomId)
 void LobbyConnection::sendKickPlayer(std::uint32_t roomId, std::uint32_t playerId)
 {
     kickPlayer(roomId, playerId);
+}
+
+void LobbyConnection::sendRoomConfig(std::uint32_t roomId, RoomDifficulty mode, float enemyMult, float playerSpeedMult,
+                                     float scoreMult, std::uint8_t lives)
+{
+    Logger::instance().info("[LobbyConnection] Sending room config for room " + std::to_string(roomId));
+
+    PacketHeader hdr{};
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomSetConfig);
+    hdr.sequenceId  = nextSequence_++;
+    hdr.payloadSize = sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1;
+
+    auto encoded = hdr.encode();
+    std::vector<std::uint8_t> packet(encoded.begin(), encoded.end());
+
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    packet.push_back(static_cast<std::uint8_t>(mode));
+
+    auto encodePercent = [](float f) {
+        int v = static_cast<int>(std::round(f * 100.0F));
+        v     = std::clamp(v, 0, 1000);
+        return static_cast<std::uint16_t>(v);
+    };
+    std::uint16_t enemy  = encodePercent(enemyMult);
+    std::uint16_t player = encodePercent(playerSpeedMult);
+    std::uint16_t score  = encodePercent(scoreMult);
+
+    packet.push_back(static_cast<std::uint8_t>((enemy >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(enemy & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((player >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(player & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((score >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(score & 0xFF));
+
+    packet.push_back(lives);
+
+    auto crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
 }
 
 void LobbyConnection::sendLeaveRoom()
