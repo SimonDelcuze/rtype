@@ -30,8 +30,8 @@ class RoomWaitingMenu : public IMenu
         bool isHost{false};
     };
 
-    RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId, std::uint16_t gamePort,
-                    bool isHost, LobbyConnection* lobbyConnection);
+    RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId, const std::string& roomName,
+                    std::uint16_t gamePort, bool isHost, LobbyConnection* lobbyConnection);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -60,6 +60,7 @@ class RoomWaitingMenu : public IMenu
     bool done_{false};
 
     std::uint32_t roomId_;
+    std::string roomName_;
     std::uint16_t gamePort_;
     bool isHost_;
     std::vector<PlayerInfo> players_;

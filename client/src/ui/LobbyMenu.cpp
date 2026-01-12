@@ -272,6 +272,7 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     conn->sendCreateRoom(result.roomName, result.password, result.visibility);
                     state_      = State::Creating;
                     isCreating_ = true;
+                    currentRoomName_ = result.roomName;
 
                 } else {
                     Logger::instance().info("[LobbyMenu] Room creation cancelled");
@@ -435,8 +436,8 @@ void LobbyMenu::update(Registry& registry, float dt)
 
     if (state_ == State::InRoom) {
         if (!roomWaitingMenu_) {
-            roomWaitingMenu_ = std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, result_.gamePort,
-                                                                 isRoomHost_, getConnection());
+            roomWaitingMenu_ = std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, currentRoomName_,
+                                                                 result_.gamePort, isRoomHost_, getConnection());
         }
 
         if (!roomWaitingMenuInitialized_) {
@@ -556,6 +557,12 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
         Logger::instance().info("[LobbyMenu] Room " + std::to_string(room.roomId) + " is password-protected...");
         pendingJoinRoomIndex_ = roomIndex;
         state_                = State::ShowingPasswordInput;
+        // Don't set currentRoomName_ yet, do it if password is correct? 
+        // Actually, we can set it here or when joining starts. 
+        // Let's set it here so if we join via password it's available.
+        // Wait, if we join via password, we need to make sure we don't lose it if we cancel.
+        // But logic is simpler if we set it when we decide to join.
+        currentRoomName_ = room.roomName;
         return;
     }
 
@@ -573,6 +580,7 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
     conn->sendJoinRoom(room.roomId);
     isJoining_  = true;
     isRoomHost_ = false;
+    currentRoomName_ = room.roomName;
 }
 
 void LobbyMenu::onRefreshClicked()
