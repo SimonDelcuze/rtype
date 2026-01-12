@@ -1,13 +1,13 @@
 #pragma once
 
+#include "lobby/RoomConfig.hpp"
+
 #include <cstdint>
 #include <map>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "lobby/RoomConfig.hpp"
 
 enum class RoomState : std::uint8_t
 {

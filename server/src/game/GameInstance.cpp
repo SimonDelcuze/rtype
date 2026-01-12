@@ -104,10 +104,9 @@ namespace
 GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag)
     : roomId_(roomId), port_(port), world_(), registry_(world_.getRegistry()),
       playerInputSys_(kBasePlayerSpeed, kBaseMissileSpeed, kBaseMissileLifetime, kBaseMissileDamage), movementSys_(),
-      monsterMovementSys_(), enemyShootingSys_(),
-      damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
-      receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
-                     std::chrono::seconds(30)),
+      monsterMovementSys_(), enemyShootingSys_(), damageSys_(eventBus_), scoreSys_(eventBus_, registry_),
+      destructionSys_(eventBus_), receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_,
+                                                 controlQueue_, &timeoutQueue_, std::chrono::seconds(30)),
       sendThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = 0}, clients_, kTickRate, roomId),
       gameLoop_(
           inputQueue_, [this](const std::vector<ReceivedInput>& inputs) { tick(inputs); }, kTickRate),
@@ -160,9 +159,8 @@ void GameInstance::applyConfig()
 
     logInfo("[Config] Applied room config: mode=" + std::to_string(static_cast<int>(roomConfig_.mode)) +
             " enemyMult=" + std::to_string(roomConfig_.enemyStatMultiplier) +
-            " playerSpeedMult=" + std::to_string(roomConfig_.playerSpeedMultiplier) +
-            " scoreMult=" + std::to_string(roomConfig_.scoreMultiplier) +
-            " lives=" + std::to_string(roomConfig_.playerLives));
+            " playerSpeedMult=" + std::to_string(roomConfig_.playerSpeedMultiplier) + " scoreMult=" +
+            std::to_string(roomConfig_.scoreMultiplier) + " lives=" + std::to_string(roomConfig_.playerLives));
 
     for (const auto& [playerId, entity] : playerEntities_) {
         if (!registry_.isAlive(entity) || !registry_.has<LivesComponent>(entity))

@@ -66,7 +66,7 @@ void ButtonSystem::handleEvent(Registry& registry, const Event& event)
     if (event.type == EventType::MouseButtonReleased) {
         if (event.mouseButton.button == MouseButton::Left) {
             for (EntityId entity : registry.view<ButtonComponent>()) {
-                auto& btn = registry.get<ButtonComponent>(entity);
+                auto& btn     = registry.get<ButtonComponent>(entity);
                 btn.pressed   = false;
                 btn.holdTimer = 0.0F;
             }

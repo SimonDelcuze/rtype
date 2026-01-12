@@ -19,12 +19,12 @@ class CreateRoomMenu : public IMenu
         bool cancelled       = false;
         std::string roomName = "My Room";
         std::string password;
-        RoomVisibility visibility = RoomVisibility::Public;
-        RoomDifficulty difficulty  = RoomDifficulty::Noob;
-        float enemyMultiplier      = 1.0F;
-        float playerSpeedMultiplier= 1.0F;
-        float scoreMultiplier      = 1.0F;
-        std::uint8_t playerLives   = 3;
+        RoomVisibility visibility   = RoomVisibility::Public;
+        RoomDifficulty difficulty   = RoomDifficulty::Noob;
+        float enemyMultiplier       = 1.0F;
+        float playerSpeedMultiplier = 1.0F;
+        float scoreMultiplier       = 1.0F;
+        std::uint8_t playerLives    = 3;
     };
 
     CreateRoomMenu(FontManager& fonts, TextureManager& textures);

@@ -13,10 +13,10 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <thread>
-#include <cmath>
 
 namespace
 {
@@ -28,8 +28,7 @@ namespace
             return static_cast<std::uint16_t>(v);
         };
 
-        constexpr std::size_t payloadSize =
-            sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1;
+        constexpr std::size_t payloadSize = sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1;
 
         PacketHeader hdr{};
         hdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -1003,7 +1002,7 @@ void LobbyServer::handleRoomSetConfig(const PacketHeader& hdr, const std::uint8_
     outHdr.sequenceId  = hdr.sequenceId;
     outHdr.payloadSize = static_cast<std::uint16_t>(expectedPayload);
 
-    auto pkt = buildRoomConfigPacket(roomId, cfg, outHdr.sequenceId);
+    auto pkt              = buildRoomConfigPacket(roomId, cfg, outHdr.sequenceId);
     std::string senderKey = endpointToKey(from);
     std::lock_guard<std::mutex> lock(sessionsMutex_);
     for (const auto& [key, session] : lobbySessions_) {

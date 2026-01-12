@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/GameInstance.hpp"
+#include "lobby/RoomConfig.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -8,8 +9,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-
-#include "lobby/RoomConfig.hpp"
 
 class GameInstanceManager
 {

@@ -51,7 +51,7 @@ struct RoomConfig
 
     void clampCustom()
     {
-        auto clamp = [](float v) { return std::clamp(v, 0.5F, 2.0F); };
+        auto clamp            = [](float v) { return std::clamp(v, 0.5F, 2.0F); };
         enemyStatMultiplier   = clamp(enemyStatMultiplier);
         playerSpeedMultiplier = clamp(playerSpeedMultiplier);
         scoreMultiplier       = clamp(scoreMultiplier);
