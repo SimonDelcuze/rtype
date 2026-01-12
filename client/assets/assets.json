@@ -46,6 +46,11 @@
       "type": "sprite"
     },
     {
+      "id": "ally",
+      "path": "sprites/ally.png",
+      "type": "sprite"
+    },
+    {
       "id": "obstacle_top",
       "path": "sprites/obstacle/top.png",
       "type": "sprite"

@@ -122,6 +122,11 @@ bool LevelDirector::finished() const
     return finished_;
 }
 
+bool LevelDirector::isSafeZoneActive() const
+{
+    return activeScroll_.mode == ScrollMode::Stopped;
+}
+
 const std::optional<CameraBounds>& LevelDirector::playerBounds() const
 {
     return activePlayerBounds_;
@@ -281,40 +286,58 @@ bool LevelDirector::arePlayersReady(Registry& registry) const
 
 bool LevelDirector::isTriggerActive(const Trigger& trigger, const TriggerContext& ctx) const
 {
+    bool active = false;
     switch (trigger.type) {
         case TriggerType::Time:
-            return ctx.time >= trigger.time;
+            active = ctx.time >= trigger.time;
+            break;
         case TriggerType::Distance:
-            return ctx.distance >= trigger.distance;
+            active = ctx.distance >= trigger.distance;
+            break;
         case TriggerType::SpawnDead:
-            return isSpawnDead(trigger.spawnId, *ctx.registry);
+            active = isSpawnDead(trigger.spawnId, *ctx.registry);
+            break;
         case TriggerType::BossDead:
-            return isBossDead(trigger.bossId, *ctx.registry);
+            active = isBossDead(trigger.bossId, *ctx.registry);
+            break;
         case TriggerType::EnemyCountAtMost:
-            return ctx.enemyCount <= trigger.count;
+            active = ctx.enemyCount <= trigger.count;
+            break;
         case TriggerType::CheckpointReached:
-            return checkpoints_.find(trigger.checkpointId) != checkpoints_.end();
+            active = checkpoints_.find(trigger.checkpointId) != checkpoints_.end();
+            break;
         case TriggerType::HpBelow:
-            return isBossHpBelow(trigger.bossId, trigger.value, *ctx.registry);
+            active = isBossHpBelow(trigger.bossId, trigger.value, *ctx.registry);
+            break;
         case TriggerType::PlayersReady:
-            return arePlayersReady(*ctx.registry);
+            active = arePlayersReady(*ctx.registry);
+            break;
         case TriggerType::AllOf:
+            active = true;
             for (const auto& child : trigger.triggers) {
-                if (!isTriggerActive(child, ctx))
-                    return false;
+                if (!isTriggerActive(child, ctx)) {
+                    active = false;
+                    break;
+                }
             }
-            return true;
+            break;
         case TriggerType::AnyOf:
+            active = false;
             for (const auto& child : trigger.triggers) {
-                if (isTriggerActive(child, ctx))
-                    return true;
+                if (isTriggerActive(child, ctx)) {
+                    active = true;
+                    break;
+                }
             }
-            return false;
+            break;
         case TriggerType::PlayerInZone:
-            return isPlayerInZone(trigger, *ctx.registry);
+            active = isPlayerInZone(trigger, *ctx.registry);
+            break;
         default:
-            return false;
+            active = false;
+            break;
     }
+    return active;
 }
 
 void LevelDirector::fireEvent(const LevelEvent& event, const std::string& segmentId, const std::string& bossId,
@@ -328,6 +351,10 @@ void LevelDirector::applyEventEffects(const LevelEvent& event)
 {
     if (event.type == EventType::SetScroll && event.scroll) {
         activeScroll_ = *event.scroll;
+        if (activeScroll_.mode == ScrollMode::Stopped) {
+            readyPlayers_.clear();
+            readyInputHeld_.clear();
+        }
     } else if (event.type == EventType::Checkpoint && event.checkpoint) {
         checkpoints_.insert(event.checkpoint->checkpointId);
     } else if (event.type == EventType::SetPlayerBounds && event.playerBounds) {

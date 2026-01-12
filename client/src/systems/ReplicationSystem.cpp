@@ -299,6 +299,9 @@ std::optional<EntityId> ReplicationSystem::ensureEntity(Registry& registry, cons
         Logger::instance().warn("[Replication] Missing entityType for remoteId " + std::to_string(remoteId));
         return std::nullopt;
     }
+    if (*entity.entityType == 16) {
+        return std::nullopt;
+    }
     if (!types_->has(*entity.entityType)) {
         Logger::instance().warn("[Replication] Unknown entityType " +
                                 std::to_string(static_cast<int>(*entity.entityType)) + " for remoteId " +

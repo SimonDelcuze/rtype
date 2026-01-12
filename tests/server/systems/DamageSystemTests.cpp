@@ -37,7 +37,7 @@ TEST(DamageSystem, AppliesMissileDamageToHealth)
     auto& h = registry.get<HealthComponent>(target);
     EXPECT_EQ(h.current, 5);
     ASSERT_EQ(collector.events.size(), 1u);
-    EXPECT_EQ(collector.events[0].attacker, 42u);
+    EXPECT_EQ(collector.events[0].attacker, missile);
     EXPECT_EQ(collector.events[0].target, target);
     EXPECT_EQ(collector.events[0].amount, 5);
     EXPECT_EQ(collector.events[0].remaining, 5);
