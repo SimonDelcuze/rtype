@@ -35,9 +35,17 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
         return ClientLoopResult{exitCode.has_value() ? false : true, exitCode};
     }
 
+    // Update NetworkSender with the playerId received from server
+    std::uint32_t receivedPlayerId = net.receivedPlayerId.load();
+    if (receivedPlayerId != 0 && net.sender) {
+        net.sender->setPlayerId(receivedPlayerId);
+        Logger::instance().info("[ClientLoop] Updated NetworkSender with playerId: " + std::to_string(receivedPlayerId));
+    }
+
     stopLauncherMusic();
-    auto gameResult = runGameSession(userId, window, options, *serverEndpoint, net, inputBuffer, textureManager,
-                                     fontManager, errorMessage, broadcastQueue);
+    // Use receivedPlayerId instead of userId for game session - receivedPlayerId is the actual player ID from server
+    auto gameResult = runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, window, options, *serverEndpoint,
+                                     net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     if (gameResult.serverLost) {

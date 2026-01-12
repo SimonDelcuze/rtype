@@ -12,12 +12,13 @@ NetworkMessageHandler::NetworkMessageHandler(
     ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
     ThreadSafeQueue<std::string>* disconnectQueue, ThreadSafeQueue<NotificationData>* broadcastQueue,
     std::atomic<bool>* handshakeFlag, std::atomic<bool>* allReadyFlag, std::atomic<int>* countdownValueFlag,
-    std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag)
+    std::atomic<bool>* gameStartFlag, std::atomic<bool>* joinDeniedFlag, std::atomic<bool>* joinAcceptedFlag,
+    std::atomic<std::uint32_t>* receivedPlayerIdFlag)
     : rawQueue_(rawQueue), snapshotQueue_(snapshotQueue), levelInitQueue_(levelInitQueue),
       levelEventQueue_(levelEventQueue), spawnQueue_(spawnQueue), destroyQueue_(destroyQueue),
       handshakeFlag_(handshakeFlag), allReadyFlag_(allReadyFlag), countdownValueFlag_(countdownValueFlag),
       gameStartFlag_(gameStartFlag), joinDeniedFlag_(joinDeniedFlag), joinAcceptedFlag_(joinAcceptedFlag),
-      disconnectQueue_(disconnectQueue), broadcastQueue_(broadcastQueue),
+      receivedPlayerIdFlag_(receivedPlayerIdFlag), disconnectQueue_(disconnectQueue), broadcastQueue_(broadcastQueue),
       lastPacketTime_(std::chrono::steady_clock::now())
 {}
 
@@ -217,6 +218,19 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     lastPacketTime_ = std::chrono::steady_clock::now();
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinAccept)) {
+        // Parse playerId from payload (4 bytes, big-endian)
+        if (data.size() >= PacketHeader::kSize + sizeof(std::uint32_t) + PacketHeader::kCrcSize) {
+            const std::uint8_t* payload = data.data() + PacketHeader::kSize;
+            std::uint32_t playerId      = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                                     (static_cast<std::uint32_t>(payload[1]) << 16) |
+                                     (static_cast<std::uint32_t>(payload[2]) << 8) |
+                                     static_cast<std::uint32_t>(payload[3]);
+            if (receivedPlayerIdFlag_ != nullptr) {
+                receivedPlayerIdFlag_->store(playerId);
+                Logger::instance().info("[NetworkMessageHandler] Received playerId from server: " +
+                                       std::to_string(playerId));
+            }
+        }
         if (joinAcceptedFlag_ != nullptr) {
             joinAcceptedFlag_->store(true);
         }

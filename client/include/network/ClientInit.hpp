@@ -38,6 +38,7 @@ struct NetPipelines
     std::atomic<bool> gameStartReceived{false};
     std::atomic<bool> joinDenied{false};
     std::atomic<bool> joinAccepted{false};
+    std::atomic<std::uint32_t> receivedPlayerId{0};
 };
 
 std::vector<std::uint8_t> buildClientHello(std::uint16_t sequence);
