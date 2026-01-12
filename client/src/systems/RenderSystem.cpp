@@ -22,9 +22,15 @@ void RenderSystem::update(Registry& registry, float deltaTime)
     struct DrawItem
     {
         int layer;
-        SpriteComponent* spriteComp;
-        TransformComponent* transform;
-        bool isVisible;
+        enum class Type
+        {
+            Sprite,
+            Box
+        } type;
+        SpriteComponent* spriteComp{nullptr};
+        const BoxComponent* boxComp{nullptr};
+        const TransformComponent* transform{nullptr};
+        bool isVisible{true};
     };
 
     std::vector<DrawItem> drawQueue;
@@ -68,33 +74,48 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         if (registry.has<LayerComponent>(id)) {
             layer = registry.get<LayerComponent>(id).layer;
         }
-        drawQueue.push_back(DrawItem{layer, &spriteComp, &transform, currentIsVisible});
-    }
-
-    std::stable_sort(drawQueue.begin(), drawQueue.end(),
-                     [](const DrawItem& a, const DrawItem& b) { return a.layer < b.layer; });
-
-    for (auto& item : drawQueue) {
-        if (!item.isVisible)
-            continue;
-
-        auto spritePtr = item.spriteComp->getSprite();
-        if (!spritePtr) {
-            continue;
-        }
-        ISprite& sprite = *spritePtr;
-        sprite.setPosition(Vector2f{item.transform->x, item.transform->y});
-        sprite.setScale(Vector2f{item.transform->scaleX, item.transform->scaleY});
-        sprite.setRotation(item.transform->rotation);
-        window_.draw(sprite);
+        drawQueue.push_back(DrawItem{layer, DrawItem::Type::Sprite, &spriteComp, nullptr, &transform, currentIsVisible});
     }
 
     for (EntityId id : registry.view<TransformComponent, BoxComponent>()) {
         const auto& transform = registry.get<TransformComponent>(id);
         const auto& box       = registry.get<BoxComponent>(id);
+        int layer             = RenderLayer::UI;
+        if (registry.has<LayerComponent>(id)) {
+            layer = registry.get<LayerComponent>(id).layer;
+        }
+        drawQueue.push_back(DrawItem{layer, DrawItem::Type::Box, nullptr, &box, &transform, true});
+    }
 
-        window_.drawRectangle({box.width, box.height}, {transform.x, transform.y}, transform.rotation,
-                              {transform.scaleX, transform.scaleY}, box.fillColor, box.outlineColor,
-                              box.outlineThickness);
+    auto typePriority = [](DrawItem::Type t) {
+        return t == DrawItem::Type::Box ? 0 : 1; // draw boxes first when layers match so sprites/icons sit above
+    };
+
+    std::stable_sort(drawQueue.begin(), drawQueue.end(), [&](const DrawItem& a, const DrawItem& b) {
+        if (a.layer == b.layer)
+            return typePriority(a.type) < typePriority(b.type);
+        return a.layer < b.layer;
+    });
+
+    for (auto& item : drawQueue) {
+        if (!item.isVisible)
+            continue;
+
+        if (item.type == DrawItem::Type::Sprite) {
+            auto spritePtr = item.spriteComp->getSprite();
+            if (!spritePtr) {
+                continue;
+            }
+            ISprite& sprite = *spritePtr;
+            sprite.setPosition(Vector2f{item.transform->x, item.transform->y});
+            sprite.setScale(Vector2f{item.transform->scaleX, item.transform->scaleY});
+            sprite.setRotation(item.transform->rotation);
+            window_.draw(sprite);
+        } else if (item.type == DrawItem::Type::Box) {
+            const auto& box = *item.boxComp;
+            window_.drawRectangle({box.width, box.height}, {item.transform->x, item.transform->y},
+                                  item.transform->rotation, {item.transform->scaleX, item.transform->scaleY},
+                                  box.fillColor, box.outlineColor, box.outlineThickness);
+        }
     }
 }

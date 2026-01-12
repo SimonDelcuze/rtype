@@ -144,6 +144,11 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     background_ = createBackground(registry, textures_);
     logo_       = createLogo(registry, textures_);
 
+    // Load rank icon (fallback if not in manifest)
+    if (!textures_.has("rank_prey")) {
+        textures_.load("rank_prey", "client/assets/ranks/prey.png");
+    }
+
     std::string title = roomName_ + " (#" + std::to_string(roomId_) + ")";
     title_            = createText(registry, 470.0F, 200.0F, title, 32, Color::White);
     status_           = createText(registry, 470.0F, 240.0F, "Waiting for players...", 18, Color(200, 200, 200));
@@ -182,7 +187,7 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     createText(registry, 60.0F, 392.0F, "Rank Leaderboard", 20, Color(200, 230, 255));
     createText(registry, 60.0F, 425.0F, "No ranks yet", 16, Color(210, 220, 230));
     createPanel(registry, 430.0F, 320.0F, 340.0F, 320.0F, Color(25, 35, 55, 200));
-    createText(registry, 450.0F, 332.0F, "Players", 20, Color(180, 220, 255));
+    createText(registry, 450.0F, 325.0F, "Players", 20, Color(180, 220, 255));
     createPanel(registry, 800.0F, 250.0F, 460.0F, 400.0F, Color(30, 30, 30, 180));
     createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
 
@@ -333,14 +338,41 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
     }
     playerEntities_.clear();
 
-    float startY = 370.0F;
+    float startY   = 370.0F;
+    float spacing  = 70.0F;
+    float rowHeight = 50.0F;
     for (std::size_t i = 0; i < players_.size(); ++i) {
         const auto& p = players_[i];
         std::string readyText = p.isReady ? " [READY]" : "";
         Color textColor = p.isReady ? Color(100, 255, 100) : Color(220, 220, 220);
-        auto name     = createText(registry, 450.0F, startY + static_cast<float>(i) * 40.0F,
-                                   p.name + " (" + p.rankName + " " + std::to_string(p.elo) + ")" + readyText, 18,
-                                   textColor);
+
+        // Create background panel for this player row FIRST (so it renders before sprites)
+        EntityId rowBg = registry.createEntity();
+        auto& bgT = registry.emplace<TransformComponent>(rowBg);
+        bgT.x = 435.0F;
+        bgT.y = startY + static_cast<float>(i) * spacing - 30.0F;
+        auto bgBox = BoxComponent::create(330.0F, rowHeight, Color(25, 35, 55, 100), Color(25, 35, 55, 100));
+        registry.emplace<BoxComponent>(rowBg, bgBox);
+        registry.emplace<LayerComponent>(rowBg, LayerComponent::create(RenderLayer::UI - 10));
+        playerEntities_.push_back(rowBg);
+
+        // Rank Icon (created after panel, so it renders on top)
+        if (textures_.has("rank_prey")) {
+            auto tex = textures_.get("rank_prey");
+            EntityId icon = registry.createEntity();
+            auto& t = registry.emplace<TransformComponent>(icon);
+            t.x = 450.0F;
+            t.y = startY + static_cast<float>(i) * spacing - 15.0F;
+            t.scaleX = 0.12F;
+            t.scaleY = 0.12F;
+            registry.emplace<SpriteComponent>(icon, SpriteComponent(tex));
+            registry.emplace<LayerComponent>(icon, LayerComponent::create(RenderLayer::UI));
+            playerEntities_.push_back(icon);
+        }
+
+        auto name = createText(registry, 500.0F, startY + static_cast<float>(i) * spacing,
+                               p.name + " (" + std::to_string(p.elo) + ")" + readyText, 18,
+                               textColor);
         playerEntities_.push_back(name);
     }
 
