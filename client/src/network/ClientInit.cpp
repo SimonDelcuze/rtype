@@ -113,7 +113,7 @@ bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& han
     net.handler = std::make_unique<NetworkMessageHandler>(
         net.raw, net.parsed, net.levelInit, net.levelEvents, net.spawns, net.destroys, &net.disconnectEvents,
         broadcastQueue, &handshakeFlag, &net.allReady, &net.countdownValue, &net.gameStartReceived, &net.joinDenied,
-        &net.joinAccepted);
+        &net.joinAccepted, &net.receivedPlayerId);
     Logger::instance().info("Receiver started on port " + std::to_string(port));
     return true;
 }

@@ -29,7 +29,8 @@ class NetworkMessageHandler
                           ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr,
                           std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
                           std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
-                          std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr);
+                          std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr,
+                          std::atomic<std::uint32_t>* receivedPlayerIdFlag = nullptr);
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                           ThreadSafeQueue<LevelInitData>& levelInitQueue);
@@ -73,6 +74,7 @@ class NetworkMessageHandler
     std::atomic<bool>* gameStartFlag_;
     std::atomic<bool>* joinDeniedFlag_;
     std::atomic<bool>* joinAcceptedFlag_;
+    std::atomic<std::uint32_t>* receivedPlayerIdFlag_;
     ThreadSafeQueue<std::string>* disconnectQueue_;
     ThreadSafeQueue<NotificationData>* broadcastQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
