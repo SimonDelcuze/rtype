@@ -10,7 +10,6 @@ TEST(StringSanityTests, IsSafeMessage)
     EXPECT_TRUE(isSafeChatMessage("How are you?"));
     EXPECT_TRUE(isSafeChatMessage("1234567890"));
 
-    // Unsafe characters
     EXPECT_FALSE(isSafeChatMessage("<script>"));
     EXPECT_FALSE(isSafeChatMessage("Hello <there>"));
     EXPECT_FALSE(isSafeChatMessage("Fish & Chips"));
@@ -23,9 +22,8 @@ TEST(StringSanityTests, SanitizeMessage)
     EXPECT_EQ(sanitizeChatMessage("<script>alert(1)</script>"), "scriptalert(1)/script");
     EXPECT_EQ(sanitizeChatMessage("Fish & Chips"), "Fish  Chips");
 
-    // Non-printable characters
     std::string complex = "Hello";
-    complex += static_cast<char>(7); // Bell
+    complex += static_cast<char>(7);
     complex += "World";
     EXPECT_EQ(sanitizeChatMessage(complex), "HelloWorld");
 }
