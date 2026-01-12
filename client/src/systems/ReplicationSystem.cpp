@@ -120,7 +120,7 @@ void ReplicationSystem::update(Registry& registry, float deltaTime)
         }
         applyArchetype(registry, id, spawnPkt.entityType);
         if (spawnPkt.entityType == 1 || spawnPkt.entityType == 12 || spawnPkt.entityType == 13 ||
-            spawnPkt.entityType == 14) {
+            spawnPkt.entityType == 14 || spawnPkt.entityType == 25) {
             if (!registry.has<OwnershipComponent>(id)) {
                 registry.emplace<OwnershipComponent>(id, OwnershipComponent::create(spawnPkt.ownerId));
             }

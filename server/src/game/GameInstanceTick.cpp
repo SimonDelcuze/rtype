@@ -1,5 +1,6 @@
 #include "Logger.hpp"
 #include "components/AllyComponent.hpp"
+#include "components/ShieldComponent.hpp"
 #include "core/EntityTypeResolver.hpp"
 #include "game/GameInstance.hpp"
 #include "network/EntityDestroyedPacket.hpp"
@@ -92,6 +93,7 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
 
         if (levelDirector_->isSafeZoneActive()) {
             processAllyPurchase(commands);
+            processShieldPurchase(commands);
         } else {
             playerBoundsSys_.update(registry_, std::nullopt);
         }
@@ -139,6 +141,7 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
         }
 
         allySys_.update(registry_, deltaTime);
+        shieldSys_.update(registry_, deltaTime);
 
         enemyShootingSys_.update(registry_, deltaTime);
         walkerShotSys_.update(registry_, deltaTime);
@@ -440,5 +443,91 @@ void GameInstance::processAllyPurchase(const std::vector<PlayerCommand>& command
         Logger::instance().info("[Ally] Spawned ally entity " + std::to_string(allyEntity) +
                                 " for ownerId=" + std::to_string(ownerId) + " at (" + std::to_string(at.x) + ", " +
                                 std::to_string(at.y) + ")");
+    }
+}
+
+void GameInstance::processShieldPurchase(const std::vector<PlayerCommand>& commands)
+{
+    constexpr std::uint16_t kShieldRenderTypeId = 25;
+
+    for (const auto& cmd : commands) {
+        // Debug: log all received flags
+        if (cmd.inputFlags != 0) {
+            Logger::instance().info("[Shield] Checking cmd flags=" + std::to_string(cmd.inputFlags) +
+                                    " BuyShield=" + std::to_string(static_cast<std::uint16_t>(InputFlag::BuyShield)));
+        }
+        if ((cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::BuyShield)) == 0) {
+            continue;
+        }
+
+        EntityId playerEntity = static_cast<EntityId>(cmd.playerId);
+        if (!registry_.isAlive(playerEntity)) {
+            Logger::instance().info("[Shield] Player entity not alive: " + std::to_string(playerEntity));
+            continue;
+        }
+
+        if (!registry_.has<OwnershipComponent>(playerEntity)) {
+            Logger::instance().info("[Shield] Player has no OwnershipComponent");
+            continue;
+        }
+        std::uint32_t ownerId = registry_.get<OwnershipComponent>(playerEntity).ownerId;
+
+        Logger::instance().info("[Shield] BuyShield flag detected for entity " + std::to_string(playerEntity) +
+                                " ownerId=" + std::to_string(ownerId));
+
+        if (!registry_.has<ScoreComponent>(playerEntity)) {
+            Logger::instance().info("[Shield] Player has no ScoreComponent");
+            continue;
+        }
+        auto& score = registry_.get<ScoreComponent>(playerEntity);
+        Logger::instance().info("[Shield] Player score: " + std::to_string(score.value));
+        if (score.value < ShieldComponent::kShieldCost) {
+            Logger::instance().info("[Shield] Not enough score");
+            continue;
+        }
+
+        bool hasShield = false;
+        for (EntityId shieldId : registry_.view<ShieldComponent>()) {
+            if (!registry_.isAlive(shieldId))
+                continue;
+            const auto& shield = registry_.get<ShieldComponent>(shieldId);
+            if (shield.ownerId == ownerId) {
+                hasShield = true;
+                break;
+            }
+        }
+        if (hasShield) {
+            Logger::instance().info("[Shield] Shield already active for ownerId=" + std::to_string(ownerId) +
+                                    ", purchase ignored");
+            continue;
+        }
+
+        score.subtract(ShieldComponent::kShieldCost);
+
+        const auto& playerTransform = registry_.get<TransformComponent>(playerEntity);
+
+        EntityId shieldEntity = registry_.createEntity();
+
+        auto& st = registry_.emplace<TransformComponent>(shieldEntity);
+        st.x     = playerTransform.x + 40.0F;
+        st.y     = playerTransform.y;
+
+        registry_.emplace<VelocityComponent>(shieldEntity, VelocityComponent::create(0.0F, 0.0F));
+        registry_.emplace<ShieldComponent>(shieldEntity, ShieldComponent::create(ownerId));
+        registry_.emplace<TagComponent>(shieldEntity, TagComponent::create(EntityTag::None));
+        registry_.emplace<RenderTypeComponent>(shieldEntity, RenderTypeComponent::create(kShieldRenderTypeId));
+        registry_.emplace<OwnershipComponent>(shieldEntity, OwnershipComponent::create(ownerId, 0));
+
+        EntitySpawnPacket spawnPkt{};
+        spawnPkt.entityId   = shieldEntity;
+        spawnPkt.ownerId    = ownerId;
+        spawnPkt.entityType = static_cast<std::uint8_t>(kShieldRenderTypeId);
+        spawnPkt.posX       = st.x;
+        spawnPkt.posY       = st.y;
+        sendThread_.broadcast(spawnPkt);
+
+        Logger::instance().info("[Shield] Spawned shield entity " + std::to_string(shieldEntity) +
+                                " for ownerId=" + std::to_string(ownerId) + " at (" + std::to_string(st.x) + ", " +
+                                std::to_string(st.y) + ")");
     }
 }

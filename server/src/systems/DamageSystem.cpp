@@ -2,6 +2,8 @@
 
 #include "Logger.hpp"
 #include "components/InvincibilityComponent.hpp"
+#include "components/ShieldComponent.hpp"
+#include "network/EntityDestroyedPacket.hpp"
 
 #include <string>
 
@@ -29,6 +31,33 @@ namespace
         if (tag.hasTag(EntityTag::Projectile))
             return "Projectile";
         return "Target";
+    }
+
+    bool tryAbsorbWithShield(Registry& registry, EntityId playerId)
+    {
+        if (!registry.has<OwnershipComponent>(playerId)) {
+            return false;
+        }
+        std::uint32_t ownerId = registry.get<OwnershipComponent>(playerId).ownerId;
+
+        for (EntityId shieldId : registry.view<ShieldComponent>()) {
+            if (!registry.isAlive(shieldId))
+                continue;
+            auto& shield = registry.get<ShieldComponent>(shieldId);
+            if (shield.ownerId != ownerId)
+                continue;
+
+            shield.hitsRemaining--;
+            Logger::instance().info("[Shield] Absorbed hit for player " + std::to_string(playerId) +
+                                    ", hits remaining: " + std::to_string(shield.hitsRemaining));
+
+            if (shield.hitsRemaining <= 0) {
+                Logger::instance().info("[Shield] Shield destroyed for owner " + std::to_string(ownerId));
+                registry.destroyEntity(shieldId);
+            }
+            return true;
+        }
+        return false;
     }
 } // namespace
 
@@ -102,6 +131,13 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
         if (!missile.fromPlayer && !targetTag.hasTag(EntityTag::Player)) {
             return;
         }
+
+        if (!missile.fromPlayer && targetTag.hasTag(EntityTag::Player)) {
+            if (tryAbsorbWithShield(registry, targetId)) {
+                missilesToDestroy.push_back(missileId);
+                return;
+            }
+        }
     }
 
     auto& h          = registry.get<HealthComponent>(targetId);
@@ -155,6 +191,9 @@ void DamageSystem::applyDirectCollisionDamage(Registry& registry, EntityId entit
             emitDamageEvent(entityA, entityB, std::min(before, dmg), h.current);
         }
     } else if (aIsHostile && bIsPlayer) {
+        if (tryAbsorbWithShield(registry, entityB)) {
+            return;
+        }
         auto& h             = registry.get<HealthComponent>(entityB);
         std::int32_t dmg    = tagA.hasTag(EntityTag::Obstacle) ? h.current : 10;
         std::int32_t before = h.current;

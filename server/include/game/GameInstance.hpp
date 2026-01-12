@@ -30,6 +30,7 @@
 #include "systems/PlayerBoundsSystem.hpp"
 #include "systems/PlayerInputSystem.hpp"
 #include "systems/ScoreSystem.hpp"
+#include "systems/ShieldSystem.hpp"
 #include "systems/WalkerShotSystem.hpp"
 
 #include <atomic>
@@ -144,6 +145,7 @@ class GameInstance
     Vec2f respawnPosition(EntityId entityId) const;
     void respawnPlayer(EntityId entityId);
     void processAllyPurchase(const std::vector<PlayerCommand>& commands);
+    void processShieldPurchase(const std::vector<PlayerCommand>& commands);
 
     void logInfo(const std::string& msg) const;
     void logWarn(const std::string& msg) const;
@@ -176,6 +178,7 @@ class GameInstance
     BoundarySystem boundarySys_;
     PlayerBoundsSystem playerBoundsSys_;
     AllySystem allySys_;
+    ShieldSystem shieldSys_;
     IntroCinematic introCinematic_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;

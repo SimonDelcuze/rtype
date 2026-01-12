@@ -22,6 +22,7 @@ enum class InputFlag : std::uint16_t
     Charge4    = 1 << 8,
     Charge5    = 1 << 9,
     Interact   = 1 << 10,
+    BuyShield  = 1 << 11,
     ChargeMask = Charge1 | Charge2 | Charge3 | Charge4 | Charge5
 };
 

@@ -1,5 +1,6 @@
 #include "level/EntityTypeSetup.hpp"
 
+#include <iostream>
 namespace
 {
 
@@ -125,10 +126,43 @@ namespace
         registry.registerType(24, data);
     }
 
+    void registerShieldType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+    {
+        auto entry = manifest.findTextureById("shield");
+        if (!entry) {
+            std::cerr << "[EntityTypeSetup] Shield texture 'shield' not found in manifest" << std::endl;
+            return;
+        }
+        if (!textures.has(entry->id))
+            textures.load(entry->id, "client/assets/" + entry->path);
+        auto tex = textures.get(entry->id);
+        if (tex == nullptr) {
+            std::cerr << "[EntityTypeSetup] Failed to load shield texture" << std::endl;
+            return;
+        }
+
+        RenderTypeData data{};
+        data.texture       = tex;
+        data.layer         = 1;
+        data.spriteId      = "shield";
+        data.frameCount    = 1;
+        data.frameDuration = 0.20F;
+        data.columns       = 1;
+        data.frameWidth    = 106;
+        data.frameHeight   = 125;
+        data.defaultScaleX = 0.3F;
+        data.defaultScaleY = 0.3F;
+        registry.registerType(25, data);
+        std::cerr << "[EntityTypeSetup] Registered shield type 25" << std::endl;
+    }
+
 } // namespace
 
-void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
+                         const AnimationRegistry* animations, const AnimationLabels* labels)
 {
+    (void) animations;
+    (void) labels;
     registerPlayerType(registry, textures, manifest);
     registerWalkingMobType(registry, textures, manifest, 2, "mob1", 36.0F);
     registerWalkingMobType(registry, textures, manifest, 21, "mob2", 32.0F);
@@ -138,4 +172,5 @@ void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures,
     registerObstacleType(registry, textures, manifest, 10, "obstacle_middle");
     registerObstacleType(registry, textures, manifest, 11, "obstacle_bottom");
     registerAllyType(registry, textures, manifest);
+    registerShieldType(registry, textures, manifest);
 }
