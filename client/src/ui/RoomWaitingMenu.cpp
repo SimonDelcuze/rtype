@@ -276,9 +276,10 @@ namespace
 } // namespace
 
 RoomWaitingMenu::RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId,
-                                 std::uint16_t gamePort, bool isHost, LobbyConnection* lobbyConnection)
-    : fonts_(fonts), textures_(textures), lobbyConnection_(lobbyConnection), roomId_(roomId), gamePort_(gamePort),
-      isHost_(isHost)
+                                 const std::string& roomName, std::uint16_t gamePort, bool isHost,
+                                 LobbyConnection* lobbyConnection)
+    : fonts_(fonts), textures_(textures), lobbyConnection_(lobbyConnection), roomId_(roomId), roomName_(roomName),
+      gamePort_(gamePort), isHost_(isHost)
 {
     result_.roomId   = roomId;
     result_.gamePort = gamePort;
@@ -723,7 +724,7 @@ void RoomWaitingMenu::buildChrome(Registry& registry)
     backgroundEntity_ = createBackground(registry, textures_);
     logoEntity_       = createLogo(registry, textures_);
 
-    std::string roomTitle = "Room #" + std::to_string(roomId_);
+    std::string roomTitle = roomName_ + " (#" + std::to_string(roomId_) + ")";
     titleEntity_          = createText(registry, 450.0F, 200.0F, roomTitle, 36, Color::White);
 
     playerCountEntity_ = createText(registry, 400.0F, 260.0F, "Players: 1/4", 24, Color(200, 200, 200));

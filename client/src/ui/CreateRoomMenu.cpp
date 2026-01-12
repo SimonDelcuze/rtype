@@ -96,7 +96,7 @@ namespace
         transform.x     = x;
         transform.y     = y;
 
-        auto box       = BoxComponent::create(width, 40.0F, Color(40, 40, 50), Color(60, 60, 70));
+        auto box       = BoxComponent::create(width, 50.0F, Color(40, 40, 50), Color(60, 60, 70));
         box.focusColor = Color(80, 120, 200);
         registry.emplace<BoxComponent>(entity, box);
 
@@ -160,6 +160,10 @@ CreateRoomMenu::CreateRoomMenu(FontManager& fonts, TextureManager& textures) : f
 
 void CreateRoomMenu::create(Registry& registry)
 {
+    done_            = false;
+    result_          = Result{};
+    passwordEnabled_ = false;
+
     if (!fonts_.has("ui")) {
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
     }

@@ -133,4 +133,5 @@ class LobbyMenu : public IMenu
     bool isCreating_{false};
     bool isJoining_{false};
     bool isGettingStats_{false};
+    std::string currentRoomName_;
 };

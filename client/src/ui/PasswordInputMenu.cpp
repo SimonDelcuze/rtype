@@ -109,6 +109,11 @@ PasswordInputMenu::PasswordInputMenu(FontManager& fonts, TextureManager& texture
 
 void PasswordInputMenu::create(Registry& registry)
 {
+    done_             = false;
+    result_           = Result{};
+    result_.cancelled = false;
+    result_.submitted = false;
+
     if (!fonts_.has("ui")) {
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
     }
