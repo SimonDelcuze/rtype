@@ -23,7 +23,7 @@ TEST(GameOverSystemTest, EmitsEventOnZeroLives)
 
     EntityId player = registry.createEntity();
     registry.emplace<TagComponent>(player, TagComponent::create(EntityTag::Player));
-    registry.emplace<LivesComponent>(player, LivesComponent::create(0, 3)); // Dead
+    registry.emplace<LivesComponent>(player, LivesComponent::create(0, 3));
     registry.emplace<ScoreComponent>(player, ScoreComponent::create(100));
 
     system.update(registry, 0.16f);
@@ -42,7 +42,7 @@ TEST(GameOverSystemTest, DoesNotEmitIfAlive)
 
     EntityId player = registry.createEntity();
     registry.emplace<TagComponent>(player, TagComponent::create(EntityTag::Player));
-    registry.emplace<LivesComponent>(player, LivesComponent::create(3, 3)); // Alive
+    registry.emplace<LivesComponent>(player, LivesComponent::create(3, 3));
 
     system.update(registry, 0.16f);
     EXPECT_FALSE(eventEmitted);
