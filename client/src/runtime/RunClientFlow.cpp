@@ -22,8 +22,8 @@
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
-#include "ui/ModeSelectMenu.hpp"
 #include "ui/MenuRunner.hpp"
+#include "ui/ModeSelectMenu.hpp"
 
 #include <chrono>
 
@@ -31,10 +31,11 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
                                                  ThreadSafeQueue<NotificationData>& broadcastQueue);
 
-std::optional<std::pair<IpEndpoint, RoomType>> resolveServerEndpoint(
-    const ClientOptions& options, Window& window, FontManager& fontManager, TextureManager& textureManager,
-    std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue,
-    std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId)
+std::optional<std::pair<IpEndpoint, RoomType>>
+resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
+                      TextureManager& textureManager, std::string& errorMessage,
+                      ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
+                      std::uint32_t& outUserId)
 {
     while (window.isOpen() && g_running && !g_forceExit.load()) {
         if (!options.useDefault && !lastLobbyEndpoint.has_value()) {
@@ -52,7 +53,6 @@ std::optional<std::pair<IpEndpoint, RoomType>> resolveServerEndpoint(
         IpEndpoint lobbyEp = *lastLobbyEndpoint;
         Logger::instance().info("[Nav] Using lobby endpoint: port " + std::to_string(lobbyEp.port));
         bool backToServerSelect = false;
-
 
         while (window.isOpen() && !backToServerSelect && g_running && !g_forceExit.load()) {
             Logger::instance().info("[Auth] Starting authentication flow");
@@ -105,8 +105,8 @@ std::optional<std::pair<IpEndpoint, RoomType>> resolveServerEndpoint(
 
                 Logger::instance().info("[Nav] Showing lobby menu");
                 bool serverLost = false;
-                auto gameEp = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, targetRoomType, fontManager, textureManager,
-                                                              broadcastQueue, &conn, serverLost);
+                auto gameEp     = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, targetRoomType, fontManager,
+                                                                  textureManager, broadcastQueue, &conn, serverLost);
 
                 if (gameEp.has_value()) {
                     return std::make_pair(*gameEp, targetRoomType);
@@ -116,7 +116,7 @@ std::optional<std::pair<IpEndpoint, RoomType>> resolveServerEndpoint(
                     Logger::instance().warn("[Nav] Server connection lost in lobby");
                     backToServerSelect = true;
                     lastLobbyEndpoint.reset();
-                    errorMessage = "Connection lost to server";
+                    errorMessage       = "Connection lost to server";
                     stayingInLobbyFlow = false;
                     continue;
                 }

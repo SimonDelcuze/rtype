@@ -342,12 +342,13 @@ void LobbyManager::addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId)
         playerReadyStatus_[roomId][playerId] = false;
 
         auto roomIt = rooms_.find(roomId);
-    if (roomIt != rooms_.end() && roomIt->second.roomType == RoomType::Ranked) {
-         if (rankedCountdowns_.find(roomId) == rankedCountdowns_.end()) {
-             rankedCountdowns_[roomId] = 60.0F;
-             Logger::instance().info("[LobbyManager] Started 60s auto-start timer for Room " + std::to_string(roomId));
-         }
-    }
+        if (roomIt != rooms_.end() && roomIt->second.roomType == RoomType::Ranked) {
+            if (rankedCountdowns_.find(roomId) == rankedCountdowns_.end()) {
+                rankedCountdowns_[roomId] = 60.0F;
+                Logger::instance().info("[LobbyManager] Started 60s auto-start timer for Room " +
+                                        std::to_string(roomId));
+            }
+        }
         Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " added to room " +
                                 std::to_string(roomId) + " (now " + std::to_string(players.size()) + " players)");
     }
@@ -406,8 +407,6 @@ bool LobbyManager::handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t pl
         return true;
     }
 
-
-
     playerReadyStatus_[roomId].erase(playerId);
 
     return false;
@@ -417,7 +416,8 @@ void LobbyManager::setPlayerReady(std::uint32_t roomId, std::uint32_t playerId, 
 {
     std::lock_guard<std::mutex> lock(roomsMutex_);
     playerReadyStatus_[roomId][playerId] = ready;
-    Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " in room " + std::to_string(roomId) + " is now " + (ready ? "READY" : "NOT READY"));
+    Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " in room " + std::to_string(roomId) +
+                            " is now " + (ready ? "READY" : "NOT READY"));
 }
 
 bool LobbyManager::isPlayerReady(std::uint32_t roomId, std::uint32_t playerId) const
@@ -437,10 +437,12 @@ bool LobbyManager::isRoomAllReady(std::uint32_t roomId) const
 {
     std::lock_guard<std::mutex> lock(roomsMutex_);
     auto pIt = roomPlayers_.find(roomId);
-    if (pIt == roomPlayers_.end() || pIt->second.empty()) return false;
+    if (pIt == roomPlayers_.end() || pIt->second.empty())
+        return false;
 
     auto rIt = playerReadyStatus_.find(roomId);
-    if (rIt == playerReadyStatus_.end()) return false;
+    if (rIt == playerReadyStatus_.end())
+        return false;
 
     for (std::uint32_t playerId : pIt->second) {
         auto statusIt = rIt->second.find(playerId);

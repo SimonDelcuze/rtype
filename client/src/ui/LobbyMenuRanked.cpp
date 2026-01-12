@@ -95,8 +95,8 @@ namespace
 } // namespace
 
 LobbyMenuRanked::LobbyMenuRanked(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
-                                 ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag,
-                                 LobbyConnection* sharedConnection)
+                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                 const std::atomic<bool>& runningFlag, LobbyConnection* sharedConnection)
     : fonts_(fonts), textures_(textures), lobbyEndpoint_(lobbyEndpoint), broadcastQueue_(broadcastQueue),
       runningFlag_(runningFlag), sharedConnection_(sharedConnection), ownsConnection_(sharedConnection == nullptr)
 {}
@@ -163,8 +163,7 @@ bool LobbyMenuRanked::isDone() const
     return state_ == State::Done;
 }
 
-void LobbyMenuRanked::handleEvent(Registry&, const Event&)
-{}
+void LobbyMenuRanked::handleEvent(Registry&, const Event&) {}
 
 void LobbyMenuRanked::render(Registry& registry, Window& window)
 {
@@ -312,10 +311,9 @@ void LobbyMenuRanked::updateStatus(Registry& registry, const std::string& text)
 void LobbyMenuRanked::transitionToWaiting(Registry& registry)
 {
     destroyLobbyEntities(registry);
-    waitingMenu_ = std::make_unique<RoomWaitingMenuRanked>(fonts_, textures_, result_.roomId, "Ranked",
-                                                           result_.gamePort,
-                                                           sharedConnection_ ? sharedConnection_
-                                                                             : lobbyConnection_.get());
+    waitingMenu_ =
+        std::make_unique<RoomWaitingMenuRanked>(fonts_, textures_, result_.roomId, "Ranked", result_.gamePort,
+                                                sharedConnection_ ? sharedConnection_ : lobbyConnection_.get());
     waitingMenu_->create(registry);
     waitingMenuInit_ = true;
     state_           = State::InRoom;
@@ -323,12 +321,12 @@ void LobbyMenuRanked::transitionToWaiting(Registry& registry)
 
 void LobbyMenuRanked::destroyLobbyEntities(Registry& registry)
 {
-    for (EntityId id : {background_, logo_, title_, status_, findBtn_, backBtn_, leftBoard_, rightBoard_, leftTitle_,
-                        rightTitle_}) {
+    for (EntityId id :
+         {background_, logo_, title_, status_, findBtn_, backBtn_, leftBoard_, rightBoard_, leftTitle_, rightTitle_}) {
         if (registry.isAlive(id))
             registry.destroyEntity(id);
     }
-    background_ = logo_ = title_ = status_ = findBtn_ = backBtn_ = leftBoard_ = rightBoard_ = leftTitle_ =
-        rightTitle_                                                                         = 0;
-    layoutBuilt_                                                                             = false;
+    background_ = logo_ = title_ = status_ = findBtn_ = backBtn_ = leftBoard_ = rightBoard_ = leftTitle_ = rightTitle_ =
+        0;
+    layoutBuilt_ = false;
 }

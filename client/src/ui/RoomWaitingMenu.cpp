@@ -307,7 +307,7 @@ void RoomWaitingMenu::create(Registry& registry)
 
 void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
 {
-    float baseX            = 30.0F;
+    float baseX = 30.0F;
     if (isRanked_) {
         setDifficulty(RoomDifficulty::Nightmare);
         return;
@@ -806,17 +806,17 @@ void RoomWaitingMenu::setInputValue(Registry& registry, EntityId inputId, const 
 void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
 {
     if (isRanked_) {
-        DifficultyPreset preset = presetFromMode(RoomDifficulty::Nightmare);
-        difficulty_             = RoomDifficulty::Nightmare;
-        enemyMultiplier_        = preset.enemyMultiplier;
-        playerSpeedMultiplier_  = preset.playerSpeedMultiplier;
-        scoreMultiplier_        = preset.scoreMultiplier;
-        playerLives_            = preset.lives;
-        result_.difficulty      = difficulty_;
-        result_.enemyMultiplier = enemyMultiplier_;
+        DifficultyPreset preset       = presetFromMode(RoomDifficulty::Nightmare);
+        difficulty_                   = RoomDifficulty::Nightmare;
+        enemyMultiplier_              = preset.enemyMultiplier;
+        playerSpeedMultiplier_        = preset.playerSpeedMultiplier;
+        scoreMultiplier_              = preset.scoreMultiplier;
+        playerLives_                  = preset.lives;
+        result_.difficulty            = difficulty_;
+        result_.enemyMultiplier       = enemyMultiplier_;
         result_.playerSpeedMultiplier = playerSpeedMultiplier_;
-        result_.scoreMultiplier = scoreMultiplier_;
-        result_.playerLives     = playerLives_;
+        result_.scoreMultiplier       = scoreMultiplier_;
+        result_.playerLives           = playerLives_;
         return;
     }
 

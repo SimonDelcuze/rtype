@@ -14,8 +14,8 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
 
     for (const auto& room : rooms) {
         payloadSize += sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t) * 3 +
-                       sizeof(std::uint8_t) * 4 +
-                       sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) + room.inviteCode.size();
+                       sizeof(std::uint8_t) * 4 + sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) +
+                       room.inviteCode.size();
     }
 
     hdr.payloadSize  = static_cast<std::uint16_t>(payloadSize);

@@ -137,7 +137,7 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
                       (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
-        info.roomType    = static_cast<RoomType>(ptr[0]);
+        info.roomType = static_cast<RoomType>(ptr[0]);
         ptr += 1;
 
         info.playerCount = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
@@ -271,7 +271,7 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
     payload += 4;
 
     std::uint8_t countdown = payload[0];
-    (void)countdown;
+    (void) countdown;
     payload += 1;
 
     std::uint8_t playerCount = payload[0];

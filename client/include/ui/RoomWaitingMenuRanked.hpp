@@ -41,7 +41,10 @@ class RoomWaitingMenuRanked : public IMenu
     void update(Registry& registry, float dt) override;
     void render(Registry& registry, Window& window) override;
 
-    Result getResult(Registry&) const { return result_; }
+    Result getResult(Registry&) const
+    {
+        return result_;
+    }
 
   private:
     void buildChrome(Registry& registry);

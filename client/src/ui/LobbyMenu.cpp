@@ -142,21 +142,19 @@ void LobbyMenu::create(Registry& registry)
     statsScoreEntity_    = createText(registry, 30.0F, 160.0F, "", 14, Color(255, 255, 100));
 
     if (targetRoomType_ == RoomType::Quickplay) {
-        createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
-                                           Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
+        createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
+                                           [this]() { onCreateRoomClicked(); });
     }
 
-    refreshButtonEntity_ =
-        createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh", Color(80, 80, 80),
-                     [this]() { onRefreshClicked(); });
+    refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh", Color(80, 80, 80),
+                                        [this]() { onRefreshClicked(); });
 
     backButtonEntity_ = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
                                      [this]() { onBackClicked(); });
 
     if (targetRoomType_ == RoomType::Quickplay) {
-        filterFullButtonEntity_ =
-            createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full", Color(60, 100, 60),
-                         [this]() { onToggleFilterFull(); });
+        filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full", Color(60, 100, 60),
+                                               [this]() { onToggleFilterFull(); });
 
         filterProtectedButtonEntity_ = createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected",
                                                     Color(60, 100, 60), [this]() { onToggleFilterProtected(); });
@@ -253,9 +251,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
 
                 if (targetRoomType_ == RoomType::Quickplay) {
-                    createButtonEntity_ =
-                        createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
-                                     [this]() { onCreateRoomClicked(); });
+                    createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
+                                                       Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
                 }
 
                 refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh",
@@ -332,22 +329,20 @@ void LobbyMenu::render(Registry& registry, Window& window)
                 passwordInputMenu_->destroy(registry);
                 passwordMenuInitialized_ = false;
 
-                backgroundEntity_ = createBackground(registry, textures_);
-                logoEntity_       = createLogo(registry, textures_);
+                backgroundEntity_      = createBackground(registry, textures_);
+                logoEntity_            = createLogo(registry, textures_);
                 std::string lobbyTitle = targetRoomType_ == RoomType::Ranked ? "Ranked Lobby" : "Game Lobby";
-                titleEntity_      = createText(registry, 400.0F, 200.0F, lobbyTitle, 36, Color::White);
+                titleEntity_           = createText(registry, 400.0F, 200.0F, lobbyTitle, 36, Color::White);
                 statusEntity_ =
                     createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
                 if (targetRoomType_ == RoomType::Quickplay) {
-                    createButtonEntity_ =
-                        createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
-                                     [this]() { onCreateRoomClicked(); });
+                    createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
+                                                       Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
                 }
                 refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh",
                                                     Color(80, 80, 80), [this]() { onRefreshClicked(); });
-                backButtonEntity_ =
-                    createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
-                                 [this]() { onBackClicked(); });
+                backButtonEntity_    = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
+                                                    [this]() { onBackClicked(); });
                 if (targetRoomType_ == RoomType::Quickplay) {
                     filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full",
                                                            Color(60, 100, 60), [this]() { onToggleFilterFull(); });
@@ -470,9 +465,9 @@ void LobbyMenu::update(Registry& registry, float dt)
 
     if (state_ == State::InRoom) {
         if (!roomWaitingMenu_) {
-            roomWaitingMenu_ = std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, currentRoomName_,
-                                                                 result_.gamePort, isRoomHost_,
-                                                                 targetRoomType_ == RoomType::Ranked, getConnection());
+            roomWaitingMenu_ =
+                std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, currentRoomName_, result_.gamePort,
+                                                  isRoomHost_, targetRoomType_ == RoomType::Ranked, getConnection());
         }
 
         if (!roomWaitingMenuInitialized_) {
@@ -523,15 +518,13 @@ void LobbyMenu::update(Registry& registry, float dt)
                 statusEntity_ =
                     createText(registry, 400.0F, 250.0F, "Connecting to lobby...", 20, Color(200, 200, 200));
                 if (targetRoomType_ == RoomType::Quickplay) {
-                    createButtonEntity_ =
-                        createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room", Color(0, 120, 200),
-                                     [this]() { onCreateRoomClicked(); });
+                    createButtonEntity_ = createButton(registry, 400.0F, 320.0F, 200.0F, 50.0F, "Create Room",
+                                                       Color(0, 120, 200), [this]() { onCreateRoomClicked(); });
                 }
                 refreshButtonEntity_ = createButton(registry, 620.0F, 320.0F, 180.0F, 50.0F, "Refresh",
                                                     Color(80, 80, 80), [this]() { onRefreshClicked(); });
-                backButtonEntity_ =
-                    createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
-                                 [this]() { onBackClicked(); });
+                backButtonEntity_    = createButton(registry, 820.0F, 320.0F, 150.0F, 50.0F, "Back", Color(120, 50, 50),
+                                                    [this]() { onBackClicked(); });
                 if (targetRoomType_ == RoomType::Quickplay) {
                     filterFullButtonEntity_ = createButton(registry, 150.0F, 320.0F, 200.0F, 50.0F, "Hide Full",
                                                            Color(60, 100, 60), [this]() { onToggleFilterFull(); });
@@ -708,7 +701,7 @@ void LobbyMenu::updateRoomListDisplay(Registry& registry)
 }
 
 void LobbyMenu::createRoomButton(Registry& registry, const RoomInfo& room, std::size_t displayIndex,
-                               std::size_t roomIndex)
+                                 std::size_t roomIndex)
 {
     float startY  = 400.0F;
     float spacing = 70.0F;

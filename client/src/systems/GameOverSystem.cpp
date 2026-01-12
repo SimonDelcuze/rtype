@@ -2,12 +2,11 @@
 
 #include "Logger.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "events/GameEvents.hpp"
-
-#include "components/OwnershipComponent.hpp"
 
 GameOverSystem::GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode)
     : eventBus_(eventBus), localPlayerId_(localPlayerId), gameMode_(gameMode)

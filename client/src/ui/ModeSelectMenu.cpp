@@ -88,31 +88,28 @@ ModeSelectMenu::ModeSelectMenu(FontManager& fonts, TextureManager& textures) : f
 
 void ModeSelectMenu::create(Registry& registry)
 {
-    done_        = false;
-    result_      = Result{};
-    background_  = createBackground(registry, textures_);
-    logo_        = createLogo(registry, textures_);
-    title_       = createText(registry, 420.0F, 220.0F, "Choose Mode", 36, Color::White);
-    quickBtn_    = createButton(registry, 430.0F, 320.0F, 220.0F, 60.0F, "Quickplay", Color(0, 120, 200),
-                                [this]() {
-                                    result_.selected  = RoomType::Quickplay;
-                                    result_.confirmed = true;
-                                    done_             = true;
-                                    Logger::instance().info("[ModeSelect] Quickplay selected");
-                                });
-    rankedBtn_   = createButton(registry, 680.0F, 320.0F, 220.0F, 60.0F, "Ranked", Color(0, 80, 160),
-                              [this]() {
-                                  result_.selected  = RoomType::Ranked;
-                                  result_.confirmed = true;
-                                  done_             = true;
-                                  Logger::instance().info("[ModeSelect] Ranked selected");
-                              });
-    backBtn_     = createButton(registry, 560.0F, 420.0F, 200.0F, 50.0F, "Back", Color(120, 50, 50),
-                                [this]() {
-                                    result_.backRequested = true;
-                                    done_                  = true;
-                                    Logger::instance().info("[ModeSelect] Back requested");
-                                });
+    done_       = false;
+    result_     = Result{};
+    background_ = createBackground(registry, textures_);
+    logo_       = createLogo(registry, textures_);
+    title_      = createText(registry, 420.0F, 220.0F, "Choose Mode", 36, Color::White);
+    quickBtn_   = createButton(registry, 430.0F, 320.0F, 220.0F, 60.0F, "Quickplay", Color(0, 120, 200), [this]() {
+        result_.selected  = RoomType::Quickplay;
+        result_.confirmed = true;
+        done_             = true;
+        Logger::instance().info("[ModeSelect] Quickplay selected");
+    });
+    rankedBtn_  = createButton(registry, 680.0F, 320.0F, 220.0F, 60.0F, "Ranked", Color(0, 80, 160), [this]() {
+        result_.selected  = RoomType::Ranked;
+        result_.confirmed = true;
+        done_             = true;
+        Logger::instance().info("[ModeSelect] Ranked selected");
+    });
+    backBtn_    = createButton(registry, 560.0F, 420.0F, 200.0F, 50.0F, "Back", Color(120, 50, 50), [this]() {
+        result_.backRequested = true;
+        done_                 = true;
+        Logger::instance().info("[ModeSelect] Back requested");
+    });
 }
 
 void ModeSelectMenu::destroy(Registry& registry)
@@ -128,11 +125,8 @@ bool ModeSelectMenu::isDone() const
     return done_;
 }
 
-void ModeSelectMenu::handleEvent(Registry&, const Event&)
-{}
+void ModeSelectMenu::handleEvent(Registry&, const Event&) {}
 
-void ModeSelectMenu::update(Registry&, float)
-{}
+void ModeSelectMenu::update(Registry&, float) {}
 
-void ModeSelectMenu::render(Registry&, Window&)
-{}
+void ModeSelectMenu::render(Registry&, Window&) {}

@@ -15,8 +15,8 @@
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/LobbyMenu.hpp"
-#include "ui/LoginMenu.hpp"
 #include "ui/LobbyMenuRanked.hpp"
+#include "ui/LoginMenu.hpp"
 #include "ui/MenuRunner.hpp"
 #include "ui/RegisterMenu.hpp"
 #include "ui/SettingsMenu.hpp"
@@ -95,7 +95,8 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
 }
 
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
-                                             std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue)
+                                             std::string& errorMessage,
+                                             ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     if (g_forceExit.load()) {
         return std::nullopt;
@@ -162,8 +163,8 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
     if (targetRoomType == RoomType::Ranked) {
-        auto result = runner.runAndGetResult<LobbyMenuRanked>(lobbyEndpoint, broadcastQueue, g_running,
-                                                              authenticatedConnection);
+        auto result =
+            runner.runAndGetResult<LobbyMenuRanked>(lobbyEndpoint, broadcastQueue, g_running, authenticatedConnection);
 
         if (!window.isOpen())
             return std::nullopt;

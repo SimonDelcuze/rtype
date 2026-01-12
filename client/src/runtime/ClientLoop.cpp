@@ -9,8 +9,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
 {
     NetPipelines net;
     std::uint32_t userId = 0;
-    auto resolution      = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,
-                                                 broadcastQueue, lastLobbyEndpoint, userId);
+    auto resolution = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                            lastLobbyEndpoint, userId);
     if (!resolution) {
         return ClientLoopResult{false, 0};
     }
@@ -44,7 +44,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     }
 
     stopLauncherMusic();
-     auto gameResult =
+    auto gameResult =
         runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, gameMode, window, options, serverEndpoint,
                        net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
     stopNetwork(net, welcomeThread, handshakeDone);

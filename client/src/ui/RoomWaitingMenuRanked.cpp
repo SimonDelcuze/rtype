@@ -9,8 +9,9 @@
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "concurrency/ThreadSafeQueue.hpp"
-#include "ui/NotificationData.hpp"
 #include "graphics/GraphicsFactory.hpp"
+#include "ui/NotificationData.hpp"
+
 #include <sstream>
 
 namespace
@@ -155,10 +156,10 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     playerCount_      = createText(registry, 470.0F, 270.0F, "Players: 0/4", 18, Color(200, 200, 200));
     timerLabel_       = createText(registry, 420.0F, 50.0F, "", 24, Color(255, 100, 100));
 
-    readyButton_ = registry.createEntity();
-    auto& tr     = registry.emplace<TransformComponent>(readyButton_);
-    tr.x         = 442.0F;
-    tr.y         = 650.0F;
+    readyButton_  = registry.createEntity();
+    auto& tr      = registry.emplace<TransformComponent>(readyButton_);
+    tr.x          = 442.0F;
+    tr.y          = 650.0F;
     auto readyBox = BoxComponent::create(320.0F, 50.0F, Color(200, 50, 50), Color(200, 50, 50));
     registry.emplace<BoxComponent>(readyButton_, readyBox);
     registry.emplace<ButtonComponent>(readyButton_, ButtonComponent::create("", [this, &registry]() {
@@ -167,14 +168,14 @@ void RoomWaitingMenuRanked::create(Registry& registry)
                                               lobbyConnection_->sendSetReady(roomId_, isReady_);
                                           }
                                           if (registry.isAlive(readyButton_) && registry.isAlive(readyButtonText_)) {
-                                              auto& text = registry.get<TextComponent>(readyButtonText_);
-                                              text.content = isReady_ ? "NOT READY" : "READY";
-                                              auto& box = registry.get<BoxComponent>(readyButton_);
-                                              Color c = isReady_ ? Color(50, 200, 50) : Color(200, 50, 50);
-                                              box.fillColor = c;
+                                              auto& text       = registry.get<TextComponent>(readyButtonText_);
+                                              text.content     = isReady_ ? "NOT READY" : "READY";
+                                              auto& box        = registry.get<BoxComponent>(readyButton_);
+                                              Color c          = isReady_ ? Color(50, 200, 50) : Color(200, 50, 50);
+                                              box.fillColor    = c;
                                               box.outlineColor = c;
-                                              auto& textTr = registry.get<TransformComponent>(readyButtonText_);
-                                              textTr.x = isReady_ ? 532.0F : 557.0F;
+                                              auto& textTr     = registry.get<TransformComponent>(readyButtonText_);
+                                              textTr.x         = isReady_ ? 532.0F : 557.0F;
                                           }
                                       }));
 
@@ -238,8 +239,7 @@ void RoomWaitingMenuRanked::handleEvent(Registry& registry, const Event& event)
     }
 }
 
-void RoomWaitingMenuRanked::render(Registry&, Window&)
-{}
+void RoomWaitingMenuRanked::render(Registry&, Window&) {}
 
 void RoomWaitingMenuRanked::update(Registry& registry, float dt)
 {
@@ -248,7 +248,7 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
         lobbyConnection_->poll(dummy);
         if (lobbyConnection_->isGameStarting()) {
             result_.expectedPlayerCount = lobbyConnection_->getExpectedPlayerCount();
-            result_.startGame = true;
+            result_.startGame           = true;
             return;
         }
         if (lobbyConnection_->wasKicked()) {
@@ -258,7 +258,7 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
 
         if (isRefreshing_) {
             if (lobbyConnection_->hasPlayerListResult()) {
-                auto list = lobbyConnection_->popPlayerListResult();
+                auto list     = lobbyConnection_->popPlayerListResult();
                 isRefreshing_ = false;
                 if (list.has_value()) {
                     consecutiveFailures_ = 0;
@@ -266,10 +266,10 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
                     for (const auto& p : *list) {
                         PlayerRow row;
                         row.playerId = p.playerId;
-                        row.name = std::string(p.name);
+                        row.name     = std::string(p.name);
                         row.rankName = "Prey";
-                        row.elo = 1000;
-                        row.isReady = p.isReady;
+                        row.elo      = 1000;
+                        row.isReady  = p.isReady;
                         players_.push_back(row);
                     }
                     buildPlayerList(registry);
@@ -282,7 +282,7 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
         std::uint8_t countdown = lobbyConnection_->getRoomCountdown();
         if (countdown > 0) {
             if (registry.has<TextComponent>(timerLabel_)) {
-                auto& text = registry.get<TextComponent>(timerLabel_);
+                auto& text   = registry.get<TextComponent>(timerLabel_);
                 text.content = "Game starting in: " + std::to_string(countdown) + "s";
             }
         } else {
@@ -338,41 +338,40 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
     }
     playerEntities_.clear();
 
-    float startY   = 370.0F;
-    float spacing  = 70.0F;
+    float startY    = 370.0F;
+    float spacing   = 70.0F;
     float rowHeight = 50.0F;
     for (std::size_t i = 0; i < players_.size(); ++i) {
-        const auto& p = players_[i];
+        const auto& p         = players_[i];
         std::string readyText = p.isReady ? " [READY]" : "";
-        Color textColor = p.isReady ? Color(100, 255, 100) : Color(220, 220, 220);
+        Color textColor       = p.isReady ? Color(100, 255, 100) : Color(220, 220, 220);
 
         // Create background panel for this player row FIRST (so it renders before sprites)
         EntityId rowBg = registry.createEntity();
-        auto& bgT = registry.emplace<TransformComponent>(rowBg);
-        bgT.x = 435.0F;
-        bgT.y = startY + static_cast<float>(i) * spacing - 30.0F;
-        auto bgBox = BoxComponent::create(330.0F, rowHeight, Color(25, 35, 55, 100), Color(25, 35, 55, 100));
+        auto& bgT      = registry.emplace<TransformComponent>(rowBg);
+        bgT.x          = 435.0F;
+        bgT.y          = startY + static_cast<float>(i) * spacing - 30.0F;
+        auto bgBox     = BoxComponent::create(330.0F, rowHeight, Color(25, 35, 55, 100), Color(25, 35, 55, 100));
         registry.emplace<BoxComponent>(rowBg, bgBox);
         registry.emplace<LayerComponent>(rowBg, LayerComponent::create(RenderLayer::UI - 10));
         playerEntities_.push_back(rowBg);
 
         // Rank Icon (created after panel, so it renders on top)
         if (textures_.has("rank_prey")) {
-            auto tex = textures_.get("rank_prey");
+            auto tex      = textures_.get("rank_prey");
             EntityId icon = registry.createEntity();
-            auto& t = registry.emplace<TransformComponent>(icon);
-            t.x = 450.0F;
-            t.y = startY + static_cast<float>(i) * spacing - 15.0F;
-            t.scaleX = 0.12F;
-            t.scaleY = 0.12F;
+            auto& t       = registry.emplace<TransformComponent>(icon);
+            t.x           = 450.0F;
+            t.y           = startY + static_cast<float>(i) * spacing - 15.0F;
+            t.scaleX      = 0.12F;
+            t.scaleY      = 0.12F;
             registry.emplace<SpriteComponent>(icon, SpriteComponent(tex));
             registry.emplace<LayerComponent>(icon, LayerComponent::create(RenderLayer::UI));
             playerEntities_.push_back(icon);
         }
 
         auto name = createText(registry, 500.0F, startY + static_cast<float>(i) * spacing,
-                               p.name + " (" + std::to_string(p.elo) + ")" + readyText, 18,
-                               textColor);
+                               p.name + " (" + std::to_string(p.elo) + ")" + readyText, 18, textColor);
         playerEntities_.push_back(name);
     }
 
@@ -383,12 +382,11 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
 
 void RoomWaitingMenuRanked::buildChatUI(Registry& registry)
 {
-    chatBg_ = registry.createEntity();
-    auto& t = registry.emplace<TransformComponent>(chatBg_);
-    t.x     = 800.0F;
-    t.y     = 250.0F;
-    auto box =
-        BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
+    chatBg_  = registry.createEntity();
+    auto& t  = registry.emplace<TransformComponent>(chatBg_);
+    t.x      = 800.0F;
+    t.y      = 250.0F;
+    auto box = BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
     registry.emplace<BoxComponent>(chatBg_, box);
 
     auto chatField             = InputFieldComponent::create("", 120);
@@ -402,16 +400,14 @@ void RoomWaitingMenuRanked::buildChatUI(Registry& registry)
     registry.emplace<BoxComponent>(chatInput_, chatBox);
     registry.emplace<InputFieldComponent>(chatInput_, chatField);
 
-    chatSend_ = registry.createEntity();
-    auto& ts  = registry.emplace<TransformComponent>(chatSend_);
-    ts.x      = 1160.0F;
-    ts.y      = 600.0F;
-    auto sendBox =
-        BoxComponent::create(80.0F, 40.0F, Color(0, 150, 80), Color(0, 180, 100));
+    chatSend_    = registry.createEntity();
+    auto& ts     = registry.emplace<TransformComponent>(chatSend_);
+    ts.x         = 1160.0F;
+    ts.y         = 600.0F;
+    auto sendBox = BoxComponent::create(80.0F, 40.0F, Color(0, 150, 80), Color(0, 180, 100));
     registry.emplace<BoxComponent>(chatSend_, sendBox);
-    registry.emplace<ButtonComponent>(chatSend_, ButtonComponent::create("Send", [this, &registry]() {
-                                          onSendChatClicked(registry);
-                                      }));
+    registry.emplace<ButtonComponent>(
+        chatSend_, ButtonComponent::create("Send", [this, &registry]() { onSendChatClicked(registry); }));
 }
 
 void RoomWaitingMenuRanked::onSendChatClicked(Registry& registry)
@@ -427,7 +423,7 @@ void RoomWaitingMenuRanked::onSendChatClicked(Registry& registry)
 
 void RoomWaitingMenuRanked::refreshPlayers(Registry& registry)
 {
-    (void)registry;
+    (void) registry;
     if (!lobbyConnection_ || isRefreshing_)
         return;
 

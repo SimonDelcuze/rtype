@@ -74,7 +74,8 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         if (registry.has<LayerComponent>(id)) {
             layer = registry.get<LayerComponent>(id).layer;
         }
-        drawQueue.push_back(DrawItem{layer, DrawItem::Type::Sprite, &spriteComp, nullptr, &transform, currentIsVisible});
+        drawQueue.push_back(
+            DrawItem{layer, DrawItem::Type::Sprite, &spriteComp, nullptr, &transform, currentIsVisible});
     }
 
     for (EntityId id : registry.view<TransformComponent, BoxComponent>()) {
