@@ -146,6 +146,7 @@ class GameInstance
     std::unique_ptr<LevelDirector> levelDirector_;
     std::unique_ptr<LevelSpawnSystem> levelSpawnSys_;
     bool levelLoaded_{false};
+    bool gameEnded_{false};
     LevelSpawnSystem::SpawnScaling spawnScaling_{};
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;

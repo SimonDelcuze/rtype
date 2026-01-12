@@ -17,7 +17,6 @@ class LoginMenuTest : public ::testing::Test
   protected:
     void SetUp() override
     {
-        // Try to find assets in common locations
         std::string assetPath = "client/assets/";
         if (!std::filesystem::exists(assetPath)) {
             assetPath = "../../../client/assets/";
@@ -29,7 +28,6 @@ class LoginMenuTest : public ::testing::Test
                 textures.load("menu_bg", assetPath + "backgrounds/menu.jpg");
                 textures.load("logo", assetPath + "other/rtype-logo.png");
             } catch (...) {
-                // If loading fails, we'll still try to run the tests
             }
         }
     }
@@ -46,7 +44,6 @@ TEST_F(LoginMenuTest, CreatePopulatesRegistry)
 {
     LoginMenu menu(fonts, textures, lobbyConn, broadcastQueue);
 
-    // If assets are not loaded, create() might throw. We catch it to still check registry if possible.
     try {
         menu.create(registry);
     } catch (...) {

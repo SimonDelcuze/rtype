@@ -5,6 +5,7 @@
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/InputPacket.hpp"
+#include "network/GameEndPacket.hpp"
 #include "network/PacketHeader.hpp"
 #include "simulation/GameEvent.hpp"
 #include "simulation/PlayerCommand.hpp"
@@ -91,6 +92,19 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
 
         if (levelDirector_->isSafeZoneActive()) {
             processAllyPurchase(commands);
+        if (levelDirector_->finished()) {
+            if (!gameEnded_) {
+                gameEnded_ = true;
+                logInfo("[Game] Level finished! Starting to broadcast GameEnd packets.");
+            }
+
+            if (currentTick_ % 10 == 0) {
+                auto pkt   = GameEndPacket::create(true, 1000);
+                auto bytes = pkt;
+                for (const auto& c : clients_) {
+                    sendThread_.sendTo(bytes, c);
+                }
+            }
         }
     } else {
         playerBoundsSys_.update(registry_, std::nullopt);

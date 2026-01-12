@@ -6,6 +6,8 @@
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 
+#include <iostream>
+
 NetworkMessageHandler::NetworkMessageHandler(
     ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
     ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
@@ -218,7 +220,6 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     lastPacketTime_ = std::chrono::steady_clock::now();
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinAccept)) {
-        // Parse playerId from payload (4 bytes, big-endian)
         if (data.size() >= PacketHeader::kSize + sizeof(std::uint32_t) + PacketHeader::kCrcSize) {
             const std::uint8_t* payload = data.data() + PacketHeader::kSize;
             std::uint32_t playerId =
@@ -293,6 +294,26 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerBroadcast)) {
         handleServerBroadcast(data);
         return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::GameEnd)) {
+        std::cout << ">>> [NETWORK] Dispatching GameEnd Packet! <<<" << std::endl;
+        Logger::instance().info("[Network] Received GameEnd packet in dispatch");
+        handleGameEnd(data);
+        return;
+    }
+}
+
+void NetworkMessageHandler::handleGameEnd(const std::vector<std::uint8_t>& data)
+{
+    auto pkt = GameEndPacket::decode(data.data(), data.size());
+    if (pkt) {
+        std::cout << ">>> [NETWORK] GameEnd Packet Decoded SUCCESSFULLY. Victory: " << pkt->victory << std::endl;
+        Logger::instance().info("[Network] Successfully decoded GameEnd packet. Victory: " +
+                                (pkt->victory ? std::string("true") : std::string("false")));
+        gameEndQueue_.push(*pkt);
+    } else {
+        std::cout << ">>> [NETWORK] GameEnd Packet Decode FAILED!" << std::endl;
+        Logger::instance().error("[Network] Failed to decode GameEnd packet");
     }
 }
 
