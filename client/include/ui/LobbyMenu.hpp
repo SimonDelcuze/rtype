@@ -35,7 +35,7 @@ class LobbyMenu : public IMenu
 
     LobbyMenu(FontManager& fonts, TextureManager& textures, const IpEndpoint& lobbyEndpoint,
               ThreadSafeQueue<NotificationData>& broadcastQueue, const std::atomic<bool>& runningFlag,
-              LobbyConnection* sharedConnection = nullptr);
+              RoomType targetRoomType, LobbyConnection* sharedConnection = nullptr);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -59,7 +59,7 @@ class LobbyMenu : public IMenu
     void onToggleFilterFull();
     void onToggleFilterProtected();
     void updateRoomListDisplay(Registry& registry);
-    void createRoomButton(Registry& registry, const RoomInfo& room, std::size_t index);
+    void createRoomButton(Registry& registry, const RoomInfo& room, std::size_t displayIndex, std::size_t roomIndex);
     bool shouldShowRoom(const RoomInfo& room) const;
     void loadAndDisplayStats(Registry& registry);
 
@@ -83,6 +83,7 @@ class LobbyMenu : public IMenu
     FontManager& fonts_;
     TextureManager& textures_;
     IpEndpoint lobbyEndpoint_;
+    RoomType targetRoomType_{RoomType::Quickplay};
     ThreadSafeQueue<NotificationData>& broadcastQueue_;
     const std::atomic<bool>& runningFlag_;
     std::unique_ptr<LobbyConnection> lobbyConnection_;

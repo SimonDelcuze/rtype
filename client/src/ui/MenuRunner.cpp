@@ -9,7 +9,7 @@ MenuRunner::MenuRunner(Window& window, FontManager& fonts, TextureManager& textu
                        ThreadSafeQueue<NotificationData>& broadcastQueue)
     : window_(window), fonts_(fonts), textures_(textures), runningFlag_(running), broadcastQueue_(broadcastQueue),
       renderSystem_(window), inputFieldSystem_(window, fonts), buttonSystem_(window, fonts),
-      hudSystem_(window, fonts, textures), notificationSystem_(window, fonts, broadcastQueue)
+      hudSystem_(window, fonts, textures, 0, RoomType::Quickplay), notificationSystem_(window, fonts, broadcastQueue)
 {}
 
 Registry& MenuRunner::getRegistry()

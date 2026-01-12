@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lobby/RoomConfig.hpp"
+#include "network/RoomType.hpp"
 
 #include <cstdint>
 #include <map>
@@ -28,6 +29,7 @@ enum class RoomVisibility : std::uint8_t
 struct RoomInfo
 {
     std::uint32_t roomId;
+    RoomType roomType{RoomType::Quickplay};
     std::size_t playerCount;
     std::size_t maxPlayers;
     RoomState state;
@@ -42,6 +44,7 @@ struct RoomInfo
     RoomVisibility visibility{RoomVisibility::Public};
     std::string inviteCode;
     RoomConfig config{RoomConfig::preset(RoomDifficulty::Hell)};
+    std::uint8_t countdown{0};
 };
 
 class LobbyManager
@@ -49,7 +52,8 @@ class LobbyManager
   public:
     LobbyManager();
 
-    void addRoom(std::uint32_t roomId, std::uint16_t port, std::size_t maxPlayers = 4);
+    void addRoom(std::uint32_t roomId, std::uint16_t port, std::size_t maxPlayers = 4,
+                 RoomType roomType = RoomType::Quickplay);
 
     void removeRoom(std::uint32_t roomId);
 
@@ -62,6 +66,8 @@ class LobbyManager
     std::vector<RoomInfo> listRooms() const;
 
     bool roomExists(std::uint32_t roomId) const;
+    bool hasRoomOfType(RoomType type) const;
+    bool hasWaitingRoomOfType(RoomType type) const;
 
     void setRoomOwner(std::uint32_t roomId, std::uint32_t ownerId);
 
@@ -91,9 +97,17 @@ class LobbyManager
     std::vector<std::uint32_t> getRoomPlayers(std::uint32_t roomId) const;
     bool handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t playerId);
 
+    void setPlayerReady(std::uint32_t roomId, std::uint32_t playerId, bool ready);
+    bool isPlayerReady(std::uint32_t roomId, std::uint32_t playerId) const;
+    bool isRoomAllReady(std::uint32_t roomId) const;
+    void updateRankedCountdowns(float dt);
+    std::uint8_t getRoomCountdown(std::uint32_t roomId) const;
+
   private:
     mutable std::mutex roomsMutex_;
     std::map<std::uint32_t, RoomInfo> rooms_;
     std::map<std::uint32_t, std::vector<std::uint32_t>> roomPlayers_;
+    std::map<std::uint32_t, std::map<std::uint32_t, bool>> playerReadyStatus_;
+    std::map<std::uint32_t, float> rankedCountdowns_;
     std::uint32_t nextPlayerId_{1};
 };

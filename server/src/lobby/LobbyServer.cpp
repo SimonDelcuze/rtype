@@ -9,6 +9,7 @@
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 #include "network/StatsPackets.hpp"
+#include "network/RoomType.hpp"
 #include "utils/StringSanity.hpp"
 
 #include <array>
@@ -263,7 +264,34 @@ void LobbyServer::cleanupThread()
     Logger::instance().info("[LobbyServer] Cleanup thread started");
 
     while (receiveRunning_) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        lobbyManager_.updateRankedCountdowns(0.1F);
+
+        std::uint32_t roomToStart = 0;
+        {
+            auto rooms = lobbyManager_.listRooms();
+            for (const auto& room : rooms) {
+                if (room.roomType == RoomType::Ranked && room.playerCount >= 2) {
+                    if (room.state == RoomState::Waiting && room.countdown == 0) {
+                        roomToStart = room.roomId;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (roomToStart != 0) {
+            Logger::instance().info("[LobbyServer] Ranked room " + std::to_string(roomToStart) + " timer expired, auto-starting.");
+            PacketHeader dummyHdr{};
+            dummyHdr.sequenceId = 0;
+            std::vector<std::uint8_t> dummyData(PacketHeader::kSize + 4, 0);
+            dummyData[PacketHeader::kSize + 0] = (roomToStart >> 24) & 0xFF;
+            dummyData[PacketHeader::kSize + 1] = (roomToStart >> 16) & 0xFF;
+            dummyData[PacketHeader::kSize + 2] = (roomToStart >> 8) & 0xFF;
+            dummyData[PacketHeader::kSize + 3] = roomToStart & 0xFF;
+            handleRoomForceStart(dummyHdr, dummyData.data(), dummyData.size(), IpEndpoint{});
+        }
 
         {
             std::lock_guard<std::mutex> lock(sessionsMutex_);
@@ -296,9 +324,39 @@ void LobbyServer::cleanupThread()
                 }
             }
         }
+
+        ensureRankedRoomExists();
     }
 
     Logger::instance().info("[LobbyServer] Cleanup thread stopped");
+}
+
+void LobbyServer::ensureRankedRoomExists()
+{
+    if (lobbyManager_.hasWaitingRoomOfType(RoomType::Ranked)) {
+        return;
+    }
+
+    RoomConfig rankedCfg = RoomConfig::preset(RoomDifficulty::Nightmare);
+    auto roomIdOpt       = instanceManager_.createInstance(rankedCfg);
+    if (!roomIdOpt.has_value()) {
+        Logger::instance().warn("[LobbyServer] Unable to auto-create ranked room (no capacity)");
+        return;
+    }
+
+    auto* instance = instanceManager_.getInstance(*roomIdOpt);
+    if (instance == nullptr) {
+        Logger::instance().error("[LobbyServer] Auto-created ranked instance missing");
+        return;
+    }
+
+    std::uint16_t port = instance->getPort();
+    lobbyManager_.addRoom(*roomIdOpt, port, 4, RoomType::Ranked);
+    lobbyManager_.setRoomConfig(*roomIdOpt, rankedCfg);
+    lobbyManager_.setRoomName(*roomIdOpt, "Ranked");
+
+    Logger::instance().info("[LobbyServer] Auto-created ranked room " + std::to_string(*roomIdOpt) + " on port " +
+                            std::to_string(port));
 }
 
 void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const IpEndpoint& from)
@@ -371,6 +429,10 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
 
         case MessageType::RoomSetConfig:
             handleRoomSetConfig(*hdr, data, size, from);
+            break;
+
+        case MessageType::RoomSetReady:
+            handleRoomSetReady(*hdr, data, size, from);
             break;
 
         case MessageType::LobbyLeaveRoom:
@@ -458,7 +520,7 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
 
     std::uint16_t port = instance->getPort();
 
-    lobbyManager_.addRoom(*roomId, port, 4);
+    lobbyManager_.addRoom(*roomId, port, 4, RoomType::Quickplay);
     lobbyManager_.setRoomConfig(*roomId, roomConfig);
 
     lobbyManager_.setRoomName(*roomId, roomName);
@@ -624,8 +686,9 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
     auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
+    std::uint8_t countdown   = lobbyManager_.getRoomCountdown(roomId);
 
-    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + (playerCount * 37);
+    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 38);
 
     PacketHeader respHdr{};
     respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -641,6 +704,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
     packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
 
+    packet.push_back(countdown);
     packet.push_back(playerCount);
 
     auto roomInfoOpt      = lobbyManager_.getRoomInfo(roomId);
@@ -672,6 +736,9 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
         bool isHost = (playerId == ownerId);
         packet.push_back(isHost ? 1 : 0);
+
+        bool isReady = lobbyManager_.isPlayerReady(roomId, playerId);
+        packet.push_back(isReady ? 1 : 0);
     }
 
     auto crc = PacketHeader::crc32(packet.data(), packet.size());
@@ -717,18 +784,20 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
         }
     }
 
-    Logger::instance().info("[LobbyServer] Owner check: SenderPlayerId=" + std::to_string(senderPlayerId) +
-                            ", RoomOwnerId=" + std::to_string(roomInfo->ownerId) +
-                            " for Room=" + std::to_string(roomId));
+    auto players = lobbyManager_.getRoomPlayers(roomId);
 
-    if (senderPlayerId != roomInfo->ownerId) {
+    bool isRankedAndAllReady = (roomInfo->roomType == RoomType::Ranked &&
+                                players.size() >= 4 && lobbyManager_.isRoomAllReady(roomId));
+    bool isExpiredRanked     = (roomInfo->roomType == RoomType::Ranked &&
+                                players.size() >= 2 && lobbyManager_.getRoomCountdown(roomId) == 0);
+
+    if (senderPlayerId != roomInfo->ownerId && !isRankedAndAllReady && !isExpiredRanked) {
         Logger::instance().warn("[LobbyServer] Player " + std::to_string(senderPlayerId) +
                                 " tried to force start room " + std::to_string(roomId) +
                                 " but is not the owner (Owner: " + std::to_string(roomInfo->ownerId) + ")");
         return;
     }
 
-    auto players             = lobbyManager_.getRoomPlayers(roomId);
     std::uint8_t playerCount = static_cast<std::uint8_t>(players.size());
 
     Logger::instance().info("[LobbyServer] Owner validated. Starting Room " + std::to_string(roomId) + " with " +
@@ -1009,6 +1078,39 @@ void LobbyServer::handleRoomSetConfig(const PacketHeader& hdr, const std::uint8_
     for (const auto& [key, session] : lobbySessions_) {
         if (session.roomId == roomId && key != senderKey) {
             sendPacket(pkt, session.endpoint);
+        }
+    }
+}
+
+void LobbyServer::handleRoomSetReady(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                                     const IpEndpoint& from)
+{
+    if (size < PacketHeader::kSize + sizeof(std::uint32_t) + 1) {
+        return;
+    }
+    const std::uint8_t* payload = data + PacketHeader::kSize;
+    std::uint32_t roomId        = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                           (static_cast<std::uint32_t>(payload[1]) << 16) |
+                           (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+    bool ready = payload[4] != 0;
+
+    std::uint32_t playerId = 0;
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        auto it = lobbySessions_.find(endpointToKey(from));
+        if (it != lobbySessions_.end()) {
+            playerId = it->second.playerId;
+        }
+    }
+    if (playerId == 0) return;
+
+    lobbyManager_.setPlayerReady(roomId, playerId, ready);
+
+    if (lobbyManager_.isRoomAllReady(roomId)) {
+        auto players = lobbyManager_.getRoomPlayers(roomId);
+        if (players.size() >= 4) {
+             Logger::instance().info("[LobbyServer] At least 4 players ready in room " + std::to_string(roomId) + ", starting game.");
+             handleRoomForceStart(hdr, data, size, from);
         }
     }
 }

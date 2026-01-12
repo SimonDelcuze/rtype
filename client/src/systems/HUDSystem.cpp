@@ -28,12 +28,16 @@ namespace
     constexpr float kLivesChargeOffset = 24.0F;
 } // namespace
 
-HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager)
-    : window_(window), fonts_(fonts), textures_(textureManager), state_(nullptr)
+HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager, std::uint32_t localPlayerId,
+                     RoomType gameMode)
+    : window_(window), fonts_(fonts), textures_(textureManager), state_(nullptr), localPlayerId_(localPlayerId),
+      gameMode_(gameMode)
 {}
 
-HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager, LevelState& state)
-    : window_(window), fonts_(fonts), textures_(textureManager), state_(&state)
+HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager, LevelState& state,
+                     std::uint32_t localPlayerId, RoomType gameMode)
+    : window_(window), fonts_(fonts), textures_(textureManager), state_(&state), localPlayerId_(localPlayerId),
+      gameMode_(gameMode)
 {}
 
 void HUDSystem::updateContent(Registry& registry, EntityId id, TextComponent& textComp) const
@@ -159,12 +163,22 @@ void HUDSystem::update(Registry& registry, float)
             }
         }
     }
-    int playerScore = -1;
-    for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
-        const auto& tag = registry.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Player)) {
-            playerScore = registry.get<ScoreComponent>(id).value;
-            break;
+    int playerScore = 0;
+
+    if (gameMode_ == RoomType::Ranked) {
+        for (EntityId id : registry.view<ScoreComponent, OwnershipComponent>()) {
+            const auto& owner = registry.get<OwnershipComponent>(id);
+            if (owner.ownerId == localPlayerId_) {
+                playerScore = registry.get<ScoreComponent>(id).value;
+                break;
+            }
+        }
+    } else {
+        for (EntityId id : registry.view<ScoreComponent, TagComponent>()) {
+            const auto& tag = registry.get<TagComponent>(id);
+            if (tag.hasTag(EntityTag::Player)) {
+                playerScore += registry.get<ScoreComponent>(id).value;
+            }
         }
     }
 
@@ -203,7 +217,7 @@ void HUDSystem::update(Registry& registry, float)
         auto& transform = registry.get<TransformComponent>(entity);
         auto& textComp  = registry.get<TextComponent>(entity);
 
-        if (registry.has<ScoreComponent>(entity) && playerScore >= 0) {
+        if (registry.has<ScoreComponent>(entity)) {
             registry.get<ScoreComponent>(entity).set(playerScore);
         }
 
@@ -257,6 +271,11 @@ void HUDSystem::update(Registry& registry, float)
         if (registry.has<OwnershipComponent>(id)) {
             key = registry.get<OwnershipComponent>(id).ownerId;
         }
+
+        if (gameMode_ == RoomType::Ranked && key != localPlayerId_) {
+            continue;
+        }
+
         playerLives.emplace_back(key, registry.get<LivesComponent>(id).current);
     }
     std::sort(playerLives.begin(), playerLives.end(), [](const auto& a, const auto& b) { return a.first < b.first; });

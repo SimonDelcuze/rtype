@@ -238,13 +238,13 @@ namespace
                 p.enemyMultiplier       = 0.5F;
                 p.playerSpeedMultiplier = 1.0F;
                 p.scoreMultiplier       = 0.5F;
-                p.lives                 = 3;
+                p.lives                 = 5;
                 break;
             case RoomDifficulty::Hell:
                 p.enemyMultiplier       = 1.0F;
                 p.playerSpeedMultiplier = 1.0F;
                 p.scoreMultiplier       = 1.0F;
-                p.lives                 = 2;
+                p.lives                 = 3;
                 break;
             case RoomDifficulty::Nightmare:
                 p.enemyMultiplier       = 1.5F;
@@ -276,10 +276,10 @@ namespace
 } // namespace
 
 RoomWaitingMenu::RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId,
-                                 const std::string& roomName, std::uint16_t gamePort, bool isHost,
+                                 const std::string& roomName, std::uint16_t gamePort, bool isHost, bool isRanked,
                                  LobbyConnection* lobbyConnection)
     : fonts_(fonts), textures_(textures), lobbyConnection_(lobbyConnection), roomId_(roomId), roomName_(roomName),
-      gamePort_(gamePort), isHost_(isHost)
+      gamePort_(gamePort), isHost_(isHost), isRanked_(isRanked)
 {
     result_.roomId   = roomId;
     result_.gamePort = gamePort;
@@ -291,7 +291,7 @@ void RoomWaitingMenu::create(Registry& registry)
     enemyMultiplier_       = 1.0F;
     playerSpeedMultiplier_ = 1.0F;
     scoreMultiplier_       = 1.0F;
-    playerLives_           = 2;
+    playerLives_           = 3;
 
     if (!fonts_.has("ui")) {
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
@@ -308,6 +308,11 @@ void RoomWaitingMenu::create(Registry& registry)
 void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
 {
     float baseX            = 30.0F;
+    if (isRanked_) {
+        setDifficulty(RoomDifficulty::Nightmare);
+        return;
+    }
+
     difficultyTitleEntity_ = createText(registry, baseX, 220.0F, "Game Config", 22, Color(220, 220, 220));
 
     const std::array<std::pair<std::string, std::string>, 4> textureInfos{
@@ -732,7 +737,7 @@ void RoomWaitingMenu::buildChrome(Registry& registry)
 
 void RoomWaitingMenu::buildControlButtons(Registry& registry)
 {
-    if (isHost_) {
+    if (isHost_ && !isRanked_) {
         startButtonEntity_ = createButton(registry, 400.0F, 600.0F, 200.0F, 50.0F, "Start Game", Color(0, 150, 80),
                                           [this]() { onStartGameClicked(); });
     }
@@ -800,6 +805,21 @@ void RoomWaitingMenu::setInputValue(Registry& registry, EntityId inputId, const 
 
 void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
 {
+    if (isRanked_) {
+        DifficultyPreset preset = presetFromMode(RoomDifficulty::Nightmare);
+        difficulty_             = RoomDifficulty::Nightmare;
+        enemyMultiplier_        = preset.enemyMultiplier;
+        playerSpeedMultiplier_  = preset.playerSpeedMultiplier;
+        scoreMultiplier_        = preset.scoreMultiplier;
+        playerLives_            = preset.lives;
+        result_.difficulty      = difficulty_;
+        result_.enemyMultiplier = enemyMultiplier_;
+        result_.playerSpeedMultiplier = playerSpeedMultiplier_;
+        result_.scoreMultiplier = scoreMultiplier_;
+        result_.playerLives     = playerLives_;
+        return;
+    }
+
     for (std::size_t i = 0; i < difficultyButtons_.size(); ++i) {
         if (registry.has<BoxComponent>(difficultyButtons_[i])) {
             auto& box        = registry.get<BoxComponent>(difficultyButtons_[i]);

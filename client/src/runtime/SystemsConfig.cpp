@@ -45,12 +45,13 @@ namespace
     }
 } // namespace
 
-void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
-                      const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
-                      AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
-                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
-                      SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue)
+void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& gameLoop, NetPipelines& net,
+                      EntityTypeRegistry& types, const AssetManifest& manifest, TextureManager& textures,
+                      AnimationRegistry& animations, AnimationLabels& labels, LevelState& levelState,
+                      InputBuffer& inputBuffer, InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX,
+                      float& playerPosY, Window& window, FontManager& fontManager, EventBus& eventBus,
+                      GraphicsFactory& graphicsFactory, SoundManager& soundManager,
+                      ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     preloadSounds(manifest, soundManager);
 
@@ -64,13 +65,14 @@ void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipeli
         std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures, g_musicVolume, levelState));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
-    gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus));
+    gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus, localPlayerId, gameMode));
     gameLoop.addSystem(std::make_shared<FollowerFacingSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<DirectionalAnimationSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
-    gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures, levelState));
+    gameLoop.addSystem(
+        std::make_shared<HUDSystem>(window, fontManager, textures, levelState, localPlayerId, gameMode));
     gameLoop.addSystem(std::make_shared<NetworkDebugOverlay>(window, fontManager));
     gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
     gameLoop.addSystem(std::make_shared<NotificationSystem>(window, fontManager, broadcastQueue));

@@ -13,7 +13,8 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
     std::size_t payloadSize = sizeof(std::uint16_t);
 
     for (const auto& room : rooms) {
-        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint16_t) * 3 + sizeof(std::uint8_t) * 3 +
+        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t) * 3 +
+                       sizeof(std::uint8_t) * 4 +
                        sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) + room.inviteCode.size();
     }
 
@@ -34,6 +35,8 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
         packet.push_back(static_cast<std::uint8_t>((room.roomId >> 16) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>((room.roomId >> 8) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>(room.roomId & 0xFF));
+
+        packet.push_back(static_cast<std::uint8_t>(room.roomType));
 
         std::uint16_t playerCount = static_cast<std::uint16_t>(room.playerCount);
         packet.push_back(static_cast<std::uint8_t>((playerCount >> 8) & 0xFF));
@@ -56,6 +59,8 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
         packet.push_back(room.passwordProtected ? 1 : 0);
 
         packet.push_back(static_cast<std::uint8_t>(room.visibility));
+
+        packet.push_back(room.countdown);
 
         std::uint16_t nameLen = static_cast<std::uint16_t>(room.roomName.size());
         packet.push_back(static_cast<std::uint8_t>((nameLen >> 8) & 0xFF));

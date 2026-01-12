@@ -98,6 +98,7 @@ class LobbyConnection
     void sendKickPlayer(std::uint32_t roomId, std::uint32_t playerId);
     void sendRoomConfig(std::uint32_t roomId, RoomDifficulty mode, float enemyMult, float playerSpeedMult,
                         float scoreMult, std::uint8_t lives);
+    void sendSetReady(std::uint32_t roomId, bool ready);
 
     void sendLeaveRoom();
     std::optional<LoginResponseData> login(const std::string& username, const std::string& password);
@@ -119,6 +120,10 @@ class LobbyConnection
         auto val = pendingRoomConfig_;
         pendingRoomConfig_.reset();
         return val;
+    }
+    std::uint8_t getRoomCountdown() const
+    {
+        return currentRoomCountdown_;
     }
 
   private:
@@ -144,4 +149,5 @@ class LobbyConnection
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
     ThreadSafeQueue<ChatPacket> chatMessages_;
     std::optional<RoomConfigUpdate> pendingRoomConfig_;
+    std::uint8_t currentRoomCountdown_{0};
 };

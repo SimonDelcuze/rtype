@@ -127,7 +127,7 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
     const std::uint8_t* end = data + size - PacketHeader::kCrcSize;
 
     for (std::uint16_t i = 0; i < roomCount; ++i) {
-        if (ptr + 13 > end) {
+        if (ptr + 18 > end) {
             return std::nullopt;
         }
 
@@ -136,6 +136,9 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
         info.roomId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                       (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
+
+        info.roomType    = static_cast<RoomType>(ptr[0]);
+        ptr += 1;
 
         info.playerCount = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
@@ -157,6 +160,9 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
         ptr += 1;
 
         info.visibility = static_cast<RoomVisibility>(ptr[0]);
+        ptr += 1;
+
+        info.countdown = ptr[0];
         ptr += 1;
 
         if (ptr + 2 > end) {
@@ -264,6 +270,10 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
 
     payload += 4;
 
+    std::uint8_t countdown = payload[0];
+    (void)countdown;
+    payload += 1;
+
     std::uint8_t playerCount = payload[0];
     payload += 1;
 
@@ -271,7 +281,7 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
     players.reserve(playerCount);
 
     for (std::uint8_t i = 0; i < playerCount; ++i) {
-        if (payload + 37 > data + size - PacketHeader::kCrcSize) {
+        if (payload + 38 > data + size - PacketHeader::kCrcSize) {
             return std::nullopt;
         }
 
@@ -287,8 +297,44 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
         info.isHost = (payload[0] != 0);
         payload += 1;
 
+        info.isReady = (payload[0] != 0);
+        payload += 1;
+
         players.push_back(info);
     }
 
     return players;
+}
+
+std::vector<std::uint8_t> buildRoomSetReadyPacket(std::uint32_t roomId, bool ready, std::uint16_t sequence)
+{
+    PacketHeader hdr;
+    hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+    hdr.messageType = static_cast<std::uint8_t>(MessageType::RoomSetReady);
+    hdr.sequenceId  = sequence;
+
+    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint8_t);
+    hdr.payloadSize           = payloadSize;
+    hdr.originalSize          = payloadSize;
+
+    std::vector<std::uint8_t> packet;
+    packet.reserve(PacketHeader::kSize + payloadSize + PacketHeader::kCrcSize);
+
+    auto headerBytes = hdr.encode();
+    packet.insert(packet.end(), headerBytes.begin(), headerBytes.end());
+
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((roomId >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(roomId & 0xFF));
+
+    packet.push_back(ready ? 1 : 0);
+
+    std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());
+    packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
+    return packet;
 }

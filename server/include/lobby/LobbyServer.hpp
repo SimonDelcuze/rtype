@@ -53,6 +53,8 @@ class LobbyServer
     void handleRoomKickPlayer(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                               const IpEndpoint& from);
     void handleRoomSetConfig(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
+                               const IpEndpoint& from);
+    void handleRoomSetReady(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                              const IpEndpoint& from);
     void handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint& from);
 
@@ -67,6 +69,8 @@ class LobbyServer
 
     void sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to);
     void sendAuthRequired(const IpEndpoint& to);
+
+    void ensureRankedRoomExists();
 
     std::string endpointToKey(const IpEndpoint& ep) const;
     bool isAuthenticated(const IpEndpoint& from) const;
