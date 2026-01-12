@@ -3,6 +3,7 @@
 #include "game/GameInstance.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/GameEndPacket.hpp"
 #include "network/PacketHeader.hpp"
 #include "simulation/GameEvent.hpp"
 #include "simulation/PlayerCommand.hpp"
@@ -86,6 +87,23 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
         sendLevelEvents(events);
         sendSegmentState();
         playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
+
+        if (levelDirector_->finished()) {
+            if (!gameEnded_) {
+                gameEnded_ = true;
+                logInfo("[Game] Level finished! Starting to broadcast GameEnd packets.");
+            }
+
+            // Send redundantly every 10 ticks to ensure delivery over UDP
+            if (currentTick_ % 10 == 0) {
+                // TODO: Calculate score properly for victory
+                auto pkt   = GameEndPacket::create(true, 1000); // Placeholder score
+                auto bytes = pkt;
+                for (const auto& c : clients_) {
+                    sendThread_.sendTo(bytes, c);
+                }
+            }
+        }
     } else {
         playerBoundsSys_.update(registry_, std::nullopt);
     }

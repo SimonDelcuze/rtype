@@ -1,0 +1,128 @@
+{
+  "textures": [
+    {
+      "id": "space_background",
+      "path": "backgrounds/space.png",
+      "type": "background"
+    },
+    {
+      "id": "player_ship",
+      "path": "sprites/player.png",
+      "type": "sprite"
+    },
+    {
+      "id": "walker_special_shot",
+      "path": "sprites/bullet.png",
+      "type": "sprite"
+    },
+    {
+      "id": "enemy_ship",
+      "path": "sprites/enemy.png",
+      "type": "sprite"
+    },
+    {
+      "id": "bullet",
+      "path": "sprites/bullet.png",
+      "type": "sprite"
+    },
+    {
+      "id": "enemy_bullet",
+      "path": "sprites/bullet1.png",
+      "type": "sprite"
+    },
+    {
+      "id": "mob1",
+      "path": "sprites/mob1.png",
+      "type": "sprite"
+    },
+    {
+      "id": "mob2",
+      "path": "sprites/mob2.png",
+      "type": "sprite"
+    },
+    {
+      "id": "follower",
+      "path": "sprites/follower.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_top",
+      "path": "sprites/obstacle/top.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_middle",
+      "path": "sprites/obstacle/middle.png",
+      "type": "sprite"
+    },
+    {
+      "id": "obstacle_bottom",
+      "path": "sprites/obstacle/bottom.png",
+      "type": "sprite"
+    },
+    {
+      "id": "diff_noob",
+      "path": "other/noob.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_hell",
+      "path": "other/hell.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_nightmare",
+      "path": "other/nightmare.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_custom",
+      "path": "other/custom.png",
+      "type": "ui"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "laser",
+      "path": "sounds/laser.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "loading_sound",
+      "path": "sounds/loading_sound.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "loading_laser",
+      "path": "sounds/loading_laser.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "explosion",
+      "path": "sounds/explosion.wav",
+      "type": "sfx"
+    },
+    {
+      "id": "theme_music",
+      "path": "music/theme.wav",
+      "type": "music"
+    },
+    {
+      "id": "menu_music",
+      "path": "music/theme.ogg",
+      "type": "music"
+    }
+  ],
+  "fonts": [
+    {
+      "id": "ui_font",
+      "path": "fonts/ui.ttf",
+      "type": "ui"
+    },
+    {
+      "id": "score_font",
+      "path": "fonts/ui.ttf",
+      "type": "game"
+    }
+  ]
+}
