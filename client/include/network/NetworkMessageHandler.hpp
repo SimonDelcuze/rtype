@@ -19,18 +19,15 @@
 class NetworkMessageHandler
 {
   public:
-    NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
-                          ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
-                          ThreadSafeQueue<LevelInitData>& levelInitQueue,
-                          ThreadSafeQueue<LevelEventData>& levelEventQueue,
-                          ThreadSafeQueue<EntitySpawnPacket>& spawnQueue,
-                          ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
-                          ThreadSafeQueue<std::string>* disconnectQueue     = nullptr,
-                          ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr,
-                          std::atomic<bool>* handshakeFlag = nullptr, std::atomic<bool>* allReadyFlag = nullptr,
-                          std::atomic<int>* countdownValueFlag = nullptr, std::atomic<bool>* gameStartFlag = nullptr,
-                          std::atomic<bool>* joinDeniedFlag = nullptr, std::atomic<bool>* joinAcceptedFlag = nullptr,
-                          std::atomic<std::uint32_t>* receivedPlayerIdFlag = nullptr);
+    NetworkMessageHandler(
+        ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue, ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
+        ThreadSafeQueue<LevelInitData>& levelInitQueue, ThreadSafeQueue<LevelEventData>& levelEventQueue,
+        ThreadSafeQueue<EntitySpawnPacket>& spawnQueue, ThreadSafeQueue<EntityDestroyedPacket>& destroyQueue,
+        ThreadSafeQueue<std::string>* disconnectQueue     = nullptr,
+        ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr, std::atomic<bool>* handshakeFlag = nullptr,
+        std::atomic<bool>* allReadyFlag = nullptr, std::atomic<int>* countdownValueFlag = nullptr,
+        std::atomic<bool>* gameStartFlag = nullptr, std::atomic<bool>* joinDeniedFlag = nullptr,
+        std::atomic<bool>* joinAcceptedFlag = nullptr, std::atomic<std::uint32_t>* receivedPlayerIdFlag = nullptr);
     NetworkMessageHandler(ThreadSafeQueue<std::vector<std::uint8_t>>& rawQueue,
                           ThreadSafeQueue<SnapshotParseResult>& snapshotQueue,
                           ThreadSafeQueue<LevelInitData>& levelInitQueue);

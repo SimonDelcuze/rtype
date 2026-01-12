@@ -221,14 +221,13 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
         // Parse playerId from payload (4 bytes, big-endian)
         if (data.size() >= PacketHeader::kSize + sizeof(std::uint32_t) + PacketHeader::kCrcSize) {
             const std::uint8_t* payload = data.data() + PacketHeader::kSize;
-            std::uint32_t playerId      = (static_cast<std::uint32_t>(payload[0]) << 24) |
-                                     (static_cast<std::uint32_t>(payload[1]) << 16) |
-                                     (static_cast<std::uint32_t>(payload[2]) << 8) |
-                                     static_cast<std::uint32_t>(payload[3]);
+            std::uint32_t playerId =
+                (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
+                (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
             if (receivedPlayerIdFlag_ != nullptr) {
                 receivedPlayerIdFlag_->store(playerId);
                 Logger::instance().info("[NetworkMessageHandler] Received playerId from server: " +
-                                       std::to_string(playerId));
+                                        std::to_string(playerId));
             }
         }
         if (joinAcceptedFlag_ != nullptr) {
