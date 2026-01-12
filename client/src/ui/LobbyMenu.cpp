@@ -276,6 +276,9 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     state_           = State::Creating;
                     isCreating_      = true;
                     currentRoomName_ = result.roomName;
+                    if (registry.has<TextComponent>(statusEntity_)) {
+                        registry.get<TextComponent>(statusEntity_).content = "Creating room...";
+                    }
 
                 } else {
                     Logger::instance().info("[LobbyMenu] Room creation cancelled");
@@ -631,6 +634,13 @@ bool LobbyMenu::shouldShowRoom(const RoomInfo& room) const
 
 void LobbyMenu::updateRoomListDisplay(Registry& registry)
 {
+    if (state_ == State::Creating) {
+        if (registry.has<TextComponent>(statusEntity_)) {
+            registry.get<TextComponent>(statusEntity_).content = "Creating room...";
+        }
+        return;
+    }
+
     for (EntityId id : roomButtonEntities_) {
         if (registry.isAlive(id)) {
             registry.destroyEntity(id);
