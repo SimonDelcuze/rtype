@@ -88,9 +88,7 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         drawQueue.push_back(DrawItem{layer, DrawItem::Type::Box, nullptr, &box, &transform, true});
     }
 
-    auto typePriority = [](DrawItem::Type t) {
-        return t == DrawItem::Type::Box ? 0 : 1;
-    };
+    auto typePriority = [](DrawItem::Type t) { return t == DrawItem::Type::Box ? 0 : 1; };
 
     std::stable_sort(drawQueue.begin(), drawQueue.end(), [&](const DrawItem& a, const DrawItem& b) {
         if (a.layer == b.layer)

@@ -1,8 +1,8 @@
 #include "components/LivesComponent.hpp"
 #include "components/ScoreComponent.hpp"
+#include "components/TagComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
-#include "components/TagComponent.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
@@ -53,7 +53,7 @@ TEST_F(HUDSystemFixture, UpdatesAfterScoreChange)
 {
     EntityId e = registry.createEntity();
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
-    auto& text  = registry.emplace<TextComponent>(e, TextComponent::create("", 20, Color::White));
+    auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, Color::White));
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Player));
     auto& score = registry.emplace<ScoreComponent>(e, ScoreComponent::create(50));
 
