@@ -18,6 +18,7 @@
 #include "rollback/RollbackManager.hpp"
 #include "simulation/GameWorld.hpp"
 #include "simulation/PlayerCommand.hpp"
+#include "lobby/RoomConfig.hpp"
 #include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
 #include "systems/DamageSystem.hpp"
@@ -43,6 +44,7 @@ class GameInstance
 {
   public:
     GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag);
+    void setRoomConfig(const RoomConfig& config);
     bool start();
     void run();
     void stop(const std::string& reason = "Room closed");
@@ -113,6 +115,8 @@ class GameInstance
     std::uint32_t nextSeed() const;
     void resetGame();
     void onDisconnect(const IpEndpoint& endpoint);
+    void applyConfig();
+    std::uint8_t computePlayerLives() const;
 
     void updateRespawnTimers(float deltaTime);
     void updateInvincibilityTimers(float deltaTime);
@@ -131,6 +135,7 @@ class GameInstance
     std::uint16_t port_;
     GameWorld world_;
     Registry& registry_;
+    RoomConfig roomConfig_{RoomConfig::preset(RoomDifficulty::Hell)};
     std::map<std::uint32_t, EntityId> playerEntities_;
     std::vector<IpEndpoint> clients_;
     std::unordered_map<std::string, ClientSession> sessions_;
@@ -139,6 +144,7 @@ class GameInstance
     std::unique_ptr<LevelDirector> levelDirector_;
     std::unique_ptr<LevelSpawnSystem> levelSpawnSys_;
     bool levelLoaded_{false};
+    LevelSpawnSystem::SpawnScaling spawnScaling_{};
     PlayerInputSystem playerInputSys_;
     MovementSystem movementSys_;
     MonsterMovementSystem monsterMovementSys_;

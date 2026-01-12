@@ -8,6 +8,11 @@
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include <algorithm>
+#include <array>
+#include <iomanip>
+#include <sstream>
+
 namespace
 {
     EntityId createBackground(Registry& registry, TextureManager& textures)
@@ -95,9 +100,58 @@ namespace
         box.focusColor = Color(80, 120, 200);
         registry.emplace<BoxComponent>(entity, box);
 
-        auto input = InputFieldComponent::create(defaultValue, 32);
-        registry.emplace<InputFieldComponent>(entity, input);
-        return entity;
+    auto input = InputFieldComponent::create(defaultValue, 32);
+    registry.emplace<InputFieldComponent>(entity, input);
+    return entity;
+}
+
+    std::string toString(float value)
+    {
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(0) << value;
+        return ss.str();
+    }
+
+    std::string toStringLives(std::uint8_t lives)
+    {
+        return std::to_string(lives);
+    }
+
+    struct DifficultyPreset
+    {
+        float enemyMultiplier      = 1.0F;
+        float playerSpeedMultiplier= 1.0F;
+        float scoreMultiplier      = 1.0F;
+        std::uint8_t lives         = 3;
+    };
+
+    DifficultyPreset presetFromMode(RoomDifficulty difficulty)
+    {
+        DifficultyPreset p{};
+        switch (difficulty) {
+            case RoomDifficulty::Noob:
+                p.enemyMultiplier       = 1.0F;
+                p.playerSpeedMultiplier = 1.0F;
+                p.scoreMultiplier       = 1.0F;
+                p.lives                 = 3;
+                break;
+            case RoomDifficulty::Hell:
+                p.enemyMultiplier       = 1.33F;
+                p.playerSpeedMultiplier = 0.67F;
+                p.scoreMultiplier       = 1.5F;
+                p.lives                 = 2;
+                break;
+            case RoomDifficulty::Nightmare:
+                p.enemyMultiplier       = 1.66F;
+                p.playerSpeedMultiplier = 0.34F;
+                p.scoreMultiplier       = 2.0F;
+                p.lives                 = 1;
+                break;
+            case RoomDifficulty::Custom:
+            default:
+                break;
+        }
+        return p;
     }
 
 } // namespace
@@ -131,6 +185,65 @@ void CreateRoomMenu::create(Registry& registry)
                                        [this]() { onCancelClicked(); });
 }
 
+CreateRoomMenu::ConfigRow CreateRoomMenu::createConfigRow(Registry& registry, float x, float y, const std::string& label,
+                                                          const std::string& value)
+{
+    ConfigRow row;
+    row.label  = createText(registry, x, y, label, 18, Color(200, 200, 200));
+    row.input  = createInputField(registry, x + 220.0F, y - 5.0F, 120.0F, value);
+    row.suffix = createText(registry, x + 350.0F, y, "", 16, Color(160, 160, 160));
+    return row;
+}
+
+void CreateRoomMenu::destroyConfigRow(Registry& registry, const ConfigRow& row)
+{
+    if (registry.isAlive(row.label))
+        registry.destroyEntity(row.label);
+    if (registry.isAlive(row.input))
+        registry.destroyEntity(row.input);
+    if (registry.isAlive(row.suffix))
+        registry.destroyEntity(row.suffix);
+}
+
+void CreateRoomMenu::setInputValue(Registry& registry, EntityId inputId, const std::string& value)
+{
+    if (!registry.has<InputFieldComponent>(inputId))
+        return;
+    auto& input = registry.get<InputFieldComponent>(inputId);
+    if (input.value != value) {
+        input.value = value;
+    }
+}
+
+float CreateRoomMenu::readPercentField(Registry& registry, EntityId inputId, float minVal, float maxVal,
+                                       float fallback)
+{
+    if (!registry.has<InputFieldComponent>(inputId))
+        return fallback;
+    const auto& comp = registry.get<InputFieldComponent>(inputId);
+    try {
+        float v = std::stof(comp.value);
+        v       = std::clamp(v, minVal, maxVal);
+        return v;
+    } catch (...) {
+        return fallback;
+    }
+}
+
+std::uint8_t CreateRoomMenu::readLivesField(Registry& registry, EntityId inputId, std::uint8_t fallback)
+{
+    if (!registry.has<InputFieldComponent>(inputId))
+        return fallback;
+    const auto& comp = registry.get<InputFieldComponent>(inputId);
+    try {
+        int v = std::stoi(comp.value);
+        v     = std::clamp(v, 1, 6);
+        return static_cast<std::uint8_t>(v);
+    } catch (...) {
+        return fallback;
+    }
+}
+
 void CreateRoomMenu::destroy(Registry& registry)
 {
     if (registry.isAlive(backgroundEntity_))
@@ -139,6 +252,18 @@ void CreateRoomMenu::destroy(Registry& registry)
         registry.destroyEntity(logoEntity_);
     if (registry.isAlive(titleEntity_))
         registry.destroyEntity(titleEntity_);
+    if (registry.isAlive(difficultyTitleEntity_))
+        registry.destroyEntity(difficultyTitleEntity_);
+    if (registry.isAlive(configTitleEntity_))
+        registry.destroyEntity(configTitleEntity_);
+    for (auto id : difficultyButtons_) {
+        if (registry.isAlive(id))
+            registry.destroyEntity(id);
+    }
+    destroyConfigRow(registry, enemyRow_);
+    destroyConfigRow(registry, playerRow_);
+    destroyConfigRow(registry, scoreRow_);
+    destroyConfigRow(registry, livesRow_);
     if (registry.isAlive(roomNameLabelEntity_))
         registry.destroyEntity(roomNameLabelEntity_);
     if (registry.isAlive(roomNameInputEntity_))
@@ -177,6 +302,8 @@ void CreateRoomMenu::render(Registry& registry, Window&)
     if (passwordToggleEntity_ != 0 && registry.has<ButtonComponent>(passwordToggleEntity_)) {
         registry.get<ButtonComponent>(passwordToggleEntity_).label = passwordEnabled_ ? "Enabled" : "Disabled";
     }
+
+    updateDifficultyUI(registry);
 }
 
 void CreateRoomMenu::onCreateClicked()
@@ -197,4 +324,75 @@ void CreateRoomMenu::onTogglePassword()
 {
     passwordEnabled_ = !passwordEnabled_;
     Logger::instance().info("[CreateRoomMenu] Password " + std::string(passwordEnabled_ ? "enabled" : "disabled"));
+}
+
+void CreateRoomMenu::setDifficulty(RoomDifficulty difficulty)
+{
+    result_.difficulty = difficulty;
+    if (difficulty == RoomDifficulty::Custom) {
+        return;
+    }
+    DifficultyPreset cfg        = presetFromMode(difficulty);
+    result_.enemyMultiplier     = cfg.enemyMultiplier;
+    result_.playerSpeedMultiplier= cfg.playerSpeedMultiplier;
+    result_.scoreMultiplier     = cfg.scoreMultiplier;
+    result_.playerLives         = cfg.lives;
+}
+
+void CreateRoomMenu::updateDifficultyUI(Registry& registry)
+{
+    for (std::size_t i = 0; i < difficultyButtons_.size(); ++i) {
+        if (!registry.has<BoxComponent>(difficultyButtons_[i]))
+            continue;
+        auto& box   = registry.get<BoxComponent>(difficultyButtons_[i]);
+        bool active = (static_cast<int>(result_.difficulty) == static_cast<int>(i));
+        box.fillColor    = active ? Color(0, 150, 80) : Color(50, 70, 90);
+        box.outlineColor = active ? Color(0, 180, 110) : Color(80, 90, 110);
+    }
+
+    const bool isCustom = result_.difficulty == RoomDifficulty::Custom;
+    if (!isCustom) {
+        DifficultyPreset cfg            = presetFromMode(result_.difficulty);
+        result_.enemyMultiplier         = cfg.enemyMultiplier;
+        result_.playerSpeedMultiplier   = cfg.playerSpeedMultiplier;
+        result_.scoreMultiplier         = cfg.scoreMultiplier;
+        result_.playerLives             = cfg.lives;
+    } else {
+        float enemyPct =
+            readPercentField(registry, enemyRow_.input, 50.0F, 200.0F, result_.enemyMultiplier * 100.0F);
+        float playerPct =
+            readPercentField(registry, playerRow_.input, 50.0F, 200.0F, result_.playerSpeedMultiplier * 100.0F);
+        float scorePct =
+            readPercentField(registry, scoreRow_.input, 50.0F, 200.0F, result_.scoreMultiplier * 100.0F);
+        std::uint8_t lives = readLivesField(registry, livesRow_.input,
+                                            result_.playerLives == 0 ? static_cast<std::uint8_t>(3)
+                                                                     : result_.playerLives);
+
+        result_.enemyMultiplier       = enemyPct / 100.0F;
+        result_.playerSpeedMultiplier = playerPct / 100.0F;
+        result_.scoreMultiplier       = scorePct / 100.0F;
+        result_.playerLives           = lives;
+    }
+
+    setInputValue(registry, enemyRow_.input, toString(result_.enemyMultiplier * 100.0F));
+    setInputValue(registry, playerRow_.input, toString(result_.playerSpeedMultiplier * 100.0F));
+    setInputValue(registry, scoreRow_.input, toString(result_.scoreMultiplier * 100.0F));
+    setInputValue(registry, livesRow_.input, toStringLives(result_.playerLives));
+
+    auto setRowState = [&](const ConfigRow& row, bool locked) {
+        if (registry.has<BoxComponent>(row.input)) {
+            auto& box = registry.get<BoxComponent>(row.input);
+            box.fillColor =
+                locked ? Color(50, 50, 50, 160) : Color(40, 40, 50);
+            box.outlineColor = locked ? Color(80, 80, 80) : Color(60, 60, 70);
+        }
+        if (registry.has<TextComponent>(row.suffix)) {
+            registry.get<TextComponent>(row.suffix).content = locked ? "(locked)" : "(editable)";
+        }
+    };
+
+    setRowState(enemyRow_, !isCustom);
+    setRowState(playerRow_, !isCustom);
+    setRowState(scoreRow_, !isCustom);
+    setRowState(livesRow_, !isCustom);
 }

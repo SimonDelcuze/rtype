@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <random>
 #include <thread>
 
@@ -23,6 +24,10 @@ namespace
     constexpr float kOffscreenRespawnPlaceholder = -10000.0F;
     constexpr float kRespawnDelay                = 2.0F;
     constexpr float kRespawnInvincibility        = 3.0F;
+    constexpr float kBasePlayerSpeed             = 250.0F;
+    constexpr float kBaseMissileSpeed            = 500.0F;
+    constexpr float kBaseMissileLifetime         = 2.0F;
+    constexpr std::int32_t kBaseMissileDamage    = 10;
     const Vec2f kDefaultRespawn{100.0F, 400.0F};
 
     LevelScrollSettings toNetworkScroll(const ScrollSettings& scroll)
@@ -98,7 +103,8 @@ namespace
 
 GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic<bool>& runningFlag)
     : roomId_(roomId), port_(port), world_(), registry_(world_.getRegistry()),
-      playerInputSys_(250.0F, 500.0F, 2.0F, 10), movementSys_(), monsterMovementSys_(), enemyShootingSys_(),
+      playerInputSys_(kBasePlayerSpeed, kBaseMissileSpeed, kBaseMissileLifetime, kBaseMissileDamage), movementSys_(),
+      monsterMovementSys_(), enemyShootingSys_(),
       damageSys_(eventBus_), scoreSys_(eventBus_, registry_), destructionSys_(eventBus_),
       receiveThread_(IpEndpoint{.addr = {0, 0, 0, 0}, .port = port}, inputQueue_, controlQueue_, &timeoutQueue_,
                      std::chrono::seconds(30)),
@@ -122,6 +128,58 @@ GameInstance::GameInstance(std::uint32_t roomId, std::uint16_t port, std::atomic
         world_.setLevelLoaded(false);
         logError("[Level] Level load failed: " + error.message + " path=" + error.path + " ptr=" + error.jsonPointer);
     }
+
+    applyConfig();
+}
+
+void GameInstance::setRoomConfig(const RoomConfig& config)
+{
+    roomConfig_ = config;
+    if (roomConfig_.mode == RoomDifficulty::Custom) {
+        roomConfig_.clampCustom();
+    }
+    applyConfig();
+}
+
+void GameInstance::applyConfig()
+{
+    spawnScaling_.enemyHealthMultiplier = roomConfig_.enemyStatMultiplier;
+    spawnScaling_.enemySpeedMultiplier  = roomConfig_.enemyStatMultiplier;
+    spawnScaling_.enemyDamageMultiplier = roomConfig_.enemyStatMultiplier;
+    spawnScaling_.scoreMultiplier       = roomConfig_.scoreMultiplier;
+
+    if (levelSpawnSys_) {
+        levelSpawnSys_->setScaling(spawnScaling_);
+    }
+    if (world_.getLevelSpawnSystem() != nullptr) {
+        world_.getLevelSpawnSystem()->setScaling(spawnScaling_);
+    }
+
+    float playerSpeed = kBasePlayerSpeed * roomConfig_.playerSpeedMultiplier;
+    playerInputSys_.setTuning(playerSpeed, kBaseMissileSpeed, kBaseMissileLifetime, kBaseMissileDamage);
+
+    logInfo("[Config] Applied room config: mode=" + std::to_string(static_cast<int>(roomConfig_.mode)) +
+            " enemyMult=" + std::to_string(roomConfig_.enemyStatMultiplier) +
+            " playerSpeedMult=" + std::to_string(roomConfig_.playerSpeedMultiplier) +
+            " scoreMult=" + std::to_string(roomConfig_.scoreMultiplier) +
+            " lives=" + std::to_string(roomConfig_.playerLives));
+
+    for (const auto& [playerId, entity] : playerEntities_) {
+        if (!registry_.isAlive(entity) || !registry_.has<LivesComponent>(entity))
+            continue;
+        std::uint8_t lives = computePlayerLives();
+        auto& lc           = registry_.get<LivesComponent>(entity);
+        lc.max             = lives;
+        lc.current         = std::min<int>(lc.current, lives);
+        if (lc.current <= 0) {
+            lc.current = lives;
+        }
+    }
+}
+
+std::uint8_t GameInstance::computePlayerLives() const
+{
+    return std::max<std::uint8_t>(1, roomConfig_.playerLives);
 }
 
 bool GameInstance::start()

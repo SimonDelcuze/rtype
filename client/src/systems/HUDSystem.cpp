@@ -232,8 +232,8 @@ void HUDSystem::update(Registry& registry, float)
                     FloatRect bounds = textComp.text->getLocalBounds();
                     textComp.text->setOrigin(
                         Vector2f{bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
-                    transform.x = static_cast<float>(size.x) / 2.0F;
-                    transform.y = static_cast<float>(size.y) / 2.0F;
+                    transform.x = static_cast<float>(size.x) / 2.0F + textComp.centerOffsetX;
+                    transform.y = static_cast<float>(size.y) / 2.0F + textComp.centerOffsetY;
                 } else {
                     textComp.text->setOrigin(Vector2f{0.0F, 0.0F});
                 }

@@ -59,6 +59,26 @@
       "id": "obstacle_bottom",
       "path": "sprites/obstacle/bottom.png",
       "type": "sprite"
+    },
+    {
+      "id": "diff_noob",
+      "path": "other/noob.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_hell",
+      "path": "other/hell.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_nightmare",
+      "path": "other/nightmare.png",
+      "type": "ui"
+    },
+    {
+      "id": "diff_custom",
+      "path": "other/custom.png",
+      "type": "ui"
     }
   ],
   "sounds": [

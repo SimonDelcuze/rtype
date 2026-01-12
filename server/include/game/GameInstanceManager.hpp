@@ -9,12 +9,14 @@
 #include <mutex>
 #include <optional>
 
+#include "lobby/RoomConfig.hpp"
+
 class GameInstanceManager
 {
   public:
     GameInstanceManager(std::uint16_t basePort, std::uint32_t maxInstances, std::atomic<bool>& runningFlag);
 
-    std::optional<std::uint32_t> createInstance();
+    std::optional<std::uint32_t> createInstance(const RoomConfig& config = RoomConfig::preset(RoomDifficulty::Hell));
 
     void destroyInstance(std::uint32_t roomId);
 
@@ -36,6 +38,8 @@ class GameInstanceManager
     void stopAll(const std::string& reason = "Server disconnect");
 
     void broadcast(const std::string& message);
+
+    void setRoomConfig(std::uint32_t roomId, const RoomConfig& config);
 
   private:
     std::uint16_t basePort_;

@@ -104,7 +104,7 @@ namespace
         return entity;
     }
 
-} // namespace
+}
 
 ConnectionMenu::ConnectionMenu(FontManager& fonts, TextureManager& textures, std::string initialError)
     : fonts_(fonts), textures_(textures), initialError_(std::move(initialError))
@@ -193,11 +193,12 @@ void ConnectionMenu::showConnectingText(Registry& registry)
     EntityId entity = registry.createEntity();
     auto& transform = registry.emplace<TransformComponent>(entity);
     transform.x     = 550.0F;
-    transform.y     = 500.0F;
+    transform.y     = 740.0F;
 
-    auto text     = TextComponent::create("ui", 32, Color(180, 180, 180, 200));
-    text.content  = "Connecting to server.";
-    text.centered = true;
+    auto text      = TextComponent::create("ui", 32, Color(180, 180, 180, 200));
+    text.content   = "Connecting to server.";
+    text.centered  = true;
+    text.centerOffsetY = 10.0F;
     registry.emplace<TextComponent>(entity, text);
     registry.emplace<LayerComponent>(entity, LayerComponent::create(RenderLayer::UI));
 
