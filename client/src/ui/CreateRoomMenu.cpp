@@ -100,10 +100,10 @@ namespace
         box.focusColor = Color(80, 120, 200);
         registry.emplace<BoxComponent>(entity, box);
 
-    auto input = InputFieldComponent::create(defaultValue, 32);
-    registry.emplace<InputFieldComponent>(entity, input);
-    return entity;
-}
+        auto input = InputFieldComponent::create(defaultValue, 32);
+        registry.emplace<InputFieldComponent>(entity, input);
+        return entity;
+    }
 
     std::string toString(float value)
     {
@@ -119,10 +119,10 @@ namespace
 
     struct DifficultyPreset
     {
-        float enemyMultiplier      = 1.0F;
-        float playerSpeedMultiplier= 1.0F;
-        float scoreMultiplier      = 1.0F;
-        std::uint8_t lives         = 3;
+        float enemyMultiplier       = 1.0F;
+        float playerSpeedMultiplier = 1.0F;
+        float scoreMultiplier       = 1.0F;
+        std::uint8_t lives          = 3;
     };
 
     DifficultyPreset presetFromMode(RoomDifficulty difficulty)
@@ -185,8 +185,8 @@ void CreateRoomMenu::create(Registry& registry)
                                        [this]() { onCancelClicked(); });
 }
 
-CreateRoomMenu::ConfigRow CreateRoomMenu::createConfigRow(Registry& registry, float x, float y, const std::string& label,
-                                                          const std::string& value)
+CreateRoomMenu::ConfigRow CreateRoomMenu::createConfigRow(Registry& registry, float x, float y,
+                                                          const std::string& label, const std::string& value)
 {
     ConfigRow row;
     row.label  = createText(registry, x, y, label, 18, Color(200, 200, 200));
@@ -215,8 +215,7 @@ void CreateRoomMenu::setInputValue(Registry& registry, EntityId inputId, const s
     }
 }
 
-float CreateRoomMenu::readPercentField(Registry& registry, EntityId inputId, float minVal, float maxVal,
-                                       float fallback)
+float CreateRoomMenu::readPercentField(Registry& registry, EntityId inputId, float minVal, float maxVal, float fallback)
 {
     if (!registry.has<InputFieldComponent>(inputId))
         return fallback;
@@ -332,11 +331,11 @@ void CreateRoomMenu::setDifficulty(RoomDifficulty difficulty)
     if (difficulty == RoomDifficulty::Custom) {
         return;
     }
-    DifficultyPreset cfg        = presetFromMode(difficulty);
-    result_.enemyMultiplier     = cfg.enemyMultiplier;
-    result_.playerSpeedMultiplier= cfg.playerSpeedMultiplier;
-    result_.scoreMultiplier     = cfg.scoreMultiplier;
-    result_.playerLives         = cfg.lives;
+    DifficultyPreset cfg          = presetFromMode(difficulty);
+    result_.enemyMultiplier       = cfg.enemyMultiplier;
+    result_.playerSpeedMultiplier = cfg.playerSpeedMultiplier;
+    result_.scoreMultiplier       = cfg.scoreMultiplier;
+    result_.playerLives           = cfg.lives;
 }
 
 void CreateRoomMenu::updateDifficultyUI(Registry& registry)
@@ -344,29 +343,26 @@ void CreateRoomMenu::updateDifficultyUI(Registry& registry)
     for (std::size_t i = 0; i < difficultyButtons_.size(); ++i) {
         if (!registry.has<BoxComponent>(difficultyButtons_[i]))
             continue;
-        auto& box   = registry.get<BoxComponent>(difficultyButtons_[i]);
-        bool active = (static_cast<int>(result_.difficulty) == static_cast<int>(i));
+        auto& box        = registry.get<BoxComponent>(difficultyButtons_[i]);
+        bool active      = (static_cast<int>(result_.difficulty) == static_cast<int>(i));
         box.fillColor    = active ? Color(0, 150, 80) : Color(50, 70, 90);
         box.outlineColor = active ? Color(0, 180, 110) : Color(80, 90, 110);
     }
 
     const bool isCustom = result_.difficulty == RoomDifficulty::Custom;
     if (!isCustom) {
-        DifficultyPreset cfg            = presetFromMode(result_.difficulty);
-        result_.enemyMultiplier         = cfg.enemyMultiplier;
-        result_.playerSpeedMultiplier   = cfg.playerSpeedMultiplier;
-        result_.scoreMultiplier         = cfg.scoreMultiplier;
-        result_.playerLives             = cfg.lives;
+        DifficultyPreset cfg          = presetFromMode(result_.difficulty);
+        result_.enemyMultiplier       = cfg.enemyMultiplier;
+        result_.playerSpeedMultiplier = cfg.playerSpeedMultiplier;
+        result_.scoreMultiplier       = cfg.scoreMultiplier;
+        result_.playerLives           = cfg.lives;
     } else {
-        float enemyPct =
-            readPercentField(registry, enemyRow_.input, 50.0F, 200.0F, result_.enemyMultiplier * 100.0F);
+        float enemyPct = readPercentField(registry, enemyRow_.input, 50.0F, 200.0F, result_.enemyMultiplier * 100.0F);
         float playerPct =
             readPercentField(registry, playerRow_.input, 50.0F, 200.0F, result_.playerSpeedMultiplier * 100.0F);
-        float scorePct =
-            readPercentField(registry, scoreRow_.input, 50.0F, 200.0F, result_.scoreMultiplier * 100.0F);
-        std::uint8_t lives = readLivesField(registry, livesRow_.input,
-                                            result_.playerLives == 0 ? static_cast<std::uint8_t>(3)
-                                                                     : result_.playerLives);
+        float scorePct = readPercentField(registry, scoreRow_.input, 50.0F, 200.0F, result_.scoreMultiplier * 100.0F);
+        std::uint8_t lives = readLivesField(
+            registry, livesRow_.input, result_.playerLives == 0 ? static_cast<std::uint8_t>(3) : result_.playerLives);
 
         result_.enemyMultiplier       = enemyPct / 100.0F;
         result_.playerSpeedMultiplier = playerPct / 100.0F;
@@ -381,9 +377,8 @@ void CreateRoomMenu::updateDifficultyUI(Registry& registry)
 
     auto setRowState = [&](const ConfigRow& row, bool locked) {
         if (registry.has<BoxComponent>(row.input)) {
-            auto& box = registry.get<BoxComponent>(row.input);
-            box.fillColor =
-                locked ? Color(50, 50, 50, 160) : Color(40, 40, 50);
+            auto& box        = registry.get<BoxComponent>(row.input);
+            box.fillColor    = locked ? Color(50, 50, 50, 160) : Color(40, 40, 50);
             box.outlineColor = locked ? Color(80, 80, 80) : Color(60, 60, 70);
         }
         if (registry.has<TextComponent>(row.suffix)) {

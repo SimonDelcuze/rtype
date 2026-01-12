@@ -273,8 +273,8 @@ void LobbyManager::setRoomConfig(std::uint32_t roomId, const RoomConfig& config)
         cfg.clampCustom();
     }
     it->second.config = cfg;
-    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) + " config set (mode=" +
-                            std::to_string(static_cast<int>(cfg.mode)) + ")");
+    Logger::instance().info("[LobbyManager] Room " + std::to_string(roomId) +
+                            " config set (mode=" + std::to_string(static_cast<int>(cfg.mode)) + ")");
 }
 
 std::string LobbyManager::generateAndSetInviteCode(std::uint32_t roomId)

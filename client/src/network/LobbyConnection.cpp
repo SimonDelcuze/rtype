@@ -142,9 +142,10 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 hdr->payloadSize >= sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1) {
                 const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
                 RoomConfigUpdate upd;
-                upd.roomId = (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
+                upd.roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                             (static_cast<std::uint32_t>(payload[1]) << 16) |
                              (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
-                upd.mode = static_cast<RoomDifficulty>(payload[4]);
+                upd.mode           = static_cast<RoomDifficulty>(payload[4]);
                 auto decodePercent = [](const std::uint8_t* p) {
                     std::uint16_t v = (static_cast<std::uint16_t>(p[0]) << 8) | static_cast<std::uint16_t>(p[1]);
                     return static_cast<float>(v) / 100.0F;
@@ -154,7 +155,8 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 upd.scoreMultiplier       = decodePercent(payload + 9);
                 upd.playerLives           = payload[11];
                 pendingRoomConfig_        = upd;
-                Logger::instance().info("[LobbyConnection] Received RoomSetConfig for room " + std::to_string(upd.roomId));
+                Logger::instance().info("[LobbyConnection] Received RoomSetConfig for room " +
+                                        std::to_string(upd.roomId));
             }
         } else if (type == MessageType::Chat) {
             auto pkt = ChatPacket::decode(buffer.data(), recvResult.size);

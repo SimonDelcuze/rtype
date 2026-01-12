@@ -97,16 +97,16 @@ namespace
         return entity;
     }
 
-    EntityId createArrowButton(Registry& registry, float x, float y, float width, float height, const std::string& label,
-                               std::function<void()> onClick)
+    EntityId createArrowButton(Registry& registry, float x, float y, float width, float height,
+                               const std::string& label, std::function<void()> onClick)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
         transform.x     = x;
         transform.y     = y;
 
-        auto box         = BoxComponent::create(width, height, Color(70, 70, 70), Color(110, 110, 110));
-        box.focusColor   = Color(100, 200, 255, 160);
+        auto box       = BoxComponent::create(width, height, Color(70, 70, 70), Color(110, 110, 110));
+        box.focusColor = Color(100, 200, 255, 160);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<ButtonComponent>(entity, ButtonComponent::create(label, onClick));
         return entity;
@@ -125,7 +125,7 @@ namespace
         }
 
         if (registry.has<BoxComponent>(entity)) {
-            auto& box = registry.get<BoxComponent>(entity);
+            auto& box          = registry.get<BoxComponent>(entity);
             box.fillColor.a    = 0;
             box.outlineColor.a = 0;
         }
@@ -262,10 +262,14 @@ namespace
     std::string difficultyName(RoomDifficulty difficulty)
     {
         switch (difficulty) {
-            case RoomDifficulty::Noob: return "Noob";
-            case RoomDifficulty::Hell: return "Hell";
-            case RoomDifficulty::Nightmare: return "Nightmare";
-            case RoomDifficulty::Custom: return "Custom";
+            case RoomDifficulty::Noob:
+                return "Noob";
+            case RoomDifficulty::Hell:
+                return "Hell";
+            case RoomDifficulty::Nightmare:
+                return "Nightmare";
+            case RoomDifficulty::Custom:
+                return "Custom";
         }
         return "Unknown";
     }
@@ -282,11 +286,11 @@ RoomWaitingMenu::RoomWaitingMenu(FontManager& fonts, TextureManager& textures, s
 
 void RoomWaitingMenu::create(Registry& registry)
 {
-    difficulty_           = RoomDifficulty::Hell;
-    enemyMultiplier_      = 1.0F;
-    playerSpeedMultiplier_= 1.0F;
-    scoreMultiplier_      = 1.0F;
-    playerLives_          = 2;
+    difficulty_            = RoomDifficulty::Hell;
+    enemyMultiplier_       = 1.0F;
+    playerSpeedMultiplier_ = 1.0F;
+    scoreMultiplier_       = 1.0F;
+    playerLives_           = 2;
 
     if (!fonts_.has("ui")) {
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
@@ -302,8 +306,8 @@ void RoomWaitingMenu::create(Registry& registry)
 
 void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
 {
-    float baseX             = 30.0F;
-    difficultyTitleEntity_  = createText(registry, baseX, 220.0F, "Game Config", 22, Color(220, 220, 220));
+    float baseX            = 30.0F;
+    difficultyTitleEntity_ = createText(registry, baseX, 220.0F, "Game Config", 22, Color(220, 220, 220));
 
     const std::array<std::pair<std::string, std::string>, 4> textureInfos{
         std::make_pair("diff_noob", "client/assets/other/noob.png"),
@@ -327,24 +331,31 @@ void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
                 if (!isHost_)
                     return;
                 switch (i) {
-                    case 0: setDifficulty(RoomDifficulty::Noob); break;
-                    case 1: setDifficulty(RoomDifficulty::Hell); break;
-                    case 2: setDifficulty(RoomDifficulty::Nightmare); break;
-                    case 3: setDifficulty(RoomDifficulty::Custom); break;
+                    case 0:
+                        setDifficulty(RoomDifficulty::Noob);
+                        break;
+                    case 1:
+                        setDifficulty(RoomDifficulty::Hell);
+                        break;
+                    case 2:
+                        setDifficulty(RoomDifficulty::Nightmare);
+                        break;
+                    case 3:
+                        setDifficulty(RoomDifficulty::Custom);
+                        break;
                 }
             },
             difficultyIcons_[i], iconScales[i], iconOffsetX[i], iconOffsetY[i]);
     }
 
-    selectedDifficultyLabel_ =
-        createText(registry, baseX, 333.0F, "Selected: Noob", 18, Color(190, 220, 255));
+    selectedDifficultyLabel_ = createText(registry, baseX, 333.0F, "Selected: Noob", 18, Color(190, 220, 255));
 
     configTitleEntity_ = createText(registry, baseX, 375.0F, "Stats", 18, Color(200, 200, 200));
 
     auto makeField = [&](const std::string& label, const std::string& value, float y) {
         ConfigRow row;
-        row.label  = createText(registry, baseX, y, label, 16, Color(200, 200, 200));
-        auto field = InputFieldComponent::create(value, 8);
+        row.label              = createText(registry, baseX, y, label, 16, Color(200, 200, 200));
+        auto field             = InputFieldComponent::create(value, 8);
         field.centerVertically = true;
         row.input              = createInputField(registry, 200.0F + baseX, y - 6.0F, 100.0F, 36.0F, field, 0);
         return row;
@@ -366,14 +377,10 @@ void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
     disableCaret(livesRow_);
 
     auto addArrows = [&](ConfigRow& row, float y, float baseXOffset) {
-        float btnW = 26.0F;
-        float btnH = 18.0F;
-        row.upBtn = createArrowButton(
-            registry, baseX + baseXOffset - 1.0F, y - 6.0F, btnW, btnH, "/\\",
-            []() {});
-        row.downBtn = createArrowButton(
-            registry, baseX + baseXOffset - 1.0F, y + 14.0F, btnW, btnH, "\\/",
-            []() {});
+        float btnW  = 26.0F;
+        float btnH  = 18.0F;
+        row.upBtn   = createArrowButton(registry, baseX + baseXOffset - 1.0F, y - 6.0F, btnW, btnH, "/\\", []() {});
+        row.downBtn = createArrowButton(registry, baseX + baseXOffset - 1.0F, y + 14.0F, btnW, btnH, "\\/", []() {});
         if (registry.has<ButtonComponent>(row.upBtn))
             registry.get<ButtonComponent>(row.upBtn).textOffsetX = -1.5F;
         if (registry.has<ButtonComponent>(row.downBtn))
@@ -409,10 +416,14 @@ void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
 
     attachArrow(enemyRow_.upBtn, [this]() { enemyMultiplier_ = std::min(enemyMultiplier_ + 0.05F, 2.0F); });
     attachArrow(enemyRow_.downBtn, [this]() { enemyMultiplier_ = std::max(enemyMultiplier_ - 0.05F, 0.5F); });
-    attachArrow(playerRow_.upBtn, [this]() { playerSpeedMultiplier_ = std::min(playerSpeedMultiplier_ + 0.05F, 2.0F); });
-    attachArrow(playerRow_.downBtn, [this]() { playerSpeedMultiplier_ = std::max(playerSpeedMultiplier_ - 0.05F, 0.5F); });
-    attachArrow(livesRow_.upBtn, [this]() { playerLives_ = static_cast<std::uint8_t>(std::min<int>(playerLives_ + 1, 10)); });
-    attachArrow(livesRow_.downBtn, [this]() { playerLives_ = static_cast<std::uint8_t>(std::max<int>(playerLives_ - 1, 1)); });
+    attachArrow(playerRow_.upBtn,
+                [this]() { playerSpeedMultiplier_ = std::min(playerSpeedMultiplier_ + 0.05F, 2.0F); });
+    attachArrow(playerRow_.downBtn,
+                [this]() { playerSpeedMultiplier_ = std::max(playerSpeedMultiplier_ - 0.05F, 0.5F); });
+    attachArrow(livesRow_.upBtn,
+                [this]() { playerLives_ = static_cast<std::uint8_t>(std::min<int>(playerLives_ + 1, 10)); });
+    attachArrow(livesRow_.downBtn,
+                [this]() { playerLives_ = static_cast<std::uint8_t>(std::max<int>(playerLives_ - 1, 1)); });
 
     setDifficulty(difficulty_);
 }
@@ -537,12 +548,12 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
         if (lobbyConnection_->hasRoomConfigUpdate()) {
             auto updOpt = lobbyConnection_->popRoomConfigUpdate();
             if (updOpt.has_value() && updOpt->roomId == roomId_) {
-                suppressSend_        = true;
-                difficulty_          = updOpt->mode;
-                enemyMultiplier_     = updOpt->enemyMultiplier;
-                playerSpeedMultiplier_= updOpt->playerSpeedMultiplier;
-                scoreMultiplier_     = updOpt->scoreMultiplier;
-                playerLives_         = updOpt->playerLives;
+                suppressSend_          = true;
+                difficulty_            = updOpt->mode;
+                enemyMultiplier_       = updOpt->enemyMultiplier;
+                playerSpeedMultiplier_ = updOpt->playerSpeedMultiplier;
+                scoreMultiplier_       = updOpt->scoreMultiplier;
+                playerLives_           = updOpt->playerLives;
                 lastSentConfig_.mode   = difficulty_;
                 lastSentConfig_.enemy  = enemyMultiplier_;
                 lastSentConfig_.player = playerSpeedMultiplier_;
@@ -739,10 +750,10 @@ void RoomWaitingMenu::buildChatUI(Registry& registry)
     registry.emplace<BoxComponent>(chatBackgroundEntity_, chatBgBox);
 
     createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
-    auto chatField        = InputFieldComponent::create("", 120);
-    chatField.placeholder = "Type message...";
+    auto chatField             = InputFieldComponent::create("", 120);
+    chatField.placeholder      = "Type message...";
     chatField.centerVertically = true;
-    chatInputField_       = createInputField(registry, 820.0F, 600.0F, 300.0F, 40.0F, chatField, 0);
+    chatInputField_            = createInputField(registry, 820.0F, 600.0F, 300.0F, 40.0F, chatField, 0);
 
     sendButtonEntity_ = createButton(registry, 1160.0F, 600.0F, 80.0F, 40.0F, "Send", Color(0, 150, 80),
                                      [this, &registry]() { onSendChatClicked(registry); });
@@ -790,8 +801,8 @@ void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
 {
     for (std::size_t i = 0; i < difficultyButtons_.size(); ++i) {
         if (registry.has<BoxComponent>(difficultyButtons_[i])) {
-            auto& box   = registry.get<BoxComponent>(difficultyButtons_[i]);
-            bool active = static_cast<int>(difficulty_) == static_cast<int>(i);
+            auto& box        = registry.get<BoxComponent>(difficultyButtons_[i]);
+            bool active      = static_cast<int>(difficulty_) == static_cast<int>(i);
             box.fillColor    = active ? Color(0, 150, 80, 40) : Color(50, 70, 90, 20);
             box.outlineColor = active ? Color(0, 180, 110, 180) : Color(80, 90, 110, 120);
         }
@@ -826,8 +837,7 @@ void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
     maybeSendRoomConfig();
 
     if (registry.has<TextComponent>(selectedDifficultyLabel_)) {
-        registry.get<TextComponent>(selectedDifficultyLabel_).content =
-            "Selected: " + difficultyName(difficulty_);
+        registry.get<TextComponent>(selectedDifficultyLabel_).content = "Selected: " + difficultyName(difficulty_);
     }
 
     setInputValue(registry, enemyRow_.input, toStringPct(enemyMultiplier_));
@@ -837,7 +847,7 @@ void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
 
     auto setRowState = [&](const ConfigRow& row, bool locked) {
         if (registry.has<BoxComponent>(row.input)) {
-            auto& box = registry.get<BoxComponent>(row.input);
+            auto& box        = registry.get<BoxComponent>(row.input);
             box.fillColor    = locked ? Color(60, 60, 60, 160) : Color(50, 50, 50);
             box.outlineColor = locked ? Color(90, 90, 90) : Color(100, 100, 100);
         }
@@ -862,13 +872,13 @@ void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
                 t.scaleY = visible ? 1.0F : 0.0F;
             }
             if (registry.has<BoxComponent>(id)) {
-                auto& b        = registry.get<BoxComponent>(id);
-                b.fillColor.a   = visible ? 255 : 0;
-                b.outlineColor.a= visible ? 255 : 0;
-                b.focusColor.a  = visible ? 200 : 0;
+                auto& b          = registry.get<BoxComponent>(id);
+                b.fillColor.a    = visible ? 255 : 0;
+                b.outlineColor.a = visible ? 255 : 0;
+                b.focusColor.a   = visible ? 200 : 0;
             }
             if (registry.has<TextComponent>(id)) {
-                auto& txt = registry.get<TextComponent>(id);
+                auto& txt   = registry.get<TextComponent>(id);
                 txt.color.a = visible ? 255 : 0;
             }
         };
@@ -919,11 +929,10 @@ void RoomWaitingMenu::maybeSendRoomConfig()
         return;
     }
 
-    bool changed = (difficulty_ != lastSentConfig_.mode) ||
-                   (std::abs(enemyMultiplier_ - lastSentConfig_.enemy) > 0.001F) ||
-                   (std::abs(playerSpeedMultiplier_ - lastSentConfig_.player) > 0.001F) ||
-                   (std::abs(scoreMultiplier_ - lastSentConfig_.score) > 0.001F) ||
-                   (playerLives_ != lastSentConfig_.lives);
+    bool changed =
+        (difficulty_ != lastSentConfig_.mode) || (std::abs(enemyMultiplier_ - lastSentConfig_.enemy) > 0.001F) ||
+        (std::abs(playerSpeedMultiplier_ - lastSentConfig_.player) > 0.001F) ||
+        (std::abs(scoreMultiplier_ - lastSentConfig_.score) > 0.001F) || (playerLives_ != lastSentConfig_.lives);
     if (!changed)
         return;
 

@@ -7,8 +7,8 @@
 #include "network/PacketHeader.hpp"
 #include "network/StatsPackets.hpp"
 #include "network/UdpSocket.hpp"
-#include "ui/RoomDifficulty.hpp"
 #include "ui/NotificationData.hpp"
+#include "ui/RoomDifficulty.hpp"
 
 #include <array>
 #include <atomic>

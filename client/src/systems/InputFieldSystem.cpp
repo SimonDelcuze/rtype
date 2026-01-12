@@ -65,8 +65,7 @@ void InputFieldSystem::update(Registry& registry, float)
             auto bounds    = text->getLocalBounds();
             float textH    = bounds.height;
             float baseline = bounds.top;
-            text->setPosition(
-                Vector2f{transform.x + padX, transform.y + (box.height - textH) * 0.5F - baseline});
+            text->setPosition(Vector2f{transform.x + padX, transform.y + (box.height - textH) * 0.5F - baseline});
         } else {
             text->setPosition(Vector2f{transform.x + padX, transform.y + input.paddingY});
         }
