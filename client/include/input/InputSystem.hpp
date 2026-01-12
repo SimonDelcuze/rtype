@@ -36,6 +36,7 @@ class InputSystem : public ISystem
     void updateChargeMeter(Registry& registry, float progress);
     void resetInputState(Registry& registry);
     void recordHistory(Registry& registry, const InputCommand& cmd, float deltaTime);
+    bool hasLocalShield(Registry& registry) const;
     static TextureManager& dummyTextures();
     static AnimationRegistry& dummyAnimations();
     void startChargeSound(Registry& registry);

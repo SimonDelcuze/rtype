@@ -4,4 +4,8 @@
 #include "graphics/TextureManager.hpp"
 #include "level/EntityTypeRegistry.hpp"
 
-void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest);
+class AnimationRegistry;
+struct AnimationLabels;
+
+void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest,
+                         const AnimationRegistry* animations = nullptr, const AnimationLabels* labels = nullptr);

@@ -288,6 +288,36 @@ void LevelInitSystem::registerBuiltinTypes()
                     }
                 }
             }
+            if (!typeRegistry_->has(25)) {
+                auto shieldEntry = manifest_->findTextureById("shield");
+                if (shieldEntry) {
+                    if (!textures_->has(shieldEntry->id)) {
+                        try {
+                            textures_->load(shieldEntry->id, "client/assets/" + shieldEntry->path);
+                        } catch (...) {
+                            Logger::instance().warn("[LevelInit] Failed to load shield texture");
+                        }
+                    }
+                    if (textures_->has(shieldEntry->id)) {
+                        auto shieldTex = textures_->get(shieldEntry->id);
+                        if (shieldTex != nullptr) {
+                            RenderTypeData shieldData{};
+                            shieldData.texture       = shieldTex;
+                            shieldData.layer         = 1;
+                            shieldData.spriteId      = "shield";
+                            shieldData.frameCount    = 1;
+                            shieldData.frameDuration = 0.20F;
+                            shieldData.columns       = 1;
+                            shieldData.frameWidth    = 106;
+                            shieldData.frameHeight   = 125;
+                            shieldData.defaultScaleX = 0.3F;
+                            shieldData.defaultScaleY = 0.3F;
+                            typeRegistry_->registerType(25, shieldData);
+                            Logger::instance().info("[LevelInit] Registered builtin shield type 25");
+                        }
+                    }
+                }
+            }
         }
     }
 }

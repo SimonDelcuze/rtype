@@ -1,5 +1,7 @@
 #include "input/InputMapper.hpp"
 
+#include "Logger.hpp"
+
 std::uint16_t InputMapper::pollFlags() const
 {
     std::uint16_t flags = 0;
@@ -15,6 +17,9 @@ std::uint16_t InputMapper::pollFlags() const
         flags |= InputMapper::FireFlag;
     if (interactPressed_)
         flags |= InputMapper::InteractFlag;
+    if (buyShieldPressed_ || buyShieldLatched_)
+        flags |= InputMapper::BuyShieldFlag;
+    buyShieldLatched_ = false;
     return flags;
 }
 
@@ -25,7 +30,9 @@ void InputMapper::handleEvent(const Event& event)
     } else if (event.type == EventType::KeyReleased) {
         setKeyState(event.key.code, false);
     } else if (event.type == EventType::LostFocus) {
-        upPressed_ = downPressed_ = leftPressed_ = rightPressed_ = firePressed_ = interactPressed_ = false;
+        upPressed_ = downPressed_ = leftPressed_ = rightPressed_ = firePressed_ = interactPressed_ = buyShieldPressed_ =
+            false;
+        buyShieldLatched_ = false;
     }
 }
 
@@ -43,6 +50,14 @@ void InputMapper::setKeyState(KeyCode key, bool pressed)
         firePressed_ = pressed;
     if (key == bindings_.interact)
         interactPressed_ = pressed;
+    if (key == bindings_.buyShield) {
+        buyShieldPressed_ = pressed;
+        if (pressed)
+            buyShieldLatched_ = true;
+        if (pressed) {
+            Logger::instance().info("[InputMapper] BuyShield key pressed");
+        }
+    }
 }
 
 void InputMapper::setBindings(const KeyBindings& bindings)

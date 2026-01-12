@@ -928,7 +928,7 @@
         },
         {
           "x": 260,
-          "y": 144,
+          "y": 143,
           "width": 259,
           "height": 144
         },
@@ -943,6 +943,25 @@
           "y": 429,
           "width": 259,
           "height": 144
+        }
+      ]
+    },
+    {
+      "id": "shield",
+      "frameTime": 0.20,
+      "loop": true,
+      "frames": [
+        {
+          "x": 211,
+          "y": 150,
+          "width": 106,
+          "height": 125
+        },
+        {
+          "x": 211,
+          "y": 150,
+          "width": 106,
+          "height": 125
         }
       ]
     }
@@ -999,6 +1018,9 @@
     },
     "boss": {
       "default": "boss"
+    },
+    "shield": {
+      "default": "shield"
     }
   }
 }

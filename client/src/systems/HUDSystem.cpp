@@ -4,6 +4,7 @@
 #include "components/ChargeMeterComponent.hpp"
 #include "components/HealthComponent.hpp"
 #include "components/OwnershipComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "graphics/GraphicsFactory.hpp"
 #include "graphics/abstraction/Common.hpp"
@@ -17,15 +18,16 @@
 
 namespace
 {
-    constexpr int kScoreDigits         = 7;
-    constexpr float kScoreRightMargin  = 16.0F;
-    constexpr float kScoreBottomMargin = 12.0F;
-    constexpr float kLivesLeftMargin   = 16.0F;
-    constexpr float kLivesBottomMargin = 12.0F;
-    constexpr float kLivesRowSpacing   = 26.0F;
-    constexpr float kLivesPipSpacing   = 40.0F;
-    constexpr float kLivesPipHeight    = 17.0F;
-    constexpr float kLivesChargeOffset = 24.0F;
+    constexpr int kScoreDigits                  = 7;
+    constexpr float kScoreRightMargin           = 16.0F;
+    constexpr float kScoreBottomMargin          = 12.0F;
+    constexpr float kLivesLeftMargin            = 16.0F;
+    constexpr float kLivesBottomMargin          = 12.0F;
+    constexpr float kLivesRowSpacing            = 26.0F;
+    constexpr float kLivesPipSpacing            = 40.0F;
+    constexpr float kLivesPipHeight             = 17.0F;
+    constexpr float kLivesChargeOffset          = 24.0F;
+    constexpr std::uint16_t kShieldRenderTypeId = 25;
 } // namespace
 
 HUDSystem::HUDSystem(Window& window, FontManager& fonts, TextureManager& textureManager, std::uint32_t localPlayerId,
@@ -84,7 +86,7 @@ void HUDSystem::drawLivesPips(float startX, float startY, int lives) const
     }
 }
 
-void HUDSystem::update(Registry& registry, float)
+void HUDSystem::update(Registry& registry, float deltaTime)
 {
     const BossComponent* boss         = nullptr;
     const HealthComponent* bossHealth = nullptr;
@@ -164,6 +166,10 @@ void HUDSystem::update(Registry& registry, float)
             }
         }
     }
+    if (state_ != nullptr && state_->shieldFeedbackTimeRemaining > 0.0F) {
+        state_->shieldFeedbackTimeRemaining =
+            std::max(0.0F, state_->shieldFeedbackTimeRemaining - std::max(0.0F, deltaTime));
+    }
     int playerScore = 0;
 
     for (EntityId id : registry.view<ScoreComponent, OwnershipComponent>()) {
@@ -173,9 +179,22 @@ void HUDSystem::update(Registry& registry, float)
             break;
         }
     }
+    bool hasShield = false;
+    for (EntityId id : registry.view<RenderTypeComponent, OwnershipComponent>()) {
+        if (!registry.isAlive(id))
+            continue;
+        const auto& renderType = registry.get<RenderTypeComponent>(id);
+        if (renderType.typeId != kShieldRenderTypeId)
+            continue;
+        const auto& owner = registry.get<OwnershipComponent>(id);
+        if (owner.ownerId == localPlayerId_) {
+            hasShield = true;
+            break;
+        }
+    }
 
     auto font = fonts_.get("score_font");
-    if (font != nullptr && playerScore >= 1000) {
+    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && playerScore >= 1000) {
         static std::shared_ptr<IText> allyText = nullptr;
         if (!allyText) {
             GraphicsFactory factory;
@@ -195,6 +214,81 @@ void HUDSystem::update(Registry& registry, float)
             allyText->setScale(Vector2f{1.0F, 1.0F});
             allyText->setRotation(0.0F);
             window_.draw(*allyText);
+        }
+    }
+
+    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && playerScore >= 500 && !hasShield) {
+        static std::shared_ptr<IText> shieldText = nullptr;
+        if (!shieldText) {
+            GraphicsFactory factory;
+            shieldText = factory.createText();
+        }
+        if (shieldText) {
+            shieldText->setFont(*font);
+            shieldText->setCharacterSize(18);
+            shieldText->setString("Press F to buy Shield (500 pts)");
+            shieldText->setFillColor(Color{200, 255, 200});
+            const auto screenSize  = window_.getSize();
+            FloatRect shieldBounds = shieldText->getLocalBounds();
+            shieldText->setOrigin(
+                Vector2f{shieldBounds.left + shieldBounds.width / 2.0F, shieldBounds.top + shieldBounds.height / 2.0F});
+            float shieldY = bossActive ? 100.0F : 76.0F;
+            shieldText->setPosition(Vector2f{static_cast<float>(screenSize.x) / 2.0F, shieldY});
+            shieldText->setScale(Vector2f{1.0F, 1.0F});
+            shieldText->setRotation(0.0F);
+            window_.draw(*shieldText);
+        }
+    }
+    if (font != nullptr && hasShield) {
+        static std::shared_ptr<IText> shieldActiveText = nullptr;
+        if (!shieldActiveText) {
+            GraphicsFactory factory;
+            shieldActiveText = factory.createText();
+        }
+        if (shieldActiveText) {
+            shieldActiveText->setFont(*font);
+            shieldActiveText->setCharacterSize(18);
+            shieldActiveText->setString("Shield active");
+            shieldActiveText->setFillColor(Color{200, 220, 255});
+            const auto screenSize  = window_.getSize();
+            FloatRect shieldBounds = shieldActiveText->getLocalBounds();
+            float shieldY          = bossActive ? 100.0F : 76.0F;
+            shieldActiveText->setOrigin(
+                Vector2f{shieldBounds.left + shieldBounds.width / 2.0F, shieldBounds.top + shieldBounds.height / 2.0F});
+            shieldActiveText->setPosition(Vector2f{static_cast<float>(screenSize.x) / 2.0F, shieldY});
+            shieldActiveText->setScale(Vector2f{1.0F, 1.0F});
+            shieldActiveText->setRotation(0.0F);
+            window_.draw(*shieldActiveText);
+        }
+    }
+    if (font != nullptr && state_ != nullptr && state_->shieldFeedbackTimeRemaining > 0.0F) {
+        std::string feedbackText;
+        if (state_->shieldFeedback == LevelState::ShieldFeedback::AlreadyActive) {
+            feedbackText = "Shield already active";
+        } else if (state_->shieldFeedback == LevelState::ShieldFeedback::PurchaseRequested) {
+            feedbackText = "Shield purchase requested";
+        }
+        if (!feedbackText.empty()) {
+            static std::shared_ptr<IText> shieldFeedbackText = nullptr;
+            if (!shieldFeedbackText) {
+                GraphicsFactory factory;
+                shieldFeedbackText = factory.createText();
+            }
+            if (shieldFeedbackText) {
+                shieldFeedbackText->setFont(*font);
+                shieldFeedbackText->setCharacterSize(16);
+                shieldFeedbackText->setString(feedbackText);
+                shieldFeedbackText->setFillColor(Color{255, 230, 160});
+                const auto screenSize = window_.getSize();
+                FloatRect bounds      = shieldFeedbackText->getLocalBounds();
+                float feedbackY       = bossActive ? 124.0F : 100.0F;
+                shieldFeedbackText->setOrigin(
+                    Vector2f{bounds.left + bounds.width / 2.0F, bounds.top + bounds.height / 2.0F});
+                shieldFeedbackText->setPosition(Vector2f{static_cast<float>(screenSize.x) / 2.0F, feedbackY});
+                shieldFeedbackText->setScale(Vector2f{1.0F, 1.0F});
+                shieldFeedbackText->setRotation(0.0F);
+                window_.draw(*shieldFeedbackText);
+            }
         }
     }
 

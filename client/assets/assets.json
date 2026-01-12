@@ -91,6 +91,11 @@
       "type": "ui"
     },
     {
+      "id": "shield",
+      "path": "sprites/shield.png",
+      "type": "sprite"
+    },
+    {
       "id": "boss",
       "path": "sprites/boss.png",
       "type": "sprite"

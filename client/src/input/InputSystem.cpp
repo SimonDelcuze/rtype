@@ -11,6 +11,7 @@
 #include "components/LayerComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/OwnershipComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
@@ -23,8 +24,10 @@
 
 namespace
 {
-    constexpr float kMoveSpeed = 250.0F;
-}
+    constexpr float kMoveSpeed                  = 250.0F;
+    constexpr std::uint16_t kShieldRenderTypeId = 25;
+    constexpr float kShieldFeedbackDuration     = 1.5F;
+} // namespace
 
 InputSystem::InputSystem(std::uint32_t localPlayerId, InputBuffer& buffer, InputMapper& mapper,
                          std::uint32_t& sequenceCounter, float& posX, float& posY, TextureManager& textures,
@@ -55,7 +58,7 @@ void InputSystem::update(Registry& registry, float deltaTime)
     auto flags                                       = mapper_->pollFlags();
     constexpr std::uint16_t kMovementAndInteractMask = InputMapper::UpFlag | InputMapper::DownFlag |
                                                        InputMapper::LeftFlag | InputMapper::RightFlag |
-                                                       InputMapper::InteractFlag;
+                                                       InputMapper::InteractFlag | InputMapper::BuyShieldFlag;
     std::uint16_t moves  = static_cast<std::uint16_t>(flags & kMovementAndInteractMask);
     bool changedMovement = moves != lastSentMoveFlags_;
 
@@ -191,6 +194,17 @@ void InputSystem::update(Registry& registry, float deltaTime)
     auto now         = std::chrono::steady_clock::now().time_since_epoch();
     cmd.captureTimestampNs =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+    if ((cmd.flags & InputMapper::BuyShieldFlag) != 0) {
+        if (levelState_ != nullptr && levelState_->safeZoneActive) {
+            Logger::instance().info("[InputSystem] Sending BuyShield flag in input command");
+            levelState_->shieldFeedback = hasLocalShield(registry) ? LevelState::ShieldFeedback::AlreadyActive
+                                                                   : LevelState::ShieldFeedback::PurchaseRequested;
+            levelState_->shieldFeedbackTimeRemaining = kShieldFeedbackDuration;
+        } else {
+            // Clear the flag if not in safe zone
+            cmd.flags &= ~InputMapper::BuyShieldFlag;
+        }
+    }
     buffer_->push(cmd);
     recordHistory(registry, cmd, deltaTime);
     lastSentMoveFlags_ = moves;
@@ -396,6 +410,22 @@ void InputSystem::resetInputState(Registry& registry)
     fireElapsed_       = 0.0F;
     repeatElapsed_     = 0.0F;
     lastSentMoveFlags_ = 0;
+}
+
+bool InputSystem::hasLocalShield(Registry& registry) const
+{
+    for (EntityId entity : registry.view<RenderTypeComponent, OwnershipComponent>()) {
+        if (!registry.isAlive(entity))
+            continue;
+        const auto& renderType = registry.get<RenderTypeComponent>(entity);
+        if (renderType.typeId != kShieldRenderTypeId)
+            continue;
+        const auto& owner = registry.get<OwnershipComponent>(entity);
+        if (owner.ownerId == localPlayerId_) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool InputSystem::ensurePlayerPosition(Registry& registry)
