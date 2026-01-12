@@ -201,6 +201,9 @@ void LobbyMenu::handleEvent(Registry& registry, const Event& event)
 void LobbyMenu::render(Registry& registry, Window& window)
 {
     if (state_ == State::ShowingCreateMenu) {
+        if (!createRoomMenu_) {
+            createRoomMenu_ = std::make_unique<CreateRoomMenu>(fonts_, textures_);
+        }
         if (createRoomMenu_) {
             if (!createMenuInitialized_) {
                 for (EntityId id : roomButtonEntities_) {
@@ -285,6 +288,9 @@ void LobbyMenu::render(Registry& registry, Window& window)
     }
 
     if (state_ == State::ShowingPasswordInput) {
+        if (!passwordInputMenu_) {
+            passwordInputMenu_ = std::make_unique<PasswordInputMenu>(fonts_, textures_);
+        }
         if (passwordInputMenu_) {
             if (!passwordMenuInitialized_) {
                 for (EntityId id : roomButtonEntities_) {
@@ -435,6 +441,12 @@ void LobbyMenu::update(Registry& registry, float dt)
     }
 
     if (state_ == State::InRoom) {
+        if (createRoomMenu_) {
+            createRoomMenu_->destroy(registry);
+            createRoomMenu_.reset();
+            createMenuInitialized_ = false;
+        }
+
         if (!roomWaitingMenu_) {
             roomWaitingMenu_ = std::make_unique<RoomWaitingMenu>(fonts_, textures_, result_.roomId, currentRoomName_,
                                                                  result_.gamePort, isRoomHost_, getConnection());
