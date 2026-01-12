@@ -761,6 +761,7 @@ void LobbyServer::handleLobbyLeaveRoom(const PacketHeader& hdr, const IpEndpoint
 
     if (roomDeleted) {
         Logger::instance().info("[LobbyServer] Room " + std::to_string(roomId) + " was deleted (owner left)");
+        instanceManager_.destroyInstance(roomId);
     }
 }
 
