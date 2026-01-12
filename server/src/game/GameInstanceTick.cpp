@@ -94,10 +94,8 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                 logInfo("[Game] Level finished! Starting to broadcast GameEnd packets.");
             }
 
-            // Send redundantly every 10 ticks to ensure delivery over UDP
             if (currentTick_ % 10 == 0) {
-                // TODO: Calculate score properly for victory
-                auto pkt   = GameEndPacket::create(true, 1000); // Placeholder score
+                auto pkt   = GameEndPacket::create(true, 1000);
                 auto bytes = pkt;
                 for (const auto& c : clients_) {
                     sendThread_.sendTo(bytes, c);

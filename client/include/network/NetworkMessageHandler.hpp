@@ -78,7 +78,6 @@ class NetworkMessageHandler
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
     std::chrono::steady_clock::time_point lastPacketTime_;
 
-    // Game End
     ThreadSafeQueue<GameEndPacket> gameEndQueue_;
     void handleGameEnd(const std::vector<std::uint8_t>& data);
 
