@@ -10,6 +10,7 @@
 #include "network/NetworkReceiver.hpp"
 #include "network/NetworkSender.hpp"
 #include "network/PacketHeader.hpp"
+#include "network/UdpSocket.hpp"
 #include "ui/NotificationData.hpp"
 
 #include <atomic>

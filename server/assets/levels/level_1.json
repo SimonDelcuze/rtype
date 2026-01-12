@@ -542,86 +542,13 @@
             "spawnX": 1220.0,
             "startY": 140.0,
             "deltaY": 120.0,
-            "count": 3
-          }
-        },
-        {
-          "type": "spawn_wave",
-          "id": "follower_intro",
-          "trigger": {
-            "type": "time",
-            "time": 3.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "follower",
-            "patternId": "p_follower",
-            "spawnX": 1180.0,
-            "startY": 200.0,
-            "deltaY": 160.0,
-            "count": 2
+            "count": 1
           }
         }
       ],
       "exit": {
         "type": "time",
-        "time": 8.0
-      }
-    },
-    {
-      "id": "safe_zone",
-      "scroll": {
-        "mode": "stopped",
-        "speedX": 0.0
-      },
-      "events": [
-        {
-          "type": "set_player_bounds",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 0.0
-          },
-          "bounds": {
-            "minX": 0.0,
-            "maxX": 1246.0,
-            "minY": 0.0,
-            "maxY": 702.0
-          }
-        }
-      ],
-      "exit": {
-        "type": "players_ready"
-      }
-    },
-    {
-      "id": "segment_2",
-      "scroll": {
-        "mode": "constant",
-        "speedX": -60.0
-      },
-      "events": [
-        {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 1.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_zigzag",
-            "spawnX": 1220.0,
-            "startY": 180.0,
-            "deltaY": 120.0,
-            "count": 3
-          }
-        }
-      ],
-      "exit": {
-        "type": "time",
-        "time": 10.0
+        "time": 20.0
       }
     }
   ],
