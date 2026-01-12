@@ -326,7 +326,7 @@ void LoginMenu::showLoggingInText(Registry& registry)
     registry.emplace<TextComponent>(entity, text);
     registry.emplace<LayerComponent>(entity, LayerComponent::create(RenderLayer::UI));
 
-    loggingInText_   = entity;
+    loggingInText_    = entity;
     loggingStartTime_ = std::chrono::steady_clock::now();
     dotCount_         = 1;
 }
