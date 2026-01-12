@@ -38,6 +38,7 @@ class LevelDirector
     float segmentTime() const;
     float segmentDistance() const;
     bool finished() const;
+    bool isSafeZoneActive() const;
     const std::optional<CameraBounds>& playerBounds() const;
 
   private:

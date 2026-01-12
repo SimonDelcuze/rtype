@@ -5,10 +5,13 @@
 #include "components/ButtonComponent.hpp"
 #include "components/FocusableComponent.hpp"
 #include "components/InputFieldComponent.hpp"
+#include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
 
+#include <chrono>
+#include <cmath>
 #include <utility>
 
 namespace
@@ -164,7 +167,24 @@ bool LoginMenu::isDone() const
 
 void LoginMenu::handleEvent(Registry& /* registry */, const Event& /* event */) {}
 
-void LoginMenu::render(Registry& /* registry */, Window& /* window */) {}
+void LoginMenu::render(Registry& registry, Window& /* window */)
+{
+    if (isLoading_) {
+        if (loggingInText_ == 0 || !registry.isAlive(loggingInText_)) {
+            showLoggingInText(registry);
+        }
+
+        constexpr float dotInterval = 0.33F;
+
+        auto now      = std::chrono::steady_clock::now();
+        float elapsed = std::chrono::duration<float>(now - loggingStartTime_).count();
+
+        float cycleTime = dotInterval * 3.0F;
+        float phase     = std::fmod(elapsed, cycleTime);
+        dotCount_       = (static_cast<int>(phase / dotInterval) % 3) + 1;
+        updateLoggingInText(registry);
+    }
+}
 
 void LoginMenu::update(Registry& registry, float dt)
 {
@@ -286,4 +306,40 @@ void LoginMenu::reset()
     token_.clear();
     heartbeatTimer_      = 0.0F;
     consecutiveFailures_ = 0;
+}
+
+void LoginMenu::showLoggingInText(Registry& registry)
+{
+    if (loggingInText_ != 0 && registry.isAlive(loggingInText_)) {
+        return;
+    }
+
+    EntityId entity = registry.createEntity();
+    auto& transform = registry.emplace<TransformComponent>(entity);
+    transform.x     = 550.0F;
+    transform.y     = 540.0F;
+
+    auto text          = TextComponent::create("ui", 32, Color(180, 180, 180, 200));
+    text.content       = "Logging in.";
+    text.centered      = true;
+    text.centerOffsetY = 10.0F;
+    registry.emplace<TextComponent>(entity, text);
+    registry.emplace<LayerComponent>(entity, LayerComponent::create(RenderLayer::UI));
+
+    loggingInText_    = entity;
+    loggingStartTime_ = std::chrono::steady_clock::now();
+    dotCount_         = 1;
+}
+
+void LoginMenu::updateLoggingInText(Registry& registry)
+{
+    if (loggingInText_ == 0 || !registry.isAlive(loggingInText_)) {
+        return;
+    }
+    if (!registry.has<TextComponent>(loggingInText_)) {
+        return;
+    }
+
+    std::string dots(static_cast<std::size_t>(dotCount_), '.');
+    registry.get<TextComponent>(loggingInText_).content = "Logging in" + dots;
 }

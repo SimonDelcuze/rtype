@@ -251,36 +251,62 @@ void CreateRoomMenu::destroy(Registry& registry)
 {
     if (registry.isAlive(backgroundEntity_))
         registry.destroyEntity(backgroundEntity_);
+    backgroundEntity_ = 0;
+
     if (registry.isAlive(logoEntity_))
         registry.destroyEntity(logoEntity_);
+    logoEntity_ = 0;
+
     if (registry.isAlive(titleEntity_))
         registry.destroyEntity(titleEntity_);
+    titleEntity_ = 0;
+
     if (registry.isAlive(difficultyTitleEntity_))
         registry.destroyEntity(difficultyTitleEntity_);
+    difficultyTitleEntity_ = 0;
+
     if (registry.isAlive(configTitleEntity_))
         registry.destroyEntity(configTitleEntity_);
-    for (auto id : difficultyButtons_) {
+    configTitleEntity_ = 0;
+
+    for (auto& id : difficultyButtons_) {
         if (registry.isAlive(id))
             registry.destroyEntity(id);
+        id = 0;
     }
+
     destroyConfigRow(registry, enemyRow_);
     destroyConfigRow(registry, playerRow_);
     destroyConfigRow(registry, scoreRow_);
     destroyConfigRow(registry, livesRow_);
+
     if (registry.isAlive(roomNameLabelEntity_))
         registry.destroyEntity(roomNameLabelEntity_);
+    roomNameLabelEntity_ = 0;
+
     if (registry.isAlive(roomNameInputEntity_))
         registry.destroyEntity(roomNameInputEntity_);
+    roomNameInputEntity_ = 0;
+
     if (registry.isAlive(passwordLabelEntity_))
         registry.destroyEntity(passwordLabelEntity_);
+    passwordLabelEntity_ = 0;
+
     if (registry.isAlive(passwordInputEntity_))
         registry.destroyEntity(passwordInputEntity_);
+    passwordInputEntity_ = 0;
+
     if (registry.isAlive(passwordToggleEntity_))
         registry.destroyEntity(passwordToggleEntity_);
+    passwordToggleEntity_ = 0;
+
     if (registry.isAlive(createButtonEntity_))
         registry.destroyEntity(createButtonEntity_);
+    createButtonEntity_ = 0;
+
     if (registry.isAlive(cancelButtonEntity_))
         registry.destroyEntity(cancelButtonEntity_);
+    cancelButtonEntity_ = 0;
 }
 
 bool CreateRoomMenu::isDone() const

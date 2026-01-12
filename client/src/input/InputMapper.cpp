@@ -13,6 +13,8 @@ std::uint16_t InputMapper::pollFlags() const
         flags |= InputMapper::RightFlag;
     if (firePressed_)
         flags |= InputMapper::FireFlag;
+    if (interactPressed_)
+        flags |= InputMapper::InteractFlag;
     return flags;
 }
 
@@ -23,7 +25,7 @@ void InputMapper::handleEvent(const Event& event)
     } else if (event.type == EventType::KeyReleased) {
         setKeyState(event.key.code, false);
     } else if (event.type == EventType::LostFocus) {
-        upPressed_ = downPressed_ = leftPressed_ = rightPressed_ = firePressed_ = false;
+        upPressed_ = downPressed_ = leftPressed_ = rightPressed_ = firePressed_ = interactPressed_ = false;
     }
 }
 
@@ -39,6 +41,8 @@ void InputMapper::setKeyState(KeyCode key, bool pressed)
         rightPressed_ = pressed;
     if (key == bindings_.fire)
         firePressed_ = pressed;
+    if (key == bindings_.interact)
+        interactPressed_ = pressed;
 }
 
 void InputMapper::setBindings(const KeyBindings& bindings)

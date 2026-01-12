@@ -12,14 +12,15 @@
 
 namespace
 {
-    EntityId createSemiTransparentBackground(Registry& registry)
+    EntityId createBackground(Registry& registry, bool victory)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
         transform.x     = 0.0F;
         transform.y     = 0.0F;
 
-        auto box = BoxComponent::create(1280.0F, 720.0F, Color{0, 0, 0, 180}, Color{0, 0, 0, 180});
+        Color color = victory ? Color{0, 0, 0, 255} : Color{0, 0, 0, 180};
+        auto box    = BoxComponent::create(1280.0F, 720.0F, color, color);
         registry.emplace<BoxComponent>(entity, box);
         registry.emplace<LayerComponent>(entity, LayerComponent::create(100));
         return entity;
@@ -70,9 +71,9 @@ void GameOverMenu::create(Registry& registry)
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
     }
 
-    backgroundRect_ = createSemiTransparentBackground(registry);
+    backgroundRect_ = createBackground(registry, victory_);
 
-    std::string titleStr = victory_ ? "VICTORY!" : "GAME OVER";
+    std::string titleStr = victory_ ? "WIN" : "GAME OVER";
     Color titleColor     = victory_ ? Color::Green : Color::Red;
     titleText_           = createCenteredText(registry, 150.0F, titleStr, 72, titleColor, 101);
 

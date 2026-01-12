@@ -35,6 +35,7 @@ class LevelInitSystem : public ISystem
     void logMissingAnimation(const std::string& spriteId, const std::string& animId) const;
     void applyBackground(Registry& registry, const LevelInitData& data);
     void createHUDEntities(Registry& registry);
+    void registerBuiltinTypes();
 
     ThreadSafeQueue<LevelInitData>* queue_;
     EntityTypeRegistry* typeRegistry_;

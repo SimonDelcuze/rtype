@@ -3,6 +3,7 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/GameEndPacket.hpp"
 #include "network/LevelEventData.hpp"
 #include "network/LevelInitData.hpp"
 #include "network/PacketHeader.hpp"
@@ -76,4 +77,13 @@ class NetworkMessageHandler
     ThreadSafeQueue<NotificationData>* broadcastQueue_;
     std::map<std::uint32_t, ChunkAccumulator> chunkAccumulators_;
     std::chrono::steady_clock::time_point lastPacketTime_;
+
+    ThreadSafeQueue<GameEndPacket> gameEndQueue_;
+    void handleGameEnd(const std::vector<std::uint8_t>& data);
+
+  public:
+    ThreadSafeQueue<GameEndPacket>& getGameEndQueue()
+    {
+        return gameEndQueue_;
+    }
 };

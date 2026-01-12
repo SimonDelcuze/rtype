@@ -52,8 +52,11 @@ void InputSystem::update(Registry& registry, float deltaTime)
     fireElapsed_ += deltaTime;
     repeatElapsed_ += deltaTime;
 
-    auto flags           = mapper_->pollFlags();
-    std::uint16_t moves  = static_cast<std::uint16_t>(flags & ~InputMapper::FireFlag);
+    auto flags                                       = mapper_->pollFlags();
+    constexpr std::uint16_t kMovementAndInteractMask = InputMapper::UpFlag | InputMapper::DownFlag |
+                                                       InputMapper::LeftFlag | InputMapper::RightFlag |
+                                                       InputMapper::InteractFlag;
+    std::uint16_t moves  = static_cast<std::uint16_t>(flags & kMovementAndInteractMask);
     bool changedMovement = moves != lastSentMoveFlags_;
 
     bool canFire = true;

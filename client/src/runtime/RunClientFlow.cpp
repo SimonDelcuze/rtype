@@ -13,6 +13,7 @@
 #include "input/InputMapper.hpp"
 #include "level/EntityTypeSetup.hpp"
 #include "level/LevelState.hpp"
+#include "network/GameEndPacket.hpp"
 #include "network/LobbyConnection.hpp"
 #include "network/PacketHeader.hpp"
 #include "scheduler/ClientScheduler.hpp"
@@ -26,6 +27,7 @@
 #include "ui/ModeSelectMenu.hpp"
 
 #include <chrono>
+#include <iostream>
 
 std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
@@ -217,6 +219,12 @@ namespace
                     sessionRunning = false;
                     net.disconnectEvents.push("Server timeout");
                 }
+
+                GameEndPacket gameEndPkt;
+                while (net.handler->getGameEndQueue().tryPop(gameEndPkt)) {
+                    Logger::instance().info("[RunClientFlow] Popped GameEndPacket from queue. Emitting event.");
+                    eventBus.emit(GameOverEvent{gameEndPkt.victory, gameEndPkt.finalScore, 1});
+                }
             }
 
             std::string disconnectMsg;
@@ -360,6 +368,9 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
     GameState gameState;
 
     eventBus.subscribe<GameOverEvent>([&](const GameOverEvent& event) {
+        std::cout << ">>> CLIENT RECEIVED GAMEOVER EVENT. Victory: " << event.victory << std::endl;
+        Logger::instance().info("[RunClientFlow] GameOverEvent received. Victory: " +
+                                (event.victory ? std::string("true") : std::string("false")));
         gameState.gameOverTriggered = true;
         gameState.finalScore        = event.finalScore;
         gameState.victory           = event.victory;

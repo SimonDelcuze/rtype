@@ -55,7 +55,7 @@ class RoomWaitingMenu : public IMenu
     }
 
   private:
-    void onStartGameClicked();
+    void onStartGameClicked(Registry& registry);
     void onLeaveRoomClicked();
     void onKickPlayerClicked(std::uint32_t playerId);
     void updatePlayerList(Registry& registry);
@@ -137,4 +137,6 @@ class RoomWaitingMenu : public IMenu
 
     int consecutiveFailures_{0};
     bool isRefreshingPlayers_{false};
+    EntityId startingGameMessageEntity_{0};
+    bool isStarting_{false};
 };

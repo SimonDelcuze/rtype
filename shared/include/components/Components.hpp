@@ -1,5 +1,6 @@
 #pragma once
 
+#include "components/AllyComponent.hpp"
 #include "components/BoundaryComponent.hpp"
 #include "components/ColliderComponent.hpp"
 #include "components/EnemyShootingComponent.hpp"
