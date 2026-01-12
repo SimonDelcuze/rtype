@@ -52,8 +52,7 @@ void InputSystem::update(Registry& registry, float deltaTime)
     fireElapsed_ += deltaTime;
     repeatElapsed_ += deltaTime;
 
-    auto flags = mapper_->pollFlags();
-    // Include movement flags AND InteractFlag, exclude FireFlag (handled separately)
+    auto flags                                       = mapper_->pollFlags();
     constexpr std::uint16_t kMovementAndInteractMask = InputMapper::UpFlag | InputMapper::DownFlag |
                                                        InputMapper::LeftFlag | InputMapper::RightFlag |
                                                        InputMapper::InteractFlag;

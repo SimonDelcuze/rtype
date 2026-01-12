@@ -135,6 +135,16 @@ void HUDSystem::update(Registry& registry, float)
             }
         }
     }
+
+    int playerScore = -1;
+    for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
+        const auto& tag = registry.get<TagComponent>(id);
+        if (tag.hasTag(EntityTag::Player)) {
+            playerScore = registry.get<ScoreComponent>(id).value;
+            break;
+        }
+    }
+
     if (state_ != nullptr && state_->safeZoneActive) {
         auto font = fonts_.get("score_font");
         if (font != nullptr) {
@@ -157,14 +167,29 @@ void HUDSystem::update(Registry& registry, float)
                 safeZoneText->setRotation(0.0F);
                 window_.draw(*safeZoneText);
             }
-        }
-    }
-    int playerScore = -1;
-    for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
-        const auto& tag = registry.get<TagComponent>(id);
-        if (tag.hasTag(EntityTag::Player)) {
-            playerScore = registry.get<ScoreComponent>(id).value;
-            break;
+
+            if (playerScore >= 1000) {
+                static std::shared_ptr<IText> allyText = nullptr;
+                if (!allyText) {
+                    GraphicsFactory factory;
+                    allyText = factory.createText();
+                }
+                if (allyText) {
+                    allyText->setFont(*font);
+                    allyText->setCharacterSize(18);
+                    allyText->setString("Press E to buy Ally (1000 pts)");
+                    allyText->setFillColor(Color{200, 255, 200});
+                    const auto screenSize = window_.getSize();
+                    FloatRect allyBounds  = allyText->getLocalBounds();
+                    allyText->setOrigin(
+                        Vector2f{allyBounds.left + allyBounds.width / 2.0F, allyBounds.top + allyBounds.height / 2.0F});
+                    float allyY = bossActive ? 76.0F : 52.0F;
+                    allyText->setPosition(Vector2f{static_cast<float>(screenSize.x) / 2.0F, allyY});
+                    allyText->setScale(Vector2f{1.0F, 1.0F});
+                    allyText->setRotation(0.0F);
+                    window_.draw(*allyText);
+                }
+            }
         }
     }
 

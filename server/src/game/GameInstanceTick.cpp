@@ -1,8 +1,10 @@
 #include "Logger.hpp"
+#include "components/AllyComponent.hpp"
 #include "core/EntityTypeResolver.hpp"
 #include "game/GameInstance.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
+#include "network/InputPacket.hpp"
 #include "network/PacketHeader.hpp"
 #include "simulation/GameEvent.hpp"
 #include "simulation/PlayerCommand.hpp"
@@ -86,9 +88,15 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
         sendLevelEvents(events);
         sendSegmentState();
         playerBoundsSys_.update(registry_, levelDirector_->playerBounds());
+
+        if (levelDirector_->isSafeZoneActive()) {
+            processAllyPurchase(commands);
+        }
     } else {
         playerBoundsSys_.update(registry_, std::nullopt);
     }
+
+    allySys_.update(registry_, deltaTime);
 
     enemyShootingSys_.update(registry_, deltaTime);
     walkerShotSys_.update(registry_, deltaTime);
@@ -257,4 +265,83 @@ std::vector<PlayerCommand> GameInstance::convertInputsToCommands(const std::vect
     }
 
     return commands;
+}
+
+void GameInstance::processAllyPurchase(const std::vector<PlayerCommand>& commands)
+{
+    constexpr std::uint16_t kAllyRenderTypeId = 24;
+
+    for (const auto& cmd : commands) {
+        if ((cmd.inputFlags & static_cast<std::uint16_t>(InputFlag::Interact)) == 0) {
+            continue;
+        }
+
+        EntityId playerEntity = static_cast<EntityId>(cmd.playerId);
+        if (!registry_.isAlive(playerEntity)) {
+            Logger::instance().info("[Ally] Player entity not alive: " + std::to_string(playerEntity));
+            continue;
+        }
+
+        if (!registry_.has<OwnershipComponent>(playerEntity)) {
+            Logger::instance().info("[Ally] Player has no OwnershipComponent");
+            continue;
+        }
+        std::uint32_t ownerId = registry_.get<OwnershipComponent>(playerEntity).ownerId;
+
+        Logger::instance().info("[Ally] Interact flag detected for entity " + std::to_string(playerEntity) +
+                                " ownerId=" + std::to_string(ownerId));
+
+        if (!registry_.has<ScoreComponent>(playerEntity)) {
+            Logger::instance().info("[Ally] Player has no ScoreComponent");
+            continue;
+        }
+        auto& score = registry_.get<ScoreComponent>(playerEntity);
+        Logger::instance().info("[Ally] Player score: " + std::to_string(score.value));
+        if (score.value < AllyComponent::kAllyCost) {
+            Logger::instance().info("[Ally] Not enough score");
+            continue;
+        }
+
+        bool hasAlly = false;
+        for (EntityId allyId : registry_.view<AllyComponent>()) {
+            if (!registry_.isAlive(allyId))
+                continue;
+            const auto& ally = registry_.get<AllyComponent>(allyId);
+            if (ally.ownerId == ownerId) {
+                hasAlly = true;
+                break;
+            }
+        }
+        if (hasAlly) {
+            continue;
+        }
+
+        score.subtract(AllyComponent::kAllyCost);
+
+        const auto& playerTransform = registry_.get<TransformComponent>(playerEntity);
+
+        EntityId allyEntity = registry_.createEntity();
+
+        auto& at = registry_.emplace<TransformComponent>(allyEntity);
+        at.x     = playerTransform.x;
+        at.y     = playerTransform.y + 30.0F;
+
+        registry_.emplace<VelocityComponent>(allyEntity, VelocityComponent::create(0.0F, 0.0F));
+        registry_.emplace<AllyComponent>(allyEntity, AllyComponent::create(ownerId));
+        registry_.emplace<TagComponent>(allyEntity, TagComponent::create(EntityTag::None));
+        registry_.emplace<RenderTypeComponent>(allyEntity, RenderTypeComponent::create(kAllyRenderTypeId));
+        registry_.emplace<OwnershipComponent>(allyEntity, OwnershipComponent::create(ownerId, 0));
+
+        EntitySpawnPacket spawnPkt{};
+        spawnPkt.entityId   = allyEntity;
+        spawnPkt.ownerId    = ownerId;
+        spawnPkt.entityType = static_cast<std::uint8_t>(kAllyRenderTypeId);
+        spawnPkt.posX       = at.x;
+        spawnPkt.posY       = at.y;
+        sendThread_.broadcast(spawnPkt);
+
+        Logger::instance().info("[Ally] Spawned ally entity " + std::to_string(allyEntity) +
+                                " for ownerId=" + std::to_string(ownerId) + " at (" + std::to_string(at.x) + ", " +
+                                std::to_string(at.y) + ")");
+    }
 }

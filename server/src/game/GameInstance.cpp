@@ -1,6 +1,7 @@
 #include "game/GameInstance.hpp"
 
 #include "Logger.hpp"
+#include "components/AllyComponent.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/RespawnTimerComponent.hpp"
@@ -579,6 +580,14 @@ void GameInstance::spawnPlayerDeathFx(float x, float y)
     lifetime.damage   = 0;
     lifetime.lifetime = kPlayerDeathFxLifetime;
     registry_.emplace<MissileComponent>(fx, lifetime);
+
+    EntitySpawnPacket spawnPkt{};
+    spawnPkt.entityId   = fx;
+    spawnPkt.ownerId    = 0;
+    spawnPkt.entityType = static_cast<std::uint8_t>(kPlayerDeathFxType);
+    spawnPkt.posX       = x;
+    spawnPkt.posY       = y;
+    sendThread_.broadcast(spawnPkt);
 }
 
 void GameInstance::handleDeathAndRespawn()
@@ -617,6 +626,28 @@ void GameInstance::handleDeathAndRespawn()
                             auto& v = registry_.get<VelocityComponent>(id);
                             v.vx    = 0.0F;
                             v.vy    = 0.0F;
+                        }
+
+                        if (isPlayer && registry_.has<OwnershipComponent>(id)) {
+                            std::uint32_t playerId = registry_.get<OwnershipComponent>(id).ownerId;
+                            for (EntityId allyId : registry_.view<AllyComponent>()) {
+                                if (!registry_.isAlive(allyId))
+                                    continue;
+                                const auto& ally = registry_.get<AllyComponent>(allyId);
+                                if (ally.ownerId == playerId) {
+                                    if (registry_.has<TransformComponent>(allyId)) {
+                                        const auto& allyT = registry_.get<TransformComponent>(allyId);
+                                        deathFxToSpawn.emplace_back(allyT.x, allyT.y);
+                                    }
+                                    EntityDestroyedPacket pkt{};
+                                    pkt.entityId = allyId;
+                                    sendThread_.broadcast(pkt);
+                                    registry_.destroyEntity(allyId);
+                                    Logger::instance().info("[Ally] Destroyed ally for player " +
+                                                            std::to_string(playerId) + " due to death");
+                                    break;
+                                }
+                            }
                         }
                     }
                     continue;

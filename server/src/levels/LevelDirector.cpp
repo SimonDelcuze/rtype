@@ -122,6 +122,11 @@ bool LevelDirector::finished() const
     return finished_;
 }
 
+bool LevelDirector::isSafeZoneActive() const
+{
+    return activeScroll_.mode == ScrollMode::Stopped;
+}
+
 const std::optional<CameraBounds>& LevelDirector::playerBounds() const
 {
     return activePlayerBounds_;
