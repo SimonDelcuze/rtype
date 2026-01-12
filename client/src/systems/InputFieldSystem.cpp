@@ -27,6 +27,10 @@ void InputFieldSystem::update(Registry& registry, float)
         if (font == nullptr)
             continue;
 
+        if (!input.editable) {
+            input.focused = false;
+        }
+
         std::string displayText = input.value;
 
         if (input.passwordField && !input.value.empty()) {
@@ -45,7 +49,7 @@ void InputFieldSystem::update(Registry& registry, float)
         text->setFillColor(Color::White);
 
         std::string fullText = displayText;
-        float maxWidth       = box.width - 20.0F;
+        float maxWidth       = box.width - 2.0F * input.paddingX;
 
         text->setString(fullText);
         if (text->getGlobalBounds().width > maxWidth) {
@@ -56,7 +60,15 @@ void InputFieldSystem::update(Registry& registry, float)
             }
         }
 
-        text->setPosition(Vector2f{transform.x + 10.0F, transform.y + 13.0F});
+        float padX = input.paddingX;
+        if (input.centerVertically) {
+            auto bounds    = text->getLocalBounds();
+            float textH    = bounds.height;
+            float baseline = bounds.top;
+            text->setPosition(Vector2f{transform.x + padX, transform.y + (box.height - textH) * 0.5F - baseline});
+        } else {
+            text->setPosition(Vector2f{transform.x + padX, transform.y + input.paddingY});
+        }
         window_.draw(*text);
     }
 }
@@ -86,7 +98,7 @@ void InputFieldSystem::handleTextEntered(Registry& registry, char c)
 {
     for (EntityId entity : registry.view<InputFieldComponent>()) {
         auto& input = registry.get<InputFieldComponent>(entity);
-        if (!input.focused || input.value.length() >= input.maxLength)
+        if (!input.editable || !input.focused || input.value.length() >= input.maxLength)
             continue;
         if (input.validator != nullptr && !input.validator(c))
             continue;
@@ -98,6 +110,8 @@ void InputFieldSystem::handleBackspace(Registry& registry)
 {
     for (EntityId entity : registry.view<InputFieldComponent>()) {
         auto& input = registry.get<InputFieldComponent>(entity);
+        if (!input.editable)
+            continue;
         if (input.focused && !input.value.empty())
             input.value.pop_back();
     }
@@ -107,6 +121,8 @@ void InputFieldSystem::handleTab(Registry& registry)
 {
     std::vector<std::pair<EntityId, int>> focusables;
     for (EntityId entity : registry.view<InputFieldComponent, FocusableComponent>()) {
+        if (!registry.get<InputFieldComponent>(entity).editable)
+            continue;
         focusables.emplace_back(entity, registry.get<FocusableComponent>(entity).tabOrder);
     }
 
@@ -136,6 +152,13 @@ void InputFieldSystem::handleClick(Registry& registry, int x, int y)
         auto& transform = registry.get<TransformComponent>(entity);
         auto& box       = registry.get<BoxComponent>(entity);
         auto& input     = registry.get<InputFieldComponent>(entity);
+
+        if (!input.editable) {
+            input.focused = false;
+            if (registry.has<FocusableComponent>(entity))
+                registry.get<FocusableComponent>(entity).focused = false;
+            continue;
+        }
 
         bool inside =
             x >= transform.x && x <= transform.x + box.width && y >= transform.y && y <= transform.y + box.height;

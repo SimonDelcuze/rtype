@@ -31,6 +31,15 @@ void LevelSpawnSystem::update(Registry& registry, float deltaTime, const std::ve
     spawnPending(registry);
 }
 
+void LevelSpawnSystem::setScaling(const SpawnScaling& scaling)
+{
+    auto clamp                     = [](float v) { return std::clamp(v, 0.1F, 10.0F); };
+    scaling_.enemyHealthMultiplier = clamp(scaling.enemyHealthMultiplier);
+    scaling_.enemySpeedMultiplier  = clamp(scaling.enemySpeedMultiplier);
+    scaling_.enemyDamageMultiplier = clamp(scaling.enemyDamageMultiplier);
+    scaling_.scoreMultiplier       = clamp(scaling.scoreMultiplier);
+}
+
 void LevelSpawnSystem::dispatchEvents(Registry& registry, const std::vector<DispatchedEvent>& events)
 {
     for (const auto& dispatched : events) {
@@ -130,11 +139,15 @@ void LevelSpawnSystem::enqueueEnemySpawn(float timeOffset, const EnemyTemplate& 
     PendingEnemySpawn spawn;
     spawn.time     = time_ + std::max(0.0F, timeOffset);
     spawn.movement = movement;
+    spawn.movement.speed *= scaling_.enemySpeedMultiplier;
     spawn.hitbox   = enemy.hitbox;
     spawn.collider = enemy.collider;
-    spawn.health   = wave.health.has_value() ? *wave.health : enemy.health;
-    spawn.score    = enemy.score;
-    spawn.scale    = wave.scale.has_value() ? *wave.scale : enemy.scale;
+    float baseHealth =
+        static_cast<float>(wave.health.has_value() ? *wave.health : enemy.health) * scaling_.enemyHealthMultiplier;
+    spawn.health      = static_cast<std::int32_t>(std::max(1.0F, std::round(baseHealth)));
+    float scaledScore = static_cast<float>(enemy.score) * scaling_.scoreMultiplier;
+    spawn.score       = static_cast<std::int32_t>(std::round(std::max(0.0F, scaledScore)));
+    spawn.scale       = wave.scale.has_value() ? *wave.scale : enemy.scale;
     if (wave.shootingEnabled.has_value()) {
         if (*wave.shootingEnabled && enemy.shooting.has_value())
             spawn.shooting = enemy.shooting;
@@ -168,7 +181,11 @@ void LevelSpawnSystem::spawnEnemy(Registry& registry, const PendingEnemySpawn& s
         registry.emplace<ScoreValueComponent>(e, ScoreValueComponent::create(spawn.score));
     }
     if (spawn.shooting.has_value()) {
-        registry.emplace<EnemyShootingComponent>(e, *spawn.shooting);
+        auto shooting             = *spawn.shooting;
+        shooting.projectileDamage = static_cast<std::int32_t>(
+            std::max(1.0F, std::round(static_cast<float>(shooting.projectileDamage) * scaling_.enemyDamageMultiplier)));
+        shooting.projectileSpeed *= scaling_.enemyDamageMultiplier;
+        registry.emplace<EnemyShootingComponent>(e, shooting);
     }
     if (director_ != nullptr && !spawn.spawnGroupId.empty()) {
         director_->registerSpawn(spawn.spawnGroupId, e);

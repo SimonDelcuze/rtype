@@ -9,7 +9,7 @@
 
 ButtonSystem::ButtonSystem(Window& window, FontManager& fonts) : window_(window), fonts_(fonts) {}
 
-void ButtonSystem::update(Registry& registry, float)
+void ButtonSystem::update(Registry& registry, float dt)
 {
     for (EntityId entity : registry.view<TransformComponent, BoxComponent, ButtonComponent>()) {
         if (!registry.isAlive(entity))
@@ -18,6 +18,24 @@ void ButtonSystem::update(Registry& registry, float)
         auto& transform = registry.get<TransformComponent>(entity);
         auto& box       = registry.get<BoxComponent>(entity);
         auto& button    = registry.get<ButtonComponent>(entity);
+
+        if (button.autoRepeat) {
+            if (button.pressed) {
+                button.holdTimer += dt;
+                if (button.holdTimer >= button.repeatDelay && button.onClick != nullptr) {
+                    float elapsedSinceDelay = button.holdTimer - button.repeatDelay;
+                    while (elapsedSinceDelay >= button.repeatInterval) {
+                        button.onClick();
+                        elapsedSinceDelay -= button.repeatInterval;
+                    }
+                    button.holdTimer = button.repeatDelay + elapsedSinceDelay;
+                }
+            } else {
+                button.holdTimer = 0.0F;
+            }
+        } else {
+            button.holdTimer = 0.0F;
+        }
 
         auto font = fonts_.get("ui");
         if (font != nullptr && !button.label.empty()) {
@@ -28,8 +46,8 @@ void ButtonSystem::update(Registry& registry, float)
             text->setCharacterSize(22);
 
             FloatRect bounds = text->getLocalBounds();
-            float centerX    = transform.x + (box.width - bounds.width) / 2.0F;
-            float centerY    = transform.y + (box.height - bounds.height) / 2.0F - 5.0F;
+            float centerX    = transform.x + (box.width - bounds.width) / 2.0F + button.textOffsetX;
+            float centerY    = transform.y + (box.height - bounds.height) / 2.0F - 5.0F + button.textOffsetY;
 
             text->setPosition(Vector2f{centerX, centerY});
             text->setFillColor(Color::White);
@@ -43,6 +61,16 @@ void ButtonSystem::handleEvent(Registry& registry, const Event& event)
     if (event.type == EventType::MouseButtonPressed) {
         if (event.mouseButton.button == MouseButton::Left)
             handleClick(registry, event.mouseButton.x, event.mouseButton.y);
+    }
+
+    if (event.type == EventType::MouseButtonReleased) {
+        if (event.mouseButton.button == MouseButton::Left) {
+            for (EntityId entity : registry.view<ButtonComponent>()) {
+                auto& btn     = registry.get<ButtonComponent>(entity);
+                btn.pressed   = false;
+                btn.holdTimer = 0.0F;
+            }
+        }
     }
 
     if (event.type == EventType::MouseMoved)

@@ -6,7 +6,10 @@
 #include "graphics/Window.hpp"
 #include "network/LobbyConnection.hpp"
 #include "ui/IMenu.hpp"
+#include "ui/RoomDifficulty.hpp"
 
+#include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -21,6 +24,11 @@ class RoomWaitingMenu : public IMenu
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
         std::uint8_t expectedPlayerCount{0};
+        RoomDifficulty difficulty{RoomDifficulty::Noob};
+        float enemyMultiplier{1.0F};
+        float playerSpeedMultiplier{1.0F};
+        float scoreMultiplier{1.0F};
+        std::uint8_t playerLives{3};
     };
 
     struct PlayerInfo
@@ -52,6 +60,24 @@ class RoomWaitingMenu : public IMenu
     void onKickPlayerClicked(std::uint32_t playerId);
     void updatePlayerList(Registry& registry);
     void onSendChatClicked(Registry& registry);
+    void buildDifficultyUI(Registry& registry);
+    void destroyDifficultyUI(Registry& registry);
+    void buildChrome(Registry& registry);
+    void buildControlButtons(Registry& registry);
+    void buildChatUI(Registry& registry);
+    void destroyChatUI(Registry& registry);
+    void setDifficulty(RoomDifficulty difficulty);
+    void updateDifficultyUI(Registry& registry);
+    void setInputValue(Registry& registry, EntityId inputId, const std::string& value);
+    void maybeSendRoomConfig();
+
+    struct ConfigRow
+    {
+        EntityId label{0};
+        EntityId input{0};
+        EntityId upBtn{0};
+        EntityId downBtn{0};
+    };
 
     FontManager& fonts_;
     TextureManager& textures_;
@@ -80,6 +106,30 @@ class RoomWaitingMenu : public IMenu
     std::vector<EntityId> chatMessageEntities_;
     std::vector<std::string> chatHistory_;
     constexpr static std::size_t kMaxChatMessages = 12;
+
+    EntityId difficultyTitleEntity_{0};
+    EntityId configTitleEntity_{0};
+    EntityId selectedDifficultyLabel_{0};
+    std::array<EntityId, 4> difficultyButtons_{};
+    std::array<EntityId, 4> difficultyIcons_{};
+    ConfigRow enemyRow_{};
+    ConfigRow playerRow_{};
+    ConfigRow scoreRow_{};
+    ConfigRow livesRow_{};
+    RoomDifficulty difficulty_{RoomDifficulty::Noob};
+    float enemyMultiplier_{1.0F};
+    float playerSpeedMultiplier_{1.0F};
+    float scoreMultiplier_{1.0F};
+    std::uint8_t playerLives_{3};
+    struct LastConfig
+    {
+        RoomDifficulty mode{RoomDifficulty::Noob};
+        float enemy{0};
+        float player{0};
+        float score{0};
+        std::uint8_t lives{0};
+    } lastSentConfig_{};
+    bool suppressSend_{false};
 
     float updateTimer_{0.0F};
     constexpr static float kUpdateInterval = 1.0F;

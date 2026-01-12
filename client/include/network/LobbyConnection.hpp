@@ -8,6 +8,7 @@
 #include "network/StatsPackets.hpp"
 #include "network/UdpSocket.hpp"
 #include "ui/NotificationData.hpp"
+#include "ui/RoomDifficulty.hpp"
 
 #include <array>
 #include <atomic>
@@ -20,6 +21,16 @@
 class LobbyConnection
 {
   public:
+    struct RoomConfigUpdate
+    {
+        std::uint32_t roomId{0};
+        RoomDifficulty mode{RoomDifficulty::Noob};
+        float enemyMultiplier{1.0F};
+        float playerSpeedMultiplier{1.0F};
+        float scoreMultiplier{1.0F};
+        std::uint8_t playerLives{3};
+    };
+
     LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::atomic<bool>& runningFlag);
     ~LobbyConnection();
 
@@ -85,6 +96,8 @@ class LobbyConnection
     void sendNotifyGameStarting(std::uint32_t roomId);
 
     void sendKickPlayer(std::uint32_t roomId, std::uint32_t playerId);
+    void sendRoomConfig(std::uint32_t roomId, RoomDifficulty mode, float enemyMult, float playerSpeedMult,
+                        float scoreMult, std::uint8_t lives);
 
     void sendLeaveRoom();
     std::optional<LoginResponseData> login(const std::string& username, const std::string& password);
@@ -96,6 +109,17 @@ class LobbyConnection
     void sendChatMessage(std::uint32_t roomId, const std::string& message);
     bool hasNewChatMessages() const;
     std::vector<ChatPacket> popChatMessages();
+
+    bool hasRoomConfigUpdate() const
+    {
+        return pendingRoomConfig_.has_value();
+    }
+    std::optional<RoomConfigUpdate> popRoomConfigUpdate()
+    {
+        auto val = pendingRoomConfig_;
+        pendingRoomConfig_.reset();
+        return val;
+    }
 
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
@@ -119,4 +143,5 @@ class LobbyConnection
     std::optional<JoinSuccessResult> pendingJoinRoomResult_;
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
     ThreadSafeQueue<ChatPacket> chatMessages_;
+    std::optional<RoomConfigUpdate> pendingRoomConfig_;
 };

@@ -13,6 +13,10 @@ struct InputFieldComponent
     bool focused                        = false;
     bool passwordField                  = false;
     std::function<bool(char)> validator = nullptr;
+    float paddingX                      = 10.0F;
+    float paddingY                      = 13.0F;
+    bool centerVertically               = false;
+    bool editable                       = true;
 
     static InputFieldComponent create(const std::string& defaultValue, std::size_t maxLen)
     {
