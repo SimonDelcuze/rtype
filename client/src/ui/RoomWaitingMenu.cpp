@@ -287,6 +287,7 @@ RoomWaitingMenu::RoomWaitingMenu(FontManager& fonts, TextureManager& textures, s
 
 void RoomWaitingMenu::create(Registry& registry)
 {
+    isStarting_            = false;
     difficulty_            = RoomDifficulty::Hell;
     enemyMultiplier_       = 1.0F;
     playerSpeedMultiplier_ = 1.0F;
@@ -329,7 +330,7 @@ void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
             registry, baseX + static_cast<float>(i) * 90.0F, 255.0F, 64.0F, textures_, textureInfos[i].first,
             Color(50, 70, 90),
             [this, i]() {
-                if (!isHost_)
+                if (!isHost_ || isStarting_)
                     return;
                 switch (i) {
                     case 0:
@@ -407,7 +408,7 @@ void RoomWaitingMenu::buildDifficultyUI(Registry& registry)
     auto attachArrow = [&](EntityId btn, std::function<void()> fn) {
         if (registry.has<ButtonComponent>(btn)) {
             registry.get<ButtonComponent>(btn).onClick = [this, &registry, fn]() {
-                if (!isHost_ || difficulty_ != RoomDifficulty::Custom)
+                if (!isHost_ || difficulty_ != RoomDifficulty::Custom || isStarting_)
                     return;
                 fn();
                 updateDifficultyUI(registry);
@@ -475,6 +476,8 @@ void RoomWaitingMenu::destroy(Registry& registry)
         registry.destroyEntity(startButtonEntity_);
     if (registry.isAlive(leaveButtonEntity_))
         registry.destroyEntity(leaveButtonEntity_);
+    if (registry.isAlive(startingGameMessageEntity_))
+        registry.destroyEntity(startingGameMessageEntity_);
 
     for (auto entityId : playerTextEntities_) {
         if (registry.isAlive(entityId))
@@ -677,13 +680,35 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
     }
 }
 
-void RoomWaitingMenu::onStartGameClicked()
+void RoomWaitingMenu::onStartGameClicked(Registry& registry)
 {
+    if (isStarting_)
+        return;
+
     Logger::instance().info("[RoomWaitingMenu] Start game clicked (Host only)");
 
     if (lobbyConnection_) {
+        isStarting_ = true;
         lobbyConnection_->sendNotifyGameStarting(roomId_);
         Logger::instance().info("[RoomWaitingMenu] Waiting for server confirmation...");
+
+        if (registry.isAlive(startButtonEntity_))
+            registry.destroyEntity(startButtonEntity_);
+        if (registry.isAlive(leaveButtonEntity_))
+            registry.destroyEntity(leaveButtonEntity_);
+        destroyDifficultyUI(registry);
+
+        for (auto entityId : kickButtonEntities_) {
+            if (registry.isAlive(entityId))
+                registry.destroyEntity(entityId);
+        }
+        kickButtonEntities_.clear();
+
+        if (!registry.isAlive(startingGameMessageEntity_)) {
+            startingGameMessageEntity_ =
+                createText(registry, 400.0F, 550.0F, "Starting game...", 32, Color(50, 255, 50));
+            registry.emplace<LayerComponent>(startingGameMessageEntity_, LayerComponent::create(200));
+        }
     }
 }
 
@@ -734,7 +759,7 @@ void RoomWaitingMenu::buildControlButtons(Registry& registry)
 {
     if (isHost_) {
         startButtonEntity_ = createButton(registry, 400.0F, 600.0F, 200.0F, 50.0F, "Start Game", Color(0, 150, 80),
-                                          [this]() { onStartGameClicked(); });
+                                          [this, &registry]() { onStartGameClicked(registry); });
     }
 
     leaveButtonEntity_ = createButton(registry, 620.0F, 600.0F, 150.0F, 50.0F, "Leave Room", Color(120, 50, 50),
@@ -800,6 +825,9 @@ void RoomWaitingMenu::setInputValue(Registry& registry, EntityId inputId, const 
 
 void RoomWaitingMenu::updateDifficultyUI(Registry& registry)
 {
+    if (isStarting_)
+        return;
+
     for (std::size_t i = 0; i < difficultyButtons_.size(); ++i) {
         if (registry.has<BoxComponent>(difficultyButtons_[i])) {
             auto& box        = registry.get<BoxComponent>(difficultyButtons_[i]);
