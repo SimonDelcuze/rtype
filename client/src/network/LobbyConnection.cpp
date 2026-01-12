@@ -20,7 +20,6 @@ LobbyConnection::~LobbyConnection()
         return;
     }
     if (gameStarting_) {
-        // Avoid sending a leave-room packet while the game instance is spinning up
         disconnect();
         return;
     }

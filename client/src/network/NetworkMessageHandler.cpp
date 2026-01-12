@@ -218,7 +218,6 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
     }
     lastPacketTime_ = std::chrono::steady_clock::now();
     if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerJoinAccept)) {
-        // Parse playerId from payload (4 bytes, big-endian)
         if (data.size() >= PacketHeader::kSize + sizeof(std::uint32_t) + PacketHeader::kCrcSize) {
             const std::uint8_t* payload = data.data() + PacketHeader::kSize;
             std::uint32_t playerId =

@@ -7,6 +7,7 @@
 #include "ui/IMenu.hpp"
 #include "ui/NotificationData.hpp"
 
+#include <chrono>
 #include <string>
 
 class LoginMenu : public IMenu
@@ -61,4 +62,11 @@ class LoginMenu : public IMenu
 
     EntityId usernameInput_ = 0;
     EntityId passwordInput_ = 0;
+    EntityId loggingInText_ = 0;
+
+    std::chrono::steady_clock::time_point loggingStartTime_;
+    int dotCount_ = 1;
+
+    void showLoggingInText(Registry& registry);
+    void updateLoggingInText(Registry& registry);
 };
