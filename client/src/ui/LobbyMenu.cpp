@@ -270,8 +270,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     }
 
                     conn->sendCreateRoom(result.roomName, result.password, result.visibility);
-                    state_      = State::Creating;
-                    isCreating_ = true;
+                    state_           = State::Creating;
+                    isCreating_      = true;
                     currentRoomName_ = result.roomName;
 
                 } else {
@@ -557,8 +557,8 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
         Logger::instance().info("[LobbyMenu] Room " + std::to_string(room.roomId) + " is password-protected...");
         pendingJoinRoomIndex_ = roomIndex;
         state_                = State::ShowingPasswordInput;
-        // Don't set currentRoomName_ yet, do it if password is correct? 
-        // Actually, we can set it here or when joining starts. 
+        // Don't set currentRoomName_ yet, do it if password is correct?
+        // Actually, we can set it here or when joining starts.
         // Let's set it here so if we join via password it's available.
         // Wait, if we join via password, we need to make sure we don't lose it if we cancel.
         // But logic is simpler if we set it when we decide to join.
@@ -578,8 +578,8 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
     }
 
     conn->sendJoinRoom(room.roomId);
-    isJoining_  = true;
-    isRoomHost_ = false;
+    isJoining_       = true;
+    isRoomHost_      = false;
     currentRoomName_ = room.roomName;
 }
 
