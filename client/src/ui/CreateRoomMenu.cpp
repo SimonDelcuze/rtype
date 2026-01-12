@@ -106,6 +106,10 @@ CreateRoomMenu::CreateRoomMenu(FontManager& fonts, TextureManager& textures) : f
 
 void CreateRoomMenu::create(Registry& registry)
 {
+    done_            = false;
+    result_          = Result{};
+    passwordEnabled_ = false;
+
     if (!fonts_.has("ui")) {
         fonts_.load("ui", "client/assets/fonts/ui.ttf");
     }
