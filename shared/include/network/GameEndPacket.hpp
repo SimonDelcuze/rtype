@@ -15,7 +15,7 @@ class GameEndPacket
         PacketHeader header;
         header.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
         header.messageType  = static_cast<std::uint8_t>(MessageType::GameEnd);
-        header.payloadSize  = 5; // 1 byte bool + 4 bytes int32
+        header.payloadSize  = 5;
         header.originalSize = 5;
 
         std::vector<std::uint8_t> payload;
