@@ -19,6 +19,11 @@ LobbyConnection::~LobbyConnection()
         socket_.close();
         return;
     }
+    if (gameStarting_) {
+        // Avoid sending a leave-room packet while the game instance is spinning up
+        disconnect();
+        return;
+    }
     if (inRoom_) {
         leaveRoom();
     }
@@ -101,6 +106,7 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 Logger::instance().info("[LobbyConnection] Received RoomGameStarting - game is starting with " +
                                         std::to_string(expectedPlayerCount_) + " players!");
                 gameStarting_ = true;
+                inRoom_       = false;
             }
         } else if (type == MessageType::RoomPlayerKicked) {
             Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
