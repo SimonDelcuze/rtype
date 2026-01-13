@@ -428,6 +428,7 @@ void GameInstance::resetGame()
     sendThread_.clearLatest();
     currentTick_ = 0;
     gameStarted_ = false;
+    gameEnded_   = false;
     introCinematic_.reset();
     eventBus_.clear();
     networkBridge_.clear();

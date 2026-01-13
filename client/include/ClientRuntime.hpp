@@ -17,6 +17,7 @@
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
 #include "network/ClientInit.hpp"
+#include "network/UdpSocket.hpp"
 #include "scheduler/GameLoop.hpp"
 
 #include <atomic>
@@ -50,8 +51,10 @@ struct GameSessionResult
 
 struct ClientLoopResult
 {
-    bool continueLoop = false;
+    bool continueLoop        = false;
     std::optional<int> exitCode;
+    std::optional<std::uint32_t> preservedUserId;
+    std::optional<IpEndpoint> preservedServerEndpoint;
 };
 
 Window createMainWindow();
@@ -83,7 +86,8 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
 std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                                                 TextureManager& textureManager, std::string& errorMessage,
                                                 ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId);
+                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId,
+                                                struct AuthResult* preservedAuth = nullptr);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue);
@@ -94,5 +98,6 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage,
                                     ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                    std::optional<IpEndpoint>& lastLobbyEndpoint);
+                                    std::optional<IpEndpoint>& lastLobbyEndpoint,
+                                    struct AuthResult* preservedAuth = nullptr);
 int runClient(const ClientOptions& options);
