@@ -28,7 +28,6 @@
 #include "ui/PauseMenu.hpp"
 
 #include <chrono>
-#include <iostream>
 
 std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fontManager,
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
@@ -38,7 +37,7 @@ std::optional<std::pair<IpEndpoint, RoomType>>
 resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                       TextureManager& textureManager, std::string& errorMessage,
                       ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
-                      std::uint32_t& outUserId)
+                      std::uint32_t& outUserId, AuthResult* preservedAuth)
 {
     while (window.isOpen() && g_running && !g_forceExit.load()) {
         if (!options.useDefault && !lastLobbyEndpoint.has_value()) {
@@ -58,7 +57,6 @@ resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager&
         bool backToServerSelect = false;
 
         while (window.isOpen() && !backToServerSelect && g_running && !g_forceExit.load()) {
-            Logger::instance().info("[Auth] Starting authentication flow");
             LobbyConnection conn(lobbyEp, g_running);
             if (!conn.connect() || !conn.ping()) {
                 Logger::instance().warn("[Nav] Failed to reach lobby server at port " + std::to_string(lobbyEp.port));
@@ -71,20 +69,40 @@ resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager&
                 continue;
             }
 
-            auto authResult = showAuthenticationMenu(window, fontManager, textureManager, conn, broadcastQueue);
+            if (preservedAuth != nullptr && !preservedAuth->password.empty()) {
+                Logger::instance().info("[Nav] Using preserved authentication, re-authenticating silently");
 
-            if (!authResult.has_value()) {
-                Logger::instance().info("[Nav] Authentication cancelled/failed, returning to server selection");
-                backToServerSelect = true;
-                lastLobbyEndpoint.reset();
-                if (options.useDefault) {
-                    return std::nullopt;
+                auto loginResult = conn.login(preservedAuth->username, preservedAuth->password);
+                if (!loginResult.has_value() || !loginResult->success) {
+                    Logger::instance().warn("[Nav] Silent re-authentication failed, showing login screen");
+                    preservedAuth = nullptr;
+                    continue;
                 }
-                continue;
-            }
 
-            Logger::instance().info("[Auth] User authenticated: " + authResult->username);
-            outUserId = authResult->userId;
+                Logger::instance().info("[Auth] Silent re-authentication successful: " + preservedAuth->username);
+                outUserId            = preservedAuth->userId;
+                preservedAuth->token = loginResult->token;
+            } else {
+                Logger::instance().info("[Auth] Starting authentication flow");
+                auto authResult = showAuthenticationMenu(window, fontManager, textureManager, conn, broadcastQueue);
+
+                if (!authResult.has_value()) {
+                    Logger::instance().info("[Nav] Authentication cancelled/failed, returning to server selection");
+                    backToServerSelect = true;
+                    lastLobbyEndpoint.reset();
+                    if (options.useDefault) {
+                        return std::nullopt;
+                    }
+                    continue;
+                }
+
+                Logger::instance().info("[Auth] User authenticated: " + authResult->username);
+                outUserId = authResult->userId;
+
+                if (preservedAuth != nullptr) {
+                    *preservedAuth = *authResult;
+                }
+            }
 
             bool stayingInLobbyFlow = true;
             while (stayingInLobbyFlow && window.isOpen() && g_running && !g_forceExit.load()) {
@@ -320,7 +338,7 @@ namespace
 
     GameOverMenu::Result runGameOverMenu(Window& window, Registry& registry, FontManager& fontManager,
                                          ButtonSystem& buttonSystem, const std::vector<PlayerScoreEntry>& playerScores,
-                                         bool victory)
+                                         bool victory, const IpEndpoint& serverEndpoint, NetPipelines& net)
     {
         GameOverMenu gameOverMenu(fontManager, playerScores, victory);
         gameOverMenu.create(registry);
@@ -354,6 +372,18 @@ namespace
 
         GameOverMenu::Result result = gameOverMenu.getResult();
         gameOverMenu.destroy(registry);
+
+        if (result == GameOverMenu::Result::Quit && net.socket) {
+            Logger::instance().info("[GameOver] Player chose Quit - sending disconnect to server");
+            PacketHeader header{};
+            header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
+            header.messageType = static_cast<std::uint8_t>(MessageType::ClientDisconnect);
+            header.sequenceId  = 0;
+            header.payloadSize = 0;
+            auto packet        = header.encode();
+            net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
+        }
+
         return result;
     }
 
@@ -419,7 +449,6 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
     GameState gameState;
 
     eventBus.subscribe<GameOverEvent>([&](const GameOverEvent& event) {
-        std::cout << ">>> CLIENT RECEIVED GAMEOVER EVENT. Victory: " << event.victory << std::endl;
         Logger::instance().info("[RunClientFlow] GameOverEvent received. Victory: " +
                                 (event.victory ? std::string("true") : std::string("false")));
         gameState.gameOverTriggered = true;
@@ -444,7 +473,6 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
                     serverLost, pauseMenuQuit, broadcastQueue, serverEndpoint, fontManager);
 
-    sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
 
     if (pauseMenuQuit) {
@@ -452,13 +480,24 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
     }
 
     if (gameState.gameOverTriggered) {
-        auto result =
-            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores, gameState.victory);
+        auto result = runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores,
+                                      gameState.victory, serverEndpoint, net);
         if (result == GameOverMenu::Result::Retry) {
+            Logger::instance().info("[GameSession] Player chose Retry - returning to lobby");
+            sendDisconnectPacket(serverEndpoint, net);
             return GameSessionResult{true, serverLost, std::nullopt};
+        }
+        if (result == GameOverMenu::Result::Quit) {
+            Logger::instance().info("[GameSession] Player chose Quit - disconnect already sent");
+            return GameSessionResult{false, serverLost, std::make_optional(0)};
         }
     }
 
-    bool retry = disconnected || !errorMessage.empty();
-    return GameSessionResult{retry, serverLost, (retry ? std::nullopt : std::make_optional(0))};
+    if (disconnected || !errorMessage.empty()) {
+        sendDisconnectPacket(serverEndpoint, net);
+        return GameSessionResult{true, serverLost, std::nullopt};
+    }
+
+    sendDisconnectPacket(serverEndpoint, net);
+    return GameSessionResult{false, serverLost, std::make_optional(0)};
 }

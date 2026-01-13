@@ -269,6 +269,7 @@ void LoginMenu::handleLoginAttempt(Registry& registry)
         return;
 
     username_ = username;
+    password_ = password;
     lobbyConn_.sendLogin(username, password);
     isLoading_ = true;
 }
@@ -284,6 +285,7 @@ LoginMenu::Result LoginMenu::getResult(Registry& registry) const
     res.userId        = userId_;
     res.username      = username_;
     res.token         = token_;
+    res.password      = password_;
     return res;
 }
 

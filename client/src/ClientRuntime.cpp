@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "animation/AnimationManifest.hpp"
+#include "auth/AuthResult.hpp"
 #include "ecs/Registry.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
@@ -28,10 +29,12 @@ int runClient(const ClientOptions& options)
     std::string errorMessage;
     ThreadSafeQueue<NotificationData> broadcastQueue;
     std::optional<IpEndpoint> lastLobbyEndpoint;
+    AuthResult preservedAuth{};
+
     while (window.isOpen() && g_running) {
         Logger::instance().info("[Client] Starting new iteration...");
         ClientLoopResult result = runClientIteration(options, window, fontManager, textureManager, errorMessage,
-                                                     broadcastQueue, lastLobbyEndpoint);
+                                                     broadcastQueue, lastLobbyEndpoint, &preservedAuth);
         if (result.exitCode.has_value())
             return *result.exitCode;
         if (!result.continueLoop)

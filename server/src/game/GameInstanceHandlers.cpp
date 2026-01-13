@@ -288,7 +288,11 @@ void GameInstance::onDisconnect(const IpEndpoint& endpoint)
     }
     std::erase_if(clients_, [&](const IpEndpoint& ep) { return endpointKey(ep) == endpointKey(endpoint); });
     sendThread_.setClients(clients_);
-    if (sessions_.empty()) {
+
+    if (gameEnded_) {
+        Logger::instance().info("[Game] Game ended and player disconnected, resetting for retry");
+        resetGame();
+    } else if (sessions_.empty()) {
         Logger::instance().info("[Game] No more clients connected, resetting game");
         resetGame();
     }

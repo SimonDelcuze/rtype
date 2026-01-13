@@ -9,4 +9,5 @@ struct AuthResult
     std::string username;
     std::string token;
     std::uint32_t userId;
+    std::string password;
 };

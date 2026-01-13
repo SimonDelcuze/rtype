@@ -86,6 +86,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
             authResult.username      = loginResult.username;
             authResult.token         = loginResult.token;
             authResult.userId        = loginResult.userId;
+            authResult.password      = loginResult.password;
             result                   = authResult;
             break;
         }

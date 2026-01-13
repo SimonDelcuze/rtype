@@ -22,6 +22,7 @@ class LoginMenu : public IMenu
         std::uint32_t userId{0};
         std::string username;
         std::string token;
+        std::string password;
     };
 
     LoginMenu(FontManager& fonts, TextureManager& textures, LobbyConnection& lobbyConn,
@@ -56,6 +57,7 @@ class LoginMenu : public IMenu
     std::uint32_t userId_{0};
     std::string username_;
     std::string token_;
+    std::string password_;
 
     float heartbeatTimer_{0.0F};
     int consecutiveFailures_{0};
