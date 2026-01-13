@@ -8,6 +8,7 @@
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
 #include "level/LevelState.hpp"
+#include "network/RoomType.hpp"
 #include "systems/ISystem.hpp"
 
 #include <string>
@@ -15,8 +16,10 @@
 class HUDSystem : public ISystem
 {
   public:
-    HUDSystem(Window& window, FontManager& fonts, TextureManager& textures);
-    HUDSystem(Window& window, FontManager& fonts, TextureManager& textures, LevelState& state);
+    HUDSystem(Window& window, FontManager& fonts, TextureManager& textures, std::uint32_t localPlayerId,
+              RoomType gameMode);
+    HUDSystem(Window& window, FontManager& fonts, TextureManager& textures, LevelState& state,
+              std::uint32_t localPlayerId, RoomType gameMode);
 
     void update(Registry& registry, float deltaTime) override;
 
@@ -29,5 +32,7 @@ class HUDSystem : public ISystem
     FontManager& fonts_;
     TextureManager& textures_;
     LevelState* state_ = nullptr;
+    std::uint32_t localPlayerId_{0};
+    RoomType gameMode_{RoomType::Quickplay};
 };
 #include "components/ChargeMeterComponent.hpp"

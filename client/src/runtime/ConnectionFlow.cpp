@@ -15,6 +15,7 @@
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/LobbyMenu.hpp"
+#include "ui/LobbyMenuRanked.hpp"
 #include "ui/LoginMenu.hpp"
 #include "ui/MenuRunner.hpp"
 #include "ui/RegisterMenu.hpp"
@@ -155,13 +156,44 @@ bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMe
 }
 
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          FontManager& fontManager, TextureManager& textureManager,
+                                                          RoomType targetRoomType, FontManager& fontManager,
+                                                          TextureManager& textureManager,
                                                           ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                           LobbyConnection* authenticatedConnection, bool& serverLost)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
-    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running, authenticatedConnection);
+    if (targetRoomType == RoomType::Ranked) {
+        auto result =
+            runner.runAndGetResult<LobbyMenuRanked>(lobbyEndpoint, broadcastQueue, g_running, authenticatedConnection);
+
+        if (!window.isOpen())
+            return std::nullopt;
+
+        if (result.serverLost) {
+            Logger::instance().warn("[ConnectionFlow] Ranked lobby reported server lost");
+            serverLost = true;
+            return std::nullopt;
+        }
+
+        if (result.backRequested || result.exitRequested) {
+            return std::nullopt;
+        }
+
+        if (result.success) {
+            Logger::instance().info("[ConnectionFlow] Ranked lobby returned game endpoint: port " +
+                                    std::to_string(result.gamePort) + " with " +
+                                    std::to_string(result.expectedPlayerCount) + " expected players");
+            g_isRoomHost          = false;
+            g_expectedPlayerCount = result.expectedPlayerCount;
+            return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
+                                  lobbyEndpoint.addr[3], result.gamePort);
+        }
+        return std::nullopt;
+    }
+
+    auto result = runner.runAndGetResult<LobbyMenu>(lobbyEndpoint, broadcastQueue, g_running, targetRoomType,
+                                                    authenticatedConnection);
 
     if (!window.isOpen())
         return std::nullopt;
@@ -239,7 +271,7 @@ bool runWaitingRoom(Window& window, NetPipelines& net, const IpEndpoint& serverE
     menu.create(registry);
 
     ButtonSystem buttonSystem(window, fontManager);
-    HUDSystem hudSystem(window, fontManager, textureManager);
+    HUDSystem hudSystem(window, fontManager, textureManager, 0, RoomType::Quickplay);
     RenderSystem renderSystem(window);
     NotificationSystem notificationSystem(window, fontManager, broadcastQueue);
 

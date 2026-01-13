@@ -9,6 +9,7 @@
 #include "components/TransformComponent.hpp"
 #include "ecs/Registry.hpp"
 
+#include <array>
 #include <iostream>
 #include <sstream>
 
@@ -53,6 +54,7 @@ void LevelInitSystem::processLevelInit(Registry& registry, const LevelInitData& 
     for (const auto& entry : data.archetypes) {
         resolveEntityType(entry);
     }
+    registerBuiltinTypes();
 }
 
 void LevelInitSystem::createHUDEntities(Registry& registry)
@@ -209,4 +211,83 @@ void LevelInitSystem::applyBackground(Registry& registry, const LevelInitData& d
     registry.emplace<TransformComponent>(e, TransformComponent::create(0.0F, 0.0F));
     registry.emplace<BackgroundScrollComponent>(e, BackgroundScrollComponent::create(-50.0F, 0.0F, 0.0F));
     registry.emplace<LayerComponent>(e, LayerComponent::create(RenderLayer::Background));
+}
+
+void LevelInitSystem::registerBuiltinTypes()
+{
+    auto playerEntry = manifest_->findTextureById("player_ship");
+    if (playerEntry && textures_->has(playerEntry->id)) {
+        auto tex = textures_->get(playerEntry->id);
+        if (tex != nullptr) {
+            std::array<std::uint16_t, 4> playerTypes = {1, 12, 13, 14};
+            for (std::uint16_t typeId : playerTypes) {
+                if (!typeRegistry_->has(typeId)) {
+                    RenderTypeData data{};
+                    data.texture       = tex;
+                    data.layer         = 0;
+                    data.spriteId      = "player_ship";
+                    data.frameCount    = 6;
+                    data.frameDuration = 0.08F;
+                    data.columns       = 6;
+                    data.frameWidth    = 33;
+                    data.frameHeight   = 14;
+                    typeRegistry_->registerType(typeId, data);
+                    Logger::instance().info("[LevelInit] Registered builtin player type " + std::to_string(typeId));
+                }
+            }
+
+            if (!typeRegistry_->has(16)) {
+                RenderTypeData data{};
+                data.texture  = tex;
+                data.layer    = 2;
+                data.spriteId = "player_death";
+
+                if (animations_->has("player_death")) {
+                    data.animation = animations_->get("player_death");
+                }
+
+                data.frameCount    = 6;
+                data.frameDuration = 0.12F;
+                data.columns       = 6;
+                data.frameWidth    = 32;
+                data.frameHeight   = 33;
+                typeRegistry_->registerType(16, data);
+                Logger::instance().info("[LevelInit] Registered builtin death FX type 16");
+            }
+
+            if (!typeRegistry_->has(24)) {
+                auto allyEntry = manifest_->findTextureById("ally");
+                if (allyEntry) {
+                    if (!textures_->has(allyEntry->id)) {
+                        try {
+                            textures_->load(allyEntry->id, "client/assets/" + allyEntry->path);
+                        } catch (...) {
+                            Logger::instance().warn("[LevelInit] Failed to load ally texture");
+                        }
+                    }
+                    if (textures_->has(allyEntry->id)) {
+                        auto allyTex = textures_->get(allyEntry->id);
+                        if (allyTex != nullptr) {
+                            RenderTypeData allyData{};
+                            allyData.texture       = allyTex;
+                            allyData.layer         = 1;
+                            allyData.spriteId      = "ally";
+                            allyData.frameCount    = 3;
+                            allyData.frameDuration = 0.18F;
+                            allyData.columns       = 3;
+                            allyData.frameWidth    = 16;
+                            allyData.frameHeight   = 11;
+                            allyData.defaultScaleX = 1.2F;
+                            allyData.defaultScaleY = 1.2F;
+                            if (animations_->has("ally")) {
+                                allyData.animation = animations_->get("ally");
+                            }
+                            typeRegistry_->registerType(24, allyData);
+                            Logger::instance().info("[LevelInit] Registered builtin ally type 24");
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -28,13 +28,13 @@ struct RoomConfig
                 cfg.enemyStatMultiplier   = 0.5F;
                 cfg.playerSpeedMultiplier = 1.0F;
                 cfg.scoreMultiplier       = 0.5F;
-                cfg.playerLives           = 3;
+                cfg.playerLives           = 5;
                 break;
             case RoomDifficulty::Hell:
                 cfg.enemyStatMultiplier   = 1.0F;
                 cfg.playerSpeedMultiplier = 1.0F;
                 cfg.scoreMultiplier       = 1.0F;
-                cfg.playerLives           = 2;
+                cfg.playerLives           = 3;
                 break;
             case RoomDifficulty::Nightmare:
                 cfg.enemyStatMultiplier   = 1.5F;

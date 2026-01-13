@@ -23,6 +23,9 @@
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
 #include "ui/GameOverMenu.hpp"
+#include "ui/MenuRunner.hpp"
+#include "ui/ModeSelectMenu.hpp"
+#include "ui/PauseMenu.hpp"
 
 #include <chrono>
 
@@ -30,11 +33,11 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
                                                  ThreadSafeQueue<NotificationData>& broadcastQueue);
 
-std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage,
-                                                ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId,
-                                                AuthResult* preservedAuth)
+std::optional<std::pair<IpEndpoint, RoomType>>
+resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
+                      TextureManager& textureManager, std::string& errorMessage,
+                      ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
+                      std::uint32_t& outUserId, AuthResult* preservedAuth)
 {
     while (window.isOpen() && g_running && !g_forceExit.load()) {
         if (!options.useDefault && !lastLobbyEndpoint.has_value()) {
@@ -43,7 +46,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
             if (!ep.has_value()) {
                 return std::nullopt;
             }
-            lastLobbyEndpoint = *ep;
+            lastLobbyEndpoint = ep;
         } else if (options.useDefault && !lastLobbyEndpoint.has_value()) {
             Logger::instance().info("Using default lobby: 127.0.0.1:50010");
             lastLobbyEndpoint = IpEndpoint::v4(127, 0, 0, 1, 50010);
@@ -101,24 +104,46 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                 }
             }
 
-            Logger::instance().info("[Nav] Showing lobby menu");
-            bool serverLost = false;
-            auto gameEp = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, fontManager, textureManager, broadcastQueue,
-                                                          &conn, serverLost);
+            bool stayingInLobbyFlow = true;
+            while (stayingInLobbyFlow && window.isOpen() && g_running && !g_forceExit.load()) {
+                Logger::instance().info("[Nav] Showing mode selection");
+                MenuRunner modeRunner(window, fontManager, textureManager, g_running, broadcastQueue);
+                auto modeRes = modeRunner.runAndGetResult<ModeSelectMenu>();
+                if (modeRes.backRequested) {
+                    Logger::instance().info("[Nav] Mode selection cancelled (Back), returning to login");
+                    stayingInLobbyFlow = false;
+                    continue;
+                }
 
-            if (gameEp.has_value()) {
-                return gameEp;
+                if (modeRes.exitRequested) {
+                    Logger::instance().info("[Nav] Mode selection exit requested");
+                    backToServerSelect = true;
+                    lastLobbyEndpoint.reset();
+                    stayingInLobbyFlow = false;
+                    continue;
+                }
+                RoomType targetRoomType = modeRes.selected;
+
+                Logger::instance().info("[Nav] Showing lobby menu");
+                bool serverLost = false;
+                auto gameEp     = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, targetRoomType, fontManager,
+                                                                  textureManager, broadcastQueue, &conn, serverLost);
+
+                if (gameEp.has_value()) {
+                    return std::make_pair(*gameEp, targetRoomType);
+                }
+
+                if (serverLost) {
+                    Logger::instance().warn("[Nav] Server connection lost in lobby");
+                    backToServerSelect = true;
+                    lastLobbyEndpoint.reset();
+                    errorMessage       = "Connection lost to server";
+                    stayingInLobbyFlow = false;
+                    continue;
+                }
+
+                Logger::instance().info("[Nav] Back from lobby, returning to mode selection");
             }
-
-            if (serverLost) {
-                Logger::instance().warn("[Nav] Server connection lost in lobby");
-                backToServerSelect = true;
-                lastLobbyEndpoint.reset();
-                errorMessage = "Connection lost to server";
-                continue;
-            }
-
-            Logger::instance().info("[Nav] Back from lobby, returning to login");
         }
     }
 
@@ -162,8 +187,8 @@ namespace
     struct GameState
     {
         bool gameOverTriggered = false;
-        int finalScore         = 0;
-        bool victory           = false;
+        std::vector<PlayerScoreEntry> playerScores;
+        bool victory = false;
     };
 
     void sendDisconnectPacket(const IpEndpoint& serverEndpoint, NetPipelines& net)
@@ -184,11 +209,17 @@ namespace
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
-                         bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue,
-                         const IpEndpoint& serverEndpoint)
+                         bool& disconnected, bool& serverLost, bool& pauseMenuQuit,
+                         ThreadSafeQueue<NotificationData>& broadcastQueue, const IpEndpoint& serverEndpoint,
+                         FontManager& fontManager)
     {
+        bool pauseMenuActive = false;
+        std::unique_ptr<PauseMenu> pauseMenu;
+
         auto onEvent = [&](const Event& event) {
-            mapper.handleEvent(event);
+            if (!pauseMenuActive) {
+                mapper.handleEvent(event);
+            }
             buttonSystem.handleEvent(registry, event);
         };
         (void) errorMessage;
@@ -198,12 +229,46 @@ namespace
         auto lastTime       = std::chrono::steady_clock::now();
         while (window.isOpen() && g_running && sessionRunning) {
             window.pollEvents([&](const Event& event) {
-                onEvent(event);
                 if (event.type == EventType::Closed) {
                     g_running = false;
                     window.close();
+                    return;
+                }
+
+                if (event.type == EventType::KeyPressed && event.key.code == KeyCode::Escape) {
+                    if (!pauseMenuActive) {
+                        pauseMenuActive = true;
+                        pauseMenu       = std::make_unique<PauseMenu>(fontManager);
+                        pauseMenu->create(registry);
+                        Logger::instance().info("[RunClientFlow] Pause menu opened");
+                    } else if (pauseMenu) {
+                        pauseMenu->handleEvent(registry, event);
+                    }
+                    return;
+                }
+
+                if (pauseMenuActive && pauseMenu) {
+                    pauseMenu->handleEvent(registry, event);
+                    buttonSystem.handleEvent(registry, event);
+                } else {
+                    onEvent(event);
                 }
             });
+
+            if (pauseMenuActive && pauseMenu && pauseMenu->isDone()) {
+                auto result = pauseMenu->getResult();
+                pauseMenu->destroy(registry);
+                pauseMenu.reset();
+                pauseMenuActive = false;
+
+                if (result == PauseMenu::Result::Quit) {
+                    Logger::instance().info("[RunClientFlow] User quit from pause menu - returning to lobby");
+                    pauseMenuQuit  = true;
+                    sessionRunning = false;
+                    continue;
+                }
+                Logger::instance().info("[RunClientFlow] Resumed from pause menu");
+            }
 
             if (net.handler) {
                 net.handler->poll();
@@ -217,7 +282,11 @@ namespace
                 GameEndPacket gameEndPkt;
                 while (net.handler->getGameEndQueue().tryPop(gameEndPkt)) {
                     Logger::instance().info("[RunClientFlow] Popped GameEndPacket from queue. Emitting event.");
-                    eventBus.emit(GameOverEvent{gameEndPkt.victory, gameEndPkt.finalScore, 1});
+                    std::vector<PlayerScoreEntry> entries;
+                    for (const auto& ps : gameEndPkt.playerScores) {
+                        entries.push_back({ps.playerId, ps.score});
+                    }
+                    eventBus.emit(GameOverEvent{gameEndPkt.victory, entries, 1});
                 }
             }
 
@@ -258,15 +327,20 @@ namespace
             window.clear();
             gameLoop.update(registry, deltaTime);
             eventBus.process();
+
+            if (pauseMenuActive && pauseMenu) {
+                pauseMenu->render(registry, window);
+            }
+
             window.display();
         }
     }
 
     GameOverMenu::Result runGameOverMenu(Window& window, Registry& registry, FontManager& fontManager,
-                                         ButtonSystem& buttonSystem, int finalScore, bool victory,
-                                         const IpEndpoint& serverEndpoint, NetPipelines& net)
+                                         ButtonSystem& buttonSystem, const std::vector<PlayerScoreEntry>& playerScores,
+                                         bool victory, const IpEndpoint& serverEndpoint, NetPipelines& net)
     {
-        GameOverMenu gameOverMenu(fontManager, finalScore, victory);
+        GameOverMenu gameOverMenu(fontManager, playerScores, victory);
         gameOverMenu.create(registry);
 
         g_running     = true;
@@ -315,10 +389,10 @@ namespace
 
 } // namespace
 
-GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, const ClientOptions& options,
-                                 const IpEndpoint& serverEndpoint, NetPipelines& net, InputBuffer& inputBuffer,
-                                 TextureManager& textureManager, FontManager& fontManager, std::string& errorMessage,
-                                 ThreadSafeQueue<NotificationData>& broadcastQueue)
+GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode, Window& window,
+                                 const ClientOptions& options, const IpEndpoint& serverEndpoint, NetPipelines& net,
+                                 InputBuffer& inputBuffer, TextureManager& textureManager, FontManager& fontManager,
+                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue)
 {
     GraphicsFactory graphicsFactory;
     SoundManager soundManager;
@@ -378,7 +452,7 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
         Logger::instance().info("[RunClientFlow] GameOverEvent received. Victory: " +
                                 (event.victory ? std::string("true") : std::string("false")));
         gameState.gameOverTriggered = true;
-        gameState.finalScore        = event.finalScore;
+        gameState.playerScores      = event.playerScores;
         gameState.victory           = event.victory;
         g_running                   = false;
     });
@@ -388,21 +462,27 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
     float playerPosX            = 0.0F;
     float playerPosY            = 0.0F;
 
-    configureSystems(localPlayerId, gameLoop, net, typeRegistry, manifest, textureManager, animations, animationLabels,
-                     levelState, inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window, fontManager,
-                     eventBus, graphicsFactory, soundManager, broadcastQueue);
+    configureSystems(localPlayerId, gameMode, gameLoop, net, typeRegistry, manifest, textureManager, animations,
+                     animationLabels, levelState, inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window,
+                     fontManager, eventBus, graphicsFactory, soundManager, broadcastQueue);
 
     ButtonSystem buttonSystem(window, fontManager);
 
-    bool disconnected = false;
+    bool disconnected  = false;
+    bool pauseMenuQuit = false;
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
-                    serverLost, broadcastQueue, serverEndpoint);
+                    serverLost, pauseMenuQuit, broadcastQueue, serverEndpoint, fontManager);
 
     gameLoop.stop();
 
+    if (pauseMenuQuit) {
+        return GameSessionResult{true, serverLost, std::nullopt};
+    }
+
     if (gameState.gameOverTriggered) {
-        auto result = runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.finalScore,
-                                      gameState.victory, serverEndpoint, net);
+        auto result =
+            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores, gameState.victory,
+                           serverEndpoint, net);
         if (result == GameOverMenu::Result::Retry) {
             Logger::instance().info("[GameSession] Player chose Retry - returning to lobby");
             sendDisconnectPacket(serverEndpoint, net);

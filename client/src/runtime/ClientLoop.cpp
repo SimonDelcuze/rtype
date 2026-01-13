@@ -9,20 +9,19 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
                                     std::optional<IpEndpoint>& lastLobbyEndpoint, AuthResult* preservedAuth)
 {
     NetPipelines net;
-    std::uint32_t userId;
-    std::optional<IpEndpoint> serverEndpoint;
-
-    serverEndpoint = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
-                                           lastLobbyEndpoint, userId, preservedAuth);
-    if (!serverEndpoint) {
-        return ClientLoopResult{false, std::nullopt, std::nullopt, std::nullopt};
+    std::uint32_t userId = 0;
+    auto resolution = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                            lastLobbyEndpoint, userId, preservedAuth);
+    if (!resolution) {
+        return ClientLoopResult{false, 0, std::nullopt, std::nullopt};
     }
+    const auto& [serverEndpoint, gameMode] = *resolution;
 
     InputBuffer inputBuffer;
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
 
-    if (!setupNetwork(net, inputBuffer, *serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
+    if (!setupNetwork(net, inputBuffer, serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
         broadcastQueue.push(NotificationData{"Failed to setup network", 5.0F});
         return ClientLoopResult{true, std::nullopt, std::nullopt, std::nullopt};
     }
@@ -47,8 +46,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
 
     stopLauncherMusic();
     auto gameResult =
-        runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, window, options, *serverEndpoint, net,
-                       inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
+        runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, gameMode, window, options, serverEndpoint,
+                       net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
 
     stopNetwork(net, welcomeThread, handshakeDone);
 

@@ -9,7 +9,8 @@ namespace
         static_cast<std::uint16_t>(InputFlag::MoveLeft) | static_cast<std::uint16_t>(InputFlag::MoveRight) |
         static_cast<std::uint16_t>(InputFlag::Fire) | static_cast<std::uint16_t>(InputFlag::Charge1) |
         static_cast<std::uint16_t>(InputFlag::Charge2) | static_cast<std::uint16_t>(InputFlag::Charge3) |
-        static_cast<std::uint16_t>(InputFlag::Charge4) | static_cast<std::uint16_t>(InputFlag::Charge5);
+        static_cast<std::uint16_t>(InputFlag::Charge4) | static_cast<std::uint16_t>(InputFlag::Charge5) |
+        static_cast<std::uint16_t>(InputFlag::Interact);
 }
 
 InputParseResult parseInputPacket(const std::uint8_t* data, std::size_t len)

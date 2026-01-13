@@ -19,6 +19,7 @@
 #include "rollback/RollbackManager.hpp"
 #include "simulation/GameWorld.hpp"
 #include "simulation/PlayerCommand.hpp"
+#include "systems/AllySystem.hpp"
 #include "systems/BoundarySystem.hpp"
 #include "systems/CollisionSystem.hpp"
 #include "systems/DamageSystem.hpp"
@@ -126,6 +127,7 @@ class GameInstance
     void sendSegmentState();
     Vec2f respawnPosition(EntityId entityId) const;
     void respawnPlayer(EntityId entityId);
+    void processAllyPurchase(const std::vector<PlayerCommand>& commands);
 
     void logInfo(const std::string& msg) const;
     void logWarn(const std::string& msg) const;
@@ -157,6 +159,7 @@ class GameInstance
     DestructionSystem destructionSys_;
     BoundarySystem boundarySys_;
     PlayerBoundsSystem playerBoundsSys_;
+    AllySystem allySys_;
     IntroCinematic introCinematic_;
     ThreadSafeQueue<ReceivedInput> inputQueue_;
     ThreadSafeQueue<ControlEvent> controlQueue_;

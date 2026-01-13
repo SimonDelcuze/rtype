@@ -100,6 +100,31 @@ namespace
         registry.registerType(typeId, data);
     }
 
+    void registerAllyType(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
+    {
+        auto entry = manifest.findTextureById("player_ship");
+        if (!entry)
+            return;
+        if (!textures.has(entry->id))
+            textures.load(entry->id, "client/assets/" + entry->path);
+        auto tex = textures.get(entry->id);
+        if (tex == nullptr)
+            return;
+
+        RenderTypeData data{};
+        data.texture       = tex;
+        data.layer         = 1;
+        data.spriteId      = "player_ship";
+        data.frameCount    = 1;
+        data.frameDuration = 0.08F;
+        data.columns       = 6;
+        data.frameWidth    = 33;
+        data.frameHeight   = 14;
+        data.defaultScaleX = 0.5F;
+        data.defaultScaleY = 0.5F;
+        registry.registerType(24, data);
+    }
+
 } // namespace
 
 void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures, const AssetManifest& manifest)
@@ -112,4 +137,5 @@ void registerEntityTypes(EntityTypeRegistry& registry, TextureManager& textures,
     registerObstacleType(registry, textures, manifest, 9, "obstacle_top");
     registerObstacleType(registry, textures, manifest, 10, "obstacle_middle");
     registerObstacleType(registry, textures, manifest, 11, "obstacle_bottom");
+    registerAllyType(registry, textures, manifest);
 }

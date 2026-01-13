@@ -46,6 +46,11 @@
       "type": "sprite"
     },
     {
+      "id": "ally",
+      "path": "sprites/ally.png",
+      "type": "sprite"
+    },
+    {
       "id": "obstacle_top",
       "path": "sprites/obstacle/top.png",
       "type": "sprite"
@@ -78,6 +83,11 @@
     {
       "id": "diff_custom",
       "path": "other/custom.png",
+      "type": "ui"
+    },
+    {
+      "id": "rank_prey",
+      "path": "ranks/prey.png",
       "type": "ui"
     }
   ],

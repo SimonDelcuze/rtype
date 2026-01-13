@@ -39,7 +39,7 @@ class RoomWaitingMenu : public IMenu
     };
 
     RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId, const std::string& roomName,
-                    std::uint16_t gamePort, bool isHost, LobbyConnection* lobbyConnection);
+                    std::uint16_t gamePort, bool isHost, bool isRanked, LobbyConnection* lobbyConnection);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -89,6 +89,7 @@ class RoomWaitingMenu : public IMenu
     std::string roomName_;
     std::uint16_t gamePort_;
     bool isHost_;
+    bool isRanked_{false};
     std::vector<PlayerInfo> players_;
 
     EntityId backgroundEntity_{0};

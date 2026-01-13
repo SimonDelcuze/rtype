@@ -2,8 +2,15 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 using EntityId = std::uint32_t;
+
+struct PlayerScoreEntry
+{
+    std::uint32_t playerId;
+    int score;
+};
 
 struct EntitySpawnedEvent
 {
@@ -91,7 +98,7 @@ struct LevelCompletedEvent
 struct GameOverEvent
 {
     bool victory;
-    int finalScore;
+    std::vector<PlayerScoreEntry> playerScores;
     int level;
 };
 
