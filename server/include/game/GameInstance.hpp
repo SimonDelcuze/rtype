@@ -35,11 +35,14 @@
 #include <atomic>
 #include <cstdint>
 #include <events/EventBus.hpp>
+#include <functional>
 #include <map>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+using GameEndCallback = std::function<void(std::uint32_t roomId, std::uint32_t playerId, bool isWin, int score)>;
 
 class GameInstance
 {
@@ -56,6 +59,12 @@ class GameInstance
     {
         return roomId_;
     }
+
+    void setGameEndCallback(GameEndCallback callback)
+    {
+        gameEndCallback_ = callback;
+    }
+
     std::uint16_t getPort() const
     {
         return port_;
@@ -184,4 +193,6 @@ class GameInstance
 
     void captureStateSnapshot();
     void handleDesync(const DesyncInfo& desyncInfo);
+
+    GameEndCallback gameEndCallback_;
 };

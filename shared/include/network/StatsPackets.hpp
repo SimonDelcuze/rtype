@@ -114,21 +114,21 @@ inline std::optional<GetStatsResponseData> parseGetStatsResponsePacket(const std
     std::memcpy(stats.username, payload, 32);
     payload += 32;
 
-    stats.gamesPlayed = (static_cast<std::uint32_t>(payload[4]) << 24) |
-                        (static_cast<std::uint32_t>(payload[5]) << 16) | (static_cast<std::uint32_t>(payload[6]) << 8) |
-                        static_cast<std::uint32_t>(payload[7]);
+    stats.gamesPlayed = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                        (static_cast<std::uint32_t>(payload[1]) << 16) | (static_cast<std::uint32_t>(payload[2]) << 8) |
+                        static_cast<std::uint32_t>(payload[3]);
 
-    stats.wins = (static_cast<std::uint32_t>(payload[8]) << 24) | (static_cast<std::uint32_t>(payload[9]) << 16) |
-                 (static_cast<std::uint32_t>(payload[10]) << 8) | static_cast<std::uint32_t>(payload[11]);
+    stats.wins = (static_cast<std::uint32_t>(payload[4]) << 24) | (static_cast<std::uint32_t>(payload[5]) << 16) |
+                 (static_cast<std::uint32_t>(payload[6]) << 8) | static_cast<std::uint32_t>(payload[7]);
 
-    stats.losses = (static_cast<std::uint32_t>(payload[12]) << 24) | (static_cast<std::uint32_t>(payload[13]) << 16) |
-                   (static_cast<std::uint32_t>(payload[14]) << 8) | static_cast<std::uint32_t>(payload[15]);
+    stats.losses = (static_cast<std::uint32_t>(payload[8]) << 24) | (static_cast<std::uint32_t>(payload[9]) << 16) |
+                   (static_cast<std::uint32_t>(payload[10]) << 8) | static_cast<std::uint32_t>(payload[11]);
 
     stats.totalScore =
-        (static_cast<std::uint64_t>(payload[16]) << 56) | (static_cast<std::uint64_t>(payload[17]) << 48) |
-        (static_cast<std::uint64_t>(payload[18]) << 40) | (static_cast<std::uint64_t>(payload[19]) << 32) |
-        (static_cast<std::uint64_t>(payload[20]) << 24) | (static_cast<std::uint64_t>(payload[21]) << 16) |
-        (static_cast<std::uint64_t>(payload[22]) << 8) | static_cast<std::uint64_t>(payload[23]);
+        (static_cast<std::uint64_t>(payload[12]) << 56) | (static_cast<std::uint64_t>(payload[13]) << 48) |
+        (static_cast<std::uint64_t>(payload[14]) << 40) | (static_cast<std::uint64_t>(payload[15]) << 32) |
+        (static_cast<std::uint64_t>(payload[16]) << 24) | (static_cast<std::uint64_t>(payload[17]) << 16) |
+        (static_cast<std::uint64_t>(payload[18]) << 8) | static_cast<std::uint64_t>(payload[19]);
 
     return stats;
 }
