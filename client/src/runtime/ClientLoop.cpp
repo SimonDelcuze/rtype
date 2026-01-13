@@ -9,17 +9,18 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
 {
     NetPipelines net;
     std::uint32_t userId = 0;
-    auto serverEndpoint  = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,
-                                                 broadcastQueue, lastLobbyEndpoint, userId);
-    if (!serverEndpoint) {
+    auto resolution = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                            lastLobbyEndpoint, userId);
+    if (!resolution) {
         return ClientLoopResult{false, 0};
     }
+    const auto& [serverEndpoint, gameMode] = *resolution;
 
     InputBuffer inputBuffer;
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
 
-    if (!setupNetwork(net, inputBuffer, *serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
+    if (!setupNetwork(net, inputBuffer, serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
         broadcastQueue.push(NotificationData{"Failed to setup network", 5.0F});
         return ClientLoopResult{true, std::nullopt};
     }
@@ -44,8 +45,8 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
 
     stopLauncherMusic();
     auto gameResult =
-        runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, window, options, *serverEndpoint, net,
-                       inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
+        runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, gameMode, window, options, serverEndpoint,
+                       net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
     stopNetwork(net, welcomeThread, handshakeDone);
 
     if (gameResult.serverLost) {

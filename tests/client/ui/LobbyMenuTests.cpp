@@ -4,6 +4,7 @@
 #include "ecs/Registry.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "network/RoomType.hpp"
 #include "ui/LobbyMenu.hpp"
 
 #include <atomic>
@@ -40,7 +41,7 @@ class LobbyMenuTest : public ::testing::Test
 
 TEST_F(LobbyMenuTest, CreatePopulatesRegistry)
 {
-    LobbyMenu menu(fonts, textures, lobbyEndpoint, broadcastQueue, running);
+    LobbyMenu menu(fonts, textures, lobbyEndpoint, broadcastQueue, running, RoomType::Quickplay, nullptr);
 
     try {
         menu.create(registry);
@@ -64,7 +65,7 @@ TEST_F(LobbyMenuTest, CreatePopulatesRegistry)
 
 TEST_F(LobbyMenuTest, InitialState)
 {
-    LobbyMenu menu(fonts, textures, lobbyEndpoint, broadcastQueue, running);
+    LobbyMenu menu(fonts, textures, lobbyEndpoint, broadcastQueue, running, RoomType::Quickplay, nullptr);
     auto result = menu.getResult(registry);
 
     EXPECT_FALSE(result.success);

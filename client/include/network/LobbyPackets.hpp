@@ -1,5 +1,7 @@
 #pragma once
 
+#include "network/RoomType.hpp"
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -24,6 +26,7 @@ enum class RoomVisibility : std::uint8_t
 struct RoomInfo
 {
     std::uint32_t roomId;
+    RoomType roomType{RoomType::Quickplay};
     std::uint16_t playerCount;
     std::uint16_t maxPlayers;
     std::uint16_t port;
@@ -33,6 +36,7 @@ struct RoomInfo
     RoomVisibility visibility{RoomVisibility::Public};
     std::string inviteCode;
     std::string roomName{"New Room"};
+    std::uint8_t countdown{0};
 };
 
 struct RoomListResult
@@ -57,6 +61,7 @@ struct PlayerInfo
     std::uint32_t playerId;
     char name[32];
     bool isHost;
+    bool isReady;
 };
 
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence);
@@ -77,3 +82,5 @@ std::optional<JoinSuccessResult> parseJoinSuccessPacket(const std::uint8_t* data
 std::vector<std::uint8_t> buildGetPlayersPacket(std::uint32_t roomId, std::uint16_t sequence);
 
 std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t* data, std::size_t size);
+
+std::vector<std::uint8_t> buildRoomSetReadyPacket(std::uint32_t roomId, bool ready, std::uint16_t sequence);

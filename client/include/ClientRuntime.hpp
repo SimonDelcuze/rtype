@@ -17,6 +17,8 @@
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
 #include "network/ClientInit.hpp"
+#include "network/RoomType.hpp"
+#include "network/UdpSocket.hpp"
 #include "scheduler/GameLoop.hpp"
 
 #include <atomic>
@@ -58,12 +60,13 @@ Window createMainWindow();
 std::optional<IpEndpoint> selectServerEndpoint(Window& window, bool useDefault,
                                                ThreadSafeQueue<NotificationData>& broadcastQueue);
 AssetManifest loadManifest();
-void configureSystems(std::uint32_t localPlayerId, GameLoop& gameLoop, NetPipelines& net, EntityTypeRegistry& types,
-                      const AssetManifest& manifest, TextureManager& textures, AnimationRegistry& animations,
-                      AnimationLabels& labels, LevelState& levelState, InputBuffer& inputBuffer, InputMapper& mapper,
-                      std::uint32_t& inputSequence, float& playerPosX, float& playerPosY, Window& window,
-                      FontManager& fontManager, EventBus& eventBus, GraphicsFactory& graphicsFactory,
-                      SoundManager& soundManager, ThreadSafeQueue<NotificationData>& broadcastQueue);
+void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& gameLoop, NetPipelines& net,
+                      EntityTypeRegistry& types, const AssetManifest& manifest, TextureManager& textures,
+                      AnimationRegistry& animations, AnimationLabels& labels, LevelState& levelState,
+                      InputBuffer& inputBuffer, InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX,
+                      float& playerPosY, Window& window, FontManager& fontManager, EventBus& eventBus,
+                      GraphicsFactory& graphicsFactory, SoundManager& soundManager,
+                      ThreadSafeQueue<NotificationData>& broadcastQueue);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread,
                   ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
@@ -76,21 +79,23 @@ std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontMa
                                              std::string& errorMessage,
                                              ThreadSafeQueue<NotificationData>& broadcastQueue);
 std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          FontManager& fontManager, TextureManager& textureManager,
+                                                          RoomType targetRoomType, FontManager& fontManager,
+                                                          TextureManager& textureManager,
                                                           ThreadSafeQueue<NotificationData>& broadcastQueue,
                                                           class LobbyConnection* authenticatedConnection,
                                                           bool& serverLost);
-std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
-                                                TextureManager& textureManager, std::string& errorMessage,
-                                                ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                std::optional<IpEndpoint>& lastLobbyEndpoint, std::uint32_t& outUserId);
+std::optional<std::pair<IpEndpoint, RoomType>>
+resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
+                      TextureManager& textureManager, std::string& errorMessage,
+                      ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
+                      std::uint32_t& outUserId);
 std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, const ClientOptions& options,
                                      NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone,
                                      std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue);
-GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, const ClientOptions& options,
-                                 const IpEndpoint& serverEndpoint, NetPipelines& net, InputBuffer& inputBuffer,
-                                 TextureManager& textureManager, FontManager& fontManager, std::string& errorMessage,
-                                 ThreadSafeQueue<NotificationData>& broadcastQueue);
+GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode, Window& window,
+                                 const ClientOptions& options, const IpEndpoint& serverEndpoint, NetPipelines& net,
+                                 InputBuffer& inputBuffer, TextureManager& textureManager, FontManager& fontManager,
+                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage,
                                     ThreadSafeQueue<NotificationData>& broadcastQueue,

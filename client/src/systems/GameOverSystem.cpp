@@ -2,12 +2,14 @@
 
 #include "Logger.hpp"
 #include "components/LivesComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "events/GameEvents.hpp"
 
-GameOverSystem::GameOverSystem(EventBus& eventBus) : eventBus_(eventBus)
+GameOverSystem::GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode)
+    : eventBus_(eventBus), localPlayerId_(localPlayerId), gameMode_(gameMode)
 {
     Logger::instance().info("[GameOverSystem] Initialized");
 }
@@ -26,6 +28,18 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
         const auto& tag = registry.get<TagComponent>(id);
 
         if (!tag.hasTag(EntityTag::Player)) {
+            continue;
+        }
+
+        bool isLocalPlayer = false;
+        if (registry.has<OwnershipComponent>(id)) {
+            const auto& owner = registry.get<OwnershipComponent>(id);
+            if (owner.ownerId == localPlayerId_) {
+                isLocalPlayer = true;
+            }
+        }
+
+        if (!isLocalPlayer) {
             continue;
         }
 

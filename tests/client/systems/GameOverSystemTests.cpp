@@ -1,9 +1,11 @@
 #include "components/LivesComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
 #include "events/GameEvents.hpp"
+#include "network/RoomType.hpp"
 #include "systems/GameOverSystem.hpp"
 
 #include <gtest/gtest.h>
@@ -11,7 +13,7 @@
 TEST(GameOverSystemTest, EmitsEventOnZeroLives)
 {
     EventBus eventBus;
-    GameOverSystem system(eventBus);
+    GameOverSystem system(eventBus, 0, RoomType::Quickplay);
     Registry registry;
 
     bool eventEmitted = false;
@@ -23,6 +25,7 @@ TEST(GameOverSystemTest, EmitsEventOnZeroLives)
 
     EntityId player = registry.createEntity();
     registry.emplace<TagComponent>(player, TagComponent::create(EntityTag::Player));
+    registry.emplace<OwnershipComponent>(player, OwnershipComponent::create(0));
     registry.emplace<LivesComponent>(player, LivesComponent::create(0, 3));
     registry.emplace<ScoreComponent>(player, ScoreComponent::create(100));
 
@@ -34,7 +37,7 @@ TEST(GameOverSystemTest, EmitsEventOnZeroLives)
 TEST(GameOverSystemTest, DoesNotEmitIfAlive)
 {
     EventBus eventBus;
-    GameOverSystem system(eventBus);
+    GameOverSystem system(eventBus, 0, RoomType::Quickplay);
     Registry registry;
 
     bool eventEmitted = false;
@@ -42,6 +45,7 @@ TEST(GameOverSystemTest, DoesNotEmitIfAlive)
 
     EntityId player = registry.createEntity();
     registry.emplace<TagComponent>(player, TagComponent::create(EntityTag::Player));
+    registry.emplace<OwnershipComponent>(player, OwnershipComponent::create(0));
     registry.emplace<LivesComponent>(player, LivesComponent::create(3, 3));
 
     system.update(registry, 0.16f);

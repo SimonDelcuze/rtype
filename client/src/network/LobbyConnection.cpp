@@ -139,6 +139,10 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             Logger::instance().warn("[LobbyConnection] Join failed received");
             pendingJoinRoomResult_ = std::nullopt;
         } else if (type == MessageType::RoomPlayerList) {
+            if (recvResult.size >= PacketHeader::kSize + 4 + 1 + 1) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize + 4;
+                currentRoomCountdown_       = payload[0];
+            }
             auto pkt = parsePlayerListPacket(buffer.data(), recvResult.size);
             if (pkt.has_value())
                 pendingPlayerListResult_ = pkt;
@@ -227,6 +231,12 @@ void LobbyConnection::sendRoomConfig(std::uint32_t roomId, RoomDifficulty mode, 
     packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
 
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+}
+
+void LobbyConnection::sendSetReady(std::uint32_t roomId, bool ready)
+{
+    auto packet = buildRoomSetReadyPacket(roomId, ready, nextSequence_++);
     socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
 }
 
