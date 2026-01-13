@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "components/AllyComponent.hpp"
+#include "components/Components.hpp"
 #include "components/InvincibilityComponent.hpp"
 #include "components/LivesComponent.hpp"
 #include "components/RespawnTimerComponent.hpp"
@@ -616,6 +617,10 @@ void GameInstance::handleDeathAndRespawn()
                 if (lives.current > 0) {
                     if (!registry_.has<RespawnTimerComponent>(id)) {
                         lives.loseLife();
+                        if (isPlayer) {
+                            Logger::instance().warn("[Game] Player Entity " + std::to_string(id) +
+                                                    " lost a life. Remaining: " + std::to_string(lives.current));
+                        }
                         if (isPlayer && hadTransform) {
                             deathFxToSpawn.emplace_back(deathX, deathY);
                         }
@@ -629,6 +634,34 @@ void GameInstance::handleDeathAndRespawn()
                             v.vy    = 0.0F;
                         }
 
+                        if (lives.current == 0 && !gameEnded_) {
+                            bool anyAlive = false;
+                            for (const auto& [pId, eId] : playerEntities_) {
+                                if (registry_.has<LivesComponent>(eId)) {
+                                    if (registry_.get<LivesComponent>(eId).current > 0) {
+                                        anyAlive = true;
+                                        break;
+                                    }
+                                } else if (registry_.isAlive(eId)) {
+                                    anyAlive = true;
+                                    break;
+                                }
+                            }
+
+                            if (!anyAlive) {
+                                gameEnded_ = true;
+                                if (gameEndCallback_) {
+                                    for (const auto& [pId, eId] : playerEntities_) {
+                                        int scoreVal = 0;
+                                        if (registry_.has<ScoreComponent>(eId)) {
+                                            scoreVal = registry_.get<ScoreComponent>(eId).value;
+                                        }
+                                        gameEndCallback_(roomId_, pId, false, scoreVal);
+                                    }
+                                }
+                            }
+                        }
+
                         if (isPlayer && registry_.has<OwnershipComponent>(id)) {
                             std::uint32_t playerId = registry_.get<OwnershipComponent>(id).ownerId;
                             for (EntityId allyId : registry_.view<AllyComponent>()) {
@@ -640,13 +673,13 @@ void GameInstance::handleDeathAndRespawn()
                                         const auto& allyT = registry_.get<TransformComponent>(allyId);
                                         deathFxToSpawn.emplace_back(allyT.x, allyT.y);
                                     }
-                                    EntityDestroyedPacket pkt{};
-                                    pkt.entityId = allyId;
-                                    sendThread_.broadcast(pkt);
-                                    registry_.destroyEntity(allyId);
-                                    Logger::instance().info("[Ally] Destroyed ally for player " +
-                                                            std::to_string(playerId) + " due to death");
-                                    break;
+                                    if (!registry_.has<RespawnTimerComponent>(allyId)) {
+                                        registry_.emplace<RespawnTimerComponent>(
+                                            allyId, RespawnTimerComponent::create(kRespawnDelay));
+                                        if (registry_.has<TransformComponent>(allyId)) {
+                                            registry_.get<TransformComponent>(allyId).y = kOffscreenRespawnPlaceholder;
+                                        }
+                                    }
                                 }
                             }
                         }

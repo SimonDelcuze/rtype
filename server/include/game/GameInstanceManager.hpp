@@ -40,6 +40,11 @@ class GameInstanceManager
 
     void setRoomConfig(std::uint32_t roomId, const RoomConfig& config);
 
+    void setGameEndCallback(GameEndCallback callback)
+    {
+        gameEndCallback_ = callback;
+    }
+
   private:
     std::uint16_t basePort_;
     std::uint32_t maxInstances_;
@@ -47,4 +52,5 @@ class GameInstanceManager
     std::atomic<bool>* running_{nullptr};
     mutable std::mutex instancesMutex_;
     std::map<std::uint32_t, std::unique_ptr<GameInstance>> instances_;
+    GameEndCallback gameEndCallback_;
 };

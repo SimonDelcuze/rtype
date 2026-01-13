@@ -36,6 +36,7 @@ void MonsterSpawnSystem::update(Registry& registry, float deltaTime)
         registry.emplace<HealthComponent>(e, HealthComponent::create(ev.health));
         registry.emplace<HitboxComponent>(e, ev.hitbox);
         registry.emplace<ColliderComponent>(e, ev.collider);
+        registry.emplace<ScoreValueComponent>(e, ScoreValueComponent::create(100));
         if (ev.shootingEnabled) {
             registry.emplace<EnemyShootingComponent>(e, ev.shooting);
         }

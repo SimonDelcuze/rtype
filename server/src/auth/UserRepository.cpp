@@ -164,17 +164,17 @@ std::optional<UserStats> UserRepository::getUserStats(std::uint32_t userId)
 bool UserRepository::updateUserStats(std::uint32_t userId, std::uint32_t gamesPlayed, std::uint32_t wins,
                                      std::uint32_t losses, std::uint64_t totalScore)
 {
-    auto stmt =
-        db_->prepare("UPDATE user_stats SET games_played = ?, wins = ?, losses = ?, total_score = ? WHERE user_id = ?");
+    auto stmt = db_->prepare("INSERT OR REPLACE INTO user_stats (user_id, games_played, wins, losses, total_score) "
+                             "VALUES (?, ?, ?, ?, ?)");
     if (!stmt.has_value()) {
         return false;
     }
 
-    stmt->bind(1, gamesPlayed);
-    stmt->bind(2, wins);
-    stmt->bind(3, losses);
-    stmt->bind(4, static_cast<std::int64_t>(totalScore));
-    stmt->bind(5, userId);
+    stmt->bind(1, userId);
+    stmt->bind(2, gamesPlayed);
+    stmt->bind(3, wins);
+    stmt->bind(4, losses);
+    stmt->bind(5, static_cast<std::int64_t>(totalScore));
 
     return stmt->step();
 }

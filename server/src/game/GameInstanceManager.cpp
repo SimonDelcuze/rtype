@@ -27,6 +27,12 @@ std::optional<std::uint32_t> GameInstanceManager::createInstance(const RoomConfi
 
     auto instance = std::make_unique<GameInstance>(roomId, instancePort, *running_);
     instance->setRoomConfig(config);
+    if (gameEndCallback_) {
+        Logger::instance().warn("[GameInstanceManager] Setting GameEndCallback for Room " + std::to_string(roomId));
+        instance->setGameEndCallback(gameEndCallback_);
+    } else {
+        Logger::instance().warn("[GameInstanceManager] gameEndCallback_ is NULL for Room " + std::to_string(roomId));
+    }
 
     if (!instance->start()) {
         Logger::instance().error("[InstanceManager] Failed to start instance " + std::to_string(roomId));

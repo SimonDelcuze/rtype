@@ -11,6 +11,7 @@
 #include "simulation/PlayerCommand.hpp"
 
 #include <algorithm>
+#include <iostream>
 
 void GameInstance::updateNetworkStats(float dt)
 {
@@ -93,6 +94,16 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
             if (!gameEnded_) {
                 gameEnded_ = true;
                 logInfo("[Game] Safe zone reached! Broadcasting GameEnd packets.");
+
+                if (gameEndCallback_) {
+                    for (const auto& [playerId, entityId] : playerEntities_) {
+                        int scoreVal = 0;
+                        if (registry_.has<ScoreComponent>(entityId)) {
+                            scoreVal = registry_.get<ScoreComponent>(entityId).value;
+                        }
+                        gameEndCallback_(roomId_, playerId, true, scoreVal);
+                    }
+                }
             }
 
             if (currentTick_ % 10 == 0) {
@@ -121,8 +132,53 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
         updateRespawnTimers(deltaTime);
         updateInvincibilityTimers(deltaTime);
 
-        cleanupExpiredMissiles(deltaTime);
         cleanupOffscreenEntities();
+
+        if (!gameEnded_ && !playerEntities_.empty()) {
+            bool allDead = true;
+            for (const auto& [playerId, entityId] : playerEntities_) {
+                if (registry_.has<LivesComponent>(entityId)) {
+                    const auto& lives = registry_.get<LivesComponent>(entityId);
+                    if (lives.current > 0) {
+                        allDead = false;
+                        break;
+                    }
+                } else if (registry_.isAlive(entityId)) {
+                    allDead = false;
+                    break;
+                }
+            }
+
+            if (allDead) {
+                gameEnded_ = true;
+                Logger::instance().warn("[GameInstance] Loss detected! Callback present? " +
+                                        std::string(gameEndCallback_ ? "YES" : "NO"));
+                if (gameEndCallback_) {
+                    for (const auto& [playerId, entityId] : playerEntities_) {
+                        int scoreVal = 0;
+                        if (registry_.has<ScoreComponent>(entityId)) {
+                            scoreVal = registry_.get<ScoreComponent>(entityId).value;
+                        }
+                        Logger::instance().warn("[GameInstance] Invoking callback for player " +
+                                                std::to_string(playerId));
+                        gameEndCallback_(roomId_, playerId, false, scoreVal);
+                    }
+                }
+
+                std::vector<PlayerScore> scores;
+                for (const auto& [playerId, entityId] : playerEntities_) {
+                    int scoreVal = 0;
+                    if (registry_.has<ScoreComponent>(entityId)) {
+                        scoreVal = registry_.get<ScoreComponent>(entityId).value;
+                    }
+                    scores.push_back({playerId, scoreVal});
+                }
+                auto pkt = GameEndPacket::create(false, scores);
+                for (const auto& c : clients_) {
+                    sendThread_.sendTo(pkt, c);
+                }
+            }
+        }
     }
 }
 
