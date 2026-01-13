@@ -34,11 +34,12 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
 
         if (lives.isDead()) {
             GameOverEvent event{};
-            event.victory    = false;
-            event.finalScore = 0;
+            event.victory = false;
+            int score     = 0;
             if (registry.has<ScoreComponent>(id)) {
-                event.finalScore = registry.get<ScoreComponent>(id).value;
+                score = registry.get<ScoreComponent>(id).value;
             }
+            event.playerScores.push_back({static_cast<std::uint32_t>(id), score});
             event.level = 1;
             eventBus_.emit(std::move(event));
             gameOverTriggered_ = true;

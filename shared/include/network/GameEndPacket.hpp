@@ -7,24 +7,43 @@
 #include <optional>
 #include <vector>
 
+struct PlayerScore
+{
+    std::uint32_t playerId;
+    std::int32_t score;
+};
+
 class GameEndPacket
 {
   public:
-    inline static std::vector<std::uint8_t> create(bool victory, std::int32_t finalScore)
+    inline static std::vector<std::uint8_t> create(bool victory, const std::vector<PlayerScore>& playerScores)
     {
         PacketHeader header;
-        header.packetType   = static_cast<std::uint8_t>(PacketType::ServerToClient);
-        header.messageType  = static_cast<std::uint8_t>(MessageType::GameEnd);
-        header.payloadSize  = 5;
-        header.originalSize = 5;
+        header.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
+        header.messageType = static_cast<std::uint8_t>(MessageType::GameEnd);
+
+        std::uint8_t playerCount =
+            static_cast<std::uint8_t>(std::min(playerScores.size(), static_cast<std::size_t>(255)));
+        std::size_t payloadSize = 2 + (playerCount * 8);
+        header.payloadSize      = static_cast<std::uint16_t>(payloadSize);
+        header.originalSize     = static_cast<std::uint16_t>(payloadSize);
 
         std::vector<std::uint8_t> payload;
-        payload.reserve(5);
+        payload.reserve(payloadSize);
         payload.push_back(victory ? 1 : 0);
-        payload.push_back(static_cast<std::uint8_t>((finalScore >> 24) & 0xFF));
-        payload.push_back(static_cast<std::uint8_t>((finalScore >> 16) & 0xFF));
-        payload.push_back(static_cast<std::uint8_t>((finalScore >> 8) & 0xFF));
-        payload.push_back(static_cast<std::uint8_t>(finalScore & 0xFF));
+        payload.push_back(playerCount);
+
+        for (std::size_t i = 0; i < playerCount; ++i) {
+            const auto& ps = playerScores[i];
+            payload.push_back(static_cast<std::uint8_t>((ps.playerId >> 24) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>((ps.playerId >> 16) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>((ps.playerId >> 8) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>(ps.playerId & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>((ps.score >> 24) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>((ps.score >> 16) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>((ps.score >> 8) & 0xFF));
+            payload.push_back(static_cast<std::uint8_t>(ps.score & 0xFF));
+        }
 
         auto headerBytes = header.encode();
         std::vector<std::uint8_t> packet(headerBytes.begin(), headerBytes.end());
@@ -41,7 +60,7 @@ class GameEndPacket
 
     static std::optional<GameEndPacket> decode(const std::uint8_t* data, std::size_t len)
     {
-        if (len < PacketHeader::kSize + 5 + PacketHeader::kCrcSize) {
+        if (len < PacketHeader::kSize + 2 + PacketHeader::kCrcSize) {
             return std::nullopt;
         }
         auto header = PacketHeader::decode(data, len);
@@ -53,12 +72,32 @@ class GameEndPacket
         std::size_t offset = PacketHeader::kSize;
         pkt.victory        = data[offset] != 0;
         offset++;
-        pkt.finalScore =
-            (static_cast<std::int32_t>(data[offset]) << 24) | (static_cast<std::int32_t>(data[offset + 1]) << 16) |
-            (static_cast<std::int32_t>(data[offset + 2]) << 8) | static_cast<std::int32_t>(data[offset + 3]);
+
+        std::uint8_t playerCount = data[offset];
+        offset++;
+
+        if (len < PacketHeader::kSize + 2 + (playerCount * 8) + PacketHeader::kCrcSize) {
+            return std::nullopt;
+        }
+
+        pkt.playerScores.reserve(playerCount);
+        for (std::uint8_t i = 0; i < playerCount; ++i) {
+            PlayerScore ps;
+            ps.playerId = (static_cast<std::uint32_t>(data[offset]) << 24) |
+                          (static_cast<std::uint32_t>(data[offset + 1]) << 16) |
+                          (static_cast<std::uint32_t>(data[offset + 2]) << 8) |
+                          static_cast<std::uint32_t>(data[offset + 3]);
+            offset += 4;
+            ps.score = (static_cast<std::int32_t>(data[offset]) << 24) |
+                       (static_cast<std::int32_t>(data[offset + 1]) << 16) |
+                       (static_cast<std::int32_t>(data[offset + 2]) << 8) | static_cast<std::int32_t>(data[offset + 3]);
+            offset += 4;
+            pkt.playerScores.push_back(ps);
+        }
+
         return pkt;
     }
 
     bool victory;
-    std::int32_t finalScore;
+    std::vector<PlayerScore> playerScores;
 };

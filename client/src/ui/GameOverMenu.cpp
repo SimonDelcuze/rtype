@@ -10,6 +10,8 @@
 #include "graphics/GraphicsFactory.hpp"
 #include "graphics/abstraction/Common.hpp"
 
+#include <algorithm>
+
 namespace
 {
     EntityId createBackground(Registry& registry, bool victory)
@@ -59,10 +61,31 @@ namespace
         return entity;
     }
 
+    EntityId createLeaderboardEntry(Registry& registry, float y, int rank, std::uint32_t playerId, int score)
+    {
+        EntityId entity = registry.createEntity();
+        auto& transform = registry.emplace<TransformComponent>(entity);
+        transform.x     = 340.0F;
+        transform.y     = y;
+
+        std::string content = "#" + std::to_string(rank) + "   Player " + std::to_string(playerId) + "   -   " +
+                              std::to_string(score) + " pts";
+
+        Color color  = (rank == 1)   ? Color{255, 215, 0}
+                       : (rank == 2) ? Color{192, 192, 192}
+                       : (rank == 3) ? Color{205, 127, 50}
+                                     : Color::White;
+        auto text    = TextComponent::create("ui", 28, color);
+        text.content = content;
+        registry.emplace<TextComponent>(entity, text);
+        registry.emplace<LayerComponent>(entity, LayerComponent::create(101));
+        return entity;
+    }
+
 } // namespace
 
-GameOverMenu::GameOverMenu(FontManager& fonts, int finalScore, bool victory)
-    : fonts_(fonts), finalScore_(finalScore), victory_(victory)
+GameOverMenu::GameOverMenu(FontManager& fonts, const std::vector<PlayerScoreEntry>& playerScores, bool victory)
+    : fonts_(fonts), playerScores_(playerScores), victory_(victory)
 {}
 
 void GameOverMenu::create(Registry& registry)
@@ -75,17 +98,38 @@ void GameOverMenu::create(Registry& registry)
 
     std::string titleStr = victory_ ? "WIN" : "GAME OVER";
     Color titleColor     = victory_ ? Color::Green : Color::Red;
-    titleText_           = createCenteredText(registry, 150.0F, titleStr, 72, titleColor, 101);
+    titleText_           = createCenteredText(registry, 80.0F, titleStr, 72, titleColor, 101);
 
-    scoreText_ = createCenteredText(registry, 250.0F, "Score: " + std::to_string(finalScore_), 36, Color::White, 101);
+    std::vector<PlayerScoreEntry> sortedScores = playerScores_;
+    std::sort(sortedScores.begin(), sortedScores.end(),
+              [](const PlayerScoreEntry& a, const PlayerScoreEntry& b) { return a.score > b.score; });
+
+    auto headerText = createCenteredText(registry, 160.0F, "LEADERBOARD", 36, Color::White, 101);
+    leaderboardTexts_.push_back(headerText);
+
+    float startY           = 210.0F;
+    float entryHeight      = 45.0F;
+    std::size_t maxEntries = std::min(sortedScores.size(), static_cast<std::size_t>(5));
+
+    for (std::size_t i = 0; i < maxEntries; ++i) {
+        EntityId entryId = createLeaderboardEntry(registry, startY + (i * entryHeight), static_cast<int>(i + 1),
+                                                  sortedScores[i].playerId, sortedScores[i].score);
+        leaderboardTexts_.push_back(entryId);
+    }
+
+    float buttonY = startY + (maxEntries * entryHeight) + 40.0F;
+    if (buttonY < 400.0F) {
+        buttonY = 400.0F;
+    }
 
     retryButton_ =
-        createCenteredButton(registry, 350.0F, "Retry", Color{50, 150, 50}, [this]() { onRetryClicked(); }, 101);
+        createCenteredButton(registry, buttonY, "Retry", Color{50, 150, 50}, [this]() { onRetryClicked(); }, 101);
 
     quitButton_ =
-        createCenteredButton(registry, 430.0F, "Quit", Color{150, 50, 50}, [this]() { onQuitClicked(); }, 101);
+        createCenteredButton(registry, buttonY + 80.0F, "Quit", Color{150, 50, 50}, [this]() { onQuitClicked(); }, 101);
 
-    Logger::instance().info("[GameOverMenu] Created game over screen");
+    Logger::instance().info("[GameOverMenu] Created game over screen with " + std::to_string(sortedScores.size()) +
+                            " player(s)");
 }
 
 void GameOverMenu::destroy(Registry& registry)
@@ -96,9 +140,12 @@ void GameOverMenu::destroy(Registry& registry)
     if (registry.isAlive(titleText_)) {
         registry.destroyEntity(titleText_);
     }
-    if (registry.isAlive(scoreText_)) {
-        registry.destroyEntity(scoreText_);
+    for (EntityId textId : leaderboardTexts_) {
+        if (registry.isAlive(textId)) {
+            registry.destroyEntity(textId);
+        }
     }
+    leaderboardTexts_.clear();
     if (registry.isAlive(retryButton_)) {
         registry.destroyEntity(retryButton_);
     }
@@ -125,7 +172,11 @@ void GameOverMenu::render(Registry& registry, Window& window)
 
     renderRectangle(registry, backgroundRect_, window);
     renderText(registry, titleText_, window);
-    renderText(registry, scoreText_, window);
+
+    for (EntityId textId : leaderboardTexts_) {
+        renderText(registry, textId, window);
+    }
+
     renderButton(registry, retryButton_, window, 70.0F, 15.0F);
     renderButton(registry, quitButton_, window, 75.0F, 15.0F);
 }

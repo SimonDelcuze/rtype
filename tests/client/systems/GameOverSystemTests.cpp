@@ -18,7 +18,8 @@ TEST(GameOverSystemTest, EmitsEventOnZeroLives)
     eventBus.subscribe<GameOverEvent>([&](const GameOverEvent& event) {
         eventEmitted = true;
         EXPECT_FALSE(event.victory);
-        EXPECT_EQ(event.finalScore, 100);
+        ASSERT_EQ(event.playerScores.size(), 1);
+        EXPECT_EQ(event.playerScores[0].score, 100);
     });
 
     EntityId player = registry.createEntity();

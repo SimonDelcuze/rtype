@@ -142,8 +142,8 @@ namespace
     struct GameState
     {
         bool gameOverTriggered = false;
-        int finalScore         = 0;
-        bool victory           = false;
+        std::vector<PlayerScoreEntry> playerScores;
+        bool victory = false;
     };
 
     void sendDisconnectPacket(const IpEndpoint& serverEndpoint, NetPipelines& net)
@@ -197,7 +197,11 @@ namespace
                 GameEndPacket gameEndPkt;
                 while (net.handler->getGameEndQueue().tryPop(gameEndPkt)) {
                     Logger::instance().info("[RunClientFlow] Popped GameEndPacket from queue. Emitting event.");
-                    eventBus.emit(GameOverEvent{gameEndPkt.victory, gameEndPkt.finalScore, 1});
+                    std::vector<PlayerScoreEntry> entries;
+                    for (const auto& ps : gameEndPkt.playerScores) {
+                        entries.push_back({ps.playerId, ps.score});
+                    }
+                    eventBus.emit(GameOverEvent{gameEndPkt.victory, entries, 1});
                 }
             }
 
@@ -243,9 +247,10 @@ namespace
     }
 
     GameOverMenu::Result runGameOverMenu(Window& window, Registry& registry, FontManager& fontManager,
-                                         ButtonSystem& buttonSystem, int finalScore, bool victory)
+                                         ButtonSystem& buttonSystem, const std::vector<PlayerScoreEntry>& playerScores,
+                                         bool victory)
     {
-        GameOverMenu gameOverMenu(fontManager, finalScore, victory);
+        GameOverMenu gameOverMenu(fontManager, playerScores, victory);
         gameOverMenu.create(registry);
 
         g_running     = true;
@@ -346,7 +351,7 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
         Logger::instance().info("[RunClientFlow] GameOverEvent received. Victory: " +
                                 (event.victory ? std::string("true") : std::string("false")));
         gameState.gameOverTriggered = true;
-        gameState.finalScore        = event.finalScore;
+        gameState.playerScores      = event.playerScores;
         gameState.victory           = event.victory;
         g_running                   = false;
     });
@@ -371,7 +376,7 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, Window& window, co
 
     if (gameState.gameOverTriggered) {
         auto result =
-            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.finalScore, gameState.victory);
+            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores, gameState.victory);
         if (result == GameOverMenu::Result::Retry) {
             return GameSessionResult{true, serverLost, std::nullopt};
         }

@@ -90,18 +90,23 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
 
         if (levelDirector_->isSafeZoneActive()) {
             processAllyPurchase(commands);
-            if (levelDirector_->finished()) {
-                if (!gameEnded_) {
-                    gameEnded_ = true;
-                    logInfo("[Game] Level finished! Starting to broadcast GameEnd packets.");
-                }
+            if (!gameEnded_) {
+                gameEnded_ = true;
+                logInfo("[Game] Safe zone reached! Broadcasting GameEnd packets.");
+            }
 
-                if (currentTick_ % 10 == 0) {
-                    auto pkt   = GameEndPacket::create(true, 1000);
-                    auto bytes = pkt;
-                    for (const auto& c : clients_) {
-                        sendThread_.sendTo(bytes, c);
+            if (currentTick_ % 10 == 0) {
+                std::vector<PlayerScore> scores;
+                for (const auto& [playerId, entityId] : playerEntities_) {
+                    int scoreVal = 0;
+                    if (registry_.has<ScoreComponent>(entityId)) {
+                        scoreVal = registry_.get<ScoreComponent>(entityId).value;
                     }
+                    scores.push_back({playerId, scoreVal});
+                }
+                auto pkt = GameEndPacket::create(true, scores);
+                for (const auto& c : clients_) {
+                    sendThread_.sendTo(pkt, c);
                 }
             }
         } else {
