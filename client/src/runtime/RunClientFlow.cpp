@@ -25,6 +25,7 @@
 #include "ui/GameOverMenu.hpp"
 #include "ui/MenuRunner.hpp"
 #include "ui/ModeSelectMenu.hpp"
+#include "ui/PauseMenu.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -191,10 +192,15 @@ namespace
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
                          bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue,
-                         const IpEndpoint& serverEndpoint)
+                         const IpEndpoint& serverEndpoint, FontManager& fontManager)
     {
+        bool pauseMenuActive = false;
+        std::unique_ptr<PauseMenu> pauseMenu;
+
         auto onEvent = [&](const Event& event) {
-            mapper.handleEvent(event);
+            if (!pauseMenuActive) {
+                mapper.handleEvent(event);
+            }
             buttonSystem.handleEvent(registry, event);
         };
         (void) errorMessage;
@@ -204,12 +210,46 @@ namespace
         auto lastTime       = std::chrono::steady_clock::now();
         while (window.isOpen() && g_running && sessionRunning) {
             window.pollEvents([&](const Event& event) {
-                onEvent(event);
                 if (event.type == EventType::Closed) {
                     g_running = false;
                     window.close();
+                    return;
+                }
+
+                if (event.type == EventType::KeyPressed && event.key.code == KeyCode::Escape) {
+                    if (!pauseMenuActive) {
+                        pauseMenuActive = true;
+                        pauseMenu       = std::make_unique<PauseMenu>(fontManager);
+                        pauseMenu->create(registry);
+                        Logger::instance().info("[RunClientFlow] Pause menu opened");
+                    } else if (pauseMenu) {
+                        pauseMenu->handleEvent(registry, event);
+                    }
+                    return;
+                }
+
+                if (pauseMenuActive && pauseMenu) {
+                    pauseMenu->handleEvent(registry, event);
+                    buttonSystem.handleEvent(registry, event);
+                } else {
+                    onEvent(event);
                 }
             });
+
+            if (pauseMenuActive && pauseMenu && pauseMenu->isDone()) {
+                auto result = pauseMenu->getResult();
+                pauseMenu->destroy(registry);
+                pauseMenu.reset();
+                pauseMenuActive = false;
+
+                if (result == PauseMenu::Result::Quit) {
+                    Logger::instance().info("[RunClientFlow] User quit from pause menu");
+                    g_running      = false;
+                    sessionRunning = false;
+                    continue;
+                }
+                Logger::instance().info("[RunClientFlow] Resumed from pause menu");
+            }
 
             if (net.handler) {
                 net.handler->poll();
@@ -268,6 +308,11 @@ namespace
             window.clear();
             gameLoop.update(registry, deltaTime);
             eventBus.process();
+
+            if (pauseMenuActive && pauseMenu) {
+                pauseMenu->render(registry, window);
+            }
+
             window.display();
         }
     }
@@ -395,7 +440,7 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
 
     bool disconnected = false;
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
-                    serverLost, broadcastQueue, serverEndpoint);
+                    serverLost, broadcastQueue, serverEndpoint, fontManager);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
