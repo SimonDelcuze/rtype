@@ -191,8 +191,9 @@ namespace
 
     void runMainGameLoop(Window& window, GameLoop& gameLoop, Registry& registry, EventBus& eventBus,
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
-                         bool& disconnected, bool& serverLost, ThreadSafeQueue<NotificationData>& broadcastQueue,
-                         const IpEndpoint& serverEndpoint, FontManager& fontManager)
+                         bool& disconnected, bool& serverLost, bool& pauseMenuQuit,
+                         ThreadSafeQueue<NotificationData>& broadcastQueue, const IpEndpoint& serverEndpoint,
+                         FontManager& fontManager)
     {
         bool pauseMenuActive = false;
         std::unique_ptr<PauseMenu> pauseMenu;
@@ -243,8 +244,8 @@ namespace
                 pauseMenuActive = false;
 
                 if (result == PauseMenu::Result::Quit) {
-                    Logger::instance().info("[RunClientFlow] User quit from pause menu");
-                    g_running      = false;
+                    Logger::instance().info("[RunClientFlow] User quit from pause menu - returning to lobby");
+                    pauseMenuQuit  = true;
                     sessionRunning = false;
                     continue;
                 }
@@ -438,12 +439,17 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
 
     ButtonSystem buttonSystem(window, fontManager);
 
-    bool disconnected = false;
+    bool disconnected  = false;
+    bool pauseMenuQuit = false;
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
-                    serverLost, broadcastQueue, serverEndpoint, fontManager);
+                    serverLost, pauseMenuQuit, broadcastQueue, serverEndpoint, fontManager);
 
     sendDisconnectPacket(serverEndpoint, net);
     gameLoop.stop();
+
+    if (pauseMenuQuit) {
+        return GameSessionResult{true, serverLost, std::nullopt};
+    }
 
     if (gameState.gameOverTriggered) {
         auto result =
