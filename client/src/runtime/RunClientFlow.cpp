@@ -480,9 +480,8 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
     }
 
     if (gameState.gameOverTriggered) {
-        auto result =
-            runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores, gameState.victory,
-                           serverEndpoint, net);
+        auto result = runGameOverMenu(window, registry, fontManager, buttonSystem, gameState.playerScores,
+                                      gameState.victory, serverEndpoint, net);
         if (result == GameOverMenu::Result::Retry) {
             Logger::instance().info("[GameSession] Player chose Retry - returning to lobby");
             sendDisconnectPacket(serverEndpoint, net);
