@@ -128,8 +128,6 @@ void PauseMenu::handleEvent(Registry&, const Event& event)
 
 void PauseMenu::render(Registry& registry, Window& window)
 {
-    // Background and box rectangles are rendered by the RenderSystem via their BoxComponents
-    // We just render text manually to ensure proper layer ordering
     renderRectangle(registry, backgroundOverlay_, window);
     renderRectangle(registry, menuBox_, window);
     renderText(registry, titleText_, window);
@@ -139,7 +137,6 @@ void PauseMenu::render(Registry& registry, Window& window)
 
 void PauseMenu::renderRectangle(Registry& registry, EntityId entityId, Window& window)
 {
-    // No-op: BoxComponent rendering is handled by RenderSystem
     if (registry.isAlive(entityId) && registry.has<BoxComponent>(entityId)) {
         (void) window;
     }
@@ -168,7 +165,6 @@ void PauseMenu::renderText(Registry& registry, EntityId entityId, Window& window
 void PauseMenu::renderButton(Registry& registry, EntityId entityId, Window& window, float labelOffsetX,
                              float labelOffsetY)
 {
-    // Only render button label - box is rendered by RenderSystem
     if (registry.isAlive(entityId) && registry.has<ButtonComponent>(entityId)) {
         const auto& transform = registry.get<TransformComponent>(entityId);
         const auto& button    = registry.get<ButtonComponent>(entityId);
