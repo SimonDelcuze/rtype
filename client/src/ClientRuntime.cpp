@@ -33,9 +33,8 @@ int runClient(const ClientOptions& options)
 
     while (window.isOpen() && g_running) {
         Logger::instance().info("[Client] Starting new iteration...");
-        ClientLoopResult result =
-            runClientIteration(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
-                               lastLobbyEndpoint, &preservedAuth);
+        ClientLoopResult result = runClientIteration(options, window, fontManager, textureManager, errorMessage,
+                                                     broadcastQueue, lastLobbyEndpoint, &preservedAuth);
         if (result.exitCode.has_value())
             return *result.exitCode;
         if (!result.continueLoop)

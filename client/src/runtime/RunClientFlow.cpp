@@ -77,7 +77,7 @@ std::optional<IpEndpoint> resolveServerEndpoint(const ClientOptions& options, Wi
                 }
 
                 Logger::instance().info("[Auth] Silent re-authentication successful: " + preservedAuth->username);
-                outUserId = preservedAuth->userId;
+                outUserId            = preservedAuth->userId;
                 preservedAuth->token = loginResult->token;
             } else {
                 Logger::instance().info("[Auth] Starting authentication flow");

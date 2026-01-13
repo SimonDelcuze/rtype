@@ -6,15 +6,14 @@
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage,
                                     ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                    std::optional<IpEndpoint>& lastLobbyEndpoint,
-                                    AuthResult* preservedAuth)
+                                    std::optional<IpEndpoint>& lastLobbyEndpoint, AuthResult* preservedAuth)
 {
     NetPipelines net;
     std::uint32_t userId;
     std::optional<IpEndpoint> serverEndpoint;
 
-    serverEndpoint = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage,
-                                           broadcastQueue, lastLobbyEndpoint, userId, preservedAuth);
+    serverEndpoint = resolveServerEndpoint(options, window, fontManager, textureManager, errorMessage, broadcastQueue,
+                                           lastLobbyEndpoint, userId, preservedAuth);
     if (!serverEndpoint) {
         return ClientLoopResult{false, std::nullopt, std::nullopt, std::nullopt};
     }

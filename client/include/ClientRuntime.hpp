@@ -51,7 +51,7 @@ struct GameSessionResult
 
 struct ClientLoopResult
 {
-    bool continueLoop        = false;
+    bool continueLoop = false;
     std::optional<int> exitCode;
     std::optional<std::uint32_t> preservedUserId;
     std::optional<IpEndpoint> preservedServerEndpoint;
