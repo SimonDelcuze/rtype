@@ -1,4 +1,5 @@
 #include "components/LivesComponent.hpp"
+#include "components/OwnershipComponent.hpp"
 #include "components/ScoreComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TextComponent.hpp"
@@ -29,6 +30,7 @@ TEST_F(HUDSystemFixture, UpdatesScoreContent)
     auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, Color::White));
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Player));
     registry.emplace<ScoreComponent>(e, ScoreComponent::create(123));
+    registry.emplace<OwnershipComponent>(e, OwnershipComponent::create(0));
 
     system.update(registry, 0.0F);
 
@@ -43,6 +45,7 @@ TEST_F(HUDSystemFixture, PrefersScoreOverLivesWhenBothPresent)
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Player));
     registry.emplace<ScoreComponent>(e, ScoreComponent::create(10));
     registry.emplace<LivesComponent>(e, LivesComponent::create(1, 3));
+    registry.emplace<OwnershipComponent>(e, OwnershipComponent::create(0));
 
     system.update(registry, 0.0F);
 
@@ -56,6 +59,7 @@ TEST_F(HUDSystemFixture, UpdatesAfterScoreChange)
     auto& text = registry.emplace<TextComponent>(e, TextComponent::create("", 20, Color::White));
     registry.emplace<TagComponent>(e, TagComponent::create(EntityTag::Player));
     auto& score = registry.emplace<ScoreComponent>(e, ScoreComponent::create(50));
+    registry.emplace<OwnershipComponent>(e, OwnershipComponent::create(0));
 
     system.update(registry, 0.0F);
     EXPECT_EQ(text.content, "SCORE 0000050");
