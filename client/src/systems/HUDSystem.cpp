@@ -166,20 +166,11 @@ void HUDSystem::update(Registry& registry, float)
     }
     int playerScore = 0;
 
-    if (gameMode_ == RoomType::Ranked) {
-        for (EntityId id : registry.view<ScoreComponent, OwnershipComponent>()) {
-            const auto& owner = registry.get<OwnershipComponent>(id);
-            if (owner.ownerId == localPlayerId_) {
-                playerScore = registry.get<ScoreComponent>(id).value;
-                break;
-            }
-        }
-    } else {
-        for (EntityId id : registry.view<ScoreComponent, TagComponent>()) {
-            const auto& tag = registry.get<TagComponent>(id);
-            if (tag.hasTag(EntityTag::Player)) {
-                playerScore += registry.get<ScoreComponent>(id).value;
-            }
+    for (EntityId id : registry.view<ScoreComponent, OwnershipComponent>()) {
+        const auto& owner = registry.get<OwnershipComponent>(id);
+        if (owner.ownerId == localPlayerId_) {
+            playerScore = registry.get<ScoreComponent>(id).value;
+            break;
         }
     }
 
