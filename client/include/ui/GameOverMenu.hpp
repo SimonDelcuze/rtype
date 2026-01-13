@@ -1,8 +1,11 @@
 #pragma once
 
+#include "events/GameEvents.hpp"
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "ui/IMenu.hpp"
+
+#include <vector>
 
 class GameOverMenu : public IMenu
 {
@@ -14,7 +17,7 @@ class GameOverMenu : public IMenu
         Quit
     };
 
-    GameOverMenu(FontManager& fonts, int finalScore, bool victory);
+    GameOverMenu(FontManager& fonts, const std::vector<PlayerScoreEntry>& playerScores, bool victory);
 
     void create(Registry& registry) override;
     void destroy(Registry& registry) override;
@@ -38,15 +41,15 @@ class GameOverMenu : public IMenu
     void renderButton(Registry& registry, EntityId entityId, Window& window, float labelOffsetX, float labelOffsetY);
 
     FontManager& fonts_;
-    int finalScore_;
+    std::vector<PlayerScoreEntry> playerScores_;
     bool victory_;
 
     Result result_ = Result::None;
     bool done_     = false;
 
     EntityId titleText_      = 0;
-    EntityId scoreText_      = 0;
+    EntityId backgroundRect_ = 0;
     EntityId retryButton_    = 0;
     EntityId quitButton_     = 0;
-    EntityId backgroundRect_ = 0;
+    std::vector<EntityId> leaderboardTexts_;
 };
