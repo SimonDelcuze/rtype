@@ -111,6 +111,9 @@ resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager&
                 auto modeRes = modeRunner.runAndGetResult<ModeSelectMenu>();
                 if (modeRes.backRequested) {
                     Logger::instance().info("[Nav] Mode selection cancelled (Back), returning to login");
+                    if (preservedAuth != nullptr) {
+                        *preservedAuth = AuthResult{}; // clear saved credentials to avoid silent re-auth
+                    }
                     stayingInLobbyFlow = false;
                     continue;
                 }
