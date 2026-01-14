@@ -119,11 +119,10 @@ bool NetworkReceiver::handlePacket(const std::uint8_t* data, std::size_t len)
     if (len < withCrc) {
         return false;
     }
-    const std::size_t crcOffset   = PacketHeader::kSize + payloadSize;
-    std::uint32_t transmittedCrc  = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
-                                   (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
-                                   (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) |
-                                   static_cast<std::uint32_t>(data[crcOffset + 3]);
+    const std::size_t crcOffset = PacketHeader::kSize + payloadSize;
+    std::uint32_t transmittedCrc =
+        (static_cast<std::uint32_t>(data[crcOffset]) << 24) | (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
+        (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) | static_cast<std::uint32_t>(data[crcOffset + 3]);
     std::uint32_t computedControl = PacketHeader::crc32(data, crcOffset);
     if (computedControl != transmittedCrc) {
         return false;

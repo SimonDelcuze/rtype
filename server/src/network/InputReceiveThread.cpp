@@ -217,11 +217,10 @@ void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const std:
                                 " size=" + std::to_string(size) + " expected=" + std::to_string(expectedSize));
         return;
     }
-    const std::size_t crcOffset   = PacketHeader::kSize + hdr.payloadSize;
-    std::uint32_t transmittedCrc  = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
-                                   (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
-                                   (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) |
-                                   static_cast<std::uint32_t>(data[crcOffset + 3]);
+    const std::size_t crcOffset = PacketHeader::kSize + hdr.payloadSize;
+    std::uint32_t transmittedCrc =
+        (static_cast<std::uint32_t>(data[crcOffset]) << 24) | (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
+        (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) | static_cast<std::uint32_t>(data[crcOffset + 3]);
     std::uint32_t computedControl = PacketHeader::crc32(data, crcOffset);
     if (computedControl != transmittedCrc) {
         Logger::instance().addPacketDropped();
