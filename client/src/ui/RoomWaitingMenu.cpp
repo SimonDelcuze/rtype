@@ -710,9 +710,9 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
         float currentX = startX;
 
         if (isHost_ && !player.isHost) {
-            auto kickButton = createButton(registry, currentX - 90.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick",
-                                           Color(180, 50, 50),
-                                           [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
+            auto kickButton =
+                createButton(registry, currentX - 90.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick", Color(180, 50, 50),
+                             [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
             kickButtonEntities_.push_back(kickButton);
         }
 
