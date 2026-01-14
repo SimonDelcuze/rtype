@@ -121,16 +121,12 @@ TEST(NetworkReceiver, IgnoresNonSnapshotPacket)
     rx.stop();
 }
 
-TEST(NetworkReceiver, ReceivesSnapshotWithoutCrc)
+TEST(NetworkReceiver, RejectsSnapshotWithoutCrc)
 {
     std::atomic<int> count{0};
-    std::mutex m;
-    std::condition_variable cv;
-
     NetworkReceiver rx(IpEndpoint::v4(0, 0, 0, 0, 0), [&](std::vector<std::uint8_t>&& pkt) {
         (void) pkt;
         ++count;
-        cv.notify_one();
     });
 
     ASSERT_TRUE(rx.start());
@@ -140,9 +136,8 @@ TEST(NetworkReceiver, ReceivesSnapshotWithoutCrc)
     auto data = makeSnapshotPacket(1, 1, false);
     ASSERT_TRUE(sendPacket(data, ep));
 
-    std::unique_lock<std::mutex> lock(m);
-    cv.wait_for(lock, std::chrono::milliseconds(500), [&] { return count.load() > 0; });
-    EXPECT_GT(count.load(), 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(count.load(), 0);
 
     rx.stop();
 }
