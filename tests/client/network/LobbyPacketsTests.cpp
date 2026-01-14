@@ -64,7 +64,7 @@ TEST_F(LobbyPacketsTest, BuildJoinRoomPacketHasValidHeader)
     EXPECT_EQ(header.packetType, static_cast<std::uint8_t>(PacketType::ClientToServer));
     EXPECT_EQ(header.messageType, static_cast<std::uint8_t>(MessageType::LobbyJoinRoom));
     EXPECT_EQ(header.sequenceId, sequence_);
-    EXPECT_EQ(header.payloadSize, 6);
+    EXPECT_EQ(header.payloadSize, 7); // 4 (roomId) + 2 (password length) + 1 (spectator flag)
 }
 
 TEST_F(LobbyPacketsTest, BuildJoinRoomPacketContainsCorrectRoomId)
