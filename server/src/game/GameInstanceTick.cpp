@@ -91,9 +91,14 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
 
         if (levelDirector_->isSafeZoneActive()) {
             processAllyPurchase(commands);
+        } else {
+            playerBoundsSys_.update(registry_, std::nullopt);
+        }
+
+        if (levelDirector_->finished()) {
             if (!gameEnded_) {
                 gameEnded_ = true;
-                logInfo("[Game] Safe zone reached! Broadcasting GameEnd packets.");
+                Logger::instance().info("[Game] Level finished! Broadcasting GameEnd packets.");
 
                 if (gameEndCallback_) {
                     for (const auto& [playerId, entityId] : playerEntities_) {
@@ -120,8 +125,6 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                     sendThread_.sendTo(pkt, c);
                 }
             }
-        } else {
-            playerBoundsSys_.update(registry_, std::nullopt);
         }
 
         allySys_.update(registry_, deltaTime);
