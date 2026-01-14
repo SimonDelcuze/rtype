@@ -657,7 +657,8 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
 
     extern bool g_joinAsSpectator;
     g_joinAsSpectator = joinAsSpectator_;
-    Logger::instance().info("[LobbyMenu] Set g_joinAsSpectator to " + std::string(g_joinAsSpectator ? "true" : "false"));
+    Logger::instance().info("[LobbyMenu] Set g_joinAsSpectator to " +
+                            std::string(g_joinAsSpectator ? "true" : "false"));
 
     conn->sendJoinRoom(room.roomId);
     isJoining_       = true;
