@@ -264,11 +264,12 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
                     players_.clear();
                     for (const auto& p : *list) {
                         PlayerRow row;
-                        row.playerId = p.playerId;
-                        row.name     = std::string(p.name);
-                        row.rankName = "Prey";
-                        row.elo      = 1000;
-                        row.isReady  = p.isReady;
+                        row.playerId    = p.playerId;
+                        row.name        = std::string(p.name);
+                        row.rankName    = "Prey";
+                        row.elo         = 1000;
+                        row.isReady     = p.isReady;
+                        row.isSpectator = p.isSpectator;
                         players_.push_back(row);
                     }
                     buildPlayerList(registry);
@@ -343,6 +344,7 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
     for (std::size_t i = 0; i < players_.size(); ++i) {
         const auto& p         = players_[i];
         std::string readyText = p.isReady ? " [READY]" : "";
+        std::string specText  = p.isSpectator ? " [SPEC]" : "";
         Color textColor       = p.isReady ? Color(100, 255, 100) : Color(220, 220, 220);
 
         EntityId rowBg = registry.createEntity();
@@ -368,12 +370,18 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
         }
 
         auto name = createText(registry, 500.0F, startY + static_cast<float>(i) * spacing,
-                               p.name + " (" + std::to_string(p.elo) + ")" + readyText, 18, textColor);
+                               p.name + " (" + std::to_string(p.elo) + ")" + readyText + specText, 18, textColor);
         playerEntities_.push_back(name);
     }
 
     if (registry.has<TextComponent>(playerCount_)) {
-        registry.get<TextComponent>(playerCount_).content = "Players: " + std::to_string(players_.size()) + "/4";
+        std::size_t nonSpectatorCount = 0;
+        for (const auto& player : players_) {
+            if (!player.isSpectator) {
+                nonSpectatorCount++;
+            }
+        }
+        registry.get<TextComponent>(playerCount_).content = "Players: " + std::to_string(nonSpectatorCount) + "/4";
     }
 }
 

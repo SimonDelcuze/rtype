@@ -19,6 +19,7 @@ class RoomWaitingMenuRanked : public IMenu
         std::string rankName{"Unknown"};
         int elo{0};
         bool isReady{false};
+        bool isSpectator{false};
     };
 
     struct Result

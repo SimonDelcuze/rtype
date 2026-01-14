@@ -103,11 +103,15 @@ class LobbyManager
     void updateRankedCountdowns(float dt);
     std::uint8_t getRoomCountdown(std::uint32_t roomId) const;
 
+    void setPlayerSpectator(std::uint32_t roomId, std::uint32_t playerId, bool spectator);
+    bool isPlayerSpectator(std::uint32_t roomId, std::uint32_t playerId) const;
+
   private:
     mutable std::mutex roomsMutex_;
     std::map<std::uint32_t, RoomInfo> rooms_;
     std::map<std::uint32_t, std::vector<std::uint32_t>> roomPlayers_;
     std::map<std::uint32_t, std::map<std::uint32_t, bool>> playerReadyStatus_;
+    std::map<std::uint32_t, std::map<std::uint32_t, bool>> playerSpectatorStatus_;
     std::map<std::uint32_t, float> rankedCountdowns_;
     std::uint32_t nextPlayerId_{1};
 };

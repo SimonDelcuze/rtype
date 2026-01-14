@@ -10,9 +10,10 @@ bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint&
         return false;
 
     auto socketPtr = net.socket;
-    welcomeThread  = std::thread([serverEp, &handshakeDone, socketPtr] {
+    bool spectator = g_joinAsSpectator;
+    welcomeThread  = std::thread([serverEp, &handshakeDone, socketPtr, spectator] {
         if (socketPtr)
-            sendWelcomeLoop(serverEp, handshakeDone, *socketPtr);
+            sendWelcomeLoop(serverEp, handshakeDone, *socketPtr, spectator);
     });
     return true;
 }

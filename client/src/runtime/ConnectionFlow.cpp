@@ -185,6 +185,7 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
                                     std::to_string(result.gamePort) + " with " +
                                     std::to_string(result.expectedPlayerCount) + " expected players");
             g_isRoomHost          = false;
+            g_joinAsSpectator     = result.spectator;
             g_expectedPlayerCount = result.expectedPlayerCount;
             return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
                                   lobbyEndpoint.addr[3], result.gamePort);
@@ -213,6 +214,7 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
                                 std::to_string(result.gamePort) + " with " +
                                 std::to_string(result.expectedPlayerCount) + " expected players");
         g_isRoomHost          = result.isHost;
+        g_joinAsSpectator     = result.spectator;
         g_expectedPlayerCount = result.expectedPlayerCount;
         return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
                               lobbyEndpoint.addr[3], result.gamePort);

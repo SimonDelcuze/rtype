@@ -32,6 +32,7 @@ extern KeyBindings g_keyBindings;
 extern float g_musicVolume;
 extern bool g_networkDebugEnabled;
 extern bool g_isRoomHost;
+extern bool g_joinAsSpectator;
 extern std::uint8_t g_expectedPlayerCount;
 extern ColorFilterMode g_colorFilterMode;
 extern std::atomic<bool> g_forceExit;

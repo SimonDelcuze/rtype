@@ -455,7 +455,19 @@ void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint
 {
     Logger::instance().info("[LobbyServer] List rooms request from client");
 
-    auto rooms  = lobbyManager_.listRooms();
+    auto rooms = lobbyManager_.listRooms();
+
+    for (auto& room : rooms) {
+        auto players              = lobbyManager_.getRoomPlayers(room.roomId);
+        std::size_t nonSpectators = 0;
+        for (auto playerId : players) {
+            if (!lobbyManager_.isPlayerSpectator(room.roomId, playerId)) {
+                nonSpectators++;
+            }
+        }
+        room.playerCount = nonSpectators;
+    }
+
     auto packet = buildRoomListPacket(rooms, hdr.sequenceId);
 
     sendPacket(packet, from);
@@ -575,6 +587,7 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
                            (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
 
     std::string passwordHash = "";
+    bool isSpectator         = false;
     if (hdr.payloadSize > sizeof(std::uint32_t)) {
         const std::uint8_t* ptr = payload + sizeof(std::uint32_t);
         const std::uint8_t* end = data + PacketHeader::kSize + hdr.payloadSize;
@@ -585,6 +598,11 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
             if (ptr + passLen <= end) {
                 passwordHash = std::string(reinterpret_cast<const char*>(ptr), passLen);
+                ptr += passLen;
+
+                if (ptr < end) {
+                    isSpectator = (ptr[0] != 0);
+                }
             }
         }
     }
@@ -644,6 +662,10 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
     lobbyManager_.addPlayerToRoom(roomId, playerId);
 
+    if (isSpectator) {
+        lobbyManager_.setPlayerSpectator(roomId, playerId, true);
+    }
+
     if (lobbyManager_.getRoomPlayers(roomId).size() == 1) {
         lobbyManager_.setRoomOwner(roomId, playerId);
         Logger::instance().info("[LobbyServer] Player " + std::to_string(playerId) + " is now owner of room " +
@@ -651,7 +673,8 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
     }
 
     Logger::instance().info("[LobbyServer] Client joining room " + std::to_string(roomId) + " on port " +
-                            std::to_string(port) + " as player " + std::to_string(playerId));
+                            std::to_string(port) + " as player " + std::to_string(playerId) +
+                            (isSpectator ? " [SPECTATOR]" : ""));
 
     auto packet = buildJoinSuccessPacket(roomId, port, hdr.sequenceId);
     sendPacket(packet, from);
@@ -690,7 +713,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
     std::uint8_t countdown   = lobbyManager_.getRoomCountdown(roomId);
 
     std::uint16_t payloadSize =
-        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 38);
+        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 39);
 
     PacketHeader respHdr{};
     respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -741,6 +764,9 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
         bool isReady = lobbyManager_.isPlayerReady(roomId, playerId);
         packet.push_back(isReady ? 1 : 0);
+
+        bool isSpectator = lobbyManager_.isPlayerSpectator(roomId, playerId);
+        packet.push_back(isSpectator ? 1 : 0);
     }
 
     auto crc = PacketHeader::crc32(packet.data(), packet.size());
