@@ -1,5 +1,7 @@
 #include "systems/AnimationSystem.hpp"
 
+#include "components/TagComponent.hpp"
+
 void AnimationSystem::advanceFrame(AnimationComponent& anim)
 {
     if (anim.frameIndices.empty()) {
@@ -68,6 +70,8 @@ void AnimationSystem::advanceFrame(AnimationComponent& anim)
 
 void AnimationSystem::update(Registry& registry, float deltaTime)
 {
+    std::vector<EntityId> toDestroy;
+
     for (EntityId entity = 0; entity < registry.entityCount(); ++entity) {
         if (!registry.isAlive(entity) || !registry.has<AnimationComponent>(entity) ||
             !registry.has<SpriteComponent>(entity)) {
@@ -76,6 +80,14 @@ void AnimationSystem::update(Registry& registry, float deltaTime)
 
         auto& anim   = registry.get<AnimationComponent>(entity);
         auto& sprite = registry.get<SpriteComponent>(entity);
+
+        if (anim.finished && !anim.loop) {
+            if (registry.has<TagComponent>(entity) &&
+                registry.get<TagComponent>(entity).hasTag(EntityTag::Background)) {
+                toDestroy.push_back(entity);
+            }
+            continue;
+        }
 
         if (!anim.playing || anim.finished || anim.frameIndices.empty()) {
             continue;
@@ -93,5 +105,9 @@ void AnimationSystem::update(Registry& registry, float deltaTime)
             advanceFrame(anim);
             sprite.setFrame(anim.getCurrentFrameIndex());
         }
+    }
+
+    for (EntityId id : toDestroy) {
+        registry.destroyEntity(id);
     }
 }

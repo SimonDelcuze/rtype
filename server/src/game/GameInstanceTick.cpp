@@ -32,6 +32,7 @@ void GameInstance::updateGameplay(float dt, const std::vector<ReceivedInput>& in
     damageSys_.apply(registry_, collisions);
 
     handleDeathAndRespawn();
+    cleanupExpiredMissiles(dt);
 
     world_.trackEntityLifecycle();
     auto events = world_.consumeEvents();

@@ -2,6 +2,25 @@
 
 #include <algorithm>
 
+namespace
+{
+    constexpr std::uint16_t kWalkerTypeId = 21;
+
+    bool isOwnerStillWalker(const Registry& registry, EntityId ownerId)
+    {
+        if (!registry.isAlive(ownerId)) {
+            return false;
+        }
+        if (!registry.has<TransformComponent>(ownerId)) {
+            return false;
+        }
+        if (!registry.has<RenderTypeComponent>(ownerId)) {
+            return false;
+        }
+        return registry.get<RenderTypeComponent>(ownerId).typeId == kWalkerTypeId;
+    }
+} // namespace
+
 void WalkerShotSystem::update(Registry& registry, float deltaTime) const
 {
     for (EntityId id : registry.view<WalkerShotComponent, TransformComponent>()) {
@@ -9,7 +28,10 @@ void WalkerShotSystem::update(Registry& registry, float deltaTime) const
             continue;
 
         auto& shot = registry.get<WalkerShotComponent>(id);
-        if (shot.ownerId == 0 || !registry.isAlive(shot.ownerId) || !registry.has<TransformComponent>(shot.ownerId)) {
+        if (shot.ownerId == 0 || !isOwnerStillWalker(registry, shot.ownerId)) {
+            if (registry.has<MissileComponent>(id)) {
+                registry.get<MissileComponent>(id).lifetime = 0.0F;
+            }
             continue;
         }
 
@@ -30,9 +52,7 @@ void WalkerShotSystem::update(Registry& registry, float deltaTime) const
             (shot.tickDuration > 0.0F && !finished) ? std::min(shot.elapsed / shot.tickDuration, 1.0F) : 0.0F;
 
         float offsetY = 0.0F;
-        if (finished) {
-            offsetY = 0.0F;
-        } else if (activeTick < shot.ascentTicks) {
+        if (activeTick < shot.ascentTicks) {
             const float perTick = shot.apexOffset / static_cast<float>(std::max(shot.ascentTicks, 1));
             offsetY             = -(perTick * (static_cast<float>(activeTick) + tickFactor));
         } else if (activeTick < shot.ascentTicks + shot.hoverTicks) {
