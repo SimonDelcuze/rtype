@@ -157,12 +157,17 @@
       "speed": 160
     },
     {
-      "id": "p_boss_hover",
+      "id": "p_hover_slow",
       "type": "sine",
       "speed": 0,
-      "amplitude": 90,
-      "frequency": 0.35,
+      "amplitude": 20,
+      "frequency": 0.5,
       "phase": 0.0
+    },
+    {
+      "id": "p_stationary",
+      "type": "linear",
+      "speed": 0
     }
   ],
   "templates": {
@@ -566,8 +571,8 @@
           },
           "bossId": "boss_alpha",
           "spawn": {
-            "x": 1000,
-            "y": 200
+            "x": 355,
+            "y": 515
           }
         }
       ],
@@ -594,10 +599,10 @@
       "health": 80,
       "score": 1000,
       "scale": [
-        1.5,
-        1.5
+        2.2,
+        2.2
       ],
-      "patternId": "p_boss_hover",
+      "patternId": "p_stationary",
       "shooting": {
         "interval": 1.3,
         "speed": 320,
