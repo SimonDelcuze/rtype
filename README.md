@@ -1,148 +1,321 @@
 <p align="center">
-  <img src="assets/logo.png" alt="R-Type Logo" width="400">
+  <img src="assets/logo.png" alt="R-Type Logo" width="350">
+</p>
+
+<h1 align="center">R-Type</h1>
+
+<p align="center">
+  <b>🚀 A high-performance multiplayer space shooter engine built with C++20</b>
 </p>
 
 <p align="center">
-  <b>A high-performance, multiplayer space shooter engine built with C++20 and custom ECS.</b>
+  <img src="https://img.shields.io/badge/C%2B%2B-20-00599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++20">
+  <img src="https://img.shields.io/badge/SFML-3.0-8CC445.svg?style=for-the-badge&logo=sfml&logoColor=white" alt="SFML 3.0">
+  <img src="https://img.shields.io/badge/CMake-3.16+-064F8C.svg?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
+  <img src="https://img.shields.io/badge/License-MIT-F7DF1E.svg?style=for-the-badge" alt="License">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C%2B%2B-Latest-blue.svg?style=for-the-badge&logo=c%2B%2B" alt="C++">
-  <img src="https://img.shields.io/badge/SFML-3.0-green.svg?style=for-the-badge&logo=sfml" alt="SFML 3.0">
-  <img src="https://img.shields.io/badge/Platform-Cross--Platform-lightgrey.svg?style=for-the-badge" alt="Platform">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-documentation">Documentation</a> •
+  <a href="#-contributing">Contributing</a>
 </p>
 
 ---
 
-![R-Type Banner](assets/banner.png)
+<p align="center">
+  <img src="assets/banner.png" alt="R-Type Banner" width="100%">
+</p>
 
-## 🌌 Overview
+## ⚡ Quick Start
 
-**R-Type** is a modern reimagining of the classic arcade shooter, developed as a robust multiplayer engine. It features a custom-built **Entity Component System (ECS)**, a high-performance network protocol, and a scalable server architecture capable of handling multiple concurrent game instances.
+<table>
+<tr>
+<td width="50%">
 
-### ✨ Key Features
+### 📦 Prerequisites
 
-- 🚀 **Custom ECS Engine**: Ultra-fast entity management with cache-friendly data structures.
-- 🌐 **Multiplayer Synchronization**: Advanced client-side prediction and server reconciliation for lag-free gameplay.
-- 🛠️ **Level Editor**: Create and share custom levels with a dedicated visual tool.
-- 🛡️ **Secure Authentication**: Integrated lobby system with user accounts, statistics, and secure login.
-- 🎨 **Dynamic Rendering**: Smooth animations, parallax scrolling, and high-fidelity visual effects powered by SFML 3.0.
-- 📊 **Scalable Architecture**: Multi-threaded server design capable of hosting hundreds of players.
+| Tool | Version |
+|------|---------|
+| **C++ Compiler** | GCC 11+ / Clang 13+ / MSVC 2022+ |
+| **CMake** | 3.16+ |
+| **Git** | Latest |
+
+</td>
+<td width="50%">
+
+### 🔧 Build & Run
+
+```bash
+# Clone & Build
+git clone https://github.com/SimonDelcuze/rtype.git
+cd rtype && cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+
+# Launch
+./r-type_server    # Terminal 1
+./r-type_client    # Terminal 2
+```
+
+</td>
+</tr>
+</table>
+
+> 💡 **First time?** Check our detailed [Installation Guide](docs/installation/README.md) for platform-specific instructions.
+
+---
+
+## 🎮 Features
+
+<table>
+<tr>
+<td align="center" width="33%">
+<h3>🚀 Custom ECS Engine</h3>
+<p>Ultra-fast entity management with cache-friendly data structures and O(1) component access</p>
+</td>
+<td align="center" width="33%">
+<h3>🌐 Netcode</h3>
+<p>Client-side prediction & server reconciliation for smooth 60 FPS gameplay even with 200ms latency</p>
+</td>
+<td align="center" width="33%">
+<h3>🛠️ Level Editor</h3>
+<p>Visual tool to create, edit and share custom levels with drag-and-drop simplicity</p>
+</td>
+</tr>
+<tr>
+<td align="center" width="33%">
+<h3>🛡️ Auth System</h3>
+<p>Secure lobby with user accounts, persistent stats, ELO ranking and match history</p>
+</td>
+<td align="center" width="33%">
+<h3>🎨 Dynamic Rendering</h3>
+<p>Parallax scrolling, smooth animations, and high-fidelity VFX powered by SFML 3.0</p>
+</td>
+<td align="center" width="33%">
+<h3>📊 Scalable Server</h3>
+<p>Multi-threaded architecture supporting multiple concurrent game instances</p>
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Architecture
+
+Our engine is built on a custom **Entity Component System (ECS)** for maximum performance and flexibility.
+
+<p align="center">
+  <img src="assets/schematics.png" alt="ECS Architecture Diagram" width="800">
+</p>
+
+<details>
+<summary><b>📐 How ECS Works</b> (click to expand)</summary>
+
+<br>
+
+```mermaid
+graph LR
+    subgraph "Entities"
+        E1[🎮 Player]
+        E2[👾 Enemy]
+        E3[💥 Bullet]
+    end
+
+    subgraph "Components"
+        C1["Transform<br/>{x, y, rotation}"]
+        C2["Velocity<br/>{vx, vy}"]
+        C3["Sprite<br/>{texture}"]
+        C4["Health<br/>{hp, max_hp}"]
+    end
+
+    subgraph "Systems"
+        S1[⚙️ Movement]
+        S2[🎨 Render]
+        S3[💢 Collision]
+    end
+
+    E1 --> C1
+    E1 --> C2
+    E1 --> C3
+    E1 --> C4
+    
+    E2 --> C1
+    E2 --> C3
+    E2 --> C4
+    
+    E3 --> C1
+    E3 --> C2
+    E3 --> C3
+
+    S1 -.->|queries| C1
+    S1 -.->|queries| C2
+    S2 -.->|queries| C1
+    S2 -.->|queries| C3
+    S3 -.->|queries| C1
+    S3 -.->|queries| C4
+```
+
+| Concept | Description |
+|---------|-------------|
+| **Entity** | A unique ID representing any game object (player, enemy, bullet) |
+| **Component** | Pure data attached to entities (Transform, Velocity, Health) |
+| **System** | Logic that processes entities with specific component combinations |
+
+</details>
 
 ---
 
 ## 📸 Screenshots
 
-<p align="center">
-  <i>[ PLACEHOLDER: Insert Gameplay Screenshot 1 ]</i>
-  <br>
-  <i>[ PLACEHOLDER: Insert Level Editor Screenshot ]</i>
-  <br>
-  <i>[ PLACEHOLDER: Insert Lobby Menu Screenshot ]</i>
-</p>
-
----
-
-## 🏗️ The ECS Architecture
-
-Our engine is built on a custom **Entity Component System (ECS)**. This pattern decouples data (Components) from logic (Systems), allowing for high-performance processing and extreme flexibility.
-
-### How it works:
-
-```mermaid
-graph LR
-    subgraph "Entities"
-        E1[Entity 1]
-        E2[Entity 2]
-        E3[Entity 3]
-    end
-
-    subgraph "Components (Data Only)"
-        C1["Transform {x, y}"]
-        C2["Velocity {vx, vy}"]
-        C3["Sprite {texture_id}"]
-        C4["Health {hp}"]
-    end
-
-    subgraph "Systems (Logic Only)"
-        S1[Movement System]
-        S2[Render System]
-        S3[Collision System]
-    end
-
-    E1 --- C1
-    E1 --- C3
-    
-    E2 --- C1
-    E2 --- C2
-    E2 --- C3
-    
-    E3 --- C1
-    E3 --- C4
-
-    S1 -->|Processes| C1
-    S1 -->|Processes| C2
-    S2 -->|Processes| C1
-    S2 -->|Processes| C3
-    S3 -->|Processes| C1
-    S3 -->|Processes| C4
-```
-
-- **Entities**: Simple unique IDs representing game objects (Player, Enemy, Bullet).
-- **Components**: Pure data structures (POD) attached to entities. They define *what* an entity is.
-- **Systems**: Logic units that run every frame. They query entities that have a specific set of components and update them. For example, the **Movement System** only cares about entities with both `Transform` and `Velocity`.
+<table>
+<tr>
+<td align="center" width="33%">
+<img src="assets/schematics.png" alt="Gameplay" width="100%">
+<br><b>⚔️ Intense Combat</b>
+</td>
+<td align="center" width="33%">
+<img src="assets/lobby.png" alt="Level Editor" width="100%">
+<br><b>🛠️ Level Editor</b>
+</td>
+<td align="center" width="33%">
+<img src="assets/editor.png" alt="Lobby" width="100%">
+<br><b>🏠 Lobby System</b>
+</td>
+</tr>
+</table>
 
 ---
 
 ## 📚 Documentation
 
-Our documentation is extensive and organized for developers of all levels.
+Our documentation is organized by module for easy navigation.
 
-| Section | Description |
-| :--- | :--- |
-| 🚀 [**Installation**](docs/installation/README.md) | How to build and run the project on Linux, macOS, and Windows. |
-| 🏗️ [**Architecture**](docs/architecture/README.md) | Deep dive into the ECS, Core Components, and Engine design. |
-| 🌐 [**Network**](docs/network/README.md) | Detailed protocol specifications, authentication, and security. |
-| 🖥️ [**Server**](docs/server/README.md) | Server-side logic, thread management, and level systems. |
-| 🕹️ [**Client**](docs/client/README.md) | Rendering pipeline, UI module, and client-side prediction. |
+<table>
+<tr>
+<td align="center" width="20%">
+
+### 🚀
+**[Getting Started](docs/installation/README.md)**
+<br><sub>Build & Install</sub>
+
+</td>
+<td align="center" width="20%">
+
+### 🏗️
+**[Architecture](docs/architecture/README.md)**
+<br><sub>ECS & Core Design</sub>
+
+</td>
+<td align="center" width="20%">
+
+### 🌐
+**[Network](docs/network/README.md)**
+<br><sub>Protocol & Auth</sub>
+
+</td>
+<td align="center" width="20%">
+
+### 🖥️
+**[Server](docs/server/README.md)**
+<br><sub>Threads & Levels</sub>
+
+</td>
+<td align="center" width="20%">
+
+### 🕹️
+**[Client](docs/client/README.md)**
+<br><sub>Rendering & Input</sub>
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>📖 Full Documentation Index</b></summary>
+
+<br>
+
+| Category | Topics |
+|----------|--------|
+| **Architecture** | [Core Components](docs/architecture/core-components.md) • [ECS Registry](docs/architecture/ecs/registry.md) • [Event Bus](docs/architecture/ecs/event-bus.md) • [Scheduler](docs/architecture/ecs/scheduler.md) |
+| **Network** | [Protocol](docs/network/protocol/network-protocol.md) • [Delta State](docs/network/protocol/delta-state.md) • [Lobby Protocol](docs/network/protocol/lobby-protocol.md) • [Authentication](docs/network/authentication/README.md) |
+| **Server** | [Game Instances](docs/server/game-instance-management.md) • [Level System](docs/server/levels/README.md) • [Thread Model](docs/server/threads/README.md) |
+| **Client** | [Prediction](docs/client/prediction-reconciliation.md) • [Scene Graph](docs/client/scene-graph-layering.md) • [UI Menus](docs/client/ui/connection-menu.md) • [Animation](docs/client/assets/animation-manifest.md) |
+
+</details>
 
 ---
 
-## 🛠️ Quick Start
+## 📂 Project Structure
 
-### Prerequisites
-
-- **C++20** compatible compiler (GCC 11+, Clang 13+, MSVC 2022+)
-- **CMake** 3.16+
-- **Git**
-
-### Build Instructions
-
-```bash
-# Clone the repository
-git clone https://github.com/SimonDelcuze/rtype.git
-cd rtype
-
-# Configure and build
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-
-# Run the server
-./r-type_server
-
-# Run the client
-./r-type_client
+```
+rtype/
+├── 📁 client/          # Game client (SFML rendering, input, UI)
+│   ├── include/        # Public headers
+│   ├── src/            # Implementation
+│   └── assets/         # Sprites, sounds, fonts
+├── 📁 server/          # Authoritative game server
+│   ├── include/        # Headers
+│   └── src/            # Game logic, networking
+├── 📁 shared/          # Common code (ECS, protocol, utils)
+├── 📁 editor/          # Level editor tool
+├── 📁 docs/            # Full documentation
+├── 📁 tests/           # Unit & integration tests
+└── 📁 scripts/         # Build & deploy utilities
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please check our [Contribution Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+We welcome contributions! See our [Contribution Guidelines](CONTRIBUTING.md) for the full process.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+```bash
+# 1. Fork & Clone
+git clone https://github.com/YOUR_USERNAME/rtype.git
+
+# 2. Create feature branch
+git checkout -b feature/awesome-feature
+
+# 3. Make changes & commit
+git commit -m "feat: add awesome feature"
+
+# 4. Push & open PR
+git push origin feature/awesome-feature
+```
+
+---
+
+## 👥 Team
+
+<table>
+<tr>
+<td align="center">
+<b>Simon Delcuze</b>
+</td>
+<td align="center">
+<b>Albin Vanden-Broeck</b>
+</td>
+<td align="center">
+<b>Louis Truptil</b>
+</td>
+<td align="center">
+<b>Ezio Decadt</b>
+</td>
+<td align="center">
+<b>Charles Ignoux</b>
+</td>
+</tr>
+</table>
+
+---
+
+<p align="center">
+  <br>
+  <sub>
+    <a href="LICENSE">MIT License</a> •
+    <a href="https://github.com/SimonDelcuze/rtype">GitHub</a>
+  </sub>
+</p>

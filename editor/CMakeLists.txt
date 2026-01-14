@@ -50,4 +50,7 @@ target_link_libraries(rtype_level_editor
 
 target_compile_options(rtype_level_editor PRIVATE ${RTYPE_COMPILE_OPTIONS})
 
-set_target_properties(rtype_level_editor PROPERTIES OUTPUT_NAME "r-type_level_editor")
+set_target_properties(rtype_level_editor PROPERTIES
+    OUTPUT_NAME "r-type_level_editor"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
