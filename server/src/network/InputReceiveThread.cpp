@@ -42,7 +42,8 @@ InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue
                                        ThreadSafeQueue<ControlEvent>& controlQueue,
                                        ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue,
                                        std::chrono::milliseconds timeout)
-    : bind_(bindTo), queue_(outQueue), controlQueue_(controlQueue), timeoutQueue_(timeoutQueue), timeout_(timeout)
+    : bind_(bindTo), ownedControlQueue_(nullptr), queue_(outQueue), controlQueue_(controlQueue),
+      timeoutQueue_(timeoutQueue), timeout_(timeout)
 {
     lastTimeoutCheck_ = std::chrono::steady_clock::now();
 }
@@ -55,8 +56,11 @@ InputReceiveThread::~InputReceiveThread()
 InputReceiveThread::InputReceiveThread(const IpEndpoint& bindTo, ThreadSafeQueue<ReceivedInput>& outQueue,
                                        ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue,
                                        std::chrono::milliseconds timeout)
-    : InputReceiveThread(bindTo, outQueue, *new ThreadSafeQueue<ControlEvent>(), timeoutQueue, timeout)
-{}
+    : bind_(bindTo), ownedControlQueue_(std::make_unique<ThreadSafeQueue<ControlEvent>>()), queue_(outQueue),
+      controlQueue_(*ownedControlQueue_), timeoutQueue_(timeoutQueue), timeout_(timeout)
+{
+    lastTimeoutCheck_ = std::chrono::steady_clock::now();
+}
 
 bool InputReceiveThread::start()
 {
@@ -206,6 +210,24 @@ void InputReceiveThread::handleInputPacket(const PacketHeader& hdr, const std::u
 void InputReceiveThread::handleControlPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size,
                                              const IpEndpoint& src)
 {
+    const std::size_t expectedSize = PacketHeader::kSize + hdr.payloadSize + PacketHeader::kCrcSize;
+    if (size < expectedSize) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=short_control from=" + endpointKey(src) +
+                                " size=" + std::to_string(size) + " expected=" + std::to_string(expectedSize));
+        return;
+    }
+    const std::size_t crcOffset   = PacketHeader::kSize + hdr.payloadSize;
+    std::uint32_t transmittedCrc  = (static_cast<std::uint32_t>(data[crcOffset]) << 24) |
+                                   (static_cast<std::uint32_t>(data[crcOffset + 1]) << 16) |
+                                   (static_cast<std::uint32_t>(data[crcOffset + 2]) << 8) |
+                                   static_cast<std::uint32_t>(data[crcOffset + 3]);
+    std::uint32_t computedControl = PacketHeader::crc32(data, crcOffset);
+    if (computedControl != transmittedCrc) {
+        Logger::instance().addPacketDropped();
+        Logger::instance().warn("[Input] input_drop status=crc_mismatch from=" + endpointKey(src));
+        return;
+    }
     if (hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientHello) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientJoinRequest) ||
         hdr.messageType == static_cast<std::uint8_t>(MessageType::ClientReady) ||
