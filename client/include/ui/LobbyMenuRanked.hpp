@@ -25,6 +25,7 @@ class LobbyMenuRanked : public IMenu
         bool exitRequested{false};
         bool backRequested{false};
         bool serverLost{false};
+        bool spectator{false};
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
         std::uint8_t expectedPlayerCount{0};

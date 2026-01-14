@@ -62,6 +62,7 @@ struct PlayerInfo
     char name[32];
     bool isHost;
     bool isReady;
+    bool isSpectator;
 };
 
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence);

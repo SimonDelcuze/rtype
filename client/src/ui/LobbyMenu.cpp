@@ -160,6 +160,9 @@ void LobbyMenu::create(Registry& registry)
                                                     Color(60, 100, 60), [this]() { onToggleFilterProtected(); });
     }
 
+    spectatorCheckboxEntity_ = createButton(registry, 150.0F, 450.0F, 230.0F, 50.0F, "Join as Spectator",
+                                            Color(100, 60, 100), [this]() { onToggleSpectator(); });
+
     if (sharedConnection_) {
         ownsConnection_ = false;
     } else {
@@ -233,6 +236,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     registry.destroyEntity(filterFullButtonEntity_);
                 if (registry.isAlive(filterProtectedButtonEntity_))
                     registry.destroyEntity(filterProtectedButtonEntity_);
+                if (registry.isAlive(spectatorCheckboxEntity_))
+                    registry.destroyEntity(spectatorCheckboxEntity_);
 
                 createRoomMenu_->create(registry);
                 createMenuInitialized_ = true;
@@ -272,6 +277,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                         createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60),
                                      [this]() { onToggleFilterProtected(); });
                 }
+                spectatorCheckboxEntity_ = createButton(registry, 150.0F, 450.0F, 230.0F, 50.0F, "Join as Spectator",
+                                                        Color(100, 60, 100), [this]() { onToggleSpectator(); });
 
                 if (result.created) {
                     Logger::instance().info("[LobbyMenu] Creating room with configuration...");
@@ -326,6 +333,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                     registry.destroyEntity(filterFullButtonEntity_);
                 if (registry.isAlive(filterProtectedButtonEntity_))
                     registry.destroyEntity(filterProtectedButtonEntity_);
+                if (registry.isAlive(spectatorCheckboxEntity_))
+                    registry.destroyEntity(spectatorCheckboxEntity_);
 
                 passwordInputMenu_->create(registry);
                 passwordMenuInitialized_ = true;
@@ -359,6 +368,8 @@ void LobbyMenu::render(Registry& registry, Window& window)
                         createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60),
                                      [this]() { onToggleFilterProtected(); });
                 }
+                spectatorCheckboxEntity_ = createButton(registry, 150.0F, 450.0F, 230.0F, 50.0F, "Join as Spectator",
+                                                        Color(100, 60, 100), [this]() { onToggleSpectator(); });
 
                 if (result.submitted) {
                     Logger::instance().info("[LobbyMenu] Password submitted, joining room...");
@@ -369,6 +380,11 @@ void LobbyMenu::render(Registry& registry, Window& window)
                         result_.exitRequested = true;
                         return;
                     }
+
+                    extern bool g_joinAsSpectator;
+                    g_joinAsSpectator = joinAsSpectator_;
+                    Logger::instance().info("[LobbyMenu] Set g_joinAsSpectator to " +
+                                            std::string(g_joinAsSpectator ? "true" : "false"));
 
                     const auto& room = rooms_[pendingJoinRoomIndex_];
                     conn->sendJoinRoom(room.roomId, result.password);
@@ -393,6 +409,17 @@ void LobbyMenu::render(Registry& registry, Window& window)
 
 void LobbyMenu::update(Registry& registry, float dt)
 {
+    if (registry.isAlive(spectatorCheckboxEntity_) && registry.has<BoxComponent>(spectatorCheckboxEntity_)) {
+        auto& box = registry.get<BoxComponent>(spectatorCheckboxEntity_);
+        if (joinAsSpectator_) {
+            box.fillColor    = Color(150, 100, 200);
+            box.outlineColor = Color(200, 150, 255);
+        } else {
+            box.fillColor    = Color(100, 60, 100);
+            box.outlineColor = Color(140, 100, 140);
+        }
+    }
+
     auto* conn = getConnection();
     if (conn) {
         conn->poll(broadcastQueue_);
@@ -505,6 +532,8 @@ void LobbyMenu::update(Registry& registry, float dt)
                 registry.destroyEntity(filterFullButtonEntity_);
             if (registry.isAlive(filterProtectedButtonEntity_))
                 registry.destroyEntity(filterProtectedButtonEntity_);
+            if (registry.isAlive(spectatorCheckboxEntity_))
+                registry.destroyEntity(spectatorCheckboxEntity_);
 
             roomWaitingMenu_->create(registry);
             roomWaitingMenuInitialized_ = true;
@@ -521,6 +550,7 @@ void LobbyMenu::update(Registry& registry, float dt)
             if (result.startGame) {
                 result_.success             = true;
                 result_.isHost              = isRoomHost_;
+                result_.spectator           = joinAsSpectator_;
                 result_.expectedPlayerCount = result.expectedPlayerCount;
                 state_                      = State::Done;
             } else if (result.serverLost) {
@@ -547,6 +577,8 @@ void LobbyMenu::update(Registry& registry, float dt)
                         createButton(registry, 150.0F, 385.0F, 200.0F, 50.0F, "Hide Protected", Color(60, 100, 60),
                                      [this]() { onToggleFilterProtected(); });
                 }
+                spectatorCheckboxEntity_ = createButton(registry, 150.0F, 450.0F, 230.0F, 50.0F, "Join as Spectator",
+                                                        Color(100, 60, 100), [this]() { onToggleSpectator(); });
 
                 state_ = State::ShowingRooms;
                 refreshRoomList();
@@ -614,13 +646,18 @@ void LobbyMenu::onJoinRoomClicked(std::size_t roomIndex)
     if (isJoining_)
         return;
 
-    Logger::instance().info("[LobbyMenu] Joining room " + std::to_string(room.roomId) + "...");
+    Logger::instance().info("[LobbyMenu] Joining room " + std::to_string(room.roomId) + " as " +
+                            (joinAsSpectator_ ? "SPECTATOR" : "PLAYER") + "...");
     auto* conn = getConnection();
     if (!conn) {
         state_                = State::Done;
         result_.exitRequested = true;
         return;
     }
+
+    extern bool g_joinAsSpectator;
+    g_joinAsSpectator = joinAsSpectator_;
+    Logger::instance().info("[LobbyMenu] Set g_joinAsSpectator to " + std::string(g_joinAsSpectator ? "true" : "false"));
 
     conn->sendJoinRoom(room.roomId);
     isJoining_       = true;
@@ -654,6 +691,12 @@ void LobbyMenu::onToggleFilterProtected()
     filterChanged_       = true;
     Logger::instance().info("[LobbyMenu] Filter protected rooms: " +
                             std::string(filterShowProtected_ ? "SHOW" : "HIDE"));
+}
+
+void LobbyMenu::onToggleSpectator()
+{
+    joinAsSpectator_ = !joinAsSpectator_;
+    Logger::instance().info("[LobbyMenu] Join as spectator: " + std::string(joinAsSpectator_ ? "YES" : "NO"));
 }
 
 bool LobbyMenu::shouldShowRoom(const RoomInfo& room) const

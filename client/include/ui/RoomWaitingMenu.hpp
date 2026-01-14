@@ -36,6 +36,7 @@ class RoomWaitingMenu : public IMenu
         std::uint32_t playerId{0};
         std::string name;
         bool isHost{false};
+        bool isSpectator{false};
     };
 
     RoomWaitingMenu(FontManager& fonts, TextureManager& textures, std::uint32_t roomId, const std::string& roomName,

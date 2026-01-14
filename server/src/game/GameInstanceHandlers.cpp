@@ -68,7 +68,15 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
         sess.playerId = nextPlayerId_++;
     }
 
-    if (playerEntities_.empty()) {
+    bool isSpectator = false;
+    if (ctrl.data.size() >= PacketHeader::kSize + 1) {
+        isSpectator = (ctrl.data[PacketHeader::kSize] == 1);
+    }
+
+    if (isSpectator) {
+        sess.role = PlayerRole::Spectator;
+        Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " joining as spectator");
+    } else if (playerEntities_.empty()) {
         sess.role = PlayerRole::Owner;
         Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " is the room owner");
     }
@@ -94,7 +102,7 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
         sendThread_.setClients(clients_);
     }
 
-    if (!playerEntities_.contains(sess.playerId)) {
+    if (!isSpectator && !playerEntities_.contains(sess.playerId)) {
         addPlayerEntity(sess.playerId);
     }
 

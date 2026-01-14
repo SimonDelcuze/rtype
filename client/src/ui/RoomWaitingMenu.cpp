@@ -545,7 +545,14 @@ void RoomWaitingMenu::render(Registry& registry, Window& window)
     }
 
     if (registry.has<TextComponent>(playerCountEntity_)) {
-        registry.get<TextComponent>(playerCountEntity_).content = "Players: " + std::to_string(players_.size()) + "/4";
+        std::size_t nonSpectatorCount = 0;
+        for (const auto& player : players_) {
+            if (!player.isSpectator) {
+                nonSpectatorCount++;
+            }
+        }
+        registry.get<TextComponent>(playerCountEntity_).content =
+            "Players: " + std::to_string(nonSpectatorCount) + "/4";
     }
 
     updateDifficultyUI(registry);
@@ -573,6 +580,7 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
         }
         if (isRefreshingPlayers_) {
             if (lobbyConnection_->hasPlayerListResult()) {
+                Logger::instance().info("[RoomWaitingMenu] Processing player list result...");
                 auto playerListOpt   = lobbyConnection_->popPlayerListResult();
                 isRefreshingPlayers_ = false;
 
@@ -583,11 +591,18 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
                     players_.clear();
                     for (const auto& playerInfo : *playerListOpt) {
                         PlayerInfo info;
-                        info.playerId = playerInfo.playerId;
-                        info.name     = std::string(playerInfo.name);
-                        info.isHost   = playerInfo.isHost;
+                        info.playerId    = playerInfo.playerId;
+                        info.name        = std::string(playerInfo.name);
+                        info.isHost      = playerInfo.isHost;
+                        info.isSpectator = playerInfo.isSpectator;
+                        Logger::instance().info("[RoomWaitingMenu] Player: " + info.name +
+                                                " (id=" + std::to_string(info.playerId) + ")" +
+                                                " isHost=" + (info.isHost ? "true" : "false") +
+                                                " isSpectator=" + (info.isSpectator ? "true" : "false"));
                         players_.push_back(info);
                     }
+                    Logger::instance().info("[RoomWaitingMenu] Calling updatePlayerList with " +
+                                            std::to_string(players_.size()) + " players");
                     updatePlayerList(registry);
                 } else {
                     Logger::instance().warn("[RoomWaitingMenu] Failed to get player list");
@@ -614,7 +629,14 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
     }
 
     if (registry.has<TextComponent>(playerCountEntity_)) {
-        registry.get<TextComponent>(playerCountEntity_).content = "Players: " + std::to_string(players_.size()) + "/4";
+        std::size_t nonSpectatorCount = 0;
+        for (const auto& player : players_) {
+            if (!player.isSpectator) {
+                nonSpectatorCount++;
+            }
+        }
+        registry.get<TextComponent>(playerCountEntity_).content =
+            "Players: " + std::to_string(nonSpectatorCount) + "/4";
     }
     if (lobbyConnection_ && lobbyConnection_->hasNewChatMessages()) {
         auto newMsgs = lobbyConnection_->popChatMessages();
@@ -645,6 +667,8 @@ void RoomWaitingMenu::update(Registry& registry, float dt)
 
 void RoomWaitingMenu::updatePlayerList(Registry& registry)
 {
+    Logger::instance().info("[RoomWaitingMenu::updatePlayerList] START with " + std::to_string(players_.size()) +
+                            " players");
     for (auto entityId : playerTextEntities_) {
         if (registry.isAlive(entityId))
             registry.destroyEntity(entityId);
@@ -663,24 +687,51 @@ void RoomWaitingMenu::updatePlayerList(Registry& registry)
 
     float startY = 340.0F;
     float startX = 480.0F;
+
+    extern bool g_joinAsSpectator;
+
+    Logger::instance().info("[RoomWaitingMenu::updatePlayerList] g_joinAsSpectator=" +
+                            std::string(g_joinAsSpectator ? "true" : "false"));
+
+    if (g_joinAsSpectator) {
+        auto spectatorNotice =
+            createText(registry, startX, startY - 40.0F, "You are in SPECTATOR mode", 18, Color(200, 150, 255));
+        playerTextEntities_.push_back(spectatorNotice);
+        Logger::instance().info("[RoomWaitingMenu::updatePlayerList] Added 'You are in SPECTATOR mode' message");
+    }
+
     for (size_t i = 0; i < players_.size(); ++i) {
         const auto& player = players_[i];
 
-        Color playerColor = player.isHost ? Color(255, 215, 0) : Color(200, 200, 200);
-        auto nameEntity   = createText(registry, startX, startY + (i * 50.0F), player.name, 22, playerColor);
-        playerTextEntities_.push_back(nameEntity);
+        Logger::instance().info("[RoomWaitingMenu::updatePlayerList] Rendering player " + std::to_string(i) + ": " +
+                                player.name + " isHost=" + (player.isHost ? "true" : "false") +
+                                " isSpectator=" + (player.isSpectator ? "true" : "false"));
 
-        if (player.isHost) {
-            auto badgeEntity =
-                createText(registry, startX + 150.0F, startY + (i * 50.0F), "[OWNER]", 20, Color(255, 215, 0));
-            playerBadgeEntities_.push_back(badgeEntity);
-        }
+        float currentX = startX;
 
         if (isHost_ && !player.isHost) {
-            auto kickButton =
-                createButton(registry, startX + 150.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick", Color(180, 50, 50),
-                             [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
+            auto kickButton = createButton(registry, currentX - 90.0F, startY + (i * 50.0F), 80.0F, 35.0F, "Kick",
+                                           Color(180, 50, 50),
+                                           [this, playerId = player.playerId]() { onKickPlayerClicked(playerId); });
             kickButtonEntities_.push_back(kickButton);
+        }
+
+        Color playerColor = player.isHost ? Color(255, 215, 0) : Color(200, 200, 200);
+        auto nameEntity   = createText(registry, currentX, startY + (i * 50.0F), player.name, 22, playerColor);
+        playerTextEntities_.push_back(nameEntity);
+
+        float badgeX = currentX + 230.0F;
+        if (player.isHost) {
+            Logger::instance().info("[RoomWaitingMenu::updatePlayerList] Adding [OWNER] badge for " + player.name);
+            auto badgeEntity = createText(registry, badgeX, startY + (i * 50.0F), "[OWNER]", 20, Color(255, 215, 0));
+            playerBadgeEntities_.push_back(badgeEntity);
+            badgeX += 100.0F;
+        }
+
+        if (player.isSpectator) {
+            Logger::instance().info("[RoomWaitingMenu::updatePlayerList] Adding [SPEC] badge for " + player.name);
+            auto specBadge = createText(registry, badgeX, startY + (i * 50.0F), "[SPEC]", 20, Color(200, 150, 255));
+            playerBadgeEntities_.push_back(specBadge);
         }
     }
 }

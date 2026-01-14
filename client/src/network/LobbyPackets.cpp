@@ -77,12 +77,14 @@ std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, std::uint16_
 std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::string& passwordHash,
                                               std::uint16_t sequence)
 {
+    extern bool g_joinAsSpectator;
+
     PacketHeader hdr;
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::LobbyJoinRoom);
     hdr.sequenceId  = sequence;
 
-    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint16_t) + passwordHash.size();
+    std::uint16_t payloadSize = sizeof(std::uint32_t) + sizeof(std::uint16_t) + passwordHash.size() + 1;
     hdr.payloadSize           = payloadSize;
     hdr.originalSize          = payloadSize;
 
@@ -101,6 +103,8 @@ std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::s
     packet.push_back(static_cast<std::uint8_t>((passLen >> 8) & 0xFF));
     packet.push_back(static_cast<std::uint8_t>(passLen & 0xFF));
     packet.insert(packet.end(), passwordHash.begin(), passwordHash.end());
+
+    packet.push_back(g_joinAsSpectator ? 1 : 0);
 
     std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());
     packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
@@ -281,7 +285,7 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
     players.reserve(playerCount);
 
     for (std::uint8_t i = 0; i < playerCount; ++i) {
-        if (payload + 38 > data + size - PacketHeader::kCrcSize) {
+        if (payload + 39 > data + size - PacketHeader::kCrcSize) {
             return std::nullopt;
         }
 
@@ -298,6 +302,9 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
         payload += 1;
 
         info.isReady = (payload[0] != 0);
+        payload += 1;
+
+        info.isSpectator = (payload[0] != 0);
         payload += 1;
 
         players.push_back(info);

@@ -479,3 +479,22 @@ std::uint8_t LobbyManager::getRoomCountdown(std::uint32_t roomId) const
     }
     return 0;
 }
+
+void LobbyManager::setPlayerSpectator(std::uint32_t roomId, std::uint32_t playerId, bool spectator)
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+    playerSpectatorStatus_[roomId][playerId] = spectator;
+}
+
+bool LobbyManager::isPlayerSpectator(std::uint32_t roomId, std::uint32_t playerId) const
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+    auto roomIt = playerSpectatorStatus_.find(roomId);
+    if (roomIt != playerSpectatorStatus_.end()) {
+        auto playerIt = roomIt->second.find(playerId);
+        if (playerIt != roomIt->second.end()) {
+            return playerIt->second;
+        }
+    }
+    return false;
+}

@@ -28,6 +28,7 @@ class LobbyMenu : public IMenu
         bool backRequested = false;
         bool isHost        = false;
         bool serverLost    = false;
+        bool spectator     = false;
         std::uint32_t roomId{0};
         std::uint16_t gamePort{0};
         std::uint8_t expectedPlayerCount{0};
@@ -58,6 +59,7 @@ class LobbyMenu : public IMenu
     void onBackClicked();
     void onToggleFilterFull();
     void onToggleFilterProtected();
+    void onToggleSpectator();
     void updateRoomListDisplay(Registry& registry);
     void createRoomButton(Registry& registry, const RoomInfo& room, std::size_t displayIndex, std::size_t roomIndex);
     bool shouldShowRoom(const RoomInfo& room) const;
@@ -113,6 +115,7 @@ class LobbyMenu : public IMenu
     EntityId backButtonEntity_{0};
     EntityId filterFullButtonEntity_{0};
     EntityId filterProtectedButtonEntity_{0};
+    EntityId spectatorCheckboxEntity_{0};
 
     float refreshTimer_{0.0F};
     bool statsLoaded_{false};
@@ -134,5 +137,6 @@ class LobbyMenu : public IMenu
     bool isCreating_{false};
     bool isJoining_{false};
     bool isGettingStats_{false};
+    bool joinAsSpectator_{false};
     std::string currentRoomName_;
 };

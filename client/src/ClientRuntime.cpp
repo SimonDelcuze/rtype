@@ -13,6 +13,7 @@ KeyBindings g_keyBindings          = KeyBindings::defaults();
 float g_musicVolume                = 20.0F;
 bool g_networkDebugEnabled         = false;
 bool g_isRoomHost                  = false;
+bool g_joinAsSpectator             = false;
 std::uint8_t g_expectedPlayerCount = 0;
 ColorFilterMode g_colorFilterMode  = ColorFilterMode::None;
 std::atomic<bool> g_forceExit{false};
