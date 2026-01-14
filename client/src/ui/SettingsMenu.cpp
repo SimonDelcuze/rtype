@@ -173,7 +173,7 @@ void SettingsMenu::create(Registry& registry)
                              [this, &registry]() { setColorFilterMode(registry, nextColorFilter(colorFilterMode_)); });
 
     float networkDebugY = colorFilterY + spacing;
-    createLabel(registry, 360.0F, networkDebugY + 12.0F, "Network Debug");
+    createLabel(registry, 310.0F, networkDebugY + 12.0F, "Network Debug");
     networkDebugButton_ =
         createCenteredButton(registry, networkDebugY, g_networkDebugEnabled ? "ON" : "OFF", [this, &registry]() {
             g_networkDebugEnabled = !g_networkDebugEnabled;
