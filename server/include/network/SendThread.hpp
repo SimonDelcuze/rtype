@@ -34,6 +34,7 @@ class SendThread
     void run();
 
     IpEndpoint bind_;
+    std::mutex clientsMutex_;
     std::vector<IpEndpoint> clients_;
     std::atomic<bool> running_{false};
     std::thread worker_;

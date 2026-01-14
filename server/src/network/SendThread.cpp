@@ -43,6 +43,7 @@ bool SendThread::isRunning() const
 
 void SendThread::setClients(const std::vector<IpEndpoint>& clients)
 {
+    std::lock_guard<std::mutex> lock(clientsMutex_);
     clients_ = clients;
 }
 
@@ -62,7 +63,12 @@ void SendThread::sendTo(const std::vector<std::uint8_t>& payload, const IpEndpoi
 {
     if (!running_)
         return;
-    socket_.sendTo(payload.data(), payload.size(), dst);
+    auto res = socket_.sendTo(payload.data(), payload.size(), dst);
+    if (!res.ok()) {
+        Logger::instance().warn("[Packets] Failed to send to " + endpointKey(dst) +
+                                " error=" + std::to_string(static_cast<int>(res.error)));
+        return;
+    }
     Logger::instance().addBytesSent(payload.size());
     Logger::instance().addPacketSent();
     Logger::instance().logToRoom(roomId_, "INFO",
@@ -74,8 +80,18 @@ void SendThread::broadcast(const PlayerDisconnectedPacket& packet)
     auto payload = packet.encode();
     if (!running_)
         return;
-    for (const auto& c : clients_) {
-        socket_.sendTo(payload.data(), payload.size(), c);
+    std::vector<IpEndpoint> clients;
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex_);
+        clients = clients_;
+    }
+    for (const auto& c : clients) {
+        auto res = socket_.sendTo(payload.data(), payload.size(), c);
+        if (!res.ok()) {
+            Logger::instance().warn("[Packets] Failed to broadcast to " + endpointKey(c) +
+                                    " error=" + std::to_string(static_cast<int>(res.error)));
+            continue;
+        }
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
         Logger::instance().logToRoom(
@@ -88,8 +104,18 @@ void SendThread::broadcast(const EntitySpawnPacket& packet)
     auto payload = packet.encode();
     if (!running_)
         return;
-    for (const auto& c : clients_) {
-        socket_.sendTo(payload.data(), payload.size(), c);
+    std::vector<IpEndpoint> clients;
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex_);
+        clients = clients_;
+    }
+    for (const auto& c : clients) {
+        auto res = socket_.sendTo(payload.data(), payload.size(), c);
+        if (!res.ok()) {
+            Logger::instance().warn("[Packets] Failed to broadcast to " + endpointKey(c) +
+                                    " error=" + std::to_string(static_cast<int>(res.error)));
+            continue;
+        }
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
         Logger::instance().logToRoom(
@@ -102,8 +128,18 @@ void SendThread::broadcast(const EntityDestroyedPacket& packet)
     auto payload = packet.encode();
     if (!running_)
         return;
-    for (const auto& c : clients_) {
-        socket_.sendTo(payload.data(), payload.size(), c);
+    std::vector<IpEndpoint> clients;
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex_);
+        clients = clients_;
+    }
+    for (const auto& c : clients) {
+        auto res = socket_.sendTo(payload.data(), payload.size(), c);
+        if (!res.ok()) {
+            Logger::instance().warn("[Packets] Failed to broadcast to " + endpointKey(c) +
+                                    " error=" + std::to_string(static_cast<int>(res.error)));
+            continue;
+        }
         Logger::instance().addBytesSent(payload.size());
         Logger::instance().addPacketSent();
         Logger::instance().logToRoom(
@@ -134,8 +170,18 @@ void SendThread::run()
             payload = latest_;
         }
         if (!payload.empty()) {
-            for (const auto& c : clients_) {
-                socket_.sendTo(payload.data(), payload.size(), c);
+            std::vector<IpEndpoint> clients;
+            {
+                std::lock_guard<std::mutex> lock(clientsMutex_);
+                clients = clients_;
+            }
+            for (const auto& c : clients) {
+                auto res = socket_.sendTo(payload.data(), payload.size(), c);
+                if (!res.ok()) {
+                    Logger::instance().warn("[Packets] Failed to send to " + endpointKey(c) +
+                                            " error=" + std::to_string(static_cast<int>(res.error)));
+                    continue;
+                }
                 Logger::instance().addBytesSent(payload.size());
                 Logger::instance().addPacketSent();
                 Logger::instance().logToRoom(roomId_, "INFO",

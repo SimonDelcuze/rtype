@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
@@ -77,6 +78,7 @@ class InputReceiveThread
     };
 
     IpEndpoint bind_;
+    std::unique_ptr<ThreadSafeQueue<ControlEvent>> ownedControlQueue_;
     ThreadSafeQueue<ReceivedInput>& queue_;
     ThreadSafeQueue<ControlEvent>& controlQueue_;
     ThreadSafeQueue<ClientTimeoutEvent>* timeoutQueue_;
