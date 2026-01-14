@@ -125,8 +125,8 @@
     },
     {
       "typeId": 20,
-      "spriteId": "enemy_ship",
-      "animId": "enemy1",
+      "spriteId": "boss",
+      "animId": "default",
       "layer": 0
     }
   ],
@@ -530,10 +530,10 @@
       "events": [
         {
           "type": "spawn_wave",
-          "id": "",
+          "id": "wave_1",
           "trigger": {
             "type": "time",
-            "time": 1.0
+            "time": 2.0
           },
           "wave": {
             "type": "line",
@@ -542,100 +542,15 @@
             "spawnX": 1220.0,
             "startY": 140.0,
             "deltaY": 100.0,
-            "count": 3
-          }
-        },
-        {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 3.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_sine",
-            "spawnX": 1220.0,
-            "startY": 200.0,
-            "deltaY": 120.0,
-            "count": 3
-          }
-        },
-        {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 5.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "walker",
-            "patternId": "p_linear",
-            "spawnX": 1220.0,
-            "startY": 540.0,
-            "deltaY": 0.0,
-            "count": 2
-          }
-        },
-        {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 7.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_linear",
-            "spawnX": 1220.0,
-            "startY": 80.0,
-            "deltaY": 90.0,
             "count": 4
           }
         },
         {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 10.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "follower",
-            "patternId": "p_follower",
-            "spawnX": 1220.0,
-            "startY": 250.0,
-            "deltaY": 0.0,
-            "count": 2
-          }
-        },
-        {
-          "type": "spawn_wave",
-          "id": "",
-          "trigger": {
-            "type": "time",
-            "time": 12.0
-          },
-          "wave": {
-            "type": "line",
-            "enemy": "grunt",
-            "patternId": "p_sine",
-            "spawnX": 1220.0,
-            "startY": 150.0,
-            "deltaY": 100.0,
-            "count": 3
-          }
-        },
-        {
           "type": "set_scroll",
-          "id": "safe_zone_start",
+          "id": "boss_arena",
           "trigger": {
-            "type": "time",
-            "time": 15.0
+            "type": "spawn_dead",
+            "spawnId": "wave_1"
           },
           "scroll": {
             "mode": "stopped",
@@ -643,43 +558,31 @@
           }
         },
         {
-          "type": "set_scroll",
-          "id": "safe_zone_end",
+          "type": "spawn_boss",
+          "id": "boss_spawn",
           "trigger": {
-            "type": "any_of",
-            "triggers": [
-              {
-                "type": "all_of",
-                "triggers": [
-                  {
-                    "type": "time",
-                    "time": 15.1
-                  },
-                  {
-                    "type": "any_of",
-                    "triggers": [
-                      {
-                        "type": "time",
-                        "time": 25.0
-                      },
-                      {
-                        "type": "players_ready"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
+            "type": "spawn_dead",
+            "spawnId": "wave_1"
           },
-          "scroll": {
-            "mode": "constant",
-            "speedX": -60
+          "bossId": "boss_alpha",
+          "spawn": {
+            "x": 1000,
+            "y": 200
           }
         }
       ],
       "exit": {
-        "type": "time",
-        "time": 28.0
+        "type": "all_of",
+        "triggers": [
+          {
+            "type": "time",
+            "time": 20.0
+          },
+          {
+            "type": "boss_dead",
+            "bossId": "boss_alpha"
+          }
+        ]
       }
     }
   ],
@@ -691,8 +594,8 @@
       "health": 80,
       "score": 1000,
       "scale": [
-        2.5,
-        2.5
+        1.5,
+        1.5
       ],
       "patternId": "p_boss_hover",
       "shooting": {
