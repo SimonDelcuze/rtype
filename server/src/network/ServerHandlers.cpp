@@ -40,6 +40,7 @@ void ServerApp::handleControlMessage(const ControlEvent& ctrl)
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientReady)) {
         sess.ready = true;
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientPing)) {
+        Logger::instance().info("[Net] Received ClientPing, sending ServerPong");
         sendThread_.sendTo(buildPong(ctrl.header), ctrl.from);
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
         onDisconnect(ctrl.from);

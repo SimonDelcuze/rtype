@@ -14,6 +14,7 @@
 #include "systems/LevelInitSystem.hpp"
 #include "systems/NetworkDebugOverlay.hpp"
 #include "systems/NetworkMessageSystem.hpp"
+#include "systems/NetworkStatsSystem.hpp"
 #include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "systems/ReplicationSystem.hpp"
@@ -72,6 +73,7 @@ void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& 
     gameLoop.addSystem(std::make_shared<BackgroundScrollSystem>(window));
     gameLoop.addSystem(std::make_shared<RenderSystem>(window));
     gameLoop.addSystem(std::make_shared<HUDSystem>(window, fontManager, textures, levelState, localPlayerId, gameMode));
+    gameLoop.addSystem(std::make_shared<NetworkStatsSystem>());
     gameLoop.addSystem(std::make_shared<NetworkDebugOverlay>(window, fontManager));
     gameLoop.addSystem(std::make_shared<AudioSystem>(soundManager, graphicsFactory));
     gameLoop.addSystem(std::make_shared<NotificationSystem>(window, fontManager, broadcastQueue));
