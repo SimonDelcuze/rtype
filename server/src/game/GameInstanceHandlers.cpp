@@ -69,7 +69,7 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
         sess.playerId = nextPlayerId_++;
     }
 
-    bool isSpectator = false;
+    bool isSpectator     = false;
     std::uint32_t userId = 0;
     if (ctrl.data.size() >= PacketHeader::kSize + 1) {
         isSpectator = (ctrl.data[PacketHeader::kSize] == 1);
@@ -77,9 +77,10 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
             userId = (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 1]) << 24) |
                      (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 2]) << 16) |
                      (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 3]) << 8) |
-                      static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 4]);
+                     static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 4]);
             sess.userId = userId;
-            Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " associated with userId " + std::to_string(userId));
+            Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " associated with userId " +
+                                    std::to_string(userId));
         }
     }
 

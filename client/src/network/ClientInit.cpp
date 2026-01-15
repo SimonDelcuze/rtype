@@ -87,7 +87,7 @@ void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& s
 }
 
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket, bool spectator,
-                      std::uint32_t userId)
+                     std::uint32_t userId)
 {
     std::uint16_t seq = 0;
     while (!stopFlag.load()) {

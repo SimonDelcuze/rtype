@@ -6,6 +6,7 @@
 #include "lobby/RoomConfig.hpp"
 #include "network/AuthPackets.hpp"
 #include "network/ChatPacket.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "network/RoomType.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
@@ -94,6 +95,7 @@ LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, st
     }
 
     database_->execute("ALTER TABLE user_stats ADD COLUMN elo INTEGER NOT NULL DEFAULT 1000");
+    database_->execute("ALTER TABLE user_stats ADD COLUMN total_ranked_score INTEGER NOT NULL DEFAULT 0");
 
     userRepository_ = std::make_shared<UserRepository>(database_);
     authService_    = std::make_shared<AuthService>("rtype-jwt-secret-key-change-in-production");
@@ -134,94 +136,98 @@ bool LobbyServer::start()
         }
     });
 
-    instanceManager_.setGameEndCallback(
-        [this](std::uint32_t roomId, const std::vector<PlayerGameResult>& results, bool isWin) {
-            if (results.empty())
-                return;
+    instanceManager_.setGameEndCallback([this](std::uint32_t roomId, const std::vector<PlayerGameResult>& results,
+                                               bool isWin) {
+        if (results.empty())
+            return;
 
-            long totalScoreInRoom = 0;
-            for (const auto& res : results) {
-                totalScoreInRoom += res.score;
+        long totalScoreInRoom = 0;
+        for (const auto& res : results) {
+            totalScoreInRoom += res.score;
+        }
+
+        Logger::instance().info("[LobbyServer] Game end callback for Room " + std::to_string(roomId) + ", " +
+                                std::to_string(results.size()) + " players" + ", win=" +
+                                std::string(isWin ? "Y" : "N") + ", totalScore=" + std::to_string(totalScoreInRoom));
+
+        auto roomInfo = lobbyManager_.getRoomInfo(roomId);
+        bool isRanked = roomInfo.has_value() && roomInfo->roomType == RoomType::Ranked;
+
+        for (const auto& res : results) {
+            auto userId       = res.userId;
+            auto score        = res.score;
+            auto currentStats = userRepository_->getUserStats(userId);
+
+            uint32_t wins                  = 0;
+            uint32_t losses                = 0;
+            uint32_t games                 = 0;
+            std::uint64_t totalScore       = 0;
+            std::uint64_t totalRankedScore = 0;
+
+            if (currentStats) {
+                wins             = currentStats->wins;
+                losses           = currentStats->losses;
+                games            = currentStats->gamesPlayed;
+                totalScore       = currentStats->totalScore;
+                totalRankedScore = currentStats->totalRankedScore;
             }
 
-            Logger::instance().info("[LobbyServer] Game end callback for Room " + std::to_string(roomId) +
-                                    ", " + std::to_string(results.size()) + " players" +
-                                    ", win=" + std::string(isWin ? "Y" : "N") +
-                                    ", totalScore=" + std::to_string(totalScoreInRoom));
+            games++;
+            if (isWin)
+                wins++;
+            else
+                losses++;
+            totalScore += score;
+            if (isRanked) {
+                totalRankedScore += score;
+            }
 
-            auto roomInfo = lobbyManager_.getRoomInfo(roomId);
-            bool isRanked = roomInfo.has_value() && roomInfo->roomType == RoomType::Ranked;
+            std::int32_t baseEloChange = isWin ? 15 : -15;
+            float multiplier           = 1.0f;
 
-            for (const auto& res : results) {
-                auto userId = res.userId;
-                auto score = res.score;
-                auto currentStats = userRepository_->getUserStats(userId);
+            if (totalScoreInRoom > 0) {
+                float contribution = static_cast<float>(score) / static_cast<float>(totalScoreInRoom);
+                multiplier         = 0.5f + (contribution * static_cast<float>(results.size()) / 2.0f);
+            } else if (results.size() > 1) {
+                multiplier = 1.0f;
+            }
 
-                uint32_t wins            = 0;
-                uint32_t losses          = 0;
-                uint32_t games           = 0;
-                std::uint64_t totalScore = 0;
+            multiplier = std::clamp(multiplier, 0.3f, 2.0f);
 
-                if (currentStats) {
-                    wins       = currentStats->wins;
-                    losses     = currentStats->losses;
-                    games      = currentStats->gamesPlayed;
-                    totalScore = currentStats->totalScore;
+            std::int32_t eloChange = 0;
+            if (isRanked) {
+                eloChange = static_cast<std::int32_t>(static_cast<float>(baseEloChange) * multiplier);
+
+                if (isWin) {
+                    eloChange = std::clamp(eloChange, 5, 25);
+                } else {
+                    eloChange = std::clamp(eloChange, -25, -5);
                 }
+            }
 
-                games++;
-                if (isWin)
-                    wins++;
-                else
-                    losses++;
-                totalScore += score;
+            std::int32_t newElo = (currentStats ? currentStats->elo : 1000) + eloChange;
+            if (newElo < 0)
+                newElo = 0;
 
-                std::int32_t baseEloChange = isWin ? 15 : -15;
-                float multiplier = 1.0f;
+            Logger::instance().info(
+                "[LobbyServer] Updating stats for user " + std::to_string(userId) + ": score=" + std::to_string(score) +
+                " (contrib=" + std::to_string(totalScoreInRoom > 0 ? (float) score / totalScoreInRoom : 0.0f) +
+                "), ELO=" + std::to_string(newElo) + " (" + (eloChange >= 0 ? "+" : "") + std::to_string(eloChange) +
+                ")");
 
-                if (totalScoreInRoom > 0) {
-                    float contribution = static_cast<float>(score) / static_cast<float>(totalScoreInRoom);
-                    multiplier = 0.5f + (contribution * static_cast<float>(results.size()) / 2.0f);
-                } else if (results.size() > 1) {
-                    multiplier = 1.0f;
-                }
+            userRepository_->updateUserStats(userId, games, wins, losses, totalScore, totalRankedScore, newElo);
 
-                multiplier = std::clamp(multiplier, 0.3f, 2.0f);
-
-                std::int32_t eloChange = 0;
-                if (isRanked) {
-                    eloChange = static_cast<std::int32_t>(static_cast<float>(baseEloChange) * multiplier);
-
-                    if (isWin) {
-                        eloChange = std::clamp(eloChange, 5, 25);
-                    } else {
-                        eloChange = std::clamp(eloChange, -25, -5);
-                    }
-                }
-
-                std::int32_t newElo = (currentStats ? currentStats->elo : 1000) + eloChange;
-                if (newElo < 0)
-                    newElo = 0;
-
-                Logger::instance().info("[LobbyServer] Updating stats for user " + std::to_string(userId) +
-                                        ": score=" + std::to_string(score) + " (contrib=" +
-                                        std::to_string(totalScoreInRoom > 0 ? (float)score/totalScoreInRoom : 0.0f) +
-                                        "), ELO=" + std::to_string(newElo) + " (" +
-                                        (eloChange >= 0 ? "+" : "") + std::to_string(eloChange) + ")");
-
-                userRepository_->updateUserStats(userId, games, wins, losses, totalScore, newElo);
-
-                {
-                    std::lock_guard<std::mutex> lock(sessionsMutex_);
-                    for (auto& [key, session] : lobbySessions_) {
-                        if (session.userId.has_value() && session.userId.value() == userId) {
-                            session.elo = newElo;
-                            break;
-                        }
+            {
+                std::lock_guard<std::mutex> lock(sessionsMutex_);
+                for (auto& [key, session] : lobbySessions_) {
+                    if (session.userId.has_value() && session.userId.value() == userId) {
+                        session.elo = newElo;
+                        break;
                     }
                 }
             }
-        });
+        }
+    });
 
     return true;
 }
@@ -546,6 +552,10 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
 
         case MessageType::Chat:
             handleChatPacket(*hdr, data, size, from);
+            break;
+
+        case MessageType::LeaderboardRequest:
+            handleLeaderboardRequest(*hdr, from);
             break;
 
         default:
@@ -1588,4 +1598,30 @@ void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* 
             sendPacket(encoded, session.endpoint);
         }
     }
+}
+
+void LobbyServer::handleLeaderboardRequest(const PacketHeader& hdr, const IpEndpoint& from)
+{
+    Logger::instance().info("[LobbyServer] Leaderboard request from " + endpointToKey(from));
+
+    auto topEloRows   = userRepository_->getTopElo(5);
+    auto topScoreRows = userRepository_->getTopScore(5);
+
+    LeaderboardResponseData response;
+    for (const auto& row : topEloRows) {
+        LeaderboardEntry entry{};
+        std::strncpy(entry.username, row.username.c_str(), sizeof(entry.username) - 1);
+        entry.value = row.value;
+        response.topElo.push_back(entry);
+    }
+
+    for (const auto& row : topScoreRows) {
+        LeaderboardEntry entry{};
+        std::strncpy(entry.username, row.username.c_str(), sizeof(entry.username) - 1);
+        entry.value = row.value;
+        response.topScore.push_back(entry);
+    }
+
+    auto packet = buildLeaderboardResponsePacket(response, hdr.sequenceId);
+    sendPacket(packet, from);
 }

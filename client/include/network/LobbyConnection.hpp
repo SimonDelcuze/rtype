@@ -3,6 +3,7 @@
 #include "concurrency/ThreadSafeQueue.hpp"
 #include "network/AuthPackets.hpp"
 #include "network/ChatPacket.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "network/LobbyPackets.hpp"
 #include "network/PacketHeader.hpp"
 #include "network/StatsPackets.hpp"
@@ -93,6 +94,10 @@ class LobbyConnection
     bool hasPlayerListResult() const;
     std::optional<std::vector<PlayerInfo>> popPlayerListResult();
 
+    void sendRequestLeaderboard();
+    bool hasLeaderboardResult() const;
+    std::optional<LeaderboardResponseData> popLeaderboardResult();
+
     void sendNotifyGameStarting(std::uint32_t roomId);
 
     void sendKickPlayer(std::uint32_t roomId, std::uint32_t playerId);
@@ -147,6 +152,7 @@ class LobbyConnection
     std::optional<RoomCreatedResult> pendingRoomCreatedResult_;
     std::optional<JoinSuccessResult> pendingJoinRoomResult_;
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
+    std::optional<LeaderboardResponseData> pendingLeaderboardResult_;
     ThreadSafeQueue<ChatPacket> chatMessages_;
     std::optional<RoomConfigUpdate> pendingRoomConfig_;
     std::uint8_t currentRoomCountdown_{0};

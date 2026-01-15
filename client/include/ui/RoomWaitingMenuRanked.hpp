@@ -2,6 +2,7 @@
 
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "network/LobbyConnection.hpp"
 #include "network/LobbyPackets.hpp"
 #include "ui/IMenu.hpp"
@@ -51,6 +52,7 @@ class RoomWaitingMenuRanked : public IMenu
     void buildChrome(Registry& registry);
     void buildPlayerList(Registry& registry);
     void buildChatUI(Registry& registry);
+    void updateLeaderboardUI(Registry& registry, const LeaderboardResponseData& data);
     void refreshPlayers(Registry& registry);
     void onSendChatClicked(Registry& registry);
 
@@ -74,6 +76,7 @@ class RoomWaitingMenuRanked : public IMenu
 
     std::vector<PlayerRow> players_;
     std::vector<EntityId> playerEntities_;
+    std::vector<EntityId> leaderboardEntities_;
 
     EntityId chatBg_{0};
     EntityId chatInput_{0};
@@ -84,6 +87,7 @@ class RoomWaitingMenuRanked : public IMenu
     constexpr static std::size_t kMaxChatMessages = 12;
 
     float updateTimer_{0.0F};
+    float leaderboardTimer_{0.0F};
     constexpr static float kUpdateInterval = 1.0F;
 
     int consecutiveFailures_{0};

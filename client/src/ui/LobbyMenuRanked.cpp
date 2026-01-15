@@ -3,9 +3,11 @@
 #include "Logger.hpp"
 #include "components/BoxComponent.hpp"
 #include "components/ButtonComponent.hpp"
+#include "components/LayerComponent.hpp"
 #include "components/SpriteComponent.hpp"
 #include "components/TextComponent.hpp"
 #include "components/TransformComponent.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "ui/RoomWaitingMenu.hpp"
 
 namespace
@@ -110,6 +112,15 @@ void LobbyMenuRanked::create(Registry& registry)
 
     buildLayout(registry);
 
+    if (!textures_.has("rank_prey"))
+        textures_.load("rank_prey", "client/assets/ranks/prey.png");
+    if (!textures_.has("rank_hunter"))
+        textures_.load("rank_hunter", "client/assets/ranks/hunter.png");
+    if (!textures_.has("rank_predator"))
+        textures_.load("rank_predator", "client/assets/ranks/predator.png");
+    if (!textures_.has("rank_apex"))
+        textures_.load("rank_apex", "client/assets/ranks/apex.png");
+
     if (sharedConnection_) {
         ownsConnection_ = false;
     } else {
@@ -121,6 +132,12 @@ void LobbyMenuRanked::create(Registry& registry)
             return;
         }
         ownsConnection_ = true;
+    }
+
+    auto* conn = sharedConnection_ ? sharedConnection_ : lobbyConnection_.get();
+    if (conn) {
+        conn->sendRequestLeaderboard();
+        leaderboardTimer_ = 0.0F;
     }
 
     state_ = State::Idle;
@@ -135,11 +152,14 @@ void LobbyMenuRanked::buildLayout(Registry& registry)
     title_       = createText(registry, 400.0F, 200.0F, "Ranked Lobby", 36, Color::White);
     status_      = createText(registry, 400.0F, 240.0F, "Connecting...", 18, Color(200, 200, 200));
 
-    leftBoard_  = createPanel(registry, 120.0F, 300.0F, 260.0F, 280.0F, Color(20, 30, 50, 180));
-    rightBoard_ = createPanel(registry, 820.0F, 300.0F, 260.0F, 280.0F, Color(30, 40, 60, 180));
+    leftBoard_  = createPanel(registry, 120.0F, 300.0F, 330.0F, 240.0F, Color(20, 30, 50, 180));
+    rightBoard_ = createPanel(registry, 820.0F, 300.0F, 330.0F, 240.0F, Color(30, 40, 60, 180));
 
     leftTitle_  = createText(registry, 150.0F, 320.0F, "Rank Leaderboard", 20, Color(180, 220, 255));
     rightTitle_ = createText(registry, 850.0F, 320.0F, "Score Leaderboard", 20, Color(180, 220, 255));
+
+    leaderboardEntities_.push_back(createText(registry, 140.0F, 360.0F, "No ranks yet", 16, Color(210, 220, 230)));
+    leaderboardEntities_.push_back(createText(registry, 840.0F, 360.0F, "No scores yet", 16, Color(210, 220, 230)));
 
     findBtn_ = createButton(registry, 500.0F, 360.0F, 200.0F, 60.0F, "Find Game", Color(0, 120, 200),
                             [this]() { onFindGameClicked(); });
@@ -191,6 +211,21 @@ void LobbyMenuRanked::update(Registry& registry, float dt)
             result_.serverLost = true;
             state_             = State::Done;
             return;
+        }
+
+        if (state_ != State::InRoom) {
+            leaderboardTimer_ += dt;
+            if (leaderboardTimer_ >= 5.0F) {
+                leaderboardTimer_ = 0.0F;
+                conn->sendRequestLeaderboard();
+            }
+
+            if (conn->hasLeaderboardResult()) {
+                auto res = conn->popLeaderboardResult();
+                if (res.has_value()) {
+                    updateLeaderboardUI(registry, *res);
+                }
+            }
         }
     }
 
@@ -265,6 +300,13 @@ void LobbyMenuRanked::update(Registry& registry, float dt)
             if (res.has_value()) {
                 result_.roomId   = res->roomId;
                 result_.gamePort = res->port;
+
+                for (auto id : leaderboardEntities_) {
+                    if (registry.isAlive(id))
+                        registry.destroyEntity(id);
+                }
+                leaderboardEntities_.clear();
+
                 transitionToWaiting(registry);
                 return;
             } else {
@@ -319,6 +361,68 @@ void LobbyMenuRanked::transitionToWaiting(Registry& registry)
     state_           = State::InRoom;
 }
 
+void LobbyMenuRanked::updateLeaderboardUI(Registry& registry, const LeaderboardResponseData& data)
+{
+    auto getRankTexture = [](int elo) -> std::string {
+        if (elo >= 1900)
+            return "rank_apex";
+        if (elo >= 1500)
+            return "rank_predator";
+        if (elo >= 1200)
+            return "rank_hunter";
+        return "rank_prey";
+    };
+
+    for (auto id : leaderboardEntities_) {
+        if (registry.isAlive(id))
+            registry.destroyEntity(id);
+    }
+    leaderboardEntities_.clear();
+
+    float spacing = 35.0F;
+
+    float scoreX = 840.0F;
+    float scoreY = 360.0F;
+    for (std::size_t i = 0; i < data.topScore.size(); ++i) {
+        std::string name(data.topScore[i].username);
+        if (name.empty())
+            continue;
+        std::string line = std::to_string(i + 1) + ". " + name + ": " + std::to_string(data.topScore[i].value);
+        leaderboardEntities_.push_back(
+            createText(registry, scoreX, scoreY + (i * spacing), line, 16, Color(210, 220, 230)));
+    }
+
+    float rankX = 140.0F;
+    float rankY = 360.0F;
+    for (std::size_t i = 0; i < data.topElo.size(); ++i) {
+        std::string name(data.topElo[i].username);
+        if (name.empty())
+            continue;
+
+        float rowY = rankY + (i * spacing);
+
+        std::string rankNum = std::to_string(i + 1) + ". ";
+        leaderboardEntities_.push_back(createText(registry, rankX, rowY, rankNum, 16, Color(210, 220, 230)));
+
+        std::string rankTex = getRankTexture(data.topElo[i].value);
+        if (textures_.has(rankTex)) {
+            auto tex      = textures_.get(rankTex);
+            EntityId icon = registry.createEntity();
+            auto& t       = registry.emplace<TransformComponent>(icon);
+            t.x           = rankX + 25.0F;
+            t.y           = rowY - 5.0F;
+            t.scaleX      = 0.08F;
+            t.scaleY      = 0.08F;
+            registry.emplace<SpriteComponent>(icon, SpriteComponent(tex));
+            registry.emplace<LayerComponent>(icon, LayerComponent::create(RenderLayer::UI));
+            leaderboardEntities_.push_back(icon);
+        }
+
+        std::string info = name + " (" + std::to_string(data.topElo[i].value) + ")";
+        leaderboardEntities_.push_back(createText(registry, rankX + 60.0F, rowY, info, 16, Color(210, 220, 230)));
+    }
+}
+
 void LobbyMenuRanked::destroyLobbyEntities(Registry& registry)
 {
     for (EntityId id :
@@ -326,6 +430,11 @@ void LobbyMenuRanked::destroyLobbyEntities(Registry& registry)
         if (registry.isAlive(id))
             registry.destroyEntity(id);
     }
+    for (auto id : leaderboardEntities_) {
+        if (registry.isAlive(id))
+            registry.destroyEntity(id);
+    }
+    leaderboardEntities_.clear();
     background_ = logo_ = title_ = status_ = findBtn_ = backBtn_ = leftBoard_ = rightBoard_ = leftTitle_ = rightTitle_ =
         0;
     layoutBuilt_ = false;

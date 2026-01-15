@@ -49,7 +49,7 @@ void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSo
 void sendClientReadyOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket);
 void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket, bool spectator = false,
-                      std::uint32_t userId = 0);
+                     std::uint32_t userId = 0);
 void sendClientReady(const IpEndpoint& server, UdpSocket& socket);
 void sendClientReadyLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket);
 bool startReceiver(NetPipelines& net, std::uint16_t port, std::atomic<bool>& handshakeFlag,

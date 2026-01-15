@@ -66,6 +66,7 @@ class LobbyServer
                                      const IpEndpoint& from);
     void handleGetStatsRequest(const PacketHeader& hdr, const IpEndpoint& from);
     void handleChatPacket(const PacketHeader& hdr, const std::uint8_t* data, std::size_t size, const IpEndpoint& from);
+    void handleLeaderboardRequest(const PacketHeader& hdr, const IpEndpoint& from);
 
     void sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to);
     void sendAuthRequired(const IpEndpoint& to);
