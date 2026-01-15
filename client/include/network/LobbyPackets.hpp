@@ -63,6 +63,7 @@ struct PlayerInfo
     bool isHost;
     bool isReady;
     bool isSpectator;
+    std::int32_t elo{1000};
 };
 
 std::vector<std::uint8_t> buildListRoomsPacket(std::uint16_t sequence);

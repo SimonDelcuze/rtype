@@ -70,8 +70,17 @@ void GameInstance::onJoin(ClientSession& sess, const ControlEvent& ctrl)
     }
 
     bool isSpectator = false;
+    std::uint32_t userId = 0;
     if (ctrl.data.size() >= PacketHeader::kSize + 1) {
         isSpectator = (ctrl.data[PacketHeader::kSize] == 1);
+        if (ctrl.data.size() >= PacketHeader::kSize + 5) {
+            userId = (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 1]) << 24) |
+                     (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 2]) << 16) |
+                     (static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 3]) << 8) |
+                      static_cast<std::uint32_t>(ctrl.data[PacketHeader::kSize + 4]);
+            sess.userId = userId;
+            Logger::instance().info("[Room] Player " + std::to_string(sess.playerId) + " associated with userId " + std::to_string(userId));
+        }
     }
 
     if (isSpectator) {

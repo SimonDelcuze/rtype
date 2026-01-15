@@ -93,6 +93,8 @@ LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, st
         schemaFile.close();
     }
 
+    database_->execute("ALTER TABLE user_stats ADD COLUMN elo INTEGER NOT NULL DEFAULT 1000");
+
     userRepository_ = std::make_shared<UserRepository>(database_);
     authService_    = std::make_shared<AuthService>("rtype-jwt-secret-key-change-in-production");
 
@@ -133,50 +135,89 @@ bool LobbyServer::start()
     });
 
     instanceManager_.setGameEndCallback(
-        [this](std::uint32_t roomId, std::uint32_t gamePlayerId, bool isWin, int score) {
-            auto roomPlayers = lobbyManager_.getRoomPlayers(roomId);
-            if (gamePlayerId == 0 || gamePlayerId > roomPlayers.size()) {
-                Logger::instance().warn("[LobbyServer] FAILED: GamePlayerId out of range. Size: " +
-                                        std::to_string(roomPlayers.size()));
-                Logger::instance().warn("[LobbyServer] GamePlayerId " + std::to_string(gamePlayerId) +
-                                        " out of range for Room " + std::to_string(roomId));
+        [this](std::uint32_t roomId, const std::vector<PlayerGameResult>& results, bool isWin) {
+            if (results.empty())
                 return;
+
+            long totalScoreInRoom = 0;
+            for (const auto& res : results) {
+                totalScoreInRoom += res.score;
             }
 
-            std::uint32_t lobbyPlayerId = roomPlayers[gamePlayerId - 1];
+            Logger::instance().info("[LobbyServer] Game end callback for Room " + std::to_string(roomId) +
+                                    ", " + std::to_string(results.size()) + " players" +
+                                    ", win=" + std::string(isWin ? "Y" : "N") +
+                                    ", totalScore=" + std::to_string(totalScoreInRoom));
 
-            auto userId       = lobbyPlayerId;
-            auto currentStats = userRepository_->getUserStats(userId);
+            auto roomInfo = lobbyManager_.getRoomInfo(roomId);
+            bool isRanked = roomInfo.has_value() && roomInfo->roomType == RoomType::Ranked;
 
-            uint32_t wins            = 0;
-            uint32_t losses          = 0;
-            uint32_t games           = 0;
-            std::uint64_t totalScore = 0;
+            for (const auto& res : results) {
+                auto userId = res.userId;
+                auto score = res.score;
+                auto currentStats = userRepository_->getUserStats(userId);
 
-            if (currentStats) {
-                wins       = currentStats->wins;
-                losses     = currentStats->losses;
-                games      = currentStats->gamesPlayed;
-                totalScore = currentStats->totalScore;
-            }
+                uint32_t wins            = 0;
+                uint32_t losses          = 0;
+                uint32_t games           = 0;
+                std::uint64_t totalScore = 0;
 
-            games++;
-            if (isWin)
-                wins++;
-            else
-                losses++;
-            totalScore += score;
+                if (currentStats) {
+                    wins       = currentStats->wins;
+                    losses     = currentStats->losses;
+                    games      = currentStats->gamesPlayed;
+                    totalScore = currentStats->totalScore;
+                }
 
-            Logger::instance().warn("[LobbyServer] Updating stats for user " + std::to_string(userId) +
-                                    ": games=" + std::to_string(games) + ", wins=" + std::to_string(wins) +
-                                    ", losses=" + std::to_string(losses));
-            userRepository_->updateUserStats(userId, games, wins, losses, totalScore);
+                games++;
+                if (isWin)
+                    wins++;
+                else
+                    losses++;
+                totalScore += score;
 
-            {
-                std::lock_guard<std::mutex> lock(sessionsMutex_);
-                for (auto& [key, session] : lobbySessions_) {
-                    if (session.playerId == lobbyPlayerId) {
-                        break;
+                std::int32_t baseEloChange = isWin ? 15 : -15;
+                float multiplier = 1.0f;
+
+                if (totalScoreInRoom > 0) {
+                    float contribution = static_cast<float>(score) / static_cast<float>(totalScoreInRoom);
+                    multiplier = 0.5f + (contribution * static_cast<float>(results.size()) / 2.0f);
+                } else if (results.size() > 1) {
+                    multiplier = 1.0f;
+                }
+
+                multiplier = std::clamp(multiplier, 0.3f, 2.0f);
+
+                std::int32_t eloChange = 0;
+                if (isRanked) {
+                    eloChange = static_cast<std::int32_t>(static_cast<float>(baseEloChange) * multiplier);
+
+                    if (isWin) {
+                        eloChange = std::clamp(eloChange, 5, 25);
+                    } else {
+                        eloChange = std::clamp(eloChange, -25, -5);
+                    }
+                }
+
+                std::int32_t newElo = (currentStats ? currentStats->elo : 1000) + eloChange;
+                if (newElo < 0)
+                    newElo = 0;
+
+                Logger::instance().info("[LobbyServer] Updating stats for user " + std::to_string(userId) +
+                                        ": score=" + std::to_string(score) + " (contrib=" +
+                                        std::to_string(totalScoreInRoom > 0 ? (float)score/totalScoreInRoom : 0.0f) +
+                                        "), ELO=" + std::to_string(newElo) + " (" +
+                                        (eloChange >= 0 ? "+" : "") + std::to_string(eloChange) + ")");
+
+                userRepository_->updateUserStats(userId, games, wins, losses, totalScore, newElo);
+
+                {
+                    std::lock_guard<std::mutex> lock(sessionsMutex_);
+                    for (auto& [key, session] : lobbySessions_) {
+                        if (session.userId.has_value() && session.userId.value() == userId) {
+                            session.elo = newElo;
+                            break;
+                        }
                     }
                 }
             }
@@ -323,7 +364,7 @@ void LobbyServer::cleanupThread()
         {
             auto rooms = lobbyManager_.listRooms();
             for (const auto& room : rooms) {
-                if (room.roomType == RoomType::Ranked && room.playerCount >= 2) {
+                if (room.roomType == RoomType::Ranked && room.playerCount >= 1) {
                     if (room.state == RoomState::Waiting && room.countdown == 0) {
                         roomToStart = room.roomId;
                         break;
@@ -619,6 +660,13 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
             session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
+
+        if (session.userId.has_value()) {
+            auto stats = userRepository_->getUserStats(session.userId.value());
+            if (stats.has_value()) {
+                session.elo = stats->elo;
+            }
+        }
     }
 
     lobbyManager_.addPlayerToRoom(*roomId, playerId);
@@ -721,6 +769,13 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
             session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
+
+        if (session.userId.has_value()) {
+            auto stats = userRepository_->getUserStats(session.userId.value());
+            if (stats.has_value()) {
+                session.elo = stats->elo;
+            }
+        }
     }
 
     lobbyManager_.addPlayerToRoom(roomId, playerId);
@@ -776,7 +831,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
     std::uint8_t countdown   = lobbyManager_.getRoomCountdown(roomId);
 
     std::uint16_t payloadSize =
-        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 39);
+        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 43);
 
     PacketHeader respHdr{};
     respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -830,6 +885,21 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
 
         bool isSpectator = lobbyManager_.isPlayerSpectator(roomId, playerId);
         packet.push_back(isSpectator ? 1 : 0);
+
+        std::int32_t playerElo = 1000;
+        {
+            std::lock_guard<std::mutex> lock(sessionsMutex_);
+            for (const auto& [key, session] : lobbySessions_) {
+                if (session.playerId == playerId) {
+                    playerElo = session.elo;
+                    break;
+                }
+            }
+        }
+        packet.push_back(static_cast<std::uint8_t>((playerElo >> 24) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((playerElo >> 16) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((playerElo >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(playerElo & 0xFF));
     }
 
     auto crc = PacketHeader::crc32(packet.data(), packet.size());
@@ -878,9 +948,9 @@ void LobbyServer::handleRoomForceStart(const PacketHeader& hdr, const std::uint8
     auto players = lobbyManager_.getRoomPlayers(roomId);
 
     bool isRankedAndAllReady =
-        (roomInfo->roomType == RoomType::Ranked && players.size() >= 4 && lobbyManager_.isRoomAllReady(roomId));
+        (roomInfo->roomType == RoomType::Ranked && players.size() >= 1 && lobbyManager_.isRoomAllReady(roomId));
     bool isExpiredRanked =
-        (roomInfo->roomType == RoomType::Ranked && players.size() >= 2 && lobbyManager_.getRoomCountdown(roomId) == 0);
+        (roomInfo->roomType == RoomType::Ranked && players.size() >= 1 && lobbyManager_.getRoomCountdown(roomId) == 0);
 
     if (senderPlayerId != roomInfo->ownerId && !isRankedAndAllReady && !isExpiredRanked) {
         Logger::instance().warn("[LobbyServer] Player " + std::to_string(senderPlayerId) +
@@ -1200,8 +1270,8 @@ void LobbyServer::handleRoomSetReady(const PacketHeader& hdr, const std::uint8_t
 
     if (lobbyManager_.isRoomAllReady(roomId)) {
         auto players = lobbyManager_.getRoomPlayers(roomId);
-        if (players.size() >= 4) {
-            Logger::instance().info("[LobbyServer] At least 4 players ready in room " + std::to_string(roomId) +
+        if (players.size() >= 1) {
+            Logger::instance().info("[LobbyServer] At least 1 player ready in room " + std::to_string(roomId) +
                                     ", starting game.");
             handleRoomForceStart(hdr, data, size, from);
         }
@@ -1275,6 +1345,13 @@ void LobbyServer::handleLoginRequest(const PacketHeader& hdr, const std::uint8_t
         session.jwtToken      = token;
         session.endpoint      = from;
         session.lastActivity  = std::chrono::steady_clock::now();
+
+        auto stats = userRepository_->getUserStats(user->id);
+        if (stats.has_value()) {
+            session.elo = stats->elo;
+        } else {
+            session.elo = 1000;
+        }
     }
 
     userRepository_->updateLastLogin(user->id);

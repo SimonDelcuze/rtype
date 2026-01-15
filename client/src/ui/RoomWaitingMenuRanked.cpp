@@ -126,6 +126,28 @@ namespace
         if (!currentLine.empty())
             lines.push_back(currentLine);
     }
+
+    std::string getRankName(int elo)
+    {
+        if (elo >= 1900)
+            return "Apex";
+        if (elo >= 1500)
+            return "Predator";
+        if (elo >= 1200)
+            return "Hunter";
+        return "Prey";
+    }
+
+    std::string getRankTexture(int elo)
+    {
+        if (elo >= 1900)
+            return "rank_apex";
+        if (elo >= 1500)
+            return "rank_predator";
+        if (elo >= 1200)
+            return "rank_hunter";
+        return "rank_prey";
+    }
 } // namespace
 
 RoomWaitingMenuRanked::RoomWaitingMenuRanked(FontManager& fonts, TextureManager& textures, std::uint32_t roomId,
@@ -145,9 +167,14 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     background_ = createBackground(registry, textures_);
     logo_       = createLogo(registry, textures_);
 
-    if (!textures_.has("rank_prey")) {
+    if (!textures_.has("rank_prey"))
         textures_.load("rank_prey", "client/assets/ranks/prey.png");
-    }
+    if (!textures_.has("rank_hunter"))
+        textures_.load("rank_hunter", "client/assets/ranks/hunter.png");
+    if (!textures_.has("rank_predator"))
+        textures_.load("rank_predator", "client/assets/ranks/predator.png");
+    if (!textures_.has("rank_apex"))
+        textures_.load("rank_apex", "client/assets/ranks/apex.png");
 
     std::string title = roomName_ + " (#" + std::to_string(roomId_) + ")";
     title_            = createText(registry, 470.0F, 200.0F, title, 32, Color::White);
@@ -266,8 +293,8 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
                         PlayerRow row;
                         row.playerId    = p.playerId;
                         row.name        = std::string(p.name);
-                        row.rankName    = "Prey";
-                        row.elo         = 1000;
+                        row.elo         = p.elo;
+                        row.rankName    = getRankName(p.elo);
                         row.isReady     = p.isReady;
                         row.isSpectator = p.isSpectator;
                         players_.push_back(row);
@@ -356,8 +383,9 @@ void RoomWaitingMenuRanked::buildPlayerList(Registry& registry)
         registry.emplace<LayerComponent>(rowBg, LayerComponent::create(RenderLayer::UI - 10));
         playerEntities_.push_back(rowBg);
 
-        if (textures_.has("rank_prey")) {
-            auto tex      = textures_.get("rank_prey");
+        std::string rankTex = getRankTexture(p.elo);
+        if (textures_.has(rankTex)) {
+            auto tex      = textures_.get(rankTex);
             EntityId icon = registry.createEntity();
             auto& t       = registry.emplace<TransformComponent>(icon);
             t.x           = 450.0F;

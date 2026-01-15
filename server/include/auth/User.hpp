@@ -19,6 +19,7 @@ struct UserStats
     std::uint32_t wins;
     std::uint32_t losses;
     std::uint64_t totalScore;
+    std::int32_t elo{1000};
 };
 
 struct SessionToken
