@@ -26,6 +26,7 @@ struct ClientSession
     std::optional<std::uint32_t> userId;
     std::string username;
     std::string jwtToken;
+    std::int32_t elo{1000};
 
     std::chrono::steady_clock::time_point lastActivity{std::chrono::steady_clock::now()};
 };

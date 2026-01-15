@@ -42,7 +42,13 @@
 #include <unordered_set>
 #include <vector>
 
-using GameEndCallback = std::function<void(std::uint32_t roomId, std::uint32_t playerId, bool isWin, int score)>;
+struct PlayerGameResult
+{
+    std::uint32_t userId;
+    int score;
+};
+
+using GameEndCallback = std::function<void(std::uint32_t roomId, const std::vector<PlayerGameResult>& results, bool isWin)>;
 
 class GameInstance
 {

@@ -21,7 +21,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     std::atomic<bool> handshakeDone{false};
     std::thread welcomeThread;
 
-    if (!setupNetwork(net, inputBuffer, serverEndpoint, handshakeDone, welcomeThread, &broadcastQueue)) {
+    if (!setupNetwork(net, inputBuffer, serverEndpoint, handshakeDone, welcomeThread, userId, &broadcastQueue)) {
         broadcastQueue.push(NotificationData{"Failed to setup network", 5.0F});
         return ClientLoopResult{true, std::nullopt, std::nullopt, std::nullopt};
     }

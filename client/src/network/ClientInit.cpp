@@ -46,18 +46,24 @@ std::vector<std::uint8_t> buildSimplePacket(std::uint8_t messageType, std::uint1
     return out;
 }
 
-void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket, bool spectator)
+void sendJoinRequestOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& socket, bool spectator,
+                         std::uint32_t userId)
 {
     PacketHeader hdr{};
     hdr.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
     hdr.messageType = static_cast<std::uint8_t>(MessageType::ClientJoinRequest);
     hdr.sequenceId  = sequence;
     hdr.tickId      = 0;
-    hdr.payloadSize = 1;
+    hdr.payloadSize = 1 + sizeof(std::uint32_t);
 
     auto encoded = hdr.encode();
     std::vector<std::uint8_t> pkt(encoded.begin(), encoded.end());
     pkt.push_back(spectator ? 1 : 0);
+
+    pkt.push_back(static_cast<std::uint8_t>((userId >> 24) & 0xFF));
+    pkt.push_back(static_cast<std::uint8_t>((userId >> 16) & 0xFF));
+    pkt.push_back(static_cast<std::uint8_t>((userId >> 8) & 0xFF));
+    pkt.push_back(static_cast<std::uint8_t>(userId & 0xFF));
 
     auto crc = PacketHeader::crc32(pkt.data(), pkt.size());
     pkt.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
@@ -80,12 +86,13 @@ void sendPingOnce(const IpEndpoint& server, std::uint16_t sequence, UdpSocket& s
     socket.sendTo(pkt.data(), pkt.size(), server);
 }
 
-void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket, bool spectator)
+void sendWelcomeLoop(const IpEndpoint& server, std::atomic<bool>& stopFlag, UdpSocket& socket, bool spectator,
+                      std::uint32_t userId)
 {
     std::uint16_t seq = 0;
     while (!stopFlag.load()) {
         sendClientHelloOnce(server, socket);
-        sendJoinRequestOnce(server, ++seq, socket, spectator);
+        sendJoinRequestOnce(server, ++seq, socket, spectator, userId);
         sendPingOnce(server, ++seq, socket);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

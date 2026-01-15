@@ -23,7 +23,7 @@ class UserRepository
 
     std::optional<UserStats> getUserStats(std::uint32_t userId);
     bool updateUserStats(std::uint32_t userId, std::uint32_t gamesPlayed, std::uint32_t wins, std::uint32_t losses,
-                         std::uint64_t totalScore);
+                         std::uint64_t totalScore, std::int32_t elo);
 
     bool updatePassword(std::uint32_t userId, const std::string& newPasswordHash);
 

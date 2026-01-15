@@ -651,13 +651,23 @@ void GameInstance::handleDeathAndRespawn()
                             if (!anyAlive) {
                                 gameEnded_ = true;
                                 if (gameEndCallback_) {
+                                    std::vector<PlayerGameResult> results;
                                     for (const auto& [pId, eId] : playerEntities_) {
                                         int scoreVal = 0;
                                         if (registry_.has<ScoreComponent>(eId)) {
                                             scoreVal = registry_.get<ScoreComponent>(eId).value;
                                         }
-                                        gameEndCallback_(roomId_, pId, false, scoreVal);
+
+                                        std::uint32_t finalId = pId;
+                                        for (const auto& [key, sess] : sessions_) {
+                                            if (sess.playerId == pId && sess.userId.has_value()) {
+                                                finalId = sess.userId.value();
+                                                break;
+                                            }
+                                        }
+                                        results.push_back({finalId, scoreVal});
                                     }
+                                    gameEndCallback_(roomId_, results, false);
                                 }
                             }
                         }

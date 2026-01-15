@@ -102,13 +102,23 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                 Logger::instance().info("[Game] Level finished! Broadcasting GameEnd packets.");
 
                 if (gameEndCallback_) {
+                    std::vector<PlayerGameResult> results;
                     for (const auto& [playerId, entityId] : playerEntities_) {
                         int scoreVal = 0;
                         if (registry_.has<ScoreComponent>(entityId)) {
                             scoreVal = registry_.get<ScoreComponent>(entityId).value;
                         }
-                        gameEndCallback_(roomId_, playerId, true, scoreVal);
+                        
+                        std::uint32_t finalId = playerId;
+                        for (const auto& [key, sess] : sessions_) {
+                            if (sess.playerId == playerId && sess.userId.has_value()) {
+                                finalId = sess.userId.value();
+                                break;
+                            }
+                        }
+                        results.push_back({finalId, scoreVal});
                     }
+                    gameEndCallback_(roomId_, results, true);
                 }
             }
 
@@ -158,15 +168,24 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                 Logger::instance().warn("[GameInstance] Loss detected! Callback present? " +
                                         std::string(gameEndCallback_ ? "YES" : "NO"));
                 if (gameEndCallback_) {
+                    std::vector<PlayerGameResult> results;
                     for (const auto& [playerId, entityId] : playerEntities_) {
                         int scoreVal = 0;
                         if (registry_.has<ScoreComponent>(entityId)) {
                             scoreVal = registry_.get<ScoreComponent>(entityId).value;
                         }
-                        Logger::instance().warn("[GameInstance] Invoking callback for player " +
-                                                std::to_string(playerId));
-                        gameEndCallback_(roomId_, playerId, false, scoreVal);
+                        
+                        std::uint32_t finalId = playerId;
+                        for (const auto& [key, sess] : sessions_) {
+                            if (sess.playerId == playerId && sess.userId.has_value()) {
+                                finalId = sess.userId.value();
+                                break;
+                            }
+                        }
+                        results.push_back({finalId, scoreVal});
                     }
+                    Logger::instance().warn("[GameInstance] Invoking game end callback for all players");
+                    gameEndCallback_(roomId_, results, false);
                 }
 
                 std::vector<PlayerScore> scores;

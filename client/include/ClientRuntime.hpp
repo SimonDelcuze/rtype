@@ -72,6 +72,7 @@ void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& 
                       ThreadSafeQueue<NotificationData>& broadcastQueue);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread,
+                  std::uint32_t userId,
                   ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
 void stopNetwork(NetPipelines& net, std::thread& welcomeThread, std::atomic<bool>& handshakeDone);
 JoinResult waitForJoinResponse(Window& window, NetPipelines& net, float timeoutSeconds = 5.0F);

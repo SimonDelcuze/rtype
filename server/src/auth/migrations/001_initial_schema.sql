@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS user_stats (
     wins INTEGER NOT NULL DEFAULT 0,
     losses INTEGER NOT NULL DEFAULT 0,
     total_score INTEGER NOT NULL DEFAULT 0,
+    elo INTEGER NOT NULL DEFAULT 1000,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -42,8 +43,8 @@ CREATE INDEX IF NOT EXISTS idx_session_tokens_hash ON session_tokens(token_hash)
 CREATE TRIGGER IF NOT EXISTS create_user_stats_trigger
 AFTER INSERT ON users
 BEGIN
-    INSERT INTO user_stats (user_id, games_played, wins, losses, total_score)
-    VALUES (NEW.id, 0, 0, 0, 0);
+    INSERT INTO user_stats (user_id, games_played, wins, losses, total_score, elo)
+    VALUES (NEW.id, 0, 0, 0, 0, 1000);
 END;
 
 -- Trigger to clean up expired tokens (runs on INSERT to session_tokens)

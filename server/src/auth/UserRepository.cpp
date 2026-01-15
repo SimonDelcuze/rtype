@@ -140,7 +140,7 @@ void UserRepository::cleanupExpiredTokens()
 std::optional<UserStats> UserRepository::getUserStats(std::uint32_t userId)
 {
     auto stmt =
-        db_->prepare("SELECT user_id, games_played, wins, losses, total_score FROM user_stats WHERE user_id = ?");
+        db_->prepare("SELECT user_id, games_played, wins, losses, total_score, elo FROM user_stats WHERE user_id = ?");
     if (!stmt.has_value()) {
         return std::nullopt;
     }
@@ -157,15 +157,16 @@ std::optional<UserStats> UserRepository::getUserStats(std::uint32_t userId)
     stats.wins        = stmt->getColumnUInt32(2).value_or(0);
     stats.losses      = stmt->getColumnUInt32(3).value_or(0);
     stats.totalScore  = static_cast<std::uint64_t>(stmt->getColumnInt64(4).value_or(0));
+    stats.elo         = stmt->getColumnInt(5).value_or(1000);
 
     return stats;
 }
 
 bool UserRepository::updateUserStats(std::uint32_t userId, std::uint32_t gamesPlayed, std::uint32_t wins,
-                                     std::uint32_t losses, std::uint64_t totalScore)
+                                     std::uint32_t losses, std::uint64_t totalScore, std::int32_t elo)
 {
-    auto stmt = db_->prepare("INSERT OR REPLACE INTO user_stats (user_id, games_played, wins, losses, total_score) "
-                             "VALUES (?, ?, ?, ?, ?)");
+    auto stmt = db_->prepare("INSERT OR REPLACE INTO user_stats (user_id, games_played, wins, losses, total_score, elo) "
+                             "VALUES (?, ?, ?, ?, ?, ?)");
     if (!stmt.has_value()) {
         return false;
     }
@@ -175,6 +176,7 @@ bool UserRepository::updateUserStats(std::uint32_t userId, std::uint32_t gamesPl
     stmt->bind(3, wins);
     stmt->bind(4, losses);
     stmt->bind(5, static_cast<std::int64_t>(totalScore));
+    stmt->bind(6, elo);
 
     return stmt->step();
 }
