@@ -5,6 +5,7 @@
 #include "network/LevelInitParser.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
+#include "systems/NetworkStatsSystem.hpp"
 
 #include <iostream>
 
@@ -299,6 +300,11 @@ void NetworkMessageHandler::dispatch(const std::vector<std::uint8_t>& data)
         std::cout << ">>> [NETWORK] Dispatching GameEnd Packet! <<<" << std::endl;
         Logger::instance().info("[Network] Received GameEnd packet in dispatch");
         handleGameEnd(data);
+        return;
+    }
+    if (hdr->messageType == static_cast<std::uint8_t>(MessageType::ServerPong)) {
+        Logger::instance().info("[Network] Received ServerPong packet");
+        recordGlobalPongReceived();
         return;
     }
 }

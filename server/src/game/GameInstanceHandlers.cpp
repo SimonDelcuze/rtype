@@ -50,6 +50,7 @@ void GameInstance::handleControlMessage(const ControlEvent& ctrl)
             onSetPlayerCount(playerCount);
         }
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientPing)) {
+        Logger::instance().info("[Net] Received ClientPing, sending ServerPong");
         sendThread_.sendTo(buildPong(ctrl.header), ctrl.from);
     } else if (type == static_cast<std::uint8_t>(MessageType::ClientDisconnect)) {
         onDisconnect(ctrl.from);

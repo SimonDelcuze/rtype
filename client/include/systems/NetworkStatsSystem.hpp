@@ -1,17 +1,15 @@
 #pragma once
 
-#include "concurrency/ThreadSafeQueue.hpp"
 #include "ecs/Registry.hpp"
-#include "network/SnapshotParser.hpp"
 #include "systems/ISystem.hpp"
 
-#include <chrono>
+#include <atomic>
 #include <cstdint>
 
 class NetworkStatsSystem : public ISystem
 {
   public:
-    NetworkStatsSystem(ThreadSafeQueue<SnapshotParseResult>& snapshots);
+    NetworkStatsSystem() = default;
 
     void initialize() override;
     void update(Registry& registry, float deltaTime) override;
@@ -21,11 +19,14 @@ class NetworkStatsSystem : public ISystem
     void recordPacketReceived(std::size_t bytes);
 
   private:
-    ThreadSafeQueue<SnapshotParseResult>& snapshots_;
-
-    std::chrono::steady_clock::time_point lastSnapshotTime_;
-    std::uint32_t lastSnapshotTick_ = 0;
-
     std::uint32_t bytesReceivedThisFrame_ = 0;
     std::uint32_t bytesSentThisFrame_     = 0;
 };
+
+extern std::atomic<int64_t> g_lastPingTimeMicros;
+extern std::atomic<bool> g_pingPending;
+extern std::atomic<float> g_lastRtt;
+extern std::atomic<bool> g_rttConsumed;
+
+void recordGlobalPingSent();
+float recordGlobalPongReceived();

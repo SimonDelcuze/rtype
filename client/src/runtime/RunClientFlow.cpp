@@ -19,6 +19,7 @@
 #include "scheduler/ClientScheduler.hpp"
 #include "scheduler/GameLoop.hpp"
 #include "systems/ButtonSystem.hpp"
+#include "systems/NetworkStatsSystem.hpp"
 #include "systems/NotificationSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include "ui/ConnectionMenu.hpp"
@@ -318,10 +319,20 @@ namespace
                 PacketHeader header{};
                 header.packetType  = static_cast<std::uint8_t>(PacketType::ClientToServer);
                 header.messageType = static_cast<std::uint8_t>(MessageType::ClientPing);
-                auto packet        = header.encode();
+                header.payloadSize = 0;
+                auto headerBytes   = header.encode();
+                std::vector<std::uint8_t> packet(headerBytes.begin(), headerBytes.end());
+
+                std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());
+                packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));
+                packet.push_back(static_cast<std::uint8_t>((crc >> 16) & 0xFF));
+                packet.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
+                packet.push_back(static_cast<std::uint8_t>(crc & 0xFF));
+
                 if (net.socket) {
                     Logger::instance().info("[Heartbeat] Sending ping to game server...");
                     net.socket->sendTo(packet.data(), packet.size(), serverEndpoint);
+                    recordGlobalPingSent();
                 }
             }
 
