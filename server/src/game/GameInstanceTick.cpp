@@ -108,7 +108,7 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                         if (registry_.has<ScoreComponent>(entityId)) {
                             scoreVal = registry_.get<ScoreComponent>(entityId).value;
                         }
-                        
+
                         std::uint32_t finalId = playerId;
                         for (const auto& [key, sess] : sessions_) {
                             if (sess.playerId == playerId && sess.userId.has_value()) {
@@ -174,7 +174,7 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                         if (registry_.has<ScoreComponent>(entityId)) {
                             scoreVal = registry_.get<ScoreComponent>(entityId).value;
                         }
-                        
+
                         std::uint32_t finalId = playerId;
                         for (const auto& [key, sess] : sessions_) {
                             if (sess.playerId == playerId && sess.userId.has_value()) {

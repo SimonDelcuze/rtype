@@ -76,6 +76,8 @@ enum class MessageType : std::uint8_t
     RoomSetConfig              = 0x71,
     RoomSetReady               = 0x72,
     Chat                       = 0x70,
+    LeaderboardRequest         = 0x73,
+    LeaderboardResponse        = 0x74,
     Handshake                  = ClientHello,
     Ack                        = ClientAcknowledge
 };

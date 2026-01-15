@@ -23,7 +23,16 @@ class UserRepository
 
     std::optional<UserStats> getUserStats(std::uint32_t userId);
     bool updateUserStats(std::uint32_t userId, std::uint32_t gamesPlayed, std::uint32_t wins, std::uint32_t losses,
-                         std::uint64_t totalScore, std::int32_t elo);
+                         std::uint64_t totalScore, std::uint64_t totalRankedScore, std::int32_t elo);
+
+    struct LeaderboardEntryRow
+    {
+        std::string username;
+        std::int32_t value;
+    };
+
+    std::vector<LeaderboardEntryRow> getTopElo(std::uint32_t limit);
+    std::vector<LeaderboardEntryRow> getTopScore(std::uint32_t limit);
 
     bool updatePassword(std::uint32_t userId, const std::string& newPasswordHash);
 

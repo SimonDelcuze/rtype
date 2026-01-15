@@ -139,8 +139,8 @@ void UserRepository::cleanupExpiredTokens()
 
 std::optional<UserStats> UserRepository::getUserStats(std::uint32_t userId)
 {
-    auto stmt =
-        db_->prepare("SELECT user_id, games_played, wins, losses, total_score, elo FROM user_stats WHERE user_id = ?");
+    auto stmt = db_->prepare("SELECT user_id, games_played, wins, losses, total_score, elo, total_ranked_score FROM "
+                             "user_stats WHERE user_id = ?");
     if (!stmt.has_value()) {
         return std::nullopt;
     }
@@ -152,21 +152,24 @@ std::optional<UserStats> UserRepository::getUserStats(std::uint32_t userId)
     }
 
     UserStats stats;
-    stats.userId      = stmt->getColumnUInt32(0).value_or(0);
-    stats.gamesPlayed = stmt->getColumnUInt32(1).value_or(0);
-    stats.wins        = stmt->getColumnUInt32(2).value_or(0);
-    stats.losses      = stmt->getColumnUInt32(3).value_or(0);
-    stats.totalScore  = static_cast<std::uint64_t>(stmt->getColumnInt64(4).value_or(0));
-    stats.elo         = stmt->getColumnInt(5).value_or(1000);
+    stats.userId           = stmt->getColumnUInt32(0).value_or(0);
+    stats.gamesPlayed      = stmt->getColumnUInt32(1).value_or(0);
+    stats.wins             = stmt->getColumnUInt32(2).value_or(0);
+    stats.losses           = stmt->getColumnUInt32(3).value_or(0);
+    stats.totalScore       = static_cast<std::uint64_t>(stmt->getColumnInt64(4).value_or(0));
+    stats.elo              = stmt->getColumnInt(5).value_or(1000);
+    stats.totalRankedScore = static_cast<std::uint64_t>(stmt->getColumnInt64(6).value_or(0));
 
     return stats;
 }
 
 bool UserRepository::updateUserStats(std::uint32_t userId, std::uint32_t gamesPlayed, std::uint32_t wins,
-                                     std::uint32_t losses, std::uint64_t totalScore, std::int32_t elo)
+                                     std::uint32_t losses, std::uint64_t totalScore, std::uint64_t totalRankedScore,
+                                     std::int32_t elo)
 {
-    auto stmt = db_->prepare("INSERT OR REPLACE INTO user_stats (user_id, games_played, wins, losses, total_score, elo) "
-                             "VALUES (?, ?, ?, ?, ?, ?)");
+    auto stmt = db_->prepare(
+        "INSERT OR REPLACE INTO user_stats (user_id, games_played, wins, losses, total_score, elo, total_ranked_score) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)");
     if (!stmt.has_value()) {
         return false;
     }
@@ -177,6 +180,7 @@ bool UserRepository::updateUserStats(std::uint32_t userId, std::uint32_t gamesPl
     stmt->bind(4, losses);
     stmt->bind(5, static_cast<std::int64_t>(totalScore));
     stmt->bind(6, elo);
+    stmt->bind(7, static_cast<std::int64_t>(totalRankedScore));
 
     return stmt->step();
 }
@@ -192,4 +196,48 @@ bool UserRepository::updatePassword(std::uint32_t userId, const std::string& new
     stmt->bind(2, userId);
 
     return stmt->step();
+}
+
+std::vector<UserRepository::LeaderboardEntryRow> UserRepository::getTopElo(std::uint32_t limit)
+{
+    std::vector<LeaderboardEntryRow> results;
+    auto stmt = db_->prepare("SELECT u.username, s.elo FROM user_stats s "
+                             "JOIN users u ON s.user_id = u.id "
+                             "ORDER BY s.elo DESC LIMIT ?");
+    if (!stmt.has_value()) {
+        return results;
+    }
+
+    stmt->bind(1, static_cast<std::int64_t>(limit));
+
+    while (stmt->step() && stmt->hasRow()) {
+        LeaderboardEntryRow row;
+        row.username = stmt->getColumnString(0).value_or("Unknown");
+        row.value    = stmt->getColumnInt(1).value_or(0);
+        results.push_back(row);
+    }
+
+    return results;
+}
+
+std::vector<UserRepository::LeaderboardEntryRow> UserRepository::getTopScore(std::uint32_t limit)
+{
+    std::vector<LeaderboardEntryRow> results;
+    auto stmt = db_->prepare("SELECT u.username, s.total_ranked_score FROM user_stats s "
+                             "JOIN users u ON s.user_id = u.id "
+                             "ORDER BY s.total_ranked_score DESC LIMIT ?");
+    if (!stmt.has_value()) {
+        return results;
+    }
+
+    stmt->bind(1, static_cast<std::int64_t>(limit));
+
+    while (stmt->step() && stmt->hasRow()) {
+        LeaderboardEntryRow row;
+        row.username = stmt->getColumnString(0).value_or("Unknown");
+        row.value    = static_cast<std::int32_t>(stmt->getColumnInt64(1).value_or(0));
+        results.push_back(row);
+    }
+
+    return results;
 }

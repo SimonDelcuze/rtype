@@ -208,17 +208,21 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     readyButtonText_ = createText(registry, 557.0F, 663.0F, "READY", 24, Color::White);
     createPanel(registry, 40.0F, 180.0F, 360.0F, 180.0F, Color(50, 70, 100, 200));
     createText(registry, 60.0F, 192.0F, "Score Leaderboard", 20, Color(200, 230, 255));
-    createText(registry, 60.0F, 225.0F, "No scores yet", 16, Color(210, 220, 230));
+    leaderboardEntities_.push_back(createText(registry, 60.0F, 225.0F, "No scores yet", 16, Color(210, 220, 230)));
 
     createPanel(registry, 40.0F, 380.0F, 360.0F, 240.0F, Color(40, 60, 90, 200));
     createText(registry, 60.0F, 392.0F, "Rank Leaderboard", 20, Color(200, 230, 255));
-    createText(registry, 60.0F, 425.0F, "No ranks yet", 16, Color(210, 220, 230));
+    leaderboardEntities_.push_back(createText(registry, 60.0F, 425.0F, "No ranks yet", 16, Color(210, 220, 230)));
     createPanel(registry, 430.0F, 320.0F, 340.0F, 320.0F, Color(25, 35, 55, 200));
     createText(registry, 450.0F, 325.0F, "Players", 20, Color(180, 220, 255));
     createPanel(registry, 800.0F, 250.0F, 460.0F, 400.0F, Color(30, 30, 30, 180));
     createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
 
     buildChatUI(registry);
+    if (lobbyConnection_) {
+        lobbyConnection_->sendRequestLeaderboard();
+        leaderboardTimer_ = 0.0F;
+    }
     refreshPlayers(registry);
 }
 
@@ -320,6 +324,7 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
     }
 
     updateTimer_ += dt;
+    leaderboardTimer_ += dt;
     if (updateTimer_ >= kUpdateInterval) {
         updateTimer_ = 0.0F;
         refreshPlayers(registry);
@@ -330,29 +335,45 @@ void RoomWaitingMenuRanked::update(Registry& registry, float dt)
         }
     }
 
-    if (lobbyConnection_ && lobbyConnection_->hasNewChatMessages()) {
-        auto newMsgs = lobbyConnection_->popChatMessages();
-        for (const auto& msg : newMsgs) {
-            std::string formatted = "[" + std::string(msg.playerName) + "] " + std::string(msg.message);
-            std::vector<std::string> lines;
-            wrapText(formatted, 420.0F, fonts_, lines);
-            for (const auto& line : lines) {
-                chatHistory_.push_back(line);
-                if (chatHistory_.size() > kMaxChatMessages) {
-                    chatHistory_.erase(chatHistory_.begin());
-                }
+    if (leaderboardTimer_ >= 5.0F) {
+        leaderboardTimer_ = 0.0F;
+        if (lobbyConnection_) {
+            lobbyConnection_->sendRequestLeaderboard();
+        }
+    }
+
+    if (lobbyConnection_) {
+        if (lobbyConnection_->hasLeaderboardResult()) {
+            auto result = lobbyConnection_->popLeaderboardResult();
+            if (result.has_value()) {
+                updateLeaderboardUI(registry, *result);
             }
         }
-        for (auto id : chatMessageEntities_) {
-            if (registry.isAlive(id))
-                registry.destroyEntity(id);
-        }
-        chatMessageEntities_.clear();
 
-        for (std::size_t i = 0; i < chatHistory_.size(); ++i) {
-            auto msgEntity = createText(registry, 820.0F, 300.0F + (static_cast<float>(i) * 25.0F), chatHistory_[i], 18,
-                                        Color(220, 220, 220));
-            chatMessageEntities_.push_back(msgEntity);
+        if (lobbyConnection_->hasNewChatMessages()) {
+            auto newMsgs = lobbyConnection_->popChatMessages();
+            for (const auto& msg : newMsgs) {
+                std::string formatted = "[" + std::string(msg.playerName) + "] " + std::string(msg.message);
+                std::vector<std::string> lines;
+                wrapText(formatted, 420.0F, fonts_, lines);
+                for (const auto& line : lines) {
+                    chatHistory_.push_back(line);
+                    if (chatHistory_.size() > kMaxChatMessages) {
+                        chatHistory_.erase(chatHistory_.begin());
+                    }
+                }
+            }
+            for (auto id : chatMessageEntities_) {
+                if (registry.isAlive(id))
+                    registry.destroyEntity(id);
+            }
+            chatMessageEntities_.clear();
+
+            for (std::size_t i = 0; i < chatHistory_.size(); ++i) {
+                auto msgEntity = createText(registry, 820.0F, 300.0F + (static_cast<float>(i) * 25.0F), chatHistory_[i],
+                                            18, Color(220, 220, 220));
+                chatMessageEntities_.push_back(msgEntity);
+            }
         }
     }
 }
@@ -451,6 +472,57 @@ void RoomWaitingMenuRanked::onSendChatClicked(Registry& registry)
             lobbyConnection_->sendChatMessage(roomId_, input.value);
             input.value.clear();
         }
+    }
+}
+
+void RoomWaitingMenuRanked::updateLeaderboardUI(Registry& registry, const LeaderboardResponseData& data)
+{
+    for (auto id : leaderboardEntities_) {
+        if (registry.isAlive(id))
+            registry.destroyEntity(id);
+    }
+    leaderboardEntities_.clear();
+
+    float scoreX = 60.0F;
+    float scoreY = 225.0F;
+    for (std::size_t i = 0; i < data.topScore.size(); ++i) {
+        std::string name(data.topScore[i].username);
+        if (name.empty())
+            continue;
+        std::string line = std::to_string(i + 1) + ". " + name + ": " + std::to_string(data.topScore[i].value);
+        leaderboardEntities_.push_back(
+            createText(registry, scoreX, scoreY + (i * 25.0F), line, 16, Color(210, 220, 230)));
+    }
+
+    float rankX   = 60.0F;
+    float rankY   = 425.0F;
+    float spacing = 35.0F;
+    for (std::size_t i = 0; i < data.topElo.size(); ++i) {
+        std::string name(data.topElo[i].username);
+        if (name.empty())
+            continue;
+
+        float rowY = rankY + (i * spacing);
+
+        std::string rankNum = std::to_string(i + 1) + ". ";
+        leaderboardEntities_.push_back(createText(registry, rankX, rowY, rankNum, 16, Color(210, 220, 230)));
+
+        std::string rankTex = getRankTexture(data.topElo[i].value);
+        if (textures_.has(rankTex)) {
+            auto tex      = textures_.get(rankTex);
+            EntityId icon = registry.createEntity();
+            auto& t       = registry.emplace<TransformComponent>(icon);
+            t.x           = rankX + 35.0F;
+            t.y           = rowY - 5.0F;
+            t.scaleX      = 0.08F;
+            t.scaleY      = 0.08F;
+            registry.emplace<SpriteComponent>(icon, SpriteComponent(tex));
+            registry.emplace<LayerComponent>(icon, LayerComponent::create(RenderLayer::UI));
+            leaderboardEntities_.push_back(icon);
+        }
+
+        std::string info = name + " (" + std::to_string(data.topElo[i].value) + ")";
+        leaderboardEntities_.push_back(createText(registry, rankX + 75.0F, rowY, info, 16, Color(210, 220, 230)));
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include "ClientRuntime.hpp"
 #include "Logger.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "network/ServerBroadcastPacket.hpp"
 #include "network/ServerDisconnectPacket.hpp"
 #include "utils/StringSanity.hpp"
@@ -172,6 +173,9 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             if (pkt.has_value()) {
                 chatMessages_.push(*pkt);
             }
+        } else if (type == MessageType::LeaderboardResponse) {
+            auto data                 = parseLeaderboardResponsePacket(buffer.data(), recvResult.size);
+            pendingLeaderboardResult_ = data;
         }
     }
 }
@@ -687,6 +691,25 @@ std::vector<ChatPacket> LobbyConnection::popChatMessages()
         messages.push_back(msg);
     }
     return messages;
+}
+
+void LobbyConnection::sendRequestLeaderboard()
+{
+    auto packet = buildLeaderboardRequestPacket(nextSequence_++);
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+    pendingLeaderboardResult_.reset();
+}
+
+bool LobbyConnection::hasLeaderboardResult() const
+{
+    return pendingLeaderboardResult_.has_value();
+}
+
+std::optional<LeaderboardResponseData> LobbyConnection::popLeaderboardResult()
+{
+    auto res = pendingLeaderboardResult_;
+    pendingLeaderboardResult_.reset();
+    return res;
 }
 
 #include "ClientRuntime.hpp"

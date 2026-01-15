@@ -5,6 +5,7 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
+#include "network/LeaderboardPacket.hpp"
 #include "network/LobbyConnection.hpp"
 #include "network/LobbyPackets.hpp"
 #include "ui/IMenu.hpp"
@@ -55,6 +56,7 @@ class LobbyMenuRanked : public IMenu
     void transitionToWaiting(Registry& registry);
     void destroyLobbyEntities(Registry& registry);
     void buildLayout(Registry& registry);
+    void updateLeaderboardUI(Registry& registry, const LeaderboardResponseData& data);
 
     enum class State
     {
@@ -80,6 +82,7 @@ class LobbyMenuRanked : public IMenu
 
     std::vector<RoomInfo> rooms_;
     float requestTimer_{0.0F};
+    float leaderboardTimer_{0.0F};
     float dotTimer_{0.0F};
     int dotCount_{1};
 
@@ -93,6 +96,7 @@ class LobbyMenuRanked : public IMenu
     EntityId rightBoard_{0};
     EntityId leftTitle_{0};
     EntityId rightTitle_{0};
+    std::vector<EntityId> leaderboardEntities_;
     bool layoutBuilt_{false};
 
     std::unique_ptr<RoomWaitingMenuRanked> waitingMenu_;

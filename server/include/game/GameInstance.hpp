@@ -48,7 +48,8 @@ struct PlayerGameResult
     int score;
 };
 
-using GameEndCallback = std::function<void(std::uint32_t roomId, const std::vector<PlayerGameResult>& results, bool isWin)>;
+using GameEndCallback =
+    std::function<void(std::uint32_t roomId, const std::vector<PlayerGameResult>& results, bool isWin)>;
 
 class GameInstance
 {

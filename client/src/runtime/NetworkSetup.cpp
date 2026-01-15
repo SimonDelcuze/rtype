@@ -1,8 +1,7 @@
 #include "ClientRuntime.hpp"
 #include "network/ClientInit.hpp"
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
-                  std::atomic<bool>& handshakeDone, std::thread& welcomeThread,
-                  std::uint32_t userId,
+                  std::atomic<bool>& handshakeDone, std::thread& welcomeThread, std::uint32_t userId,
                   ThreadSafeQueue<NotificationData>* broadcastQueue)
 {
     if (!startReceiver(net, 0, handshakeDone, broadcastQueue))
