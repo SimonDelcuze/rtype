@@ -8,7 +8,7 @@ struct AllyComponent
     float shootTimer      = 0.0F;
 
     static constexpr float kShootInterval = 2.0F;
-    static constexpr int kAllyCost        = 1000;
+    static constexpr int kAllyCost        = 6000;
 
     static AllyComponent create(std::uint32_t owner);
 };
