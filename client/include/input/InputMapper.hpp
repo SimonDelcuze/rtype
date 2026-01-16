@@ -36,13 +36,13 @@ class InputMapper
   private:
     void setKeyState(KeyCode key, bool pressed);
 
-    KeyBindings bindings_  = KeyBindings::defaults();
-    bool upPressed_        = false;
-    bool downPressed_      = false;
-    bool leftPressed_      = false;
-    bool rightPressed_     = false;
-    bool firePressed_      = false;
-    bool interactPressed_  = false;
-    bool buyShieldPressed_ = false;
+    KeyBindings bindings_          = KeyBindings::defaults();
+    bool upPressed_                = false;
+    bool downPressed_              = false;
+    bool leftPressed_              = false;
+    bool rightPressed_             = false;
+    bool firePressed_              = false;
+    bool interactPressed_          = false;
+    bool buyShieldPressed_         = false;
     mutable bool buyShieldLatched_ = false;
 };
