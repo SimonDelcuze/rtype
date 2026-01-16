@@ -23,8 +23,8 @@ class GameOverSystem : public ISystem
     EventBus& eventBus_;
     std::uint32_t localPlayerId_;
     RoomType gameMode_;
-    bool gameOverTriggered_ = false;
-    bool localPlayerDead_ = false;
+    bool gameOverTriggered_      = false;
+    bool localPlayerDead_        = false;
     EntityId spectatingPlayerId_ = std::numeric_limits<EntityId>::max();
 
     EntityId findAlivePlayer(Registry& registry);

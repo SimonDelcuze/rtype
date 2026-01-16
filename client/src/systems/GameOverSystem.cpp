@@ -71,7 +71,7 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
         if (registry.has<OwnershipComponent>(id)) {
             const auto& owner = registry.get<OwnershipComponent>(id);
             if (owner.ownerId == localPlayerId_) {
-                localPlayerFound = true;
+                localPlayerFound  = true;
                 localPlayerEntity = id;
             }
         }
