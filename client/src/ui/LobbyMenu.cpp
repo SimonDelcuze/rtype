@@ -525,11 +525,12 @@ void LobbyMenu::update(Registry& registry, float dt)
                 auto result = conn->popRoomCreatedResult();
                 isCreating_ = false;
                 if (result.has_value()) {
-                    Logger::instance().info("[LobbyMenu] Room created: ID=" + std::to_string(result->roomId));
-                    Logger::instance().info("[LobbyMenu] Joining own room...");
-                    conn->sendJoinRoom(result->roomId);
-                    isJoining_  = true;
-                    isRoomHost_ = true;
+                    Logger::instance().info("[LobbyMenu] Room created: ID=" + std::to_string(result->roomId) +
+                                            ", port=" + std::to_string(result->port));
+                    result_.roomId   = result->roomId;
+                    result_.gamePort = result->port;
+                    isRoomHost_      = true;
+                    state_           = State::InRoom;
                 } else {
                     Logger::instance().error("[LobbyMenu] Failed to create room");
                     state_ = State::ShowingRooms;

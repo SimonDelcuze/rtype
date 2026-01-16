@@ -129,10 +129,15 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             if (pkt.has_value())
                 pendingRoomListResult_ = pkt;
         } else if (type == MessageType::LobbyRoomCreated) {
+            Logger::instance().info("[LobbyConnection] Received LobbyRoomCreated packet");
             auto pkt = parseRoomCreatedPacket(buffer.data(), recvResult.size);
             if (pkt.has_value()) {
+                Logger::instance().info("[LobbyConnection] Room created successfully: ID=" +
+                                        std::to_string(pkt->roomId) + ", port=" + std::to_string(pkt->port));
                 pendingRoomCreatedResult_ = pkt;
                 inRoom_                   = true;
+            } else {
+                Logger::instance().warn("[LobbyConnection] Failed to parse RoomCreated packet");
             }
         } else if (type == MessageType::LobbyJoinSuccess) {
             auto pkt = parseJoinSuccessPacket(buffer.data(), recvResult.size);
@@ -334,6 +339,9 @@ std::optional<GetStatsResponseData> LobbyConnection::popStatsResult()
 void LobbyConnection::sendCreateRoom(const std::string& roomName, const std::string& password,
                                      RoomVisibility visibility)
 {
+    Logger::instance().info("[LobbyConnection] Sending create room: name='" + roomName + "', password='" +
+                            (password.empty() ? "(none)" : "(set, length=" + std::to_string(password.size()) + ")") +
+                            "', visibility=" + std::to_string(static_cast<int>(visibility)));
     auto packet = buildCreateRoomPacket(roomName, password, visibility, nextSequence_++);
     socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
     pendingRoomCreatedResult_.reset();
