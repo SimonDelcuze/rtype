@@ -143,6 +143,11 @@
       "speed": 140
     },
     {
+      "id": "p_walker_slow",
+      "type": "linear",
+      "speed": 90
+    },
+    {
       "id": "p_sine",
       "type": "sine",
       "speed": 120,
@@ -573,7 +578,7 @@
           "wave": {
             "type": "stagger",
             "enemy": "walker",
-            "patternId": "p_linear",
+            "patternId": "p_walker_slow",
             "spawnX": 1220.0,
             "startY": 640.0,
             "deltaY": 0.0,
