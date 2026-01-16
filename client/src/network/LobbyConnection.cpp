@@ -8,6 +8,7 @@
 #include "utils/StringSanity.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::atomic<bool>& runningFlag)
@@ -121,9 +122,20 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             if (pkt.has_value())
                 pendingRegisterResult_ = pkt;
         } else if (type == MessageType::LobbyRoomList) {
+            Logger::instance().info("[LobbyConnection] LobbyRoomList received (" + std::to_string(recvResult.size) +
+                                    " bytes)");
+            std::cout << "[LobbyConnection] LobbyRoomList received (" << recvResult.size << " bytes)" << std::endl;
             auto pkt = parseRoomListPacket(buffer.data(), recvResult.size);
-            if (pkt.has_value())
+            if (pkt.has_value()) {
+                Logger::instance().info("[LobbyConnection] Parsed " + std::to_string(pkt->rooms.size()) +
+                                        " rooms from LobbyRoomList");
+                std::cout << "[LobbyConnection] Parsed " << pkt->rooms.size() << " rooms from LobbyRoomList"
+                          << std::endl;
                 pendingRoomListResult_ = pkt;
+            } else {
+                Logger::instance().warn("[LobbyConnection] Failed to parse LobbyRoomList packet");
+                std::cout << "[LobbyConnection] Failed to parse LobbyRoomList packet" << std::endl;
+            }
         } else if (type == MessageType::LobbyRoomCreated) {
             auto pkt = parseRoomCreatedPacket(buffer.data(), recvResult.size);
             if (pkt.has_value()) {
@@ -289,8 +301,20 @@ std::optional<RegisterResponseData> LobbyConnection::popRegisterResult()
 
 void LobbyConnection::sendRequestRoomList()
 {
+    Logger::instance().info("[LobbyConnection] Sending LobbyListRooms (seq=" + std::to_string(nextSequence_) + ")");
+    std::cout << "[LobbyConnection] Sending LobbyListRooms (seq=" << nextSequence_ << ")" << std::endl;
     auto packet = buildListRoomsPacket(nextSequence_++);
-    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+    auto res    = socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+    if (!res.ok() || res.size != packet.size()) {
+        Logger::instance().warn("[LobbyConnection] Failed to send LobbyListRooms to " +
+                                std::to_string(lobbyEndpoint_.addr[0]) + "." +
+                                std::to_string(lobbyEndpoint_.addr[1]) + "." +
+                                std::to_string(lobbyEndpoint_.addr[2]) + "." +
+                                std::to_string(lobbyEndpoint_.addr[3]) + ":" +
+                                std::to_string(lobbyEndpoint_.port) + " err=" +
+                                std::to_string(static_cast<int>(res.error)) + " sent=" +
+                                std::to_string(res.size) + "/" + std::to_string(packet.size()));
+    }
     pendingRoomListResult_.reset();
 }
 

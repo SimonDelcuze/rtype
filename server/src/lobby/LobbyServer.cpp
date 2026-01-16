@@ -584,7 +584,7 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
 
 void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint& from)
 {
-    Logger::instance().info("[LobbyServer] List rooms request from client");
+    Logger::instance().info("[LobbyServer] List rooms request from client " + endpointToKey(from));
 
     for (auto roomId : instanceManager_.getAllRoomIds()) {
         if (!lobbyManager_.roomExists(roomId)) {
@@ -864,7 +864,12 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
 void LobbyServer::sendPacket(const std::vector<std::uint8_t>& packet, const IpEndpoint& to)
 {
-    lobbySocket_.sendTo(packet.data(), packet.size(), to);
+    auto res = lobbySocket_.sendTo(packet.data(), packet.size(), to);
+    if (!res.ok() || res.size != packet.size()) {
+        Logger::instance().warn("[LobbyServer] sendPacket failed to " + endpointToKey(to) + " err=" +
+                                std::to_string(static_cast<int>(res.error)) + " sent=" + std::to_string(res.size) +
+                                "/" + std::to_string(packet.size()));
+    }
 
     Logger::instance().addPacketSent();
     Logger::instance().addBytesSent(packet.size());
