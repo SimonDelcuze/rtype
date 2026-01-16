@@ -204,9 +204,8 @@ void RegisterMenu::update(Registry& registry, float dt)
         return;
     }
 
-    // Check for ping response (non-blocking)
     if (pingPending_ && lobbyConn_.hasRoomListResult()) {
-        lobbyConn_.popRoomListResult(); // Consume the response
+        lobbyConn_.popRoomListResult();
         pingPending_         = false;
         consecutiveFailures_ = 0;
     }
@@ -216,7 +215,6 @@ void RegisterMenu::update(Registry& registry, float dt)
         heartbeatTimer_ = 0.0F;
 
         if (pingPending_) {
-            // Previous ping didn't get a response
             Logger::instance().warn("[Heartbeat] Ping timeout in Register Menu");
             consecutiveFailures_++;
             pingPending_ = false;
@@ -228,7 +226,6 @@ void RegisterMenu::update(Registry& registry, float dt)
             backToLogin_ = true;
             done_        = true;
         } else {
-            // Send async ping (non-blocking)
             lobbyConn_.sendRequestRoomList();
             pingPending_ = true;
         }
