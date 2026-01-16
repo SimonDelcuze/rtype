@@ -99,7 +99,7 @@ std::vector<RoomInfo> LobbyManager::listRooms() const
     result.reserve(rooms_.size());
 
     for (const auto& [_, info] : rooms_) {
-        if (info.state != RoomState::Finished) {
+        if (info.state == RoomState::Waiting || info.state == RoomState::Countdown) {
             result.push_back(info);
         }
     }
