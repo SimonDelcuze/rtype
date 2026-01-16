@@ -3,6 +3,7 @@
 #include "components/BossComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
 #include "components/HealthComponent.hpp"
+#include "components/AllyComponent.hpp"
 #include "components/OwnershipComponent.hpp"
 #include "components/RenderTypeComponent.hpp"
 #include "components/TagComponent.hpp"
@@ -186,7 +187,7 @@ void HUDSystem::update(Registry& registry, float deltaTime)
     }
 
     auto font = fonts_.get("score_font");
-    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && playerScore >= 1000) {
+    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && playerScore >= AllyComponent::kAllyCost) {
         static std::shared_ptr<IText> allyText = nullptr;
         if (!allyText) {
             GraphicsFactory factory;
@@ -195,7 +196,7 @@ void HUDSystem::update(Registry& registry, float deltaTime)
         if (allyText) {
             allyText->setFont(*font);
             allyText->setCharacterSize(18);
-            allyText->setString("Press E to buy Ally (1000 pts)");
+            allyText->setString("Press E to buy Ally (6000 pts)");
             allyText->setFillColor(Color{200, 255, 200});
             const auto screenSize = window_.getSize();
             FloatRect allyBounds  = allyText->getLocalBounds();

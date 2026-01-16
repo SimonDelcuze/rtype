@@ -36,6 +36,6 @@ class HUDSystem : public ISystem
     TextureManager& textures_;
     LevelState* state_ = nullptr;
     std::uint32_t localPlayerId_{0};
-    RoomType gameMode_{RoomType::Quickplay};
+    [[maybe_unused]] RoomType gameMode_{RoomType::Quickplay};
 };
 #include "components/ChargeMeterComponent.hpp"
