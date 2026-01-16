@@ -344,15 +344,9 @@ void LobbyServer::receiveThread()
         auto result = lobbySocket_.recvFrom(buffer.data(), buffer.size(), from);
 
         if (!result.ok() || result.size == 0) {
-            if (!result.ok()) {
-                std::cout << "[Room1][LobbyServer] recvFrom error err=" << static_cast<int>(result.error)
-                          << " from " << endpointToKey(from) << "\n";
-            }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
-
-        std::cout << "[Room1][LobbyServer] recv " << result.size << " bytes from " << endpointToKey(from) << "\n";
 
         Logger::instance().addPacketReceived();
         Logger::instance().addBytesReceived(result.size);
@@ -498,13 +492,9 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
     auto hdr = PacketHeader::decode(data, size);
     if (!hdr.has_value()) {
         Logger::instance().warn("[Room1][LobbyServer] Invalid packet header from " + endpointToKey(from));
-        std::cout << "[Room1][LobbyServer] Invalid packet header from " << endpointToKey(from) << "\n";
         return;
     }
-
     auto msgType = static_cast<MessageType>(hdr->messageType);
-    std::cout << "[Room1][LobbyServer] handlePacket type=" << static_cast<int>(msgType) << " size=" << size
-              << " from " << endpointToKey(from) << "\n";
 
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
