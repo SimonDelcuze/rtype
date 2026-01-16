@@ -7,10 +7,12 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/Window.hpp"
+#include "graphics/abstraction/Common.hpp"
 #include "level/LevelState.hpp"
 #include "network/RoomType.hpp"
 #include "systems/ISystem.hpp"
 
+#include <memory>
 #include <string>
 
 class HUDSystem : public ISystem
@@ -25,7 +27,8 @@ class HUDSystem : public ISystem
 
   private:
     void updateContent(Registry& registry, EntityId id, TextComponent& textComp) const;
-    void drawLivesPips(float startX, float startY, int lives) const;
+    void drawLivesPips(float startX, float startY, int lives, const std::shared_ptr<ITexture>& tex,
+                       const IntRect& rect) const;
     std::string formatScore(int value) const;
 
     Window& window_;
