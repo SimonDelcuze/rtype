@@ -124,6 +124,12 @@
       "layer": 0
     },
     {
+      "typeId": 17,
+      "spriteId": "obstacle_bottom2",
+      "animId": "",
+      "layer": 0
+    },
+    {
       "typeId": 20,
       "spriteId": "boss",
       "animId": "default",
@@ -522,6 +528,20 @@
           1.4,
           1.4
         ]
+      },
+      "wall_bot2": {
+        "typeId": 17,
+        "hitbox": "ob_bot",
+        "collider": "ob_bot",
+        "health": 22,
+        "anchor": "bottom",
+        "margin": 20,
+        "speedX": -60,
+        "speedY": 0,
+        "scale": [
+          1.4,
+          1.4
+        ]
       }
     }
   },
@@ -534,11 +554,21 @@
       },
       "events": [
         {
+          "type": "spawn_obstacle",
+          "id": "walkers_floor",
+          "trigger": {
+            "type": "time",
+            "time": 0.0
+          },
+          "obstacle": "wall_bot2",
+          "x": 1220.0
+        },
+        {
           "type": "spawn_wave",
           "id": "wave_0_walkers",
           "trigger": {
             "type": "time",
-            "time": 0.5
+            "time": 6.2
           },
           "wave": {
             "type": "stagger",
@@ -555,8 +585,8 @@
           "type": "spawn_wave",
           "id": "wave_0_grunts",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "wave_0_walkers"
+            "type": "time",
+            "time": 1.2
           },
           "wave": {
             "type": "line",
