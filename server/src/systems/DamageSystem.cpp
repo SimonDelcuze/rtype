@@ -2,6 +2,7 @@
 
 #include "Logger.hpp"
 #include "components/InvincibilityComponent.hpp"
+#include "components/RenderTypeComponent.hpp"
 #include "components/ShieldComponent.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 
@@ -11,9 +12,16 @@ DamageSystem::DamageSystem(EventBus& bus) : bus_(bus) {}
 
 namespace
 {
+    constexpr std::uint16_t kWalkerPlatformTypeId = 17;
+
     bool isHostile(const TagComponent& tag)
     {
         return tag.hasTag(EntityTag::Enemy) || tag.hasTag(EntityTag::Obstacle);
+    }
+
+    bool isWalkerPlatform(const Registry& registry, EntityId id)
+    {
+        return registry.has<RenderTypeComponent>(id) && registry.get<RenderTypeComponent>(id).typeId == kWalkerPlatformTypeId;
     }
 
     std::string tagLabel(const Registry& registry, EntityId id)
@@ -120,6 +128,9 @@ void DamageSystem::applyMissileDamage(Registry& registry, EntityId missileId, En
         targetIsObstacle = targetTag.hasTag(EntityTag::Obstacle);
 
         if (targetIsObstacle) {
+            if (missile.fromPlayer && isWalkerPlatform(registry, targetId)) {
+                return;
+            }
             missilesToDestroy.push_back(missileId);
             return;
         }
