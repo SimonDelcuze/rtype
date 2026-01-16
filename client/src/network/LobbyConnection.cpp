@@ -41,6 +41,20 @@ bool LobbyConnection::connect()
 
     socket_.setNonBlocking(true);
 
+    auto local = socket_.localEndpoint();
+    Logger::instance().info("[LobbyConnection] UDP socket opened on " + std::to_string(local.addr[0]) + "." +
+                            std::to_string(local.addr[1]) + "." + std::to_string(local.addr[2]) + "." +
+                            std::to_string(local.addr[3]) + ":" + std::to_string(local.port) + " -> lobby " +
+                            std::to_string(lobbyEndpoint_.addr[0]) + "." + std::to_string(lobbyEndpoint_.addr[1]) +
+                            "." + std::to_string(lobbyEndpoint_.addr[2]) + "." + std::to_string(lobbyEndpoint_.addr[3]) +
+                            ":" + std::to_string(lobbyEndpoint_.port));
+    std::cout << "[LobbyConnection] UDP socket opened on " << static_cast<int>(local.addr[0]) << "."
+              << static_cast<int>(local.addr[1]) << "." << static_cast<int>(local.addr[2]) << "."
+              << static_cast<int>(local.addr[3]) << ":" << local.port << " -> lobby "
+              << static_cast<int>(lobbyEndpoint_.addr[0]) << "." << static_cast<int>(lobbyEndpoint_.addr[1]) << "."
+              << static_cast<int>(lobbyEndpoint_.addr[2]) << "." << static_cast<int>(lobbyEndpoint_.addr[3]) << ":"
+              << lobbyEndpoint_.port << std::endl;
+
     return true;
 }
 
@@ -314,6 +328,8 @@ void LobbyConnection::sendRequestRoomList()
                                 std::to_string(lobbyEndpoint_.port) + " err=" +
                                 std::to_string(static_cast<int>(res.error)) + " sent=" +
                                 std::to_string(res.size) + "/" + std::to_string(packet.size()));
+        std::cout << "[LobbyConnection] sendto failed err=" << static_cast<int>(res.error) << " sent " << res.size
+                  << "/" << packet.size() << std::endl;
     }
     pendingRoomListResult_.reset();
 }

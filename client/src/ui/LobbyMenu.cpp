@@ -630,6 +630,8 @@ void LobbyMenu::refreshRoomList()
     if (isRefreshing_)
         return;
 
+    Logger::instance().info("[LobbyMenu] refreshRoomList -> sending list request");
+    std::cout << "[LobbyMenu] refreshRoomList -> sending list request" << std::endl;
     conn->sendRequestRoomList();
     isRefreshing_ = true;
 }
