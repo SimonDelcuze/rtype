@@ -145,8 +145,10 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
                 currentRoomCountdown_       = payload[0];
             }
             auto pkt = parsePlayerListPacket(buffer.data(), recvResult.size);
-            if (pkt.has_value())
+            if (pkt.has_value()) {
                 pendingPlayerListResult_ = pkt;
+                lastPlayerList_          = *pkt;
+            }
         } else if (type == MessageType::RoomSetConfig) {
             if (hdr->packetType == static_cast<std::uint8_t>(PacketType::ServerToClient) &&
                 hdr->payloadSize >= sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1) {

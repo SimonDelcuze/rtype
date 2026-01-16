@@ -71,6 +71,7 @@ namespace
         return pkt;
     }
 } // namespace
+
 LobbyServer::LobbyServer(std::uint16_t lobbyPort, std::uint16_t gameBasePort, std::uint32_t maxInstances,
                          std::atomic<bool>& runningFlag)
     : lobbyPort_(lobbyPort), gameBasePort_(gameBasePort), maxInstances_(maxInstances), running_(&runningFlag),
@@ -880,7 +881,7 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
     std::uint8_t countdown   = lobbyManager_.getRoomCountdown(roomId);
 
     std::uint16_t payloadSize =
-        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 43);
+        sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint8_t) + (playerCount * 47);
 
     PacketHeader respHdr{};
     respHdr.packetType  = static_cast<std::uint8_t>(PacketType::ServerToClient);
@@ -908,15 +909,36 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
         packet.push_back(static_cast<std::uint8_t>((playerId >> 8) & 0xFF));
         packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
 
+        std::uint32_t userId = 0;
+        {
+            std::lock_guard<std::mutex> lock(sessionsMutex_);
+            for (const auto& [key, session] : lobbySessions_) {
+                if (session.playerId == playerId && session.userId.has_value()) {
+                    userId = session.userId.value();
+                    break;
+                }
+            }
+        }
+        packet.push_back(static_cast<std::uint8_t>((userId >> 24) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((userId >> 16) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>((userId >> 8) & 0xFF));
+        packet.push_back(static_cast<std::uint8_t>(userId & 0xFF));
+
         std::string name = "Player " + std::to_string(playerId);
         if (auto storedName = lobbyManager_.getPlayerName(roomId, playerId); storedName.has_value()) {
             name = *storedName;
         } else {
             std::lock_guard<std::mutex> lock(sessionsMutex_);
             for (const auto& [key, session] : lobbySessions_) {
-                if (session.playerId == playerId && !session.playerName.empty()) {
-                    name = session.playerName;
-                    break;
+                if (session.playerId == playerId) {
+                    if (!session.username.empty()) {
+                        name = session.username;
+                        break;
+                    }
+                    if (!session.playerName.empty()) {
+                        name = session.playerName;
+                        break;
+                    }
                 }
             }
         }
@@ -1612,8 +1634,14 @@ void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* 
                                     std::to_string(session.roomId));
             return;
         }
-        playerId   = session.playerId;
-        playerName = session.playerName.empty() ? ("Player " + std::to_string(playerId)) : session.playerName;
+        playerId = session.playerId;
+        if (!session.username.empty()) {
+            playerName = session.username;
+        } else if (!session.playerName.empty()) {
+            playerName = session.playerName;
+        } else {
+            playerName = "Player " + std::to_string(playerId);
+        }
     }
 
     Logger::instance().info("[LobbyServer] Chat in Room " + std::to_string(roomId) + " [" + playerName +

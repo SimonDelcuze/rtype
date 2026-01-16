@@ -131,7 +131,14 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                     if (registry_.has<ScoreComponent>(entityId)) {
                         scoreVal = registry_.get<ScoreComponent>(entityId).value;
                     }
-                    scores.push_back({playerId, scoreVal});
+                    std::uint32_t finalId = playerId;
+                    for (const auto& [key, sess] : sessions_) {
+                        if (sess.playerId == playerId && sess.userId.has_value()) {
+                            finalId = sess.userId.value();
+                            break;
+                        }
+                    }
+                    scores.push_back({finalId, scoreVal});
                 }
                 auto pkt = GameEndPacket::create(true, scores);
                 for (const auto& c : clients_) {
@@ -197,7 +204,14 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                     if (registry_.has<ScoreComponent>(entityId)) {
                         scoreVal = registry_.get<ScoreComponent>(entityId).value;
                     }
-                    scores.push_back({playerId, scoreVal});
+                    std::uint32_t finalId = playerId;
+                    for (const auto& [key, sess] : sessions_) {
+                        if (sess.playerId == playerId && sess.userId.has_value()) {
+                            finalId = sess.userId.value();
+                            break;
+                        }
+                    }
+                    scores.push_back({finalId, scoreVal});
                 }
                 auto pkt = GameEndPacket::create(false, scores);
                 for (const auto& c : clients_) {
@@ -451,7 +465,6 @@ void GameInstance::processShieldPurchase(const std::vector<PlayerCommand>& comma
     constexpr std::uint16_t kShieldRenderTypeId = 25;
 
     for (const auto& cmd : commands) {
-        // Debug: log all received flags
         if (cmd.inputFlags != 0) {
             Logger::instance().info("[Shield] Checking cmd flags=" + std::to_string(cmd.inputFlags) +
                                     " BuyShield=" + std::to_string(static_cast<std::uint16_t>(InputFlag::BuyShield)));

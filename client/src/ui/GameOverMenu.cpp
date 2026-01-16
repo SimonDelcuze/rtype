@@ -61,15 +61,17 @@ namespace
         return entity;
     }
 
-    EntityId createLeaderboardEntry(Registry& registry, float y, int rank, std::uint32_t playerId, int score)
+    EntityId createLeaderboardEntry(Registry& registry, float y, int rank, std::uint32_t playerId, int score,
+                                    const std::string& playerName)
     {
         EntityId entity = registry.createEntity();
         auto& transform = registry.emplace<TransformComponent>(entity);
         transform.x     = 340.0F;
         transform.y     = y;
 
-        std::string content = "#" + std::to_string(rank) + "   Player " + std::to_string(playerId) + "   -   " +
-                              std::to_string(score) + " pts";
+        std::string nameDisplay = playerName.empty() ? ("Player " + std::to_string(playerId)) : playerName;
+        std::string content =
+            "#" + std::to_string(rank) + "   " + nameDisplay + "   -   " + std::to_string(score) + " pts";
 
         Color color  = (rank == 1)   ? Color{255, 215, 0}
                        : (rank == 2) ? Color{192, 192, 192}
@@ -112,8 +114,9 @@ void GameOverMenu::create(Registry& registry)
     std::size_t maxEntries = std::min(sortedScores.size(), static_cast<std::size_t>(5));
 
     for (std::size_t i = 0; i < maxEntries; ++i) {
-        EntityId entryId = createLeaderboardEntry(registry, startY + (i * entryHeight), static_cast<int>(i + 1),
-                                                  sortedScores[i].playerId, sortedScores[i].score);
+        EntityId entryId =
+            createLeaderboardEntry(registry, startY + (i * entryHeight), static_cast<int>(i + 1),
+                                   sortedScores[i].playerId, sortedScores[i].score, sortedScores[i].playerName);
         leaderboardTexts_.push_back(entryId);
     }
 

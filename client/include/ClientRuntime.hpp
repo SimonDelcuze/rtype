@@ -17,6 +17,7 @@
 #include "level/EntityTypeRegistry.hpp"
 #include "level/LevelState.hpp"
 #include "network/ClientInit.hpp"
+#include "network/LobbyPackets.hpp"
 #include "network/RoomType.hpp"
 #include "network/UdpSocket.hpp"
 #include "scheduler/GameLoop.hpp"
@@ -69,7 +70,7 @@ void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& 
                       InputBuffer& inputBuffer, InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX,
                       float& playerPosY, Window& window, FontManager& fontManager, EventBus& eventBus,
                       GraphicsFactory& graphicsFactory, SoundManager& soundManager,
-                      ThreadSafeQueue<NotificationData>& broadcastQueue);
+                      ThreadSafeQueue<NotificationData>& broadcastQueue, const std::vector<PlayerInfo>& playerList);
 bool setupNetwork(NetPipelines& net, InputBuffer& inputBuffer, const IpEndpoint& serverEp,
                   std::atomic<bool>& handshakeDone, std::thread& welcomeThread, std::uint32_t userId,
                   ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
@@ -81,13 +82,12 @@ void showErrorMessage(Window& window, const std::string& message, float displayT
 std::optional<IpEndpoint> showConnectionMenu(Window& window, FontManager& fontManager, TextureManager& textureManager,
                                              std::string& errorMessage,
                                              ThreadSafeQueue<NotificationData>& broadcastQueue);
-std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          RoomType targetRoomType, FontManager& fontManager,
-                                                          TextureManager& textureManager,
-                                                          ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                          class LobbyConnection* authenticatedConnection,
-                                                          bool& serverLost);
-std::optional<std::pair<IpEndpoint, RoomType>>
+std::optional<std::pair<IpEndpoint, std::vector<PlayerInfo>>>
+showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint, RoomType targetRoomType,
+                                FontManager& fontManager, TextureManager& textureManager,
+                                ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                class LobbyConnection* authenticatedConnection, bool& serverLost);
+std::optional<std::tuple<IpEndpoint, RoomType, std::vector<PlayerInfo>>>
 resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                       TextureManager& textureManager, std::string& errorMessage,
                       ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
@@ -98,7 +98,8 @@ std::optional<int> handleJoinFailure(JoinResult joinResult, Window& window, cons
 GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode, Window& window,
                                  const ClientOptions& options, const IpEndpoint& serverEndpoint, NetPipelines& net,
                                  InputBuffer& inputBuffer, TextureManager& textureManager, FontManager& fontManager,
-                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue);
+                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                 const std::vector<PlayerInfo>& playerList);
 ClientLoopResult runClientIteration(const ClientOptions& options, Window& window, FontManager& fontManager,
                                     TextureManager& textureManager, std::string& errorMessage,
                                     ThreadSafeQueue<NotificationData>& broadcastQueue,

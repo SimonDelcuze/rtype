@@ -9,9 +9,13 @@
 #include "ecs/Registry.hpp"
 #include "events/GameEvents.hpp"
 
-GameOverSystem::GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode)
+GameOverSystem::GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode,
+                               const std::vector<PlayerInfo>& playerList)
     : eventBus_(eventBus), localPlayerId_(localPlayerId), gameMode_(gameMode)
 {
+    for (const auto& player : playerList) {
+        playerNames_[player.playerId] = std::string(player.name);
+    }
     Logger::instance().info("[GameOverSystem] Initialized");
 }
 
@@ -117,8 +121,22 @@ void GameOverSystem::update(Registry& registry, float deltaTime)
         for (EntityId id : registry.view<TagComponent, ScoreComponent>()) {
             const auto& tag = registry.get<TagComponent>(id);
             if (tag.hasTag(EntityTag::Player)) {
-                int score = registry.get<ScoreComponent>(id).value;
-                event.playerScores.push_back({static_cast<std::uint32_t>(id), score});
+                int score                   = registry.get<ScoreComponent>(id).value;
+                std::uint32_t finalPlayerId = static_cast<std::uint32_t>(id);
+                std::string playerName;
+
+                if (registry.has<OwnershipComponent>(id)) {
+                    finalPlayerId = registry.get<OwnershipComponent>(id).ownerId;
+                    if (playerNames_.count(finalPlayerId)) {
+                        playerName = playerNames_.at(finalPlayerId);
+                    }
+                }
+
+                if (playerName.empty()) {
+                    playerName = "Player " + std::to_string(finalPlayerId);
+                }
+
+                event.playerScores.push_back({finalPlayerId, score, playerName});
             }
         }
 
