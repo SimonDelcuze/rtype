@@ -877,14 +877,16 @@ void LobbyMenu::updateRoomListDisplay(Registry& registry)
     applyScrollOffset(registry);
 
     if (registry.has<TextComponent>(statusEntity_)) {
-        if (rooms_.empty()) {
+        std::size_t totalRoomsOfType = std::count_if(
+            rooms_.begin(), rooms_.end(), [this](const RoomInfo& r) { return r.roomType == targetRoomType_; });
+        if (totalRoomsOfType == 0) {
             registry.get<TextComponent>(statusEntity_).content = "No rooms available. Create one!";
         } else if (visibleCount == 0) {
             registry.get<TextComponent>(statusEntity_).content =
-                "No rooms match filters. (" + std::to_string(rooms_.size()) + " total)";
+                "No rooms match filters. (" + std::to_string(totalRoomsOfType) + " total)";
         } else {
             registry.get<TextComponent>(statusEntity_).content =
-                "Showing " + std::to_string(visibleCount) + " / " + std::to_string(rooms_.size()) + " room(s)";
+                "Showing " + std::to_string(visibleCount) + " / " + std::to_string(totalRoomsOfType) + " room(s)";
         }
     }
 }
