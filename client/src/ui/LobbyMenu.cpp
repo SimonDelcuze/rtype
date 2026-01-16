@@ -10,6 +10,7 @@
 #include "graphics/TextureManager.hpp"
 #include "ui/NotificationData.hpp"
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 
@@ -203,8 +204,43 @@ bool LobbyMenu::isDone() const
 
 void LobbyMenu::handleEvent(Registry& registry, const Event& event)
 {
-    (void) registry;
-    (void) event;
+    if (state_ != State::ShowingRooms) {
+        return;
+    }
+
+    if (event.type == EventType::MouseWheelScrolled) {
+        constexpr float scrollSpeed    = 30.0F;
+        constexpr float roomSpacing    = 70.0F;
+        constexpr float clipTop        = 400.0F;
+        constexpr float clipBottom     = 700.0F;
+        constexpr float buttonHeight   = 50.0F;
+        float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
+        float contentHeight            = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
+        float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
+
+        scrollOffset_ -= event.mouseWheelScroll.delta * scrollSpeed;
+        scrollOffset_ = std::clamp(scrollOffset_, 0.0F, maxScroll);
+        applyScrollOffset(registry);
+    }
+
+    if (event.type == EventType::KeyPressed) {
+        constexpr float scrollSpeed    = 30.0F;
+        constexpr float roomSpacing    = 70.0F;
+        constexpr float clipTop        = 400.0F;
+        constexpr float clipBottom     = 700.0F;
+        constexpr float buttonHeight   = 50.0F;
+        float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
+        float contentHeight            = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
+        float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
+
+        if (event.key.code == KeyCode::Up) {
+            scrollOffset_ = std::max(0.0F, scrollOffset_ - scrollSpeed);
+            applyScrollOffset(registry);
+        } else if (event.key.code == KeyCode::Down) {
+            scrollOffset_ = std::min(maxScroll, scrollOffset_ + scrollSpeed);
+            applyScrollOffset(registry);
+        }
+    }
 }
 
 void LobbyMenu::render(Registry& registry, Window& window)
@@ -801,16 +837,43 @@ void LobbyMenu::updateRoomListDisplay(Registry& registry)
         }
     }
     roomButtonEntities_.clear();
+    originalRoomButtonPositions_.clear();
 
-    std::size_t displayIndex = 0;
-    std::size_t visibleCount = 0;
+    std::vector<std::size_t> sortedIndices;
     for (std::size_t i = 0; i < rooms_.size(); ++i) {
         if (shouldShowRoom(rooms_[i])) {
-            createRoomButton(registry, rooms_[i], displayIndex, i);
-            displayIndex++;
-            visibleCount++;
+            sortedIndices.push_back(i);
         }
     }
+
+    std::sort(sortedIndices.begin(), sortedIndices.end(), [this](std::size_t a, std::size_t b) {
+        const auto& roomA = rooms_[a];
+        const auto& roomB = rooms_[b];
+        if (roomA.state == RoomState::Waiting && roomB.state != RoomState::Waiting) {
+            return true;
+        }
+        if (roomA.state != RoomState::Waiting && roomB.state == RoomState::Waiting) {
+            return false;
+        }
+        return false;
+    });
+
+    std::size_t displayIndex = 0;
+    for (std::size_t roomIndex : sortedIndices) {
+        createRoomButton(registry, rooms_[roomIndex], displayIndex, roomIndex);
+        displayIndex++;
+    }
+    std::size_t visibleCount = sortedIndices.size();
+
+    constexpr float roomSpacing    = 70.0F;
+    constexpr float clipTop        = 400.0F;
+    constexpr float clipBottom     = 700.0F;
+    constexpr float buttonHeight   = 50.0F;
+    float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
+    float contentHeight            = static_cast<float>(visibleCount) * roomSpacing - roomSpacing + buttonHeight;
+    float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
+    scrollOffset_                  = std::clamp(scrollOffset_, 0.0F, maxScroll);
+    applyScrollOffset(registry);
 
     if (registry.has<TextComponent>(statusEntity_)) {
         if (rooms_.empty()) {
@@ -853,6 +916,7 @@ void LobbyMenu::createRoomButton(Registry& registry, const RoomInfo& room, std::
                                      [this, roomIndex]() { onJoinRoomClicked(roomIndex); });
 
     roomButtonEntities_.push_back(buttonEntity);
+    originalRoomButtonPositions_[buttonEntity] = y;
 }
 
 void LobbyMenu::loadAndDisplayStats(Registry& registry)
@@ -867,4 +931,23 @@ void LobbyMenu::loadAndDisplayStats(Registry& registry)
     Logger::instance().info("[LobbyMenu] Requesting user stats...");
     conn->sendRequestStats();
     isGettingStats_ = true;
+}
+
+void LobbyMenu::applyScrollOffset(Registry& registry)
+{
+    constexpr float clipTop      = 400.0F;
+    constexpr float clipBottom   = 700.0F;
+    constexpr float buttonHeight = 50.0F;
+
+    for (const auto& [entityId, originalY] : originalRoomButtonPositions_) {
+        if (registry.isAlive(entityId) && registry.has<TransformComponent>(entityId)) {
+            float newY = originalY - scrollOffset_;
+            registry.get<TransformComponent>(entityId).y = newY;
+
+            if (registry.has<BoxComponent>(entityId)) {
+                bool isVisible = (newY >= clipTop) && (newY + buttonHeight <= clipBottom);
+                registry.get<BoxComponent>(entityId).visible = isVisible;
+            }
+        }
+    }
 }

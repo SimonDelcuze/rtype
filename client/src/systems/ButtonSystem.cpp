@@ -19,6 +19,9 @@ void ButtonSystem::update(Registry& registry, float dt)
         auto& box       = registry.get<BoxComponent>(entity);
         auto& button    = registry.get<ButtonComponent>(entity);
 
+        if (!box.visible)
+            continue;
+
         if (button.autoRepeat) {
             if (button.pressed) {
                 button.holdTimer += dt;
@@ -84,6 +87,9 @@ void ButtonSystem::handleClick(Registry& registry, int x, int y)
         auto& box       = registry.get<BoxComponent>(entity);
         auto& button    = registry.get<ButtonComponent>(entity);
 
+        if (!box.visible)
+            continue;
+
         bool inside =
             x >= transform.x && x <= transform.x + box.width && y >= transform.y && y <= transform.y + box.height;
         if (inside && button.onClick != nullptr) {
@@ -99,6 +105,11 @@ void ButtonSystem::handleMouseMove(Registry& registry, int x, int y)
         auto& transform = registry.get<TransformComponent>(entity);
         auto& box       = registry.get<BoxComponent>(entity);
         auto& button    = registry.get<ButtonComponent>(entity);
+
+        if (!box.visible) {
+            button.hovered = false;
+            continue;
+        }
 
         button.hovered =
             x >= transform.x && x <= transform.x + box.width && y >= transform.y && y <= transform.y + box.height;

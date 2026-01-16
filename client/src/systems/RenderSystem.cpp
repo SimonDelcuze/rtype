@@ -85,7 +85,7 @@ void RenderSystem::update(Registry& registry, float deltaTime)
         if (registry.has<LayerComponent>(id)) {
             layer = registry.get<LayerComponent>(id).layer;
         }
-        drawQueue.push_back(DrawItem{layer, DrawItem::Type::Box, nullptr, &box, &transform, true});
+        drawQueue.push_back(DrawItem{layer, DrawItem::Type::Box, nullptr, &box, &transform, box.visible});
     }
 
     auto typePriority = [](DrawItem::Type t) { return t == DrawItem::Type::Box ? 0 : 1; };
