@@ -611,6 +611,17 @@ void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint
 
     auto packet = buildRoomListPacket(rooms, hdr.sequenceId);
 
+    Logger::instance().info("[LobbyServer] Sending room list (" + std::to_string(rooms.size()) + " rooms, " +
+                            std::to_string(packet.size()) + " bytes)");
+    for (const auto& room : rooms) {
+        Logger::instance().info("  [RoomList] id=" + std::to_string(room.roomId) + " type=" +
+                                std::to_string(static_cast<int>(room.roomType)) + " players=" +
+                                std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers) + " port=" +
+                                std::to_string(room.port) + " vis=" +
+                                std::to_string(static_cast<int>(room.visibility)) + " name=" + room.roomName +
+                                " invite=" + room.inviteCode + " countdown=" + std::to_string(room.countdown));
+    }
+
     sendPacket(packet, from);
 }
 

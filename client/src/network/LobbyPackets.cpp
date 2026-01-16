@@ -1,6 +1,7 @@
 #include "network/LobbyPackets.hpp"
 
 #include "network/PacketHeader.hpp"
+#include "Logger.hpp"
 
 #include <cstring>
 
@@ -118,6 +119,7 @@ std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::s
 std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std::size_t size)
 {
     if (size < PacketHeader::kSize + sizeof(std::uint16_t)) {
+        Logger::instance().warn("[LobbyPackets] Room list too small: " + std::to_string(size) + " bytes");
         return std::nullopt;
     }
 
@@ -130,8 +132,12 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
     const std::uint8_t* ptr = payload + sizeof(std::uint16_t);
     const std::uint8_t* end = data + size - PacketHeader::kCrcSize;
 
+    Logger::instance().info("[LobbyPackets] Parsing room list, reported count=" + std::to_string(roomCount) +
+                            " totalSize=" + std::to_string(size));
+
     for (std::uint16_t i = 0; i < roomCount; ++i) {
         if (ptr + 18 > end) {
+            Logger::instance().warn("[LobbyPackets] Room entry truncated at index " + std::to_string(i));
             return std::nullopt;
         }
 
@@ -170,31 +176,43 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
         ptr += 1;
 
         if (ptr + 2 > end) {
+            Logger::instance().warn("[LobbyPackets] Missing room name length at index " + std::to_string(i));
             return std::nullopt;
         }
         std::uint16_t nameLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
         if (ptr + nameLen > end) {
+            Logger::instance().warn("[LobbyPackets] Room name truncated at index " + std::to_string(i));
             return std::nullopt;
         }
         info.roomName = std::string(reinterpret_cast<const char*>(ptr), nameLen);
         ptr += nameLen;
 
         if (ptr + 2 > end) {
+            Logger::instance().warn("[LobbyPackets] Missing invite len at index " + std::to_string(i));
             return std::nullopt;
         }
         std::uint16_t codeLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
         if (ptr + codeLen > end) {
+            Logger::instance().warn("[LobbyPackets] Invite code truncated at index " + std::to_string(i));
             return std::nullopt;
         }
         info.inviteCode = std::string(reinterpret_cast<const char*>(ptr), codeLen);
         ptr += codeLen;
 
         result.rooms.push_back(info);
+        Logger::instance().info("  [RoomList] idx=" + std::to_string(i) + " id=" + std::to_string(info.roomId) +
+                                " type=" + std::to_string(static_cast<int>(info.roomType)) + " players=" +
+                                std::to_string(info.playerCount) + "/" + std::to_string(info.maxPlayers) + " port=" +
+                                std::to_string(info.port) + " vis=" +
+                                std::to_string(static_cast<int>(info.visibility)) + " name=" + info.roomName +
+                                " invite=" + info.inviteCode + " countdown=" + std::to_string(info.countdown));
     }
+
+    Logger::instance().info("[LobbyPackets] Parsed " + std::to_string(result.rooms.size()) + " rooms");
 
     return result;
 }
