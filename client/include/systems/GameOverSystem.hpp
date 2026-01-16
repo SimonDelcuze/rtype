@@ -1,19 +1,20 @@
 #pragma once
 
+#include "ecs/Registry.hpp"
 #include "events/EventBus.hpp"
+#include "network/LobbyPackets.hpp"
 #include "network/RoomType.hpp"
 #include "systems/ISystem.hpp"
 
-#include <cstdint>
 #include <limits>
-
-using EntityId = std::uint32_t;
-class Registry;
+#include <map>
+#include <string>
 
 class GameOverSystem : public ISystem
 {
   public:
-    GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode);
+    GameOverSystem(EventBus& eventBus, std::uint32_t localPlayerId, RoomType gameMode,
+                   const std::vector<PlayerInfo>& playerList = {});
 
     void initialize() override {}
     void update(Registry& registry, float deltaTime) override;
@@ -23,6 +24,7 @@ class GameOverSystem : public ISystem
     EventBus& eventBus_;
     std::uint32_t localPlayerId_;
     RoomType gameMode_;
+    std::map<std::uint32_t, std::string> playerNames_;
     bool gameOverTriggered_      = false;
     bool localPlayerDead_        = false;
     EntityId spectatingPlayerId_ = std::numeric_limits<EntityId>::max();

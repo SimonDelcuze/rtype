@@ -131,7 +131,14 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                     if (registry_.has<ScoreComponent>(entityId)) {
                         scoreVal = registry_.get<ScoreComponent>(entityId).value;
                     }
-                    scores.push_back({playerId, scoreVal});
+                    std::uint32_t finalId = playerId;
+                    for (const auto& [key, sess] : sessions_) {
+                        if (sess.playerId == playerId && sess.userId.has_value()) {
+                            finalId = sess.userId.value();
+                            break;
+                        }
+                    }
+                    scores.push_back({finalId, scoreVal});
                 }
                 auto pkt = GameEndPacket::create(true, scores);
                 for (const auto& c : clients_) {
@@ -197,7 +204,14 @@ void GameInstance::updateSystems(float deltaTime, const std::vector<ReceivedInpu
                     if (registry_.has<ScoreComponent>(entityId)) {
                         scoreVal = registry_.get<ScoreComponent>(entityId).value;
                     }
-                    scores.push_back({playerId, scoreVal});
+                    std::uint32_t finalId = playerId;
+                    for (const auto& [key, sess] : sessions_) {
+                        if (sess.playerId == playerId && sess.userId.has_value()) {
+                            finalId = sess.userId.value();
+                            break;
+                        }
+                    }
+                    scores.push_back({finalId, scoreVal});
                 }
                 auto pkt = GameEndPacket::create(false, scores);
                 for (const auto& c : clients_) {

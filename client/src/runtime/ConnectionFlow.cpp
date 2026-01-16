@@ -155,11 +155,11 @@ bool verifyLobbyConnection(const IpEndpoint& lobbyEndpoint, std::string& errorMe
     return true;
 }
 
-std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint,
-                                                          RoomType targetRoomType, FontManager& fontManager,
-                                                          TextureManager& textureManager,
-                                                          ThreadSafeQueue<NotificationData>& broadcastQueue,
-                                                          LobbyConnection* authenticatedConnection, bool& serverLost)
+std::optional<std::pair<IpEndpoint, std::vector<PlayerInfo>>>
+showLobbyMenuAndGetGameEndpoint(Window& window, const IpEndpoint& lobbyEndpoint, RoomType targetRoomType,
+                                FontManager& fontManager, TextureManager& textureManager,
+                                ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                LobbyConnection* authenticatedConnection, bool& serverLost)
 {
     MenuRunner runner(window, fontManager, textureManager, g_running, broadcastQueue);
 
@@ -187,8 +187,13 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
             g_isRoomHost          = false;
             g_joinAsSpectator     = result.spectator;
             g_expectedPlayerCount = result.expectedPlayerCount;
-            return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
-                                  lobbyEndpoint.addr[3], result.gamePort);
+            std::vector<PlayerInfo> emptyPlayers;
+            if (authenticatedConnection) {
+                emptyPlayers = authenticatedConnection->getLastPlayerList();
+            }
+            return std::make_pair(IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
+                                                 lobbyEndpoint.addr[3], result.gamePort),
+                                  emptyPlayers);
         }
         return std::nullopt;
     }
@@ -216,8 +221,15 @@ std::optional<IpEndpoint> showLobbyMenuAndGetGameEndpoint(Window& window, const 
         g_isRoomHost          = result.isHost;
         g_joinAsSpectator     = result.spectator;
         g_expectedPlayerCount = result.expectedPlayerCount;
-        return IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
-                              lobbyEndpoint.addr[3], result.gamePort);
+
+        std::vector<PlayerInfo> players;
+        if (authenticatedConnection) {
+            players = authenticatedConnection->getLastPlayerList();
+        }
+
+        return std::make_pair(IpEndpoint::v4(lobbyEndpoint.addr[0], lobbyEndpoint.addr[1], lobbyEndpoint.addr[2],
+                                             lobbyEndpoint.addr[3], result.gamePort),
+                              players);
     }
 
     return std::nullopt;

@@ -135,6 +135,11 @@ class LobbyConnection
         return currentRoomCountdown_;
     }
 
+    const std::vector<PlayerInfo>& getLastPlayerList() const
+    {
+        return lastPlayerList_;
+    }
+
   private:
     std::vector<std::uint8_t> sendAndWaitForResponse(const std::vector<std::uint8_t>& packet,
                                                      MessageType expectedResponse,
@@ -159,6 +164,7 @@ class LobbyConnection
     std::optional<RoomCreatedResult> pendingRoomCreatedResult_;
     std::optional<JoinSuccessResult> pendingJoinRoomResult_;
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
+    std::vector<PlayerInfo> lastPlayerList_;
     std::optional<LeaderboardResponseData> pendingLeaderboardResult_;
     std::optional<struct GetStatsResponseData> pendingStatsResult_;
     ThreadSafeQueue<ChatPacket> chatMessages_;

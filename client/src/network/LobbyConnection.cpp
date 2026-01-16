@@ -85,110 +85,104 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             continue;
 
         MessageType type = static_cast<MessageType>(hdr->messageType);
-        handleIncomingPacket(type, buffer.data(), recvResult.size, from, &broadcastQueue);
-    }
-}
 
-void LobbyConnection::handleIncomingPacket(MessageType type, const std::uint8_t* data, std::size_t size,
-                                           const IpEndpoint& from, ThreadSafeQueue<NotificationData>* broadcastQueue)
-{
-    (void) from;
-    if (type == MessageType::ServerBroadcast) {
-        auto pkt = ServerBroadcastPacket::decode(data, size);
-        if (pkt.has_value() && broadcastQueue) {
-            Logger::instance().info("[LobbyConnection] Received broadcast: " + pkt->getMessage());
-            broadcastQueue->push(NotificationData{pkt->getMessage(), 5.0F});
+        if (type == MessageType::ServerBroadcast) {
+            auto pkt = ServerBroadcastPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                Logger::instance().info("[LobbyConnection] Received broadcast: " + pkt->getMessage());
+                broadcastQueue.push(NotificationData{pkt->getMessage(), 5.0F});
+            }
+        } else if (type == MessageType::ServerDisconnect) {
+            auto pkt = ServerDisconnectPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value() && pkt->getReason() == "Server disconnected") {
+                Logger::instance().warn("[LobbyConnection] Server disconnected");
+                serverLost_ = true;
+            }
+        } else if (type == MessageType::RoomGameStarting) {
+            if (recvResult.size >=
+                PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t)) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
+                expectedPlayerCount_        = payload[4];
+                Logger::instance().info("[LobbyConnection] Received RoomGameStarting - game is starting with " +
+                                        std::to_string(expectedPlayerCount_) + " players!");
+                gameStarting_ = true;
+                inRoom_       = false;
+            }
+        } else if (type == MessageType::RoomPlayerKicked) {
+            Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
+            wasKicked_ = true;
+            inRoom_    = false;
+        } else if (type == MessageType::AuthLoginResponse) {
+            auto pkt = parseLoginResponsePacket(buffer.data(), recvResult.size);
+            if (pkt.has_value())
+                pendingLoginResult_ = pkt;
+        } else if (type == MessageType::AuthRegisterResponse) {
+            auto pkt = parseRegisterResponsePacket(buffer.data(), recvResult.size);
+            if (pkt.has_value())
+                pendingRegisterResult_ = pkt;
+        } else if (type == MessageType::AuthGetStatsResponse) {
+            auto pkt = parseGetStatsResponsePacket(buffer.data(), recvResult.size);
+            if (pkt.has_value())
+                pendingStatsResult_ = pkt;
+        } else if (type == MessageType::LobbyRoomList) {
+            auto pkt = parseRoomListPacket(buffer.data(), recvResult.size);
+            if (pkt.has_value())
+                pendingRoomListResult_ = pkt;
+        } else if (type == MessageType::LobbyRoomCreated) {
+            auto pkt = parseRoomCreatedPacket(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                pendingRoomCreatedResult_ = pkt;
+                inRoom_                   = true;
+            }
+        } else if (type == MessageType::LobbyJoinSuccess) {
+            auto pkt = parseJoinSuccessPacket(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                pendingJoinRoomResult_ = pkt;
+                inRoom_                = true;
+            }
+        } else if (type == MessageType::LobbyJoinFailed) {
+            Logger::instance().warn("[LobbyConnection] Join failed received");
+            pendingJoinRoomResult_ = std::nullopt;
+        } else if (type == MessageType::RoomPlayerList) {
+            if (recvResult.size >= PacketHeader::kSize + 4 + 1 + 1) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize + 4;
+                currentRoomCountdown_       = payload[0];
+            }
+            auto pkt = parsePlayerListPacket(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                pendingPlayerListResult_ = pkt;
+                lastPlayerList_          = *pkt;
+            }
+        } else if (type == MessageType::RoomSetConfig) {
+            if (hdr->packetType == static_cast<std::uint8_t>(PacketType::ServerToClient) &&
+                hdr->payloadSize >= sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1) {
+                const std::uint8_t* payload = buffer.data() + PacketHeader::kSize;
+                RoomConfigUpdate upd;
+                upd.roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
+                             (static_cast<std::uint32_t>(payload[1]) << 16) |
+                             (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
+                upd.mode           = static_cast<RoomDifficulty>(payload[4]);
+                auto decodePercent = [](const std::uint8_t* p) {
+                    std::uint16_t v = (static_cast<std::uint16_t>(p[0]) << 8) | static_cast<std::uint16_t>(p[1]);
+                    return static_cast<float>(v) / 100.0F;
+                };
+                upd.enemyMultiplier       = decodePercent(payload + 5);
+                upd.playerSpeedMultiplier = decodePercent(payload + 7);
+                upd.scoreMultiplier       = decodePercent(payload + 9);
+                upd.playerLives           = payload[11];
+                pendingRoomConfig_        = upd;
+                Logger::instance().info("[LobbyConnection] Received RoomSetConfig for room " +
+                                        std::to_string(upd.roomId));
+            }
+        } else if (type == MessageType::Chat) {
+            auto pkt = ChatPacket::decode(buffer.data(), recvResult.size);
+            if (pkt.has_value()) {
+                chatMessages_.push(*pkt);
+            }
+        } else if (type == MessageType::LeaderboardResponse) {
+            auto data                 = parseLeaderboardResponsePacket(buffer.data(), recvResult.size);
+            pendingLeaderboardResult_ = data;
         }
-    } else if (type == MessageType::ServerDisconnect) {
-        auto pkt = ServerDisconnectPacket::decode(data, size);
-        if (pkt.has_value() && pkt->getReason() == "Server disconnected") {
-            Logger::instance().warn("[LobbyConnection] Server disconnected");
-            serverLost_ = true;
-        }
-    } else if (type == MessageType::RoomGameStarting) {
-        if (size >= PacketHeader::kSize + sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t)) {
-            const std::uint8_t* payload = data + PacketHeader::kSize;
-            expectedPlayerCount_        = payload[4];
-            Logger::instance().info("[LobbyConnection] Received RoomGameStarting - game is starting with " +
-                                    std::to_string(expectedPlayerCount_) + " players!");
-            gameStarting_ = true;
-            inRoom_       = false;
-        }
-    } else if (type == MessageType::RoomPlayerKicked) {
-        Logger::instance().warn("[LobbyConnection] You have been kicked from the room!");
-        wasKicked_ = true;
-        inRoom_    = false;
-    } else if (type == MessageType::AuthLoginResponse) {
-        auto pkt = parseLoginResponsePacket(data, size);
-        if (pkt.has_value())
-            pendingLoginResult_ = pkt;
-    } else if (type == MessageType::AuthRegisterResponse) {
-        auto pkt = parseRegisterResponsePacket(data, size);
-        if (pkt.has_value())
-            pendingRegisterResult_ = pkt;
-    } else if (type == MessageType::LobbyRoomList) {
-        auto pkt = parseRoomListPacket(data, size);
-        if (pkt.has_value()) {
-            pendingRoomListResult_ = pkt;
-        }
-    } else if (type == MessageType::LobbyRoomCreated) {
-        auto pkt = parseRoomCreatedPacket(data, size);
-        if (pkt.has_value()) {
-            pendingRoomCreatedResult_ = pkt;
-            inRoom_                   = true;
-        }
-    } else if (type == MessageType::LobbyJoinSuccess) {
-        auto pkt = parseJoinSuccessPacket(data, size);
-        if (pkt.has_value()) {
-            pendingJoinRoomResult_ = pkt;
-            inRoom_                = true;
-        }
-    } else if (type == MessageType::LobbyJoinFailed) {
-        Logger::instance().warn("[LobbyConnection] Join failed received");
-        pendingJoinRoomResult_ = std::nullopt;
-    } else if (type == MessageType::RoomPlayerList) {
-        if (size >= PacketHeader::kSize + 4 + 1 + 1) {
-            const std::uint8_t* payload = data + PacketHeader::kSize + 4;
-            currentRoomCountdown_       = payload[0];
-        }
-        auto pkt = parsePlayerListPacket(data, size);
-        if (pkt.has_value())
-            pendingPlayerListResult_ = pkt;
-    } else if (type == MessageType::RoomSetConfig) {
-        auto hdr = PacketHeader::decode(data, size);
-        if (hdr.has_value() && hdr->packetType == static_cast<std::uint8_t>(PacketType::ServerToClient) &&
-            hdr->payloadSize >= sizeof(std::uint32_t) + 1 + sizeof(std::uint16_t) * 3 + 1) {
-            const std::uint8_t* payload = data + PacketHeader::kSize;
-            RoomConfigUpdate upd;
-            upd.roomId = (static_cast<std::uint32_t>(payload[0]) << 24) |
-                         (static_cast<std::uint32_t>(payload[1]) << 16) |
-                         (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
-            upd.mode           = static_cast<RoomDifficulty>(payload[4]);
-            auto decodePercent = [](const std::uint8_t* p) {
-                std::uint16_t v = (static_cast<std::uint16_t>(p[0]) << 8) | static_cast<std::uint16_t>(p[1]);
-                return static_cast<float>(v) / 100.0F;
-            };
-            upd.enemyMultiplier       = decodePercent(payload + 5);
-            upd.playerSpeedMultiplier = decodePercent(payload + 7);
-            upd.scoreMultiplier       = decodePercent(payload + 9);
-            upd.playerLives           = payload[11];
-            pendingRoomConfig_        = upd;
-            Logger::instance().info("[LobbyConnection] Received RoomSetConfig for room " + std::to_string(upd.roomId));
-        }
-    } else if (type == MessageType::Chat) {
-        auto pkt = ChatPacket::decode(data, size);
-        if (pkt.has_value()) {
-            chatMessages_.push(*pkt);
-        }
-    } else if (type == MessageType::AuthGetStatsResponse) {
-        auto pkt = parseGetStatsResponsePacket(data, size);
-        if (pkt.has_value()) {
-            pendingStatsResult_ = pkt;
-            Logger::instance().info("[LobbyConnection] Received AuthGetStatsResponse");
-        }
-    } else if (type == MessageType::LeaderboardResponse) {
-        auto lbdata               = parseLeaderboardResponsePacket(data, size);
-        pendingLeaderboardResult_ = lbdata;
     }
 }
 
@@ -315,6 +309,25 @@ std::optional<RoomListResult> LobbyConnection::popRoomListResult()
 {
     auto res = pendingRoomListResult_;
     pendingRoomListResult_.reset();
+    return res;
+}
+
+void LobbyConnection::sendRequestStats()
+{
+    auto packet = buildGetStatsRequestPacket(nextSequence_++);
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+    pendingStatsResult_.reset();
+}
+
+bool LobbyConnection::hasStatsResult() const
+{
+    return pendingStatsResult_.has_value();
+}
+
+std::optional<GetStatsResponseData> LobbyConnection::popStatsResult()
+{
+    auto res = pendingStatsResult_;
+    pendingStatsResult_.reset();
     return res;
 }
 
@@ -566,16 +579,22 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
 
             if (recvResult.ok() && recvResult.size > 0) {
                 auto hdr = PacketHeader::decode(buffer.data(), recvResult.size);
-                if (hdr.has_value()) {
-                    MessageType receivedType = static_cast<MessageType>(hdr->messageType);
-                    if (receivedType == expectedResponse) {
-                        return std::vector<std::uint8_t>(buffer.begin(), buffer.begin() + recvResult.size);
-                    }
-                    if (receivedType == MessageType::LobbyJoinFailed &&
-                        expectedResponse == MessageType::LobbyJoinSuccess) {
+
+                if (hdr.has_value() && static_cast<MessageType>(hdr->messageType) == expectedResponse) {
+                    return std::vector<std::uint8_t>(buffer.begin(), buffer.begin() + recvResult.size);
+                }
+
+                if (hdr.has_value() && static_cast<MessageType>(hdr->messageType) == MessageType::LobbyJoinFailed) {
+                    return {};
+                }
+
+                if (hdr.has_value() && static_cast<MessageType>(hdr->messageType) == MessageType::ServerDisconnect) {
+                    auto discPkt = ServerDisconnectPacket::decode(buffer.data(), recvResult.size);
+                    if (discPkt.has_value() && discPkt->getReason() == "Server disconnected") {
+                        Logger::instance().warn("[LobbyConnection] Server disconnected while waiting for response");
+                        serverLost_ = true;
                         return {};
                     }
-                    handleIncomingPacket(receivedType, buffer.data(), recvResult.size, from);
                 }
             }
 
@@ -697,25 +716,6 @@ std::vector<ChatPacket> LobbyConnection::popChatMessages()
         messages.push_back(msg);
     }
     return messages;
-}
-
-void LobbyConnection::sendRequestStats()
-{
-    auto packet = buildGetStatsRequestPacket(nextSequence_++);
-    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
-    pendingStatsResult_.reset();
-}
-
-bool LobbyConnection::hasStatsResult() const
-{
-    return pendingStatsResult_.has_value();
-}
-
-std::optional<GetStatsResponseData> LobbyConnection::popStatsResult()
-{
-    auto res = pendingStatsResult_;
-    pendingStatsResult_.reset();
-    return res;
 }
 
 void LobbyConnection::sendRequestLeaderboard()

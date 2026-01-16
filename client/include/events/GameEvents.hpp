@@ -10,6 +10,7 @@ struct PlayerScoreEntry
 {
     std::uint32_t playerId;
     int score;
+    std::string playerName;
 };
 
 struct EntitySpawnedEvent
