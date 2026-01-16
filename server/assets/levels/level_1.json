@@ -650,9 +650,390 @@
         "mode": "stopped",
         "speedX": 0
       },
-      "events": [],
+      "events": [
+        {
+          "type": "set_scroll",
+          "id": "part2_start_scroll",
+          "trigger": {
+            "type": "players_ready"
+          },
+          "scroll": {
+            "mode": "constant",
+            "speedX": -70
+          }
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_top_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 90.0
+          },
+          "obstacle": "wall_top",
+          "x": 1220.0,
+          "margin": 20.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_bot_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 110.0
+          },
+          "obstacle": "wall_bot",
+          "x": 1220.0,
+          "margin": 70.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_mid_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 180.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 260.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_mid_2",
+          "trigger": {
+            "type": "distance",
+            "distance": 220.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 460.0
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_0_grunts",
+          "trigger": {
+            "type": "distance",
+            "distance": 150.0
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_zigzag",
+            "health": 3,
+            "spawnX": 1220.0,
+            "startY": 80.0,
+            "deltaY": 40.0,
+            "count": 14
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_0b_grunts_sine",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_0_grunts"
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_sine",
+            "health": 3,
+            "spawnX": 1230.0,
+            "startY": 120.0,
+            "deltaY": 45.0,
+            "count": 12
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_0c_followers_swarm",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_0b_grunts_sine"
+          },
+          "wave": {
+            "type": "stagger",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "health": 4,
+            "spawnX": 1230.0,
+            "startY": 90.0,
+            "deltaY": 45.0,
+            "count": 14,
+            "spacing": 0.15
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_1_followers",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_0c_followers_swarm"
+          },
+          "wave": {
+            "type": "stagger",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "health": 4,
+            "spawnX": 1230.0,
+            "startY": 120.0,
+            "deltaY": 35.0,
+            "count": 16,
+            "spacing": 0.14
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_1b_grunts_serpent",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_1_followers"
+          },
+          "wave": {
+            "type": "serpent",
+            "enemy": "grunt",
+            "patternId": "p_zigzag",
+            "health": 4,
+            "spawnX": 1240.0,
+            "startY": 80.0,
+            "stepY": 40.0,
+            "stepTime": 0.14,
+            "amplitudeX": 110.0,
+            "count": 14
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_1c_followers_zigzag",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_1b_grunts_serpent"
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "follower",
+            "patternId": "p_zigzag",
+            "health": 4,
+            "spawnX": 1230.0,
+            "startY": 110.0,
+            "deltaY": 40.0,
+            "count": 12
+          }
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_top_2",
+          "trigger": {
+            "type": "distance",
+            "distance": 340.0
+          },
+          "obstacle": "wall_top",
+          "x": 1220.0,
+          "margin": 60.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_bot_2",
+          "trigger": {
+            "type": "distance",
+            "distance": 360.0
+          },
+          "obstacle": "wall_bot",
+          "x": 1220.0,
+          "margin": 90.0
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_2_grunts_cross",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_1c_followers_zigzag"
+          },
+          "wave": {
+            "type": "cross",
+            "enemy": "grunt",
+            "patternId": "p_sine",
+            "health": 3,
+            "centerX": 1240.0,
+            "centerY": 360.0,
+            "step": 75.0,
+            "armLength": 3
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_2b_grunts_linear",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_2_grunts_cross"
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_linear",
+            "health": 4,
+            "spawnX": 1230.0,
+            "startY": 70.0,
+            "deltaY": 35.0,
+            "count": 16
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_3_grunts_triangle",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_2b_grunts_linear"
+          },
+          "wave": {
+            "type": "triangle",
+            "enemy": "grunt",
+            "patternId": "p_linear",
+            "health": 4,
+            "spawnX": 1240.0,
+            "apexY": 110.0,
+            "rowHeight": 65.0,
+            "horizontalStep": 60.0,
+            "layers": 4
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_3_followers_serpent",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_2b_grunts_linear"
+          },
+          "wave": {
+            "type": "serpent",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "health": 4,
+            "spawnX": 1240.0,
+            "startY": 120.0,
+            "stepY": 35.0,
+            "stepTime": 0.16,
+            "amplitudeX": 110.0,
+            "count": 14
+          }
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_mid_3",
+          "trigger": {
+            "type": "distance",
+            "distance": 450.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 180.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_mid_4",
+          "trigger": {
+            "type": "distance",
+            "distance": 470.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 540.0
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_4_grunts_final",
+          "trigger": {
+            "type": "all_of",
+            "triggers": [
+              {
+                "type": "spawn_dead",
+                "spawnId": "part2_wave_3_grunts_triangle"
+              },
+              {
+                "type": "spawn_dead",
+                "spawnId": "part2_wave_3_followers_serpent"
+              }
+            ]
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_sine",
+            "health": 5,
+            "spawnX": 1220.0,
+            "startY": 60.0,
+            "deltaY": 30.0,
+            "count": 18
+          }
+        },
+        {
+          "type": "set_scroll",
+          "id": "part2_end_stop_scroll",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_5_grunts_closing"
+          },
+          "scroll": {
+            "mode": "stopped",
+            "speedX": 0
+          }
+        },
+        {
+          "type": "checkpoint",
+          "id": "part2_end_safe_checkpoint",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_5_grunts_closing"
+          },
+          "checkpointId": "part2_safe_end"
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_4b_followers_final",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_4_grunts_final"
+          },
+          "wave": {
+            "type": "stagger",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "health": 5,
+            "spawnX": 1230.0,
+            "startY": 80.0,
+            "deltaY": 35.0,
+            "count": 18,
+            "spacing": 0.12
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "part2_wave_5_grunts_closing",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "part2_wave_4b_followers_final"
+          },
+          "wave": {
+            "type": "cross",
+            "enemy": "grunt",
+            "patternId": "p_zigzag",
+            "health": 5,
+            "centerX": 1240.0,
+            "centerY": 360.0,
+            "step": 70.0,
+            "armLength": 4
+          }
+        }
+      ],
       "exit": {
-        "type": "players_ready"
+        "type": "all_of",
+        "triggers": [
+          {
+            "type": "checkpoint_reached",
+            "checkpointId": "part2_safe_end"
+          },
+          {
+            "type": "players_ready"
+          }
+        ]
       }
     }
   ]
