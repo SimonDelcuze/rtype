@@ -422,6 +422,18 @@ void LobbyServer::cleanupThread()
         auto activeRoomIds = instanceManager_.getAllRoomIds();
         auto lobbyRooms    = lobbyManager_.listRooms();
 
+        // Ensure lobby state stays in sync with running instances (fixes missing quickplay rooms).
+        for (std::uint32_t roomId : activeRoomIds) {
+            if (!lobbyManager_.roomExists(roomId)) {
+                auto* instance = instanceManager_.getInstance(roomId);
+                if (instance != nullptr) {
+                    lobbyManager_.addRoom(roomId, instance->getPort(), 4, RoomType::Quickplay);
+                    Logger::instance().warn("[LobbyServer] Re-registered missing room " + std::to_string(roomId) +
+                                            " on port " + std::to_string(instance->getPort()));
+                }
+            }
+        }
+
         for (std::uint32_t roomId : activeRoomIds) {
             auto* instance = instanceManager_.getInstance(roomId);
             if (instance != nullptr) {
@@ -444,6 +456,13 @@ void LobbyServer::cleanupThread()
 
 void LobbyServer::ensureRankedRoomExists()
 {
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        if (lobbySessions_.empty()) {
+            return;
+        }
+    }
+
     if (lobbyManager_.hasWaitingRoomOfType(RoomType::Ranked)) {
         return;
     }
@@ -569,6 +588,17 @@ void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint
 {
     Logger::instance().info("[LobbyServer] List rooms request from client");
 
+    // Self-heal: ensure any running instances are reflected in lobby state before listing.
+    for (auto roomId : instanceManager_.getAllRoomIds()) {
+        if (!lobbyManager_.roomExists(roomId)) {
+            if (auto* inst = instanceManager_.getInstance(roomId)) {
+                lobbyManager_.addRoom(roomId, inst->getPort(), 4, RoomType::Quickplay);
+                Logger::instance().warn("[LobbyServer] Re-registered missing room " + std::to_string(roomId) +
+                                        " during list request");
+            }
+        }
+    }
+
     auto rooms = lobbyManager_.listRooms();
 
     for (auto& room : rooms) {
@@ -658,7 +688,8 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
 
     std::string inviteCode = lobbyManager_.generateAndSetInviteCode(*roomId);
 
-    std::uint32_t playerId = 0;
+    std::uint32_t playerId  = 0;
+    std::string displayName = "";
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
         std::string key  = endpointToKey(from);
@@ -670,6 +701,11 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
             session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
+        if (!session.playerName.empty()) {
+            displayName = session.playerName;
+        } else if (!session.username.empty()) {
+            displayName = session.username;
+        }
 
         if (session.userId.has_value()) {
             auto stats = userRepository_->getUserStats(session.userId.value());
@@ -679,7 +715,7 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
         }
     }
 
-    lobbyManager_.addPlayerToRoom(*roomId, playerId);
+    lobbyManager_.addPlayerToRoom(*roomId, playerId, displayName);
     lobbyManager_.setRoomOwner(*roomId, playerId);
 
     Logger::instance().info("[LobbyServer] Created room '" + roomName + "' (ID: " + std::to_string(*roomId) +
@@ -767,7 +803,8 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
     std::uint16_t port = instance->getPort();
 
-    std::uint32_t playerId = 0;
+    std::uint32_t playerId  = 0;
+    std::string displayName = "";
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
         std::string key  = endpointToKey(from);
@@ -779,6 +816,11 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
             session.playerId = nextPlayerId_++;
         }
         playerId = session.playerId;
+        if (!session.playerName.empty()) {
+            displayName = session.playerName;
+        } else if (!session.username.empty()) {
+            displayName = session.username;
+        }
 
         if (session.userId.has_value()) {
             auto stats = userRepository_->getUserStats(session.userId.value());
@@ -788,7 +830,7 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
         }
     }
 
-    lobbyManager_.addPlayerToRoom(roomId, playerId);
+    lobbyManager_.addPlayerToRoom(roomId, playerId, displayName);
 
     if (isSpectator) {
         lobbyManager_.setPlayerSpectator(roomId, playerId, true);
@@ -870,7 +912,9 @@ void LobbyServer::handleRoomGetPlayers(const PacketHeader& hdr, const std::uint8
         packet.push_back(static_cast<std::uint8_t>(playerId & 0xFF));
 
         std::string name = "Player " + std::to_string(playerId);
-        {
+        if (auto storedName = lobbyManager_.getPlayerName(roomId, playerId); storedName.has_value()) {
+            name = *storedName;
+        } else {
             std::lock_guard<std::mutex> lock(sessionsMutex_);
             for (const auto& [key, session] : lobbySessions_) {
                 if (session.playerId == playerId && !session.playerName.empty()) {

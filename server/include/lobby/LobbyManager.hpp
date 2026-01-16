@@ -92,9 +92,10 @@ class LobbyManager
 
     bool verifyRoomPassword(std::uint32_t roomId, const std::string& passwordHash) const;
 
-    void addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId);
+    void addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId, const std::string& displayName = "");
     void removePlayerFromRoom(std::uint32_t roomId, std::uint32_t playerId);
     std::vector<std::uint32_t> getRoomPlayers(std::uint32_t roomId) const;
+    std::optional<std::string> getPlayerName(std::uint32_t roomId, std::uint32_t playerId) const;
     bool handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t playerId);
 
     void setPlayerReady(std::uint32_t roomId, std::uint32_t playerId, bool ready);
@@ -110,6 +111,7 @@ class LobbyManager
     mutable std::mutex roomsMutex_;
     std::map<std::uint32_t, RoomInfo> rooms_;
     std::map<std::uint32_t, std::vector<std::uint32_t>> roomPlayers_;
+    std::map<std::uint32_t, std::map<std::uint32_t, std::string>> playerNames_;
     std::map<std::uint32_t, std::map<std::uint32_t, bool>> playerReadyStatus_;
     std::map<std::uint32_t, std::map<std::uint32_t, bool>> playerSpectatorStatus_;
     std::map<std::uint32_t, float> rankedCountdowns_;
