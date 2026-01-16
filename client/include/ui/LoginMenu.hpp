@@ -61,6 +61,7 @@ class LoginMenu : public IMenu
 
     float heartbeatTimer_{0.0F};
     int consecutiveFailures_{0};
+    bool pingPending_{false};
 
     EntityId usernameInput_ = 0;
     EntityId passwordInput_ = 0;

@@ -204,21 +204,33 @@ void RegisterMenu::update(Registry& registry, float dt)
         return;
     }
 
+    // Check for ping response (non-blocking)
+    if (pingPending_ && lobbyConn_.hasRoomListResult()) {
+        lobbyConn_.popRoomListResult(); // Consume the response
+        pingPending_         = false;
+        consecutiveFailures_ = 0;
+    }
+
     heartbeatTimer_ += dt;
-    if (heartbeatTimer_ >= 1.0F) {
+    if (heartbeatTimer_ >= 2.0F) {
         heartbeatTimer_ = 0.0F;
-        if (!lobbyConn_.ping()) {
-            Logger::instance().warn("[Heartbeat] Ping failed in Register Menu");
+
+        if (pingPending_) {
+            // Previous ping didn't get a response
+            Logger::instance().warn("[Heartbeat] Ping timeout in Register Menu");
             consecutiveFailures_++;
-        } else {
-            consecutiveFailures_ = 0;
+            pingPending_ = false;
         }
 
-        if (consecutiveFailures_ >= 2) {
+        if (consecutiveFailures_ >= 3) {
             Logger::instance().error("[Heartbeat] Server lost in Register Menu");
             setError(registry, "Server connection lost");
             backToLogin_ = true;
             done_        = true;
+        } else {
+            // Send async ping (non-blocking)
+            lobbyConn_.sendRequestRoomList();
+            pingPending_ = true;
         }
     }
 }
@@ -308,6 +320,7 @@ void RegisterMenu::reset()
     username_.clear();
     heartbeatTimer_      = 0.0F;
     consecutiveFailures_ = 0;
+    pingPending_         = false;
 }
 
 bool RegisterMenu::validatePassword(const std::string& password, std::string& errorMsg)
