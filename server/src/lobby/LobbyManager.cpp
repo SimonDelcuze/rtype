@@ -41,6 +41,11 @@ void LobbyManager::removeRoom(std::uint32_t roomId)
     rooms_.erase(it);
 
     Logger::instance().info("[LobbyManager] Removed room " + std::to_string(roomId));
+    roomPlayers_.erase(roomId);
+    playerReadyStatus_.erase(roomId);
+    playerSpectatorStatus_.erase(roomId);
+    rankedCountdowns_.erase(roomId);
+    playerNames_.erase(roomId);
 }
 
 void LobbyManager::updateRoomState(std::uint32_t roomId, RoomState state)
@@ -332,7 +337,7 @@ bool LobbyManager::verifyRoomPassword(std::uint32_t roomId, const std::string& p
     return it->second.passwordHash == passwordHash;
 }
 
-void LobbyManager::addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId)
+void LobbyManager::addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId, const std::string& displayName)
 {
     std::lock_guard<std::mutex> lock(roomsMutex_);
 
@@ -340,6 +345,9 @@ void LobbyManager::addPlayerToRoom(std::uint32_t roomId, std::uint32_t playerId)
     if (std::find(players.begin(), players.end(), playerId) == players.end()) {
         players.push_back(playerId);
         playerReadyStatus_[roomId][playerId] = false;
+        if (!displayName.empty()) {
+            playerNames_[roomId][playerId] = displayName;
+        }
 
         auto roomIt = rooms_.find(roomId);
         if (roomIt != rooms_.end() && roomIt->second.roomType == RoomType::Ranked) {
@@ -365,6 +373,10 @@ void LobbyManager::removePlayerFromRoom(std::uint32_t roomId, std::uint32_t play
         Logger::instance().info("[LobbyManager] Player " + std::to_string(playerId) + " removed from room " +
                                 std::to_string(roomId) + " (now " + std::to_string(players.size()) + " players)");
     }
+
+    if (auto nameIt = playerNames_.find(roomId); nameIt != playerNames_.end()) {
+        nameIt->second.erase(playerId);
+    }
 }
 
 std::vector<std::uint32_t> LobbyManager::getRoomPlayers(std::uint32_t roomId) const
@@ -376,6 +388,22 @@ std::vector<std::uint32_t> LobbyManager::getRoomPlayers(std::uint32_t roomId) co
         return it->second;
     }
     return {};
+}
+
+std::optional<std::string> LobbyManager::getPlayerName(std::uint32_t roomId, std::uint32_t playerId) const
+{
+    std::lock_guard<std::mutex> lock(roomsMutex_);
+    auto roomIt = playerNames_.find(roomId);
+    if (roomIt == playerNames_.end()) {
+        return std::nullopt;
+    }
+
+    auto it = roomIt->second.find(playerId);
+    if (it == roomIt->second.end()) {
+        return std::nullopt;
+    }
+
+    return it->second;
 }
 
 bool LobbyManager::handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t playerId)
@@ -403,11 +431,15 @@ bool LobbyManager::handlePlayerDisconnect(std::uint32_t roomId, std::uint32_t pl
         rooms_.erase(roomIt);
         roomPlayers_.erase(roomId);
         playerReadyStatus_.erase(roomId);
+        playerSpectatorStatus_.erase(roomId);
         rankedCountdowns_.erase(roomId);
+        playerNames_.erase(roomId);
         return true;
     }
 
     playerReadyStatus_[roomId].erase(playerId);
+    playerSpectatorStatus_[roomId].erase(playerId);
+    playerNames_[roomId].erase(playerId);
 
     return false;
 }
