@@ -580,7 +580,7 @@
             "enemy": "walker",
             "patternId": "p_walker_slow",
             "spawnX": 1220.0,
-            "startY": 640.0,
+            "startY": 661.0,
             "deltaY": 0.0,
             "count": 6,
             "spacing": 0.35
