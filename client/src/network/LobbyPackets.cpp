@@ -136,70 +136,85 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
                             " totalSize=" + std::to_string(size));
 
     for (std::uint16_t i = 0; i < roomCount; ++i) {
-        if (ptr + 18 > end) {
-            Logger::instance().warn("[LobbyPackets] Room entry truncated at index " + std::to_string(i));
-            return std::nullopt;
-        }
-
         RoomInfo info;
+        auto need = [&](std::size_t bytes, const char* label) -> bool {
+            if (ptr + bytes > end) {
+                Logger::instance().warn(std::string("[LobbyPackets] ") + label + " truncated at index " +
+                                        std::to_string(i));
+                return false;
+            }
+            return true;
+        };
 
+        if (!need(4, "RoomId"))
+            return std::nullopt;
         info.roomId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                       (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
+        if (!need(1, "RoomType"))
+            return std::nullopt;
         info.roomType = static_cast<RoomType>(ptr[0]);
         ptr += 1;
 
+        if (!need(2, "PlayerCount"))
+            return std::nullopt;
         info.playerCount = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(2, "MaxPlayers"))
+            return std::nullopt;
         info.maxPlayers = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(2, "Port"))
+            return std::nullopt;
         info.port = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(1, "State"))
+            return std::nullopt;
         info.state = static_cast<RoomState>(ptr[0]);
         ptr += 1;
 
+        if (!need(4, "OwnerId"))
+            return std::nullopt;
         info.ownerId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                        (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
+        if (!need(1, "PasswordFlag"))
+            return std::nullopt;
         info.passwordProtected = (ptr[0] != 0);
         ptr += 1;
 
+        if (!need(1, "Visibility"))
+            return std::nullopt;
         info.visibility = static_cast<RoomVisibility>(ptr[0]);
         ptr += 1;
 
+        if (!need(1, "Countdown"))
+            return std::nullopt;
         info.countdown = ptr[0];
         ptr += 1;
 
-        if (ptr + 2 > end) {
-            Logger::instance().warn("[LobbyPackets] Missing room name length at index " + std::to_string(i));
+        if (!need(2, "NameLen"))
             return std::nullopt;
-        }
         std::uint16_t nameLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (ptr + nameLen > end) {
-            Logger::instance().warn("[LobbyPackets] Room name truncated at index " + std::to_string(i));
+        if (!need(nameLen, "RoomName"))
             return std::nullopt;
-        }
         info.roomName = std::string(reinterpret_cast<const char*>(ptr), nameLen);
         ptr += nameLen;
 
-        if (ptr + 2 > end) {
-            Logger::instance().warn("[LobbyPackets] Missing invite len at index " + std::to_string(i));
+        if (!need(2, "InviteLen"))
             return std::nullopt;
-        }
         std::uint16_t codeLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (ptr + codeLen > end) {
-            Logger::instance().warn("[LobbyPackets] Invite code truncated at index " + std::to_string(i));
+        if (!need(codeLen, "InviteCode"))
             return std::nullopt;
-        }
         info.inviteCode = std::string(reinterpret_cast<const char*>(ptr), codeLen);
         ptr += codeLen;
 

@@ -163,7 +163,7 @@ void LobbyMenuRanked::buildLayout(Registry& registry)
 
     findBtn_ = createButton(registry, 500.0F, 360.0F, 200.0F, 60.0F, "Find Game", Color(0, 120, 200),
                             [this]() { onFindGameClicked(); });
-    backBtn_ = createButton(registry, 520.0F, 440.0F, 160.0F, 50.0F, "Back", Color(120, 50, 50),
+    backBtn_ = createButton(registry, 520.0F, 44	0.0F, 160.0F, 50.0F, "Back", Color(120, 50, 50),
                             [this]() { onBackClicked(); });
 }
 
