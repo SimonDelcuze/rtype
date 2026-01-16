@@ -344,6 +344,10 @@ void LobbyServer::receiveThread()
         auto result = lobbySocket_.recvFrom(buffer.data(), buffer.size(), from);
 
         if (!result.ok() || result.size == 0) {
+            if (!result.ok()) {
+                std::cout << "[Room1][LobbyServer] recvFrom error err=" << static_cast<int>(result.error)
+                          << " from " << endpointToKey(from) << "\n";
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
@@ -498,6 +502,10 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
         return;
     }
 
+    auto msgType = static_cast<MessageType>(hdr->messageType);
+    std::cout << "[Room1][LobbyServer] handlePacket type=" << static_cast<int>(msgType) << " size=" << size
+              << " from " << endpointToKey(from) << "\n";
+
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
         std::string key      = endpointToKey(from);
@@ -505,8 +513,6 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
         session.endpoint     = from;
         session.lastActivity = std::chrono::steady_clock::now();
     }
-
-    auto msgType = static_cast<MessageType>(hdr->messageType);
 
     switch (msgType) {
         case MessageType::ClientDisconnect: {
