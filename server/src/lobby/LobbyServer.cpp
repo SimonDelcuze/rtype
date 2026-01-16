@@ -348,6 +348,8 @@ void LobbyServer::receiveThread()
             continue;
         }
 
+        std::cout << "[Room1][LobbyServer] recv " << result.size << " bytes from " << endpointToKey(from) << "\n";
+
         Logger::instance().addPacketReceived();
         Logger::instance().addBytesReceived(result.size);
 
@@ -491,9 +493,8 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
 {
     auto hdr = PacketHeader::decode(data, size);
     if (!hdr.has_value()) {
-        Logger::instance().warn("[LobbyServer] Invalid packet header from " + std::to_string(from.addr[0]) + "." +
-                                std::to_string(from.addr[1]) + "." + std::to_string(from.addr[2]) + "." +
-                                std::to_string(from.addr[3]) + ":" + std::to_string(from.port));
+        Logger::instance().warn("[Room1][LobbyServer] Invalid packet header from " + endpointToKey(from));
+        std::cout << "[Room1][LobbyServer] Invalid packet header from " << endpointToKey(from) << "\n";
         return;
     }
 
@@ -584,7 +585,7 @@ void LobbyServer::handlePacket(const std::uint8_t* data, std::size_t size, const
 
 void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint& from)
 {
-    Logger::instance().info("[LobbyServer] List rooms request from client " + endpointToKey(from));
+    Logger::instance().info("[Room1][LobbyServer] List rooms request from client " + endpointToKey(from));
 
     for (auto roomId : instanceManager_.getAllRoomIds()) {
         if (!lobbyManager_.roomExists(roomId)) {
@@ -611,10 +612,10 @@ void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint
 
     auto packet = buildRoomListPacket(rooms, hdr.sequenceId);
 
-    Logger::instance().info("[LobbyServer] Sending room list (" + std::to_string(rooms.size()) + " rooms, " +
-                            std::to_string(packet.size()) + " bytes)");
+    Logger::instance().info("[Room1][LobbyServer] Sending room list (" + std::to_string(rooms.size()) + " rooms, " +
+                            std::to_string(packet.size()) + " bytes) to " + endpointToKey(from));
     for (const auto& room : rooms) {
-        Logger::instance().info("  [RoomList] id=" + std::to_string(room.roomId) + " type=" +
+        Logger::instance().info("[Room1]  [RoomList] id=" + std::to_string(room.roomId) + " type=" +
                                 std::to_string(static_cast<int>(room.roomType)) + " players=" +
                                 std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers) + " port=" +
                                 std::to_string(room.port) + " vis=" +
@@ -866,7 +867,7 @@ void LobbyServer::sendPacket(const std::vector<std::uint8_t>& packet, const IpEn
 {
     auto res = lobbySocket_.sendTo(packet.data(), packet.size(), to);
     if (!res.ok() || res.size != packet.size()) {
-        Logger::instance().warn("[LobbyServer] sendPacket failed to " + endpointToKey(to) + " err=" +
+        Logger::instance().warn("[Room1][LobbyServer] sendPacket failed to " + endpointToKey(to) + " err=" +
                                 std::to_string(static_cast<int>(res.error)) + " sent=" + std::to_string(res.size) +
                                 "/" + std::to_string(packet.size()));
     }
