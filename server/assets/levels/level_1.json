@@ -607,8 +607,8 @@
           "type": "spawn_wave",
           "id": "wave_0_followers",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "wave_0_grunts"
+            "type": "time",
+            "time": 4.6
           },
           "wave": {
             "type": "stagger",
@@ -625,8 +625,8 @@
           "type": "spawn_wave",
           "id": "wave_1",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "wave_0_followers"
+            "type": "time",
+            "time": 9.0
           },
           "wave": {
             "type": "line",
@@ -640,8 +640,8 @@
         }
       ],
       "exit": {
-        "type": "spawn_dead",
-        "spawnId": "wave_1"
+        "type": "time",
+        "time": 13.2
       }
     },
     {
@@ -728,8 +728,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_0b_grunts_sine",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_0_grunts"
+            "type": "distance",
+            "distance": 220.0
           },
           "wave": {
             "type": "line",
@@ -746,8 +746,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_0c_followers_swarm",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_0b_grunts_sine"
+            "type": "distance",
+            "distance": 280.0
           },
           "wave": {
             "type": "stagger",
@@ -765,8 +765,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_1_followers",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_0c_followers_swarm"
+            "type": "distance",
+            "distance": 330.0
           },
           "wave": {
             "type": "stagger",
@@ -784,8 +784,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_1b_grunts_serpent",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_1_followers"
+            "type": "distance",
+            "distance": 390.0
           },
           "wave": {
             "type": "serpent",
@@ -804,8 +804,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_1c_followers_zigzag",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_1b_grunts_serpent"
+            "type": "distance",
+            "distance": 440.0
           },
           "wave": {
             "type": "line",
@@ -844,8 +844,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_2_grunts_cross",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_1c_followers_zigzag"
+            "type": "distance",
+            "distance": 500.0
           },
           "wave": {
             "type": "cross",
@@ -862,8 +862,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_2b_grunts_linear",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_2_grunts_cross"
+            "type": "distance",
+            "distance": 560.0
           },
           "wave": {
             "type": "line",
@@ -880,8 +880,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_3_grunts_triangle",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_2b_grunts_linear"
+            "type": "distance",
+            "distance": 610.0
           },
           "wave": {
             "type": "triangle",
@@ -899,8 +899,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_3_followers_serpent",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_2b_grunts_linear"
+            "type": "distance",
+            "distance": 650.0
           },
           "wave": {
             "type": "serpent",
@@ -941,17 +941,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_4_grunts_final",
           "trigger": {
-            "type": "all_of",
-            "triggers": [
-              {
-                "type": "spawn_dead",
-                "spawnId": "part2_wave_3_grunts_triangle"
-              },
-              {
-                "type": "spawn_dead",
-                "spawnId": "part2_wave_3_followers_serpent"
-              }
-            ]
+            "type": "distance",
+            "distance": 720.0
           },
           "wave": {
             "type": "line",
@@ -968,8 +959,8 @@
           "type": "set_scroll",
           "id": "part2_end_stop_scroll",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_5_grunts_closing"
+            "type": "distance",
+            "distance": 980.0
           },
           "scroll": {
             "mode": "stopped",
@@ -980,8 +971,8 @@
           "type": "checkpoint",
           "id": "part2_end_safe_checkpoint",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_5_grunts_closing"
+            "type": "distance",
+            "distance": 980.0
           },
           "checkpointId": "part2_safe_end"
         },
@@ -989,8 +980,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_4b_followers_final",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_4_grunts_final"
+            "type": "distance",
+            "distance": 780.0
           },
           "wave": {
             "type": "stagger",
@@ -1008,8 +999,8 @@
           "type": "spawn_wave",
           "id": "part2_wave_5_grunts_closing",
           "trigger": {
-            "type": "spawn_dead",
-            "spawnId": "part2_wave_4b_followers_final"
+            "type": "distance",
+            "distance": 850.0
           },
           "wave": {
             "type": "cross",
