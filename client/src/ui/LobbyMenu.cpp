@@ -437,6 +437,18 @@ void LobbyMenu::update(Registry& registry, float dt)
                 auto result   = conn->popRoomListResult();
                 isRefreshing_ = false;
                 if (result.has_value()) {
+                    Logger::instance().info("[LobbyMenu] Room list received (" +
+                                            std::to_string(result->rooms.size()) + " rooms)");
+                    for (const auto& room : result->rooms) {
+                        Logger::instance().info("  [RoomList] id=" + std::to_string(room.roomId) +
+                                                " type=" + std::to_string(static_cast<int>(room.roomType)) +
+                                                " players=" + std::to_string(room.playerCount) + "/" +
+                                                std::to_string(room.maxPlayers) + " port=" +
+                                                std::to_string(room.port) +
+                                                " vis=" + std::to_string(static_cast<int>(room.visibility)) +
+                                                " name=" + room.roomName + " invite=" + room.inviteCode +
+                                                " countdown=" + std::to_string(room.countdown));
+                    }
                     rooms_ = result->rooms;
                     if (state_ == State::Loading)
                         state_ = State::ShowingRooms;
