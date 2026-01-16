@@ -451,7 +451,6 @@ void GameInstance::processShieldPurchase(const std::vector<PlayerCommand>& comma
     constexpr std::uint16_t kShieldRenderTypeId = 25;
 
     for (const auto& cmd : commands) {
-        // Debug: log all received flags
         if (cmd.inputFlags != 0) {
             Logger::instance().info("[Shield] Checking cmd flags=" + std::to_string(cmd.inputFlags) +
                                     " BuyShield=" + std::to_string(static_cast<std::uint16_t>(InputFlag::BuyShield)));

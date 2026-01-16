@@ -102,6 +102,7 @@ class RoomWaitingMenu : public IMenu
     std::vector<EntityId> playerTextEntities_;
     std::vector<EntityId> playerBadgeEntities_;
     std::vector<EntityId> kickButtonEntities_;
+    EntityId chatTitleEntity_{0};
     EntityId chatBackgroundEntity_{0};
     EntityId chatInputField_{0};
     EntityId sendButtonEntity_{0};
