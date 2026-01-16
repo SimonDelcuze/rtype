@@ -201,7 +201,6 @@ void InputSystem::update(Registry& registry, float deltaTime)
                                                                    : LevelState::ShieldFeedback::PurchaseRequested;
             levelState_->shieldFeedbackTimeRemaining = kShieldFeedbackDuration;
         } else {
-            // Clear the flag if not in safe zone
             cmd.flags &= ~InputMapper::BuyShieldFlag;
         }
     }
