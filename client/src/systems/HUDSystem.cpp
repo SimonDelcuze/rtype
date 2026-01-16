@@ -60,29 +60,21 @@ std::string HUDSystem::formatScore(int value) const
     return "SCORE " + digits;
 }
 
-void HUDSystem::drawLivesPips(float startX, float startY, int lives) const
+void HUDSystem::drawLivesPips(float startX, float startY, int lives, const std::shared_ptr<ITexture>& tex,
+                              const IntRect& rect) const
 {
-    static std::shared_ptr<ISprite> livesSprite = nullptr;
-    if (!livesSprite) {
-        GraphicsFactory factory;
-        livesSprite = factory.createSprite();
-        auto tex    = textures_.get("player_ship");
-        if (tex) {
-            livesSprite->setTexture(*tex);
-            livesSprite->setTextureRect({0, 0, 33, 17});
-            livesSprite->setScale({1.0f, 1.0f});
-        }
-    }
-
-    if (!livesSprite)
+    if (!tex || lives <= 0)
         return;
 
-    if (lives <= 0)
-        return;
+    GraphicsFactory factory;
+    auto sprite = factory.createSprite();
+    sprite->setTexture(*tex);
+    sprite->setTextureRect(rect);
+    sprite->setScale({1.0f, 1.0f});
 
     for (int i = 0; i < lives; ++i) {
-        livesSprite->setPosition({startX + (static_cast<float>(i) * kLivesPipSpacing), startY});
-        window_.draw(*livesSprite);
+        sprite->setPosition({startX + (static_cast<float>(i) * kLivesPipSpacing), startY});
+        window_.draw(*sprite);
     }
 }
 
@@ -370,7 +362,15 @@ void HUDSystem::update(Registry& registry, float deltaTime)
         }
     }
 
-    std::vector<std::pair<std::uint32_t, int>> playerLives;
+    struct LivesDisplay
+    {
+        std::uint32_t owner{0};
+        int lives{0};
+        std::shared_ptr<ITexture> texture;
+        IntRect rect{0, 0, 34, 18};
+    };
+
+    std::vector<LivesDisplay> playerLives;
     for (EntityId id : registry.view<TagComponent, LivesComponent>()) {
         if (!registry.isAlive(id))
             continue;
@@ -382,13 +382,33 @@ void HUDSystem::update(Registry& registry, float deltaTime)
             key = registry.get<OwnershipComponent>(id).ownerId;
         }
 
-        if (gameMode_ == RoomType::Ranked && key != localPlayerId_) {
-            continue;
+        LivesDisplay disp;
+        disp.owner = key;
+        disp.lives = registry.get<LivesComponent>(id).current;
+
+        if (textures_.has("player_ship")) {
+            disp.texture = textures_.get("player_ship");
         }
 
-        playerLives.emplace_back(key, registry.get<LivesComponent>(id).current);
+        int rowIndex = 0;
+        if (registry.has<RenderTypeComponent>(id)) {
+            auto typeId = registry.get<RenderTypeComponent>(id).typeId;
+            if (typeId == 1) {
+                rowIndex = 0;
+            } else if (typeId == 12) {
+                rowIndex = 1;
+            } else if (typeId == 13) {
+                rowIndex = 2;
+            } else {
+                rowIndex = 3;
+            }
+        }
+        disp.rect = IntRect{66, rowIndex * 18, 34, 18};
+
+        playerLives.push_back(std::move(disp));
     }
-    std::sort(playerLives.begin(), playerLives.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+    std::sort(playerLives.begin(), playerLives.end(),
+              [](const LivesDisplay& a, const LivesDisplay& b) { return a.owner < b.owner; });
 
     if (!playerLives.empty()) {
         const auto size = window_.getSize();
@@ -397,10 +417,10 @@ void HUDSystem::update(Registry& registry, float deltaTime)
             baseY -= kLivesChargeOffset;
         }
         for (std::size_t i = 0; i < playerLives.size(); ++i) {
-            int livesCount = std::max(0, playerLives[i].second);
+            int livesCount = std::max(0, playerLives[i].lives);
             float startX   = kLivesLeftMargin;
             float startY   = baseY - kLivesPipHeight - (static_cast<float>(i) * kLivesRowSpacing);
-            drawLivesPips(startX, startY, livesCount);
+            drawLivesPips(startX, startY, livesCount, playerLives[i].texture, playerLives[i].rect);
         }
     }
 }
