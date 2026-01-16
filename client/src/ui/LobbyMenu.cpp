@@ -9,7 +9,6 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "ui/NotificationData.hpp"
-#include <iostream>
 
 #include <iomanip>
 #include <sstream>
@@ -436,16 +435,16 @@ void LobbyMenu::update(Registry& registry, float dt)
         if (isRefreshing_) {
             refreshTimeout_ -= dt;
             if (conn->hasRoomListResult()) {
-                auto result      = conn->popRoomListResult();
-                isRefreshing_    = false;
-                refreshTimeout_  = 0.0F;
+                auto result     = conn->popRoomListResult();
+                isRefreshing_   = false;
+                refreshTimeout_ = 0.0F;
                 if (result.has_value()) {
-                    Logger::instance().info("[LobbyMenu] Room list received (" +
-                                            std::to_string(result->rooms.size()) + " rooms)");
+                    Logger::instance().info("[LobbyMenu] Room list received (" + std::to_string(result->rooms.size()) +
+                                            " rooms)");
                     rooms_ = result->rooms;
                     if (state_ == State::Loading)
                         state_ = State::ShowingRooms;
-                    
+
                     if (targetRoomType_ == RoomType::Ranked) {
                         if (!rooms_.empty() && !isJoining_) {
                             Logger::instance().info("[LobbyMenu] Auto-joining ranked room " +
@@ -677,7 +676,6 @@ void LobbyMenu::refreshRoomList()
     if (isRefreshing_)
         return;
 
-    Logger::instance().info("[LobbyMenu] refreshRoomList -> sending list request");
     conn->sendRequestRoomList();
     isRefreshing_   = true;
     refreshTimeout_ = 5.0F;

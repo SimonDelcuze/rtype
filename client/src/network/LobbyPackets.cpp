@@ -1,7 +1,6 @@
 #include "network/LobbyPackets.hpp"
 
 #include "network/PacketHeader.hpp"
-#include "Logger.hpp"
 
 #include <cstring>
 
@@ -119,7 +118,6 @@ std::vector<std::uint8_t> buildJoinRoomPacket(std::uint32_t roomId, const std::s
 std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std::size_t size)
 {
     if (size < PacketHeader::kSize + sizeof(std::uint16_t)) {
-        Logger::instance().warn("[LobbyPackets] Room list too small: " + std::to_string(size) + " bytes");
         return std::nullopt;
     }
 
@@ -132,102 +130,84 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
     const std::uint8_t* ptr = payload + sizeof(std::uint16_t);
     const std::uint8_t* end = data + size - PacketHeader::kCrcSize;
 
-    Logger::instance().info("[LobbyPackets] Parsing room list, reported count=" + std::to_string(roomCount) +
-                            " totalSize=" + std::to_string(size));
-
     for (std::uint16_t i = 0; i < roomCount; ++i) {
         RoomInfo info;
-        auto need = [&](std::size_t bytes, const char* label) -> bool {
-            if (ptr + bytes > end) {
-                Logger::instance().warn(std::string("[LobbyPackets] ") + label + " truncated at index " +
-                                        std::to_string(i));
-                return false;
-            }
-            return true;
-        };
+        auto need = [&](std::size_t bytes) -> bool { return ptr + bytes <= end; };
 
-        if (!need(4, "RoomId"))
+        if (!need(4))
             return std::nullopt;
         info.roomId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                       (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
-        if (!need(1, "RoomType"))
+        if (!need(1))
             return std::nullopt;
         info.roomType = static_cast<RoomType>(ptr[0]);
         ptr += 1;
 
-        if (!need(2, "PlayerCount"))
+        if (!need(2))
             return std::nullopt;
         info.playerCount = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (!need(2, "MaxPlayers"))
+        if (!need(2))
             return std::nullopt;
         info.maxPlayers = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (!need(2, "Port"))
+        if (!need(2))
             return std::nullopt;
         info.port = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (!need(1, "State"))
+        if (!need(1))
             return std::nullopt;
         info.state = static_cast<RoomState>(ptr[0]);
         ptr += 1;
 
-        if (!need(4, "OwnerId"))
+        if (!need(4))
             return std::nullopt;
         info.ownerId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                        (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
-        if (!need(1, "PasswordFlag"))
+        if (!need(1))
             return std::nullopt;
         info.passwordProtected = (ptr[0] != 0);
         ptr += 1;
 
-        if (!need(1, "Visibility"))
+        if (!need(1))
             return std::nullopt;
         info.visibility = static_cast<RoomVisibility>(ptr[0]);
         ptr += 1;
 
-        if (!need(1, "Countdown"))
+        if (!need(1))
             return std::nullopt;
         info.countdown = ptr[0];
         ptr += 1;
 
-        if (!need(2, "NameLen"))
+        if (!need(2))
             return std::nullopt;
         std::uint16_t nameLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (!need(nameLen, "RoomName"))
+        if (!need(nameLen))
             return std::nullopt;
         info.roomName = std::string(reinterpret_cast<const char*>(ptr), nameLen);
         ptr += nameLen;
 
-        if (!need(2, "InviteLen"))
+        if (!need(2))
             return std::nullopt;
         std::uint16_t codeLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (!need(codeLen, "InviteCode"))
+        if (!need(codeLen))
             return std::nullopt;
         info.inviteCode = std::string(reinterpret_cast<const char*>(ptr), codeLen);
         ptr += codeLen;
 
         result.rooms.push_back(info);
-        Logger::instance().info("  [RoomList] idx=" + std::to_string(i) + " id=" + std::to_string(info.roomId) +
-                                " type=" + std::to_string(static_cast<int>(info.roomType)) + " players=" +
-                                std::to_string(info.playerCount) + "/" + std::to_string(info.maxPlayers) + " port=" +
-                                std::to_string(info.port) + " vis=" +
-                                std::to_string(static_cast<int>(info.visibility)) + " name=" + info.roomName +
-                                " invite=" + info.inviteCode + " countdown=" + std::to_string(info.countdown));
     }
-
-    Logger::instance().info("[LobbyPackets] Parsed " + std::to_string(result.rooms.size()) + " rooms");
 
     return result;
 }

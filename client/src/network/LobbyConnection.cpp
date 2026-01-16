@@ -8,7 +8,6 @@
 #include "utils/StringSanity.hpp"
 
 #include <chrono>
-#include <iostream>
 #include <thread>
 
 LobbyConnection::LobbyConnection(const IpEndpoint& lobbyEndpoint, const std::atomic<bool>& runningFlag)
@@ -40,20 +39,6 @@ bool LobbyConnection::connect()
     }
 
     socket_.setNonBlocking(true);
-
-    auto local = socket_.localEndpoint();
-    Logger::instance().info("[LobbyConnection] UDP socket opened on " + std::to_string(local.addr[0]) + "." +
-                            std::to_string(local.addr[1]) + "." + std::to_string(local.addr[2]) + "." +
-                            std::to_string(local.addr[3]) + ":" + std::to_string(local.port) + " -> lobby " +
-                            std::to_string(lobbyEndpoint_.addr[0]) + "." + std::to_string(lobbyEndpoint_.addr[1]) +
-                            "." + std::to_string(lobbyEndpoint_.addr[2]) + "." + std::to_string(lobbyEndpoint_.addr[3]) +
-                            ":" + std::to_string(lobbyEndpoint_.port));
-    std::cout << "[LobbyConnection] UDP socket opened on " << static_cast<int>(local.addr[0]) << "."
-              << static_cast<int>(local.addr[1]) << "." << static_cast<int>(local.addr[2]) << "."
-              << static_cast<int>(local.addr[3]) << ":" << local.port << " -> lobby "
-              << static_cast<int>(lobbyEndpoint_.addr[0]) << "." << static_cast<int>(lobbyEndpoint_.addr[1]) << "."
-              << static_cast<int>(lobbyEndpoint_.addr[2]) << "." << static_cast<int>(lobbyEndpoint_.addr[3]) << ":"
-              << lobbyEndpoint_.port << std::endl;
 
     return true;
 }
@@ -142,14 +127,9 @@ void LobbyConnection::handleIncomingPacket(MessageType type, const std::uint8_t*
         if (pkt.has_value())
             pendingRegisterResult_ = pkt;
     } else if (type == MessageType::LobbyRoomList) {
-        Logger::instance().info("[LobbyConnection] LobbyRoomList received (" + std::to_string(size) + " bytes)");
         auto pkt = parseRoomListPacket(data, size);
         if (pkt.has_value()) {
-            Logger::instance().info("[LobbyConnection] Parsed " + std::to_string(pkt->rooms.size()) +
-                                    " rooms from LobbyRoomList");
             pendingRoomListResult_ = pkt;
-        } else {
-            Logger::instance().warn("[LobbyConnection] Failed to parse LobbyRoomList packet");
         }
     } else if (type == MessageType::LobbyRoomCreated) {
         auto pkt = parseRoomCreatedPacket(data, size);
@@ -321,22 +301,8 @@ std::optional<RegisterResponseData> LobbyConnection::popRegisterResult()
 
 void LobbyConnection::sendRequestRoomList()
 {
-    Logger::instance().info("[LobbyConnection] Sending LobbyListRooms (seq=" + std::to_string(nextSequence_) + ")");
-    std::cout << "[LobbyConnection] Sending LobbyListRooms (seq=" << nextSequence_ << ")" << std::endl;
     auto packet = buildListRoomsPacket(nextSequence_++);
-    auto res    = socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
-    if (!res.ok() || res.size != packet.size()) {
-        Logger::instance().warn("[LobbyConnection] Failed to send LobbyListRooms to " +
-                                std::to_string(lobbyEndpoint_.addr[0]) + "." +
-                                std::to_string(lobbyEndpoint_.addr[1]) + "." +
-                                std::to_string(lobbyEndpoint_.addr[2]) + "." +
-                                std::to_string(lobbyEndpoint_.addr[3]) + ":" +
-                                std::to_string(lobbyEndpoint_.port) + " err=" +
-                                std::to_string(static_cast<int>(res.error)) + " sent=" +
-                                std::to_string(res.size) + "/" + std::to_string(packet.size()));
-        std::cout << "[LobbyConnection] sendto failed err=" << static_cast<int>(res.error) << " sent " << res.size
-                  << "/" << packet.size() << std::endl;
-    }
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
     pendingRoomListResult_.reset();
 }
 
@@ -605,10 +571,10 @@ std::vector<std::uint8_t> LobbyConnection::sendAndWaitForResponse(const std::vec
                     if (receivedType == expectedResponse) {
                         return std::vector<std::uint8_t>(buffer.begin(), buffer.begin() + recvResult.size);
                     }
-                    if (receivedType == MessageType::LobbyJoinFailed && expectedResponse == MessageType::LobbyJoinSuccess) {
+                    if (receivedType == MessageType::LobbyJoinFailed &&
+                        expectedResponse == MessageType::LobbyJoinSuccess) {
                         return {};
                     }
-                    // Process unexpected packet instead of discarding it
                     handleIncomingPacket(receivedType, buffer.data(), recvResult.size, from);
                 }
             }
@@ -732,7 +698,6 @@ std::vector<ChatPacket> LobbyConnection::popChatMessages()
     }
     return messages;
 }
-
 
 void LobbyConnection::sendRequestStats()
 {

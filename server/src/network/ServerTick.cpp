@@ -1,6 +1,6 @@
 #include "Logger.hpp"
-#include "core/EntityTypeResolver.hpp"
 #include "components/PlayerInputComponent.hpp"
+#include "core/EntityTypeResolver.hpp"
 #include "network/EntityDestroyedPacket.hpp"
 #include "network/EntitySpawnPacket.hpp"
 #include "network/PacketHeader.hpp"
@@ -137,8 +137,8 @@ void ServerApp::sendSnapshots()
 
     for (const auto& c : clients_) {
         std::uint16_t lastSeq = 0;
-        std::string key = endpointKey(c);
-        auto itSess = sessions_.find(key);
+        std::string key       = endpointKey(c);
+        auto itSess           = sessions_.find(key);
         if (itSess != sessions_.end()) {
             auto itEnt = playerEntities_.find(itSess->second.playerId);
             if (itEnt != playerEntities_.end() && registry_.isAlive(itEnt->second)) {
@@ -155,10 +155,10 @@ void ServerApp::sendSnapshots()
 
                 if (p.size() >= PacketHeader::kSize + 4) {
                     std::uint32_t newCrc = PacketHeader::crc32(p.data(), p.size() - 4);
-                    p[p.size() - 4] = static_cast<std::uint8_t>((newCrc >> 24) & 0xFF);
-                    p[p.size() - 3] = static_cast<std::uint8_t>((newCrc >> 16) & 0xFF);
-                    p[p.size() - 2] = static_cast<std::uint8_t>((newCrc >> 8) & 0xFF);
-                    p[p.size() - 1] = static_cast<std::uint8_t>(newCrc & 0xFF);
+                    p[p.size() - 4]      = static_cast<std::uint8_t>((newCrc >> 24) & 0xFF);
+                    p[p.size() - 3]      = static_cast<std::uint8_t>((newCrc >> 16) & 0xFF);
+                    p[p.size() - 2]      = static_cast<std::uint8_t>((newCrc >> 8) & 0xFF);
+                    p[p.size() - 1]      = static_cast<std::uint8_t>(newCrc & 0xFF);
                 }
             }
             sendThread_.sendTo(p, c);

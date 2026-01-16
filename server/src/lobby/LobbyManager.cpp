@@ -99,8 +99,6 @@ std::vector<RoomInfo> LobbyManager::listRooms() const
     result.reserve(rooms_.size());
 
     for (const auto& [_, info] : rooms_) {
-        // Expose rooms unless they are finished/closed; this allows cross-platform clients to see active quickplay rooms
-        // that may already be in the Playing state.
         if (info.state != RoomState::Finished) {
             result.push_back(info);
         }

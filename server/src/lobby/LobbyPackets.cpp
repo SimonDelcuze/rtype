@@ -11,16 +11,10 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
 
     std::uint16_t roomCount = static_cast<std::uint16_t>(rooms.size());
 
-    // Build payload first to guarantee the header size matches the actual data length on every platform.
     std::vector<std::uint8_t> payload;
-    constexpr std::size_t kFixedRoomSize =
-        sizeof(std::uint32_t) +                           // roomId
-        sizeof(std::uint8_t) +                            // roomType
-        sizeof(std::uint16_t) * 3 +                       // playerCount, maxPlayers, port
-        sizeof(std::uint8_t) * 4 +                        // state, passwordProtected, visibility, countdown
-        sizeof(std::uint32_t) +                           // ownerId
-        sizeof(std::uint16_t) * 2;                        // nameLen, codeLen
-    std::size_t estimatedPayload = sizeof(std::uint16_t); // roomCount
+    constexpr std::size_t kFixedRoomSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t) * 3 +
+                                           sizeof(std::uint8_t) * 4 + sizeof(std::uint32_t) + sizeof(std::uint16_t) * 2;
+    std::size_t estimatedPayload = sizeof(std::uint16_t);
     for (const auto& room : rooms) {
         estimatedPayload += kFixedRoomSize + room.roomName.size() + room.inviteCode.size();
     }

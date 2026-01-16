@@ -831,7 +831,7 @@ void RoomWaitingMenu::buildChatUI(Registry& registry)
     auto chatBgBox        = BoxComponent::create(460.0F, 400.0F, Color(30, 30, 30, 180), Color(60, 60, 60, 180));
     registry.emplace<BoxComponent>(chatBackgroundEntity_, chatBgBox);
 
-    chatTitleEntity_ = createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
+    chatTitleEntity_           = createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
     auto chatField             = InputFieldComponent::create("", 120);
     chatField.placeholder      = "Type message...";
     chatField.centerVertically = true;

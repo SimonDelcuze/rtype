@@ -5,8 +5,8 @@
 #include <csignal>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <timeapi.h>
+#include <windows.h>
 #endif
 
 void signalHandler(int signum)
