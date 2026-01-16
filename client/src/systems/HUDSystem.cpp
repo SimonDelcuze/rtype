@@ -1,9 +1,9 @@
 #include "systems/HUDSystem.hpp"
 
+#include "components/AllyComponent.hpp"
 #include "components/BossComponent.hpp"
 #include "components/ChargeMeterComponent.hpp"
 #include "components/HealthComponent.hpp"
-#include "components/AllyComponent.hpp"
 #include "components/OwnershipComponent.hpp"
 #include "components/RenderTypeComponent.hpp"
 #include "components/TagComponent.hpp"
