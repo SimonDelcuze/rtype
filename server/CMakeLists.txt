@@ -35,7 +35,7 @@ add_executable(rtype_server
 target_link_libraries(rtype_server
     PRIVATE
         rtype_server_lib
-        $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${WIN32}>:ws2_32 winmm>
 )
 
 target_include_directories(rtype_server
