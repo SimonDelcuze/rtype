@@ -21,7 +21,8 @@ namespace
 
     bool isWalkerPlatform(const Registry& registry, EntityId id)
     {
-        return registry.has<RenderTypeComponent>(id) && registry.get<RenderTypeComponent>(id).typeId == kWalkerPlatformTypeId;
+        return registry.has<RenderTypeComponent>(id) &&
+               registry.get<RenderTypeComponent>(id).typeId == kWalkerPlatformTypeId;
     }
 
     std::string tagLabel(const Registry& registry, EntityId id)
