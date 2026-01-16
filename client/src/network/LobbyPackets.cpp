@@ -131,65 +131,78 @@ std::optional<RoomListResult> parseRoomListPacket(const std::uint8_t* data, std:
     const std::uint8_t* end = data + size - PacketHeader::kCrcSize;
 
     for (std::uint16_t i = 0; i < roomCount; ++i) {
-        if (ptr + 18 > end) {
-            return std::nullopt;
-        }
-
         RoomInfo info;
+        auto need = [&](std::size_t bytes) -> bool { return ptr + bytes <= end; };
 
+        if (!need(4))
+            return std::nullopt;
         info.roomId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                       (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
+        if (!need(1))
+            return std::nullopt;
         info.roomType = static_cast<RoomType>(ptr[0]);
         ptr += 1;
 
+        if (!need(2))
+            return std::nullopt;
         info.playerCount = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(2))
+            return std::nullopt;
         info.maxPlayers = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(2))
+            return std::nullopt;
         info.port = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
+        if (!need(1))
+            return std::nullopt;
         info.state = static_cast<RoomState>(ptr[0]);
         ptr += 1;
 
+        if (!need(4))
+            return std::nullopt;
         info.ownerId = (static_cast<std::uint32_t>(ptr[0]) << 24) | (static_cast<std::uint32_t>(ptr[1]) << 16) |
                        (static_cast<std::uint32_t>(ptr[2]) << 8) | static_cast<std::uint32_t>(ptr[3]);
         ptr += 4;
 
+        if (!need(1))
+            return std::nullopt;
         info.passwordProtected = (ptr[0] != 0);
         ptr += 1;
 
+        if (!need(1))
+            return std::nullopt;
         info.visibility = static_cast<RoomVisibility>(ptr[0]);
         ptr += 1;
 
+        if (!need(1))
+            return std::nullopt;
         info.countdown = ptr[0];
         ptr += 1;
 
-        if (ptr + 2 > end) {
+        if (!need(2))
             return std::nullopt;
-        }
         std::uint16_t nameLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (ptr + nameLen > end) {
+        if (!need(nameLen))
             return std::nullopt;
-        }
         info.roomName = std::string(reinterpret_cast<const char*>(ptr), nameLen);
         ptr += nameLen;
 
-        if (ptr + 2 > end) {
+        if (!need(2))
             return std::nullopt;
-        }
         std::uint16_t codeLen = (static_cast<std::uint16_t>(ptr[0]) << 8) | static_cast<std::uint16_t>(ptr[1]);
         ptr += 2;
 
-        if (ptr + codeLen > end) {
+        if (!need(codeLen))
             return std::nullopt;
-        }
         info.inviteCode = std::string(reinterpret_cast<const char*>(ptr), codeLen);
         ptr += codeLen;
 

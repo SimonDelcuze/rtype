@@ -10,68 +10,71 @@ std::vector<std::uint8_t> buildRoomListPacket(const std::vector<RoomInfo>& rooms
     hdr.sequenceId  = sequence;
 
     std::uint16_t roomCount = static_cast<std::uint16_t>(rooms.size());
-    std::size_t payloadSize = sizeof(std::uint16_t);
+
+    std::vector<std::uint8_t> payload;
+    constexpr std::size_t kFixedRoomSize = sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t) * 3 +
+                                           sizeof(std::uint8_t) * 4 + sizeof(std::uint32_t) + sizeof(std::uint16_t) * 2;
+    std::size_t estimatedPayload = sizeof(std::uint16_t);
+    for (const auto& room : rooms) {
+        estimatedPayload += kFixedRoomSize + room.roomName.size() + room.inviteCode.size();
+    }
+    payload.reserve(estimatedPayload);
+
+    payload.push_back(static_cast<std::uint8_t>((roomCount >> 8) & 0xFF));
+    payload.push_back(static_cast<std::uint8_t>(roomCount & 0xFF));
 
     for (const auto& room : rooms) {
-        payloadSize += sizeof(std::uint32_t) + sizeof(std::uint8_t) + sizeof(std::uint16_t) * 3 +
-                       sizeof(std::uint8_t) * 4 + sizeof(std::uint16_t) + room.roomName.size() + sizeof(std::uint16_t) +
-                       room.inviteCode.size();
+        payload.push_back(static_cast<std::uint8_t>((room.roomId >> 24) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>((room.roomId >> 16) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>((room.roomId >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(room.roomId & 0xFF));
+
+        payload.push_back(static_cast<std::uint8_t>(room.roomType));
+
+        std::uint16_t playerCount = static_cast<std::uint16_t>(room.playerCount);
+        payload.push_back(static_cast<std::uint8_t>((playerCount >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(playerCount & 0xFF));
+
+        std::uint16_t maxPlayers = static_cast<std::uint16_t>(room.maxPlayers);
+        payload.push_back(static_cast<std::uint8_t>((maxPlayers >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(maxPlayers & 0xFF));
+
+        payload.push_back(static_cast<std::uint8_t>((room.port >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(room.port & 0xFF));
+
+        payload.push_back(static_cast<std::uint8_t>(room.state));
+
+        payload.push_back(static_cast<std::uint8_t>((room.ownerId >> 24) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>((room.ownerId >> 16) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>((room.ownerId >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(room.ownerId & 0xFF));
+
+        payload.push_back(room.passwordProtected ? 1 : 0);
+
+        payload.push_back(static_cast<std::uint8_t>(room.visibility));
+
+        payload.push_back(room.countdown);
+
+        std::uint16_t nameLen = static_cast<std::uint16_t>(room.roomName.size());
+        payload.push_back(static_cast<std::uint8_t>((nameLen >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(nameLen & 0xFF));
+        payload.insert(payload.end(), room.roomName.begin(), room.roomName.end());
+
+        std::uint16_t codeLen = static_cast<std::uint16_t>(room.inviteCode.size());
+        payload.push_back(static_cast<std::uint8_t>((codeLen >> 8) & 0xFF));
+        payload.push_back(static_cast<std::uint8_t>(codeLen & 0xFF));
+        payload.insert(payload.end(), room.inviteCode.begin(), room.inviteCode.end());
     }
 
-    hdr.payloadSize  = static_cast<std::uint16_t>(payloadSize);
-    hdr.originalSize = static_cast<std::uint16_t>(payloadSize);
+    hdr.payloadSize  = static_cast<std::uint16_t>(payload.size());
+    hdr.originalSize = hdr.payloadSize;
 
     std::vector<std::uint8_t> packet;
-    packet.reserve(PacketHeader::kSize + payloadSize + PacketHeader::kCrcSize);
+    packet.reserve(PacketHeader::kSize + payload.size() + PacketHeader::kCrcSize);
 
     auto headerBytes = hdr.encode();
     packet.insert(packet.end(), headerBytes.begin(), headerBytes.end());
-
-    packet.push_back(static_cast<std::uint8_t>((roomCount >> 8) & 0xFF));
-    packet.push_back(static_cast<std::uint8_t>(roomCount & 0xFF));
-
-    for (const auto& room : rooms) {
-        packet.push_back(static_cast<std::uint8_t>((room.roomId >> 24) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>((room.roomId >> 16) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>((room.roomId >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(room.roomId & 0xFF));
-
-        packet.push_back(static_cast<std::uint8_t>(room.roomType));
-
-        std::uint16_t playerCount = static_cast<std::uint16_t>(room.playerCount);
-        packet.push_back(static_cast<std::uint8_t>((playerCount >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(playerCount & 0xFF));
-
-        std::uint16_t maxPlayers = static_cast<std::uint16_t>(room.maxPlayers);
-        packet.push_back(static_cast<std::uint8_t>((maxPlayers >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(maxPlayers & 0xFF));
-
-        packet.push_back(static_cast<std::uint8_t>((room.port >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(room.port & 0xFF));
-
-        packet.push_back(static_cast<std::uint8_t>(room.state));
-
-        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 24) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 16) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>((room.ownerId >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(room.ownerId & 0xFF));
-
-        packet.push_back(room.passwordProtected ? 1 : 0);
-
-        packet.push_back(static_cast<std::uint8_t>(room.visibility));
-
-        packet.push_back(room.countdown);
-
-        std::uint16_t nameLen = static_cast<std::uint16_t>(room.roomName.size());
-        packet.push_back(static_cast<std::uint8_t>((nameLen >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(nameLen & 0xFF));
-        packet.insert(packet.end(), room.roomName.begin(), room.roomName.end());
-
-        std::uint16_t codeLen = static_cast<std::uint16_t>(room.inviteCode.size());
-        packet.push_back(static_cast<std::uint8_t>((codeLen >> 8) & 0xFF));
-        packet.push_back(static_cast<std::uint8_t>(codeLen & 0xFF));
-        packet.insert(packet.end(), room.inviteCode.begin(), room.inviteCode.end());
-    }
+    packet.insert(packet.end(), payload.begin(), payload.end());
 
     std::uint32_t crc = PacketHeader::crc32(packet.data(), packet.size());
     packet.push_back(static_cast<std::uint8_t>((crc >> 24) & 0xFF));

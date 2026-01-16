@@ -216,7 +216,7 @@ void RoomWaitingMenuRanked::create(Registry& registry)
     createPanel(registry, 430.0F, 320.0F, 340.0F, 320.0F, Color(25, 35, 55, 200));
     createText(registry, 450.0F, 325.0F, "Players", 20, Color(180, 220, 255));
     createPanel(registry, 800.0F, 250.0F, 460.0F, 400.0F, Color(30, 30, 30, 180));
-    createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
+    chatTitle_ = createText(registry, 820.0F, 260.0F, "Chat", 28, Color(150, 200, 255));
 
     buildChatUI(registry);
     if (lobbyConnection_) {
@@ -240,6 +240,7 @@ void RoomWaitingMenuRanked::destroy(Registry& registry)
     destroyIf(readyButton_);
     destroyIf(readyButtonText_);
     destroyIf(timerLabel_);
+    destroyIf(chatTitle_);
     destroyIf(chatBg_);
     destroyIf(chatInput_);
     destroyIf(chatSend_);

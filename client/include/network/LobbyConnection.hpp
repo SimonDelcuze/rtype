@@ -94,6 +94,10 @@ class LobbyConnection
     bool hasPlayerListResult() const;
     std::optional<std::vector<PlayerInfo>> popPlayerListResult();
 
+    void sendRequestStats();
+    bool hasStatsResult() const;
+    std::optional<struct GetStatsResponseData> popStatsResult();
+
     void sendRequestLeaderboard();
     bool hasLeaderboardResult() const;
     std::optional<LeaderboardResponseData> popLeaderboardResult();
@@ -141,6 +145,9 @@ class LobbyConnection
                                                      MessageType expectedResponse,
                                                      std::chrono::milliseconds timeout = std::chrono::seconds(1));
 
+    void handleIncomingPacket(MessageType type, const std::uint8_t* data, std::size_t size, const IpEndpoint& from,
+                              ThreadSafeQueue<NotificationData>* broadcastQueue = nullptr);
+
     IpEndpoint lobbyEndpoint_;
     UdpSocket socket_;
     const std::atomic<bool>& runningFlag_;
@@ -159,6 +166,7 @@ class LobbyConnection
     std::optional<std::vector<PlayerInfo>> pendingPlayerListResult_;
     std::vector<PlayerInfo> lastPlayerList_;
     std::optional<LeaderboardResponseData> pendingLeaderboardResult_;
+    std::optional<struct GetStatsResponseData> pendingStatsResult_;
     ThreadSafeQueue<ChatPacket> chatMessages_;
     std::optional<RoomConfigUpdate> pendingRoomConfig_;
     std::uint8_t currentRoomCountdown_{0};

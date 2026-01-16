@@ -4,6 +4,11 @@
 
 #include <csignal>
 
+#ifdef _WIN32
+#include <timeapi.h>
+#include <windows.h>
+#endif
+
 void signalHandler(int signum)
 {
     (void) signum;
@@ -13,6 +18,9 @@ void signalHandler(int signum)
 
 int main(int argc, char* argv[])
 {
+#ifdef _WIN32
+    timeBeginPeriod(1);
+#endif
     Logger::instance().info("===== RTYPE CLIENT v2.0 WITH GAME OVER SYSTEM =====");
     ClientOptions options = parseOptions(argc, argv);
     std::signal(SIGINT, signalHandler);

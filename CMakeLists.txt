@@ -120,7 +120,23 @@ if(SQLite3_ADDED)
     endif()
 endif()
 
+CPMAddPackage(
+    NAME OpenSSL
+    GITHUB_REPOSITORY "janbar/openssl-cmake"
+    GIT_TAG "master"
+)
+
+if(OpenSSL_ADDED)
+    add_library(OpenSSL::SSL ALIAS ssl)
+    add_library(OpenSSL::Crypto ALIAS crypto)
+endif()
+
 set(JWT_CPP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(JWT_CPP_INSTALL OFF CACHE BOOL "" FORCE)
+
+set(OLD_SKIP_INSTALL ${CMAKE_SKIP_INSTALL_RULES})
+set(CMAKE_SKIP_INSTALL_RULES ON)
+
 CPMAddPackage(
     NAME jwt-cpp
     GITHUB_REPOSITORY Thalhammer/jwt-cpp
@@ -128,7 +144,7 @@ CPMAddPackage(
     GIT_SHALLOW TRUE
 )
 
-find_package(OpenSSL REQUIRED)
+set(CMAKE_SKIP_INSTALL_RULES ${OLD_SKIP_INSTALL})
 
 set(LZ4_MIN_CMAKE_PATCH "${CMAKE_CURRENT_LIST_DIR}/cmake/patches/lz4_force_min_cmake.cmake")
 

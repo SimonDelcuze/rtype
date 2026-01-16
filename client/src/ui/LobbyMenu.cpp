@@ -433,14 +433,18 @@ void LobbyMenu::update(Registry& registry, float dt)
         }
 
         if (isRefreshing_) {
+            refreshTimeout_ -= dt;
             if (conn->hasRoomListResult()) {
-                auto result   = conn->popRoomListResult();
-                isRefreshing_ = false;
+                auto result     = conn->popRoomListResult();
+                isRefreshing_   = false;
+                refreshTimeout_ = 0.0F;
                 if (result.has_value()) {
+                    Logger::instance().info("[LobbyMenu] Room list received (" + std::to_string(result->rooms.size()) +
+                                            " rooms)");
                     rooms_ = result->rooms;
                     if (state_ == State::Loading)
                         state_ = State::ShowingRooms;
-                    Logger::instance().info("[LobbyMenu] Received " + std::to_string(rooms_.size()) + " rooms");
+
                     if (targetRoomType_ == RoomType::Ranked) {
                         if (!rooms_.empty() && !isJoining_) {
                             Logger::instance().info("[LobbyMenu] Auto-joining ranked room " +
@@ -456,7 +460,62 @@ void LobbyMenu::update(Registry& registry, float dt)
                         updateRoomListDisplay(registry);
                     }
                 } else {
-                    Logger::instance().warn("[LobbyMenu] Failed to refresh rooms");
+                    Logger::instance().warn("[LobbyMenu] Room list result was empty");
+                }
+            } else if (refreshTimeout_ <= 0.0F) {
+                Logger::instance().warn("[LobbyMenu] Room list refresh timed out, resetting isRefreshing");
+                isRefreshing_   = false;
+                refreshTimeout_ = 0.0F;
+                if (state_ == State::Loading) {
+                    if (registry.has<TextComponent>(statusEntity_)) {
+                        registry.get<TextComponent>(statusEntity_).content = "Refresh timed out. Please try again.";
+                    }
+                }
+            }
+        }
+
+        if (isGettingStats_) {
+            if (conn->hasStatsResult()) {
+                auto stats      = conn->popStatsResult();
+                isGettingStats_ = false;
+                if (stats.has_value()) {
+                    Logger::instance().info("[LobbyMenu] Received stats - userId: " + std::to_string(stats->userId));
+
+                    float winRate = 0.0F;
+                    if (stats->gamesPlayed > 0) {
+                        winRate = (static_cast<float>(stats->wins) / static_cast<float>(stats->gamesPlayed)) * 100.0F;
+                    }
+
+                    std::string username = std::string(stats->username);
+
+                    if (registry.has<TextComponent>(statsUsernameEntity_)) {
+                        registry.get<TextComponent>(statsUsernameEntity_).content = username;
+                    }
+                    if (registry.has<TextComponent>(statsGamesEntity_)) {
+                        registry.get<TextComponent>(statsGamesEntity_).content =
+                            "Games: " + std::to_string(stats->gamesPlayed);
+                    }
+                    if (registry.has<TextComponent>(statsWinsEntity_)) {
+                        registry.get<TextComponent>(statsWinsEntity_).content = "Wins: " + std::to_string(stats->wins);
+                    }
+                    if (registry.has<TextComponent>(statsLossesEntity_)) {
+                        registry.get<TextComponent>(statsLossesEntity_).content =
+                            "Losses: " + std::to_string(stats->losses);
+                    }
+                    if (registry.has<TextComponent>(statsWinRateEntity_)) {
+                        std::ostringstream oss;
+                        oss << "Win Rate: " << std::fixed << std::setprecision(1) << winRate << "%";
+                        registry.get<TextComponent>(statsWinRateEntity_).content = oss.str();
+                    }
+                    if (registry.has<TextComponent>(statsScoreEntity_)) {
+                        registry.get<TextComponent>(statsScoreEntity_).content =
+                            "Score: " + std::to_string(stats->totalScore);
+                    }
+                } else {
+                    Logger::instance().warn("[LobbyMenu] Failed to load user stats");
+                    if (registry.has<TextComponent>(statsUsernameEntity_)) {
+                        registry.get<TextComponent>(statsUsernameEntity_).content = "Stats unavailable";
+                    }
                 }
             }
         }
@@ -592,7 +651,7 @@ void LobbyMenu::update(Registry& registry, float dt)
         updateRoomListDisplay(registry);
     }
 
-    if (!statsLoaded_ && sharedConnection_) {
+    if (!isGettingStats_ && sharedConnection_ && !statsLoaded_) {
         Logger::instance().info("[LobbyMenu] Loading stats with authenticated connection");
         loadAndDisplayStats(registry);
         statsLoaded_ = true;
@@ -604,7 +663,6 @@ void LobbyMenu::update(Registry& registry, float dt)
         if (state_ == State::ShowingRooms || state_ == State::Loading) {
             if (!isRefreshing_)
                 refreshRoomList();
-        } else {
         }
     }
 }
@@ -619,7 +677,8 @@ void LobbyMenu::refreshRoomList()
         return;
 
     conn->sendRequestRoomList();
-    isRefreshing_ = true;
+    isRefreshing_   = true;
+    refreshTimeout_ = 5.0F;
 }
 
 void LobbyMenu::onCreateRoomClicked()
@@ -798,62 +857,14 @@ void LobbyMenu::createRoomButton(Registry& registry, const RoomInfo& room, std::
 
 void LobbyMenu::loadAndDisplayStats(Registry& registry)
 {
+    (void) registry;
     auto* conn = getConnection();
     if (!conn) {
         Logger::instance().warn("[LobbyMenu] Cannot load stats: no lobby connection");
         return;
     }
 
-    Logger::instance().info("[LobbyMenu] Loading user stats...");
-
-    auto stats = conn->getStats();
-    if (!stats.has_value()) {
-        Logger::instance().warn("[LobbyMenu] Failed to load user stats");
-        if (registry.has<TextComponent>(statsUsernameEntity_)) {
-            registry.get<TextComponent>(statsUsernameEntity_).content = "Stats unavailable";
-        }
-        return;
-    }
-
-    Logger::instance().info("[LobbyMenu] Received stats - userId: " + std::to_string(stats->userId) +
-                            ", games: " + std::to_string(stats->gamesPlayed) +
-                            ", wins: " + std::to_string(stats->wins) + ", losses: " + std::to_string(stats->losses) +
-                            ", score: " + std::to_string(stats->totalScore));
-
-    float winRate = 0.0F;
-    if (stats->gamesPlayed > 0) {
-        winRate = (static_cast<float>(stats->wins) / static_cast<float>(stats->gamesPlayed)) * 100.0F;
-    }
-
-    Logger::instance().info("[LobbyMenu] Calculated win rate: " + std::to_string(winRate) + "%");
-
-    std::string username = std::string(stats->username);
-
-    if (registry.has<TextComponent>(statsUsernameEntity_)) {
-        registry.get<TextComponent>(statsUsernameEntity_).content = username;
-    }
-
-    if (registry.has<TextComponent>(statsGamesEntity_)) {
-        registry.get<TextComponent>(statsGamesEntity_).content = "Games: " + std::to_string(stats->gamesPlayed);
-    }
-
-    if (registry.has<TextComponent>(statsWinsEntity_)) {
-        registry.get<TextComponent>(statsWinsEntity_).content = "Wins: " + std::to_string(stats->wins);
-    }
-
-    if (registry.has<TextComponent>(statsLossesEntity_)) {
-        registry.get<TextComponent>(statsLossesEntity_).content = "Losses: " + std::to_string(stats->losses);
-    }
-
-    if (registry.has<TextComponent>(statsWinRateEntity_)) {
-        std::ostringstream oss;
-        oss << "Win Rate: " << std::fixed << std::setprecision(1) << winRate << "%";
-        registry.get<TextComponent>(statsWinRateEntity_).content = oss.str();
-    }
-
-    if (registry.has<TextComponent>(statsScoreEntity_)) {
-        registry.get<TextComponent>(statsScoreEntity_).content = "Score: " + std::to_string(stats->totalScore);
-    }
-
-    Logger::instance().info("[LobbyMenu] Stats loaded and displayed in stats box");
+    Logger::instance().info("[LobbyMenu] Requesting user stats...");
+    conn->sendRequestStats();
+    isGettingStats_ = true;
 }

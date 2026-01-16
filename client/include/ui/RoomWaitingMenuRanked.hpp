@@ -73,6 +73,7 @@ class RoomWaitingMenuRanked : public IMenu
     EntityId readyButton_{0};
     EntityId readyButtonText_{0};
     EntityId timerLabel_{0};
+    EntityId chatTitle_{0};
 
     std::vector<PlayerRow> players_;
     std::vector<EntityId> playerEntities_;

@@ -27,7 +27,7 @@ target_link_libraries(rtype_client_lib
         SFML::System
         SFML::Audio
         nlohmann_json::nlohmann_json
-        $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${WIN32}>:ws2_32 winmm>
 )
 
 add_executable(rtype_client
@@ -38,7 +38,7 @@ target_link_libraries(rtype_client
     PRIVATE
         rtype_client_lib
         ${SFML_LIBS}
-        $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${WIN32}>:ws2_32 winmm>
 )
 
 target_include_directories(rtype_client

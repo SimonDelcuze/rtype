@@ -120,6 +120,10 @@ void LobbyConnection::poll(ThreadSafeQueue<NotificationData>& broadcastQueue)
             auto pkt = parseRegisterResponsePacket(buffer.data(), recvResult.size);
             if (pkt.has_value())
                 pendingRegisterResult_ = pkt;
+        } else if (type == MessageType::AuthGetStatsResponse) {
+            auto pkt = parseGetStatsResponsePacket(buffer.data(), recvResult.size);
+            if (pkt.has_value())
+                pendingStatsResult_ = pkt;
         } else if (type == MessageType::LobbyRoomList) {
             auto pkt = parseRoomListPacket(buffer.data(), recvResult.size);
             if (pkt.has_value())
@@ -305,6 +309,25 @@ std::optional<RoomListResult> LobbyConnection::popRoomListResult()
 {
     auto res = pendingRoomListResult_;
     pendingRoomListResult_.reset();
+    return res;
+}
+
+void LobbyConnection::sendRequestStats()
+{
+    auto packet = buildGetStatsRequestPacket(nextSequence_++);
+    socket_.sendTo(packet.data(), packet.size(), lobbyEndpoint_);
+    pendingStatsResult_.reset();
+}
+
+bool LobbyConnection::hasStatsResult() const
+{
+    return pendingStatsResult_.has_value();
+}
+
+std::optional<GetStatsResponseData> LobbyConnection::popStatsResult()
+{
+    auto res = pendingStatsResult_;
+    pendingStatsResult_.reset();
     return res;
 }
 
