@@ -209,14 +209,14 @@ void LobbyMenu::handleEvent(Registry& registry, const Event& event)
     }
 
     if (event.type == EventType::MouseWheelScrolled) {
-        constexpr float scrollSpeed    = 30.0F;
-        constexpr float roomSpacing    = 70.0F;
-        constexpr float clipTop        = 400.0F;
-        constexpr float clipBottom     = 700.0F;
-        constexpr float buttonHeight   = 50.0F;
-        float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
-        float contentHeight            = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
-        float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
+        constexpr float scrollSpeed  = 30.0F;
+        constexpr float roomSpacing  = 70.0F;
+        constexpr float clipTop      = 400.0F;
+        constexpr float clipBottom   = 700.0F;
+        constexpr float buttonHeight = 50.0F;
+        float visibleAreaHeight      = clipBottom - clipTop - buttonHeight;
+        float contentHeight = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
+        float maxScroll     = std::max(0.0F, contentHeight - visibleAreaHeight);
 
         scrollOffset_ -= event.mouseWheelScroll.delta * scrollSpeed;
         scrollOffset_ = std::clamp(scrollOffset_, 0.0F, maxScroll);
@@ -224,14 +224,14 @@ void LobbyMenu::handleEvent(Registry& registry, const Event& event)
     }
 
     if (event.type == EventType::KeyPressed) {
-        constexpr float scrollSpeed    = 30.0F;
-        constexpr float roomSpacing    = 70.0F;
-        constexpr float clipTop        = 400.0F;
-        constexpr float clipBottom     = 700.0F;
-        constexpr float buttonHeight   = 50.0F;
-        float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
-        float contentHeight            = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
-        float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
+        constexpr float scrollSpeed  = 30.0F;
+        constexpr float roomSpacing  = 70.0F;
+        constexpr float clipTop      = 400.0F;
+        constexpr float clipBottom   = 700.0F;
+        constexpr float buttonHeight = 50.0F;
+        float visibleAreaHeight      = clipBottom - clipTop - buttonHeight;
+        float contentHeight = static_cast<float>(roomButtonEntities_.size()) * roomSpacing - roomSpacing + buttonHeight;
+        float maxScroll     = std::max(0.0F, contentHeight - visibleAreaHeight);
 
         if (event.key.code == KeyCode::Up) {
             scrollOffset_ = std::max(0.0F, scrollOffset_ - scrollSpeed);
@@ -865,14 +865,14 @@ void LobbyMenu::updateRoomListDisplay(Registry& registry)
     }
     std::size_t visibleCount = sortedIndices.size();
 
-    constexpr float roomSpacing    = 70.0F;
-    constexpr float clipTop        = 400.0F;
-    constexpr float clipBottom     = 700.0F;
-    constexpr float buttonHeight   = 50.0F;
-    float visibleAreaHeight        = clipBottom - clipTop - buttonHeight;
-    float contentHeight            = static_cast<float>(visibleCount) * roomSpacing - roomSpacing + buttonHeight;
-    float maxScroll                = std::max(0.0F, contentHeight - visibleAreaHeight);
-    scrollOffset_                  = std::clamp(scrollOffset_, 0.0F, maxScroll);
+    constexpr float roomSpacing  = 70.0F;
+    constexpr float clipTop      = 400.0F;
+    constexpr float clipBottom   = 700.0F;
+    constexpr float buttonHeight = 50.0F;
+    float visibleAreaHeight      = clipBottom - clipTop - buttonHeight;
+    float contentHeight          = static_cast<float>(visibleCount) * roomSpacing - roomSpacing + buttonHeight;
+    float maxScroll              = std::max(0.0F, contentHeight - visibleAreaHeight);
+    scrollOffset_                = std::clamp(scrollOffset_, 0.0F, maxScroll);
     applyScrollOffset(registry);
 
     if (registry.has<TextComponent>(statusEntity_)) {
@@ -941,11 +941,11 @@ void LobbyMenu::applyScrollOffset(Registry& registry)
 
     for (const auto& [entityId, originalY] : originalRoomButtonPositions_) {
         if (registry.isAlive(entityId) && registry.has<TransformComponent>(entityId)) {
-            float newY = originalY - scrollOffset_;
+            float newY                                   = originalY - scrollOffset_;
             registry.get<TransformComponent>(entityId).y = newY;
 
             if (registry.has<BoxComponent>(entityId)) {
-                bool isVisible = (newY >= clipTop) && (newY + buttonHeight <= clipBottom);
+                bool isVisible                               = (newY >= clipTop) && (newY + buttonHeight <= clipBottom);
                 registry.get<BoxComponent>(entityId).visible = isVisible;
             }
         }
