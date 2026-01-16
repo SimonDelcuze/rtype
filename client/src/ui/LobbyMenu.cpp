@@ -9,6 +9,7 @@
 #include "graphics/FontManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "ui/NotificationData.hpp"
+#include <iostream>
 
 #include <iomanip>
 #include <sstream>
