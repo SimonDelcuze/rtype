@@ -66,6 +66,11 @@
       "type": "sprite"
     },
     {
+      "id": "obstacle_bottom2",
+      "path": "sprites/obstacle/bottom2.png",
+      "type": "sprite"
+    },
+    {
       "id": "diff_noob",
       "path": "other/noob.png",
       "type": "ui"
