@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class LobbyMenu : public IMenu
@@ -140,4 +141,8 @@ class LobbyMenu : public IMenu
     bool isGettingStats_{false};
     bool joinAsSpectator_{false};
     std::string currentRoomName_;
+
+    float scrollOffset_{0.0F};
+    std::unordered_map<EntityId, float> originalRoomButtonPositions_;
+    void applyScrollOffset(Registry& registry);
 };

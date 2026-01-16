@@ -11,6 +11,7 @@ struct BoxComponent
     Color outlineColor     = Color{100, 100, 100};
     Color focusColor       = Color{100, 200, 255};
     float outlineThickness = 2.0F;
+    bool visible           = true;
 
     static BoxComponent create(float w, float h, Color fill, Color outline)
     {
