@@ -52,7 +52,7 @@ void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& 
                       InputBuffer& inputBuffer, InputMapper& mapper, std::uint32_t& inputSequence, float& playerPosX,
                       float& playerPosY, Window& window, FontManager& fontManager, EventBus& eventBus,
                       GraphicsFactory& graphicsFactory, SoundManager& soundManager,
-                      ThreadSafeQueue<NotificationData>& broadcastQueue)
+                      ThreadSafeQueue<NotificationData>& broadcastQueue, const std::vector<PlayerInfo>& playerList)
 {
     preloadSounds(manifest, soundManager);
 
@@ -66,7 +66,7 @@ void configureSystems(std::uint32_t localPlayerId, RoomType gameMode, GameLoop& 
         std::make_shared<LevelEventSystem>(net.levelEvents, manifest, textures, g_musicVolume, levelState));
     gameLoop.addSystem(std::make_shared<ReplicationSystem>(net.parsed, net.spawns, net.destroys, types));
     gameLoop.addSystem(std::make_shared<InvincibilitySystem>());
-    gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus, localPlayerId, gameMode));
+    gameLoop.addSystem(std::make_shared<GameOverSystem>(eventBus, localPlayerId, gameMode, playerList));
     gameLoop.addSystem(std::make_shared<FollowerFacingSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<DirectionalAnimationSystem>(animations, labels));
     gameLoop.addSystem(std::make_shared<AnimationSystem>());

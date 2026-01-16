@@ -15,7 +15,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     if (!resolution) {
         return ClientLoopResult{false, 0, std::nullopt, std::nullopt};
     }
-    const auto& [serverEndpoint, gameMode] = *resolution;
+    const auto& [serverEndpoint, gameMode, playerList] = *resolution;
 
     InputBuffer inputBuffer;
     std::atomic<bool> handshakeDone{false};
@@ -47,7 +47,7 @@ ClientLoopResult runClientIteration(const ClientOptions& options, Window& window
     stopLauncherMusic();
     auto gameResult =
         runGameSession(receivedPlayerId != 0 ? receivedPlayerId : userId, gameMode, window, options, serverEndpoint,
-                       net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue);
+                       net, inputBuffer, textureManager, fontManager, errorMessage, broadcastQueue, playerList);
 
     stopNetwork(net, welcomeThread, handshakeDone);
 

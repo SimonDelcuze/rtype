@@ -285,7 +285,7 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
     players.reserve(playerCount);
 
     for (std::uint8_t i = 0; i < playerCount; ++i) {
-        if (payload + 43 > data + size - PacketHeader::kCrcSize) {
+        if (payload + 47 > data + size - PacketHeader::kCrcSize) {
             return std::nullopt;
         }
 
@@ -293,6 +293,10 @@ std::optional<std::vector<PlayerInfo>> parsePlayerListPacket(const std::uint8_t*
         info.playerId = (static_cast<std::uint32_t>(payload[0]) << 24) |
                         (static_cast<std::uint32_t>(payload[1]) << 16) | (static_cast<std::uint32_t>(payload[2]) << 8) |
                         static_cast<std::uint32_t>(payload[3]);
+        payload += 4;
+
+        info.userId = (static_cast<std::uint32_t>(payload[0]) << 24) | (static_cast<std::uint32_t>(payload[1]) << 16) |
+                      (static_cast<std::uint32_t>(payload[2]) << 8) | static_cast<std::uint32_t>(payload[3]);
         payload += 4;
 
         std::memcpy(info.name, payload, 32);

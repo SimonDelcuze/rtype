@@ -34,7 +34,7 @@ std::optional<AuthResult> showAuthenticationMenu(Window& window, FontManager& fo
                                                  TextureManager& textureManager, LobbyConnection& lobbyConn,
                                                  ThreadSafeQueue<NotificationData>& broadcastQueue);
 
-std::optional<std::pair<IpEndpoint, RoomType>>
+std::optional<std::tuple<IpEndpoint, RoomType, std::vector<PlayerInfo>>>
 resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager& fontManager,
                       TextureManager& textureManager, std::string& errorMessage,
                       ThreadSafeQueue<NotificationData>& broadcastQueue, std::optional<IpEndpoint>& lastLobbyEndpoint,
@@ -129,12 +129,12 @@ resolveServerEndpoint(const ClientOptions& options, Window& window, FontManager&
                 RoomType targetRoomType = modeRes.selected;
 
                 Logger::instance().info("[Nav] Showing lobby menu");
-                bool serverLost = false;
-                auto gameEp     = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, targetRoomType, fontManager,
-                                                                  textureManager, broadcastQueue, &conn, serverLost);
+                bool serverLost   = false;
+                auto gameEpResult = showLobbyMenuAndGetGameEndpoint(window, lobbyEp, targetRoomType, fontManager,
+                                                                    textureManager, broadcastQueue, &conn, serverLost);
 
-                if (gameEp.has_value()) {
-                    return std::make_pair(*gameEp, targetRoomType);
+                if (gameEpResult.has_value()) {
+                    return std::make_tuple(gameEpResult->first, targetRoomType, gameEpResult->second);
                 }
 
                 if (serverLost) {
@@ -215,10 +215,19 @@ namespace
                          InputMapper& mapper, ButtonSystem& buttonSystem, NetPipelines& net, std::string& errorMessage,
                          bool& disconnected, bool& serverLost, bool& pauseMenuQuit,
                          ThreadSafeQueue<NotificationData>& broadcastQueue, const IpEndpoint& serverEndpoint,
-                         FontManager& fontManager)
+                         FontManager& fontManager, const std::vector<PlayerInfo>& playerList)
     {
         bool pauseMenuActive = false;
         std::unique_ptr<PauseMenu> pauseMenu;
+        std::map<std::uint32_t, std::string> playerNames;
+        for (const auto& player : playerList) {
+            if (player.userId != 0) {
+                playerNames[player.userId] = std::string(player.name);
+                Logger::instance().info("[RunClientFlow] Mapped userId " + std::to_string(player.userId) + " to name " +
+                                        std::string(player.name));
+            }
+            playerNames[player.playerId] = std::string(player.name);
+        }
 
         auto onEvent = [&](const Event& event) {
             if (!pauseMenuActive) {
@@ -288,7 +297,13 @@ namespace
                     Logger::instance().info("[RunClientFlow] Popped GameEndPacket from queue. Emitting event.");
                     std::vector<PlayerScoreEntry> entries;
                     for (const auto& ps : gameEndPkt.playerScores) {
-                        entries.push_back({ps.playerId, ps.score});
+                        std::string playerName;
+                        if (playerNames.count(ps.playerId)) {
+                            playerName = playerNames.at(ps.playerId);
+                        } else {
+                            playerName = "Player " + std::to_string(ps.playerId);
+                        }
+                        entries.push_back({ps.playerId, ps.score, playerName});
                     }
                     eventBus.emit(GameOverEvent{gameEndPkt.victory, entries, 1});
                 }
@@ -406,7 +421,8 @@ namespace
 GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode, Window& window,
                                  const ClientOptions& options, const IpEndpoint& serverEndpoint, NetPipelines& net,
                                  InputBuffer& inputBuffer, TextureManager& textureManager, FontManager& fontManager,
-                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue)
+                                 std::string& errorMessage, ThreadSafeQueue<NotificationData>& broadcastQueue,
+                                 const std::vector<PlayerInfo>& playerList)
 {
     GraphicsFactory graphicsFactory;
     SoundManager soundManager;
@@ -478,14 +494,14 @@ GameSessionResult runGameSession(std::uint32_t localPlayerId, RoomType gameMode,
 
     configureSystems(localPlayerId, gameMode, gameLoop, net, typeRegistry, manifest, textureManager, animations,
                      animationLabels, levelState, inputBuffer, mapper, inputSequence, playerPosX, playerPosY, window,
-                     fontManager, eventBus, graphicsFactory, soundManager, broadcastQueue);
+                     fontManager, eventBus, graphicsFactory, soundManager, broadcastQueue, playerList);
 
     ButtonSystem buttonSystem(window, fontManager);
 
     bool disconnected  = false;
     bool pauseMenuQuit = false;
     runMainGameLoop(window, gameLoop, registry, eventBus, mapper, buttonSystem, net, errorMessage, disconnected,
-                    serverLost, pauseMenuQuit, broadcastQueue, serverEndpoint, fontManager);
+                    serverLost, pauseMenuQuit, broadcastQueue, serverEndpoint, fontManager, playerList);
 
     gameLoop.stop();
 
