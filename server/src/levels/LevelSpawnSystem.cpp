@@ -2,6 +2,7 @@
 
 #include "components/RenderTypeComponent.hpp"
 #include "components/ScoreValueComponent.hpp"
+#include "components/SpawnGroupComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/VelocityComponent.hpp"
 
@@ -187,6 +188,9 @@ void LevelSpawnSystem::spawnEnemy(Registry& registry, const PendingEnemySpawn& s
         shooting.projectileSpeed *= scaling_.enemyDamageMultiplier;
         registry.emplace<EnemyShootingComponent>(e, shooting);
     }
+    if (!spawn.spawnGroupId.empty()) {
+        registry.emplace<SpawnGroupComponent>(e, SpawnGroupComponent::create(spawn.spawnGroupId));
+    }
     if (director_ != nullptr && !spawn.spawnGroupId.empty()) {
         director_->registerSpawn(spawn.spawnGroupId, e);
     }
@@ -239,6 +243,9 @@ void LevelSpawnSystem::spawnObstacle(Registry& registry, const SpawnObstacleSett
     registry.emplace<RenderTypeComponent>(e, RenderTypeComponent::create(tpl.typeId));
 
     std::string spawnId = settings.spawnId.empty() ? event.id : settings.spawnId;
+    if (!spawnId.empty()) {
+        registry.emplace<SpawnGroupComponent>(e, SpawnGroupComponent::create(spawnId));
+    }
     if (director_ != nullptr && !spawnId.empty()) {
         director_->registerSpawn(spawnId, e);
     }
@@ -276,6 +283,9 @@ void LevelSpawnSystem::spawnBoss(Registry& registry, const SpawnBossSettings& se
         registry.emplace<EnemyShootingComponent>(e, *boss.shooting);
     }
 
+    if (!settings.spawnId.empty()) {
+        registry.emplace<SpawnGroupComponent>(e, SpawnGroupComponent::create(settings.spawnId));
+    }
     if (director_ != nullptr) {
         director_->registerBoss(settings.bossId, e);
         if (!settings.spawnId.empty()) {

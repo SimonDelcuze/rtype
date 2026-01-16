@@ -15,6 +15,7 @@
 #include "components/ScoreComponent.hpp"
 #include "components/ScoreValueComponent.hpp"
 #include "components/ShieldComponent.hpp"
+#include "components/SpawnGroupComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "components/VelocityComponent.hpp"

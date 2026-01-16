@@ -2,6 +2,7 @@
 
 #include "components/HealthComponent.hpp"
 #include "components/RespawnTimerComponent.hpp"
+#include "components/SpawnGroupComponent.hpp"
 #include "components/TagComponent.hpp"
 #include "components/TransformComponent.hpp"
 #include "network/InputPacket.hpp"
@@ -192,8 +193,14 @@ bool LevelDirector::isSpawnDead(const std::string& spawnId, Registry& registry) 
         return false;
     const auto& group = it->second;
     for (const auto& entity : group.entities) {
-        if (registry.isAlive(entity))
-            return false;
+        if (!registry.isAlive(entity))
+            continue;
+        if (!registry.has<SpawnGroupComponent>(entity))
+            continue;
+        const auto& marker = registry.get<SpawnGroupComponent>(entity);
+        if (marker.spawnId != spawnId)
+            continue;
+        return false;
     }
     return true;
 }
