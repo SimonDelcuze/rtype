@@ -134,6 +134,7 @@ class LobbyMenu : public IMenu
     std::size_t pendingJoinRoomIndex_{0};
     bool isRoomHost_{false};
     bool isRefreshing_{false};
+    float refreshTimeout_{0.0F};
     bool isCreating_{false};
     bool isJoining_{false};
     bool isGettingStats_{false};
