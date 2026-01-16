@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "core/Session.hpp"
 #include "lobby/LobbyPackets.hpp"
+#include "lobby/PasswordUtils.hpp"
 #include "lobby/RoomConfig.hpp"
 #include "network/AuthPackets.hpp"
 #include "network/ChatPacket.hpp"
@@ -679,7 +680,7 @@ void LobbyServer::handleLobbyCreateRoom(const PacketHeader& hdr, const std::uint
 
     lobbyManager_.setRoomName(*roomId, roomName);
     if (!passwordHash.empty()) {
-        lobbyManager_.setRoomPassword(*roomId, passwordHash);
+        lobbyManager_.setRoomPassword(*roomId, PasswordUtils::hashPassword(passwordHash));
     }
     lobbyManager_.setRoomVisibility(*roomId, visibility);
 
@@ -781,7 +782,7 @@ void LobbyServer::handleLobbyJoinRoom(const PacketHeader& hdr, const std::uint8_
 
     auto roomInfoOpt = lobbyManager_.getRoomInfo(roomId);
     if (roomInfoOpt.has_value() && roomInfoOpt->passwordProtected) {
-        if (passwordHash.empty() || passwordHash != roomInfoOpt->passwordHash) {
+        if (passwordHash.empty() || PasswordUtils::hashPassword(passwordHash) != roomInfoOpt->passwordHash) {
             Logger::instance().warn("[LobbyServer] Client provided incorrect password for room " +
                                     std::to_string(roomId));
             auto packet = buildJoinFailedPacket(hdr.sequenceId);
