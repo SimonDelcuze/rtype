@@ -421,8 +421,6 @@ void LobbyServer::cleanupThread()
 
         auto activeRoomIds = instanceManager_.getAllRoomIds();
         auto lobbyRooms    = lobbyManager_.listRooms();
-
-        // Ensure lobby state stays in sync with running instances (fixes missing quickplay rooms).
         for (std::uint32_t roomId : activeRoomIds) {
             if (!lobbyManager_.roomExists(roomId)) {
                 auto* instance = instanceManager_.getInstance(roomId);
@@ -588,7 +586,6 @@ void LobbyServer::handleLobbyListRooms(const PacketHeader& hdr, const IpEndpoint
 {
     Logger::instance().info("[LobbyServer] List rooms request from client");
 
-    // Self-heal: ensure any running instances are reflected in lobby state before listing.
     for (auto roomId : instanceManager_.getAllRoomIds()) {
         if (!lobbyManager_.roomExists(roomId)) {
             if (auto* inst = instanceManager_.getInstance(roomId)) {
