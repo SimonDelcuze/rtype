@@ -562,9 +562,9 @@
         1.8
       ],
       "shooting": {
-        "interval": 1.0,
-        "speed": 320,
-        "damage": 10,
+        "interval": 0.6,
+        "speed": 360,
+        "damage": 12,
         "lifetime": 3.0
       },
       "onDeath": []
@@ -660,8 +660,29 @@
         }
       ],
       "exit": {
-        "type": "spawn_dead",
-        "spawnId": "wave_1"
+        "type": "all_of",
+        "triggers": [
+          {
+            "type": "spawn_dead",
+            "spawnId": "wave_1"
+          },
+          {
+            "type": "enemy_count_at_most",
+            "count": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "pre_safe_delay",
+      "scroll": {
+        "mode": "constant",
+        "speedX": -60
+      },
+      "events": [],
+      "exit": {
+        "type": "time",
+        "time": 5.0
       }
     },
     {
@@ -1121,8 +1142,8 @@
           },
           "bossId": "boss_1",
           "spawn": [
-            950.0,
-            330.0
+            514.0,
+            558.0
           ]
         }
       ],
