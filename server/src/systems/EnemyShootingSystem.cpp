@@ -5,11 +5,13 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <random>
 
 namespace
 {
     constexpr std::uint16_t kWalkerTypeId      = 21;
     constexpr std::uint16_t kWalkerShotTypeId  = 22;
+    constexpr std::uint16_t kBossTypeId        = 20;
     constexpr float kWalkerShotAnchorOffsetX   = 6.0F;
     constexpr float kWalkerShotAnchorOffset    = -10.0F;
     constexpr float kWalkerShotApexOffset      = 200.0F;
@@ -18,6 +20,11 @@ namespace
     bool isWalker(const Registry& registry, EntityId id)
     {
         return registry.has<RenderTypeComponent>(id) && registry.get<RenderTypeComponent>(id).typeId == kWalkerTypeId;
+    }
+
+    bool isBoss(const Registry& registry, EntityId id)
+    {
+        return registry.has<RenderTypeComponent>(id) && registry.get<RenderTypeComponent>(id).typeId == kBossTypeId;
     }
 
     void spawnWalkerShot(Registry& registry, EntityId owner, const TransformComponent& transform,
@@ -53,6 +60,51 @@ namespace
         Logger::instance().info("[Spawn] Walker " + std::to_string(owner) + " fired special shot at (" +
                                 std::to_string(pt.x) + ", " + std::to_string(pt.y) + ")");
     }
+
+    void spawnBossRadialShots(Registry& registry, EntityId owner, const TransformComponent& transform,
+                              const EnemyShootingComponent& shooting)
+    {
+        constexpr float kPi  = 3.14159265358979323846F;
+        constexpr float kTau = 2.0F * kPi;
+        constexpr int kBurstCount = 8;
+
+        static thread_local std::mt19937 rng{std::random_device{}()};
+        std::uniform_real_distribution<float> angleDist(0.0F, kTau);
+
+        float originX = transform.x;
+        float originY = transform.y;
+        if (registry.has<HitboxComponent>(owner)) {
+            const auto& hb = registry.get<HitboxComponent>(owner);
+            const float sx = (transform.scaleX == 0.0F) ? 1.0F : transform.scaleX;
+            const float sy = (transform.scaleY == 0.0F) ? 1.0F : transform.scaleY;
+            originX += (hb.offsetX + hb.width * 0.5F) * sx;
+            originY += (hb.offsetY + hb.height * 0.5F) * sy;
+        }
+
+        for (int i = 0; i < kBurstCount; ++i) {
+            const float angle = angleDist(rng);
+            const float dirX  = std::cos(angle);
+            const float dirY  = std::sin(angle);
+
+            EntityId projectile = registry.createEntity();
+
+            auto& pt    = registry.emplace<TransformComponent>(projectile);
+            pt.x        = originX;
+            pt.y        = originY;
+            pt.rotation = angle;
+
+            auto& pv = registry.emplace<VelocityComponent>(projectile);
+            pv.vx    = dirX * shooting.projectileSpeed;
+            pv.vy    = dirY * shooting.projectileSpeed;
+
+            registry.emplace<MissileComponent>(
+                projectile, MissileComponent{shooting.projectileDamage, shooting.projectileLifetime, false, 1});
+
+            registry.emplace<OwnershipComponent>(projectile, OwnershipComponent::create(owner, 0));
+            registry.emplace<TagComponent>(projectile, TagComponent::create(EntityTag::Projectile));
+            registry.emplace<HitboxComponent>(projectile, HitboxComponent::create(20.0F, 20.0F, 0.0F, 0.0F, true));
+        }
+    }
 } // namespace
 
 void EnemyShootingSystem::update(Registry& registry, float deltaTime)
@@ -84,6 +136,8 @@ void EnemyShootingSystem::update(Registry& registry, float deltaTime)
 
             if (isWalker(registry, id)) {
                 spawnWalkerShot(registry, id, transform, shooting);
+            } else if (isBoss(registry, id)) {
+                spawnBossRadialShots(registry, id, transform, shooting);
             } else {
                 float bestDist2 = std::numeric_limits<float>::max();
                 float targetX   = transform.x - 100.0F;
