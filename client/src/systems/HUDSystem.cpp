@@ -187,21 +187,21 @@ void HUDSystem::update(Registry& registry, float deltaTime)
         }
     }
 
-	    auto font = fonts_.get("score_font");
-	    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && !bossActive &&
-	        playerScore >= AllyComponent::kAllyCost) {
+    auto font = fonts_.get("score_font");
+    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && !bossActive &&
+        playerScore >= AllyComponent::kAllyCost) {
         static std::shared_ptr<IText> allyText = nullptr;
         if (!allyText) {
             GraphicsFactory factory;
             allyText = factory.createText();
         }
-	        if (allyText) {
-	            allyText->setFont(*font);
-	            allyText->setCharacterSize(18);
-	            allyText->setString("Press E to buy Ally (10000 pts)");
-	            allyText->setFillColor(Color{200, 255, 200});
-	            const auto screenSize = window_.getSize();
-	            FloatRect allyBounds  = allyText->getLocalBounds();
+        if (allyText) {
+            allyText->setFont(*font);
+            allyText->setCharacterSize(18);
+            allyText->setString("Press E to buy Ally (10000 pts)");
+            allyText->setFillColor(Color{200, 255, 200});
+            const auto screenSize = window_.getSize();
+            FloatRect allyBounds  = allyText->getLocalBounds();
             allyText->setOrigin(
                 Vector2f{allyBounds.left + allyBounds.width / 2.0F, allyBounds.top + allyBounds.height / 2.0F});
             float allyY = bossActive ? 76.0F : 52.0F;
@@ -210,22 +210,22 @@ void HUDSystem::update(Registry& registry, float deltaTime)
             allyText->setRotation(0.0F);
             window_.draw(*allyText);
         }
-	    }
+    }
 
-	    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && !bossActive &&
-	        playerScore >= ShieldComponent::kShieldCost && !hasShield) {
-	        static std::shared_ptr<IText> shieldText = nullptr;
-	        if (!shieldText) {
-	            GraphicsFactory factory;
-	            shieldText = factory.createText();
-	        }
-	        if (shieldText) {
-	            shieldText->setFont(*font);
-	            shieldText->setCharacterSize(18);
-	            shieldText->setString("Press F to buy Shield (5000 pts)");
-	            shieldText->setFillColor(Color{200, 255, 200});
-	            const auto screenSize  = window_.getSize();
-	            FloatRect shieldBounds = shieldText->getLocalBounds();
+    if (font != nullptr && state_ != nullptr && state_->safeZoneActive && !bossActive &&
+        playerScore >= ShieldComponent::kShieldCost && !hasShield) {
+        static std::shared_ptr<IText> shieldText = nullptr;
+        if (!shieldText) {
+            GraphicsFactory factory;
+            shieldText = factory.createText();
+        }
+        if (shieldText) {
+            shieldText->setFont(*font);
+            shieldText->setCharacterSize(18);
+            shieldText->setString("Press F to buy Shield (5000 pts)");
+            shieldText->setFillColor(Color{200, 255, 200});
+            const auto screenSize  = window_.getSize();
+            FloatRect shieldBounds = shieldText->getLocalBounds();
             shieldText->setOrigin(
                 Vector2f{shieldBounds.left + shieldBounds.width / 2.0F, shieldBounds.top + shieldBounds.height / 2.0F});
             float shieldY = bossActive ? 100.0F : 76.0F;
