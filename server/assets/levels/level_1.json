@@ -550,6 +550,26 @@
       }
     }
   },
+  "bosses": {
+    "boss_1": {
+      "typeId": 20,
+      "hitbox": "boss_hit",
+      "collider": "boss_box",
+      "health": 120,
+      "score": 5000,
+      "scale": [
+        1.8,
+        1.8
+      ],
+      "shooting": {
+        "interval": 1.0,
+        "speed": 320,
+        "damage": 10,
+        "lifetime": 3.0
+      },
+      "onDeath": []
+    }
+  },
   "segments": [
     {
       "id": "segment_1",
@@ -1035,6 +1055,82 @@
           }
         ]
       }
+    },
+    {
+      "id": "segment_2_boss",
+      "scroll": {
+        "mode": "constant",
+        "speedX": -60
+      },
+      "events": [
+        {
+          "type": "spawn_wave",
+          "id": "post_safe_wave_grunts",
+          "trigger": {
+            "type": "time",
+            "time": 0.8
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "grunt",
+            "patternId": "p_sine",
+            "health": 4,
+            "spawnX": 1220.0,
+            "startY": 140.0,
+            "deltaY": 80.0,
+            "count": 6
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "post_safe_wave_followers",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "post_safe_wave_grunts"
+          },
+          "wave": {
+            "type": "stagger",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "health": 5,
+            "spawnX": 1220.0,
+            "startY": 160.0,
+            "deltaY": 70.0,
+            "count": 6,
+            "spacing": 0.22
+          }
+        },
+        {
+          "type": "set_scroll",
+          "id": "boss_room_stop_scroll",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "post_safe_wave_followers"
+          },
+          "scroll": {
+            "mode": "stopped",
+            "speedX": 0
+          }
+        },
+        {
+          "type": "spawn_boss",
+          "id": "boss_1_spawn",
+          "trigger": {
+            "type": "spawn_dead",
+            "spawnId": "post_safe_wave_followers"
+          },
+          "bossId": "boss_1",
+          "spawn": [
+            950.0,
+            330.0
+          ]
+        }
+      ],
+      "exit": {
+        "type": "boss_dead",
+        "bossId": "boss_1"
+      },
+      "bossRoom": true
     }
   ]
 }
