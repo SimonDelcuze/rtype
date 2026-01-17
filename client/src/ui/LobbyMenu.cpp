@@ -566,7 +566,12 @@ void LobbyMenu::update(Registry& registry, float dt)
                     result_.roomId   = result->roomId;
                     result_.gamePort = result->port;
                     isRoomHost_      = true;
-                    state_           = State::InRoom;
+
+                    extern bool g_joinAsSpectator;
+                    g_joinAsSpectator = false;
+                    joinAsSpectator_  = false;
+
+                    state_ = State::InRoom;
                 } else {
                     Logger::instance().error("[LobbyMenu] Failed to create room");
                     state_ = State::ShowingRooms;
