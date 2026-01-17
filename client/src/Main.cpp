@@ -4,10 +4,12 @@
 
 #include <csignal>
 
+// clang-format off
 #ifdef _WIN32
-#include <timeapi.h>
 #include <windows.h>
+#include <timeapi.h>
 #endif
+// clang-format on
 
 void signalHandler(int signum)
 {
