@@ -64,8 +64,8 @@ namespace
     void spawnBossRadialShots(Registry& registry, EntityId owner, const TransformComponent& transform,
                               const EnemyShootingComponent& shooting)
     {
-        constexpr float kPi  = 3.14159265358979323846F;
-        constexpr float kTau = 2.0F * kPi;
+        constexpr float kPi       = 3.14159265358979323846F;
+        constexpr float kTau      = 2.0F * kPi;
         constexpr int kBurstCount = 8;
 
         static thread_local std::mt19937 rng{std::random_device{}()};
