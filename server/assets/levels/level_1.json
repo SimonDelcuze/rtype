@@ -600,7 +600,7 @@
             "spawnX": 1220.0,
             "startY": 120.0,
             "deltaY": 40.0,
-            "count": 10
+            "count": 8
           }
         },
         {
@@ -617,7 +617,7 @@
             "spawnX": 1220.0,
             "startY": 140.0,
             "deltaY": 70.0,
-            "count": 8,
+            "count": 6,
             "spacing": 0.25
           }
         },
@@ -635,7 +635,7 @@
             "spawnX": 1220.0,
             "startY": 100.0,
             "deltaY": 80.0,
-            "count": 7
+            "count": 5
           }
         }
       ],
@@ -667,7 +667,7 @@
           "id": "part2_ob_top_1",
           "trigger": {
             "type": "distance",
-            "distance": 90.0
+            "distance": 120.0
           },
           "obstacle": "wall_top",
           "x": 1220.0,
@@ -678,7 +678,7 @@
           "id": "part2_ob_bot_1",
           "trigger": {
             "type": "distance",
-            "distance": 110.0
+            "distance": 160.0
           },
           "obstacle": "wall_bot",
           "x": 1220.0,
@@ -689,7 +689,7 @@
           "id": "part2_ob_mid_1",
           "trigger": {
             "type": "distance",
-            "distance": 180.0
+            "distance": 240.0
           },
           "obstacle": "wall_mid",
           "x": 1220.0,
@@ -700,7 +700,7 @@
           "id": "part2_ob_mid_2",
           "trigger": {
             "type": "distance",
-            "distance": 220.0
+            "distance": 300.0
           },
           "obstacle": "wall_mid",
           "x": 1220.0,
@@ -721,7 +721,7 @@
             "spawnX": 1220.0,
             "startY": 80.0,
             "deltaY": 40.0,
-            "count": 14
+            "count": 10
           }
         },
         {
@@ -739,7 +739,7 @@
             "spawnX": 1230.0,
             "startY": 120.0,
             "deltaY": 45.0,
-            "count": 12
+            "count": 9
           }
         },
         {
@@ -757,7 +757,7 @@
             "spawnX": 1230.0,
             "startY": 90.0,
             "deltaY": 45.0,
-            "count": 14,
+            "count": 10,
             "spacing": 0.15
           }
         },
@@ -776,7 +776,7 @@
             "spawnX": 1230.0,
             "startY": 120.0,
             "deltaY": 35.0,
-            "count": 16,
+            "count": 12,
             "spacing": 0.14
           }
         },
@@ -797,7 +797,7 @@
             "stepY": 40.0,
             "stepTime": 0.14,
             "amplitudeX": 110.0,
-            "count": 14
+            "count": 10
           }
         },
         {
@@ -815,7 +815,7 @@
             "spawnX": 1230.0,
             "startY": 110.0,
             "deltaY": 40.0,
-            "count": 12
+            "count": 8
           }
         },
         {
@@ -823,7 +823,7 @@
           "id": "part2_ob_top_2",
           "trigger": {
             "type": "distance",
-            "distance": 340.0
+            "distance": 420.0
           },
           "obstacle": "wall_top",
           "x": 1220.0,
@@ -834,7 +834,7 @@
           "id": "part2_ob_bot_2",
           "trigger": {
             "type": "distance",
-            "distance": 360.0
+            "distance": 470.0
           },
           "obstacle": "wall_bot",
           "x": 1220.0,
@@ -855,7 +855,7 @@
             "centerX": 1240.0,
             "centerY": 360.0,
             "step": 75.0,
-            "armLength": 3
+            "armLength": 2
           }
         },
         {
@@ -873,7 +873,7 @@
             "spawnX": 1230.0,
             "startY": 70.0,
             "deltaY": 35.0,
-            "count": 16
+            "count": 12
           }
         },
         {
@@ -892,7 +892,7 @@
             "apexY": 110.0,
             "rowHeight": 65.0,
             "horizontalStep": 60.0,
-            "layers": 4
+            "layers": 3
           }
         },
         {
@@ -912,7 +912,7 @@
             "stepY": 35.0,
             "stepTime": 0.16,
             "amplitudeX": 110.0,
-            "count": 14
+            "count": 10
           }
         },
         {
@@ -920,7 +920,7 @@
           "id": "part2_ob_mid_3",
           "trigger": {
             "type": "distance",
-            "distance": 450.0
+            "distance": 560.0
           },
           "obstacle": "wall_mid",
           "x": 1220.0,
@@ -931,7 +931,7 @@
           "id": "part2_ob_mid_4",
           "trigger": {
             "type": "distance",
-            "distance": 470.0
+            "distance": 620.0
           },
           "obstacle": "wall_mid",
           "x": 1220.0,
@@ -961,7 +961,7 @@
             "spawnX": 1220.0,
             "startY": 60.0,
             "deltaY": 30.0,
-            "count": 18
+            "count": 12
           }
         },
         {
@@ -1000,7 +1000,7 @@
             "spawnX": 1230.0,
             "startY": 80.0,
             "deltaY": 35.0,
-            "count": 18,
+            "count": 12,
             "spacing": 0.12
           }
         },
@@ -1019,7 +1019,7 @@
             "centerX": 1240.0,
             "centerY": 360.0,
             "step": 70.0,
-            "armLength": 4
+            "armLength": 3
           }
         }
       ],
