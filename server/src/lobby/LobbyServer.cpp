@@ -1662,8 +1662,8 @@ void LobbyServer::handleChatPacket(const PacketHeader& hdr, const std::uint8_t* 
     broadcastPkt.playerId = playerId;
     std::strncpy(broadcastPkt.playerName, playerName.c_str(), 31);
     broadcastPkt.playerName[31] = '\0';
-    std::strncpy(broadcastPkt.message, chatPkt->message, 120);
-    broadcastPkt.message[120] = '\0';
+    std::memcpy(broadcastPkt.message, chatPkt->message, sizeof(broadcastPkt.message) - 1);
+    broadcastPkt.message[sizeof(broadcastPkt.message) - 1] = '\0';
 
     auto encoded = broadcastPkt.encode(hdr.sequenceId);
     std::lock_guard<std::mutex> lock(sessionsMutex_);
