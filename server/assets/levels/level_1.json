@@ -526,7 +526,7 @@
         "collider": "ob_bot",
         "health": 22,
         "anchor": "bottom",
-        "margin": 20,
+        "margin": 0,
         "speedX": -60,
         "speedY": 0,
         "scale": [
@@ -540,7 +540,7 @@
         "collider": "ob_bot",
         "health": 22,
         "anchor": "bottom",
-        "margin": 20,
+        "margin": 0,
         "speedX": -60,
         "speedY": 0,
         "scale": [
@@ -587,6 +587,39 @@
           },
           "obstacle": "wall_bot2",
           "x": 1220.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "seg1_ob_top_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 180.0
+          },
+          "obstacle": "wall_top",
+          "x": 1220.0,
+          "margin": 0.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "seg1_ob_mid_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 240.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 300.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "seg1_ob_bot_1",
+          "trigger": {
+            "type": "distance",
+            "distance": 300.0
+          },
+          "obstacle": "wall_bot",
+          "x": 1220.0,
+          "margin": 0.0
         },
         {
           "type": "spawn_wave",
@@ -712,7 +745,7 @@
           },
           "obstacle": "wall_top",
           "x": 1220.0,
-          "margin": 20.0
+          "margin": 0.0
         },
         {
           "type": "spawn_obstacle",
@@ -723,7 +756,7 @@
           },
           "obstacle": "wall_bot",
           "x": 1220.0,
-          "margin": 70.0
+          "margin": 0.0
         },
         {
           "type": "spawn_obstacle",
@@ -746,6 +779,39 @@
           "obstacle": "wall_mid",
           "x": 1220.0,
           "y": 460.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_top_3",
+          "trigger": {
+            "type": "distance",
+            "distance": 520.0
+          },
+          "obstacle": "wall_top",
+          "x": 1220.0,
+          "margin": 0.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_bot_3",
+          "trigger": {
+            "type": "distance",
+            "distance": 560.0
+          },
+          "obstacle": "wall_bot",
+          "x": 1220.0,
+          "margin": 0.0
+        },
+        {
+          "type": "spawn_obstacle",
+          "id": "part2_ob_mid_5",
+          "trigger": {
+            "type": "distance",
+            "distance": 600.0
+          },
+          "obstacle": "wall_mid",
+          "x": 1220.0,
+          "y": 320.0
         },
         {
           "type": "spawn_wave",
@@ -868,7 +934,7 @@
           },
           "obstacle": "wall_top",
           "x": 1220.0,
-          "margin": 60.0
+          "margin": 0.0
         },
         {
           "type": "spawn_obstacle",
@@ -879,7 +945,7 @@
           },
           "obstacle": "wall_bot",
           "x": 1220.0,
-          "margin": 90.0
+          "margin": 0.0
         },
         {
           "type": "spawn_wave",
@@ -1142,7 +1208,7 @@
           },
           "bossId": "boss_1",
           "spawn": [
-            540.0,
+            380.0,
             558.0
           ]
         },
