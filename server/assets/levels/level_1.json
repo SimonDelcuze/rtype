@@ -555,7 +555,7 @@
       "typeId": 20,
       "hitbox": "boss_hit",
       "collider": "boss_box",
-      "health": 120,
+      "health": 300,
       "score": 5000,
       "scale": [
         1.8,
@@ -1142,9 +1142,54 @@
           },
           "bossId": "boss_1",
           "spawn": [
-            514.0,
+            540.0,
             558.0
           ]
+        },
+        {
+          "type": "spawn_wave",
+          "id": "boss_minions_phase1",
+          "trigger": {
+            "type": "hp_below",
+            "bossId": "boss_1",
+            "value": 240
+          },
+          "repeat": {
+            "interval": 4.0,
+            "count": 3
+          },
+          "wave": {
+            "type": "stagger",
+            "enemy": "grunt",
+            "patternId": "p_sine",
+            "spawnX": 1220.0,
+            "startY": 160.0,
+            "deltaY": 70.0,
+            "count": 4,
+            "spacing": 0.2
+          }
+        },
+        {
+          "type": "spawn_wave",
+          "id": "boss_minions_phase2",
+          "trigger": {
+            "type": "hp_below",
+            "bossId": "boss_1",
+            "value": 150
+          },
+          "repeat": {
+            "interval": 6.0,
+            "count": 2
+          },
+          "wave": {
+            "type": "line",
+            "enemy": "follower",
+            "patternId": "p_follower",
+            "spawnX": 1220.0,
+            "startY": 120.0,
+            "deltaY": 80.0,
+            "count": 5
+          }
         }
       ],
       "exit": {
